@@ -11,16 +11,19 @@ Local Agent Lab is a Streamlit workbench built on Ollama, LangChain 1.x / LangGr
 self-built model gateway (speech, document parsing, reranking), and PostgreSQL. It does two
 things:
 
-1. **Benchmark local LLMs.** Browse 54+ open models by size tier and task, download them with
-   one click, and compare up to six models side by side on the same prompt (answers, time to
-   first token, tokens/s, an optional LLM judge). You can also watch every LLM call and tool
-   call an agent makes.
+1. **Benchmark local LLMs.** Browse 107 local models with capability tags (tools, thinking,
+   vision, code, embedding, decision, ASR, OCR, rerank, Taiwan-tuned, licence…), download them
+   with one click, and compare up to six models side by side on the same prompt (answers, time
+   to first token, tokens/s, an optional LLM judge). The home page shows which models are loaded,
+   how much memory they use and which tasks are running.
 2. **Demo multi-agent scenarios.** Nine ready-made workflows run as LangGraph graphs: routing
    with a decision model, hybrid RAG, self-checking RAG, permission-aware retrieval, meeting
    audio → minutes, contract review, support triage, a mixture of agents, and an analyst →
-   writer → translator pipeline. Each run has a live flow diagram and a timeline. A
-   control-center coding agent rewires scenarios and agents from plain-language instructions;
-   every change is approved as a diff and can be rolled back.
+   writer → translator pipeline. Each run has a live flow diagram and a timeline, and every
+   step's model can be swapped for a compatible one (downloaded models are the default). Build
+   agents in the **Agent studio** (model, system prompt, tools, skills, database identity), ask
+   several agents the same question, and let a **fully local coding agent** change agents,
+   scenarios or code — every change is approved as a diff and can be rolled back.
 
 The UI is bilingual (中文 / EN, switch in the top-right corner). The demo company and all of
 its data are fictional.
@@ -34,7 +37,10 @@ its data are fictional.
 | **Hybrid, permission-aware RAG** | BM25 (CJK bigrams) and bge-m3 vectors run in parallel, then RRF, then a bge-reranker-v2-m3 cross-encoder. Documents carry department tags, and restricted passages are filtered out *before* they can reach a prompt. |
 | **Model gateway** | Ollama-like download / lazy-load / idle-unload and OpenAI-style endpoints for models Ollama can't serve: Breeze-ASR-25 (Taiwanese Mandarin ASR), Whisper, Docling, rerankers. |
 | **Governed agents** | Database permissions are enforced by PostgreSQL roles, not by prompts. External APIs are off by default and capped per run, and each call needs human approval. |
-| **Coding agent with approvals** | It edits `agents.json` / `scenarios.json` through typed tools. Each write shows a diff and the validation result and waits for approval. Every version is kept. |
+| **Agent studio** | Pick a model, write the system prompt, choose tools and skills, set a database identity, test it in a chat, and save it as a new agent. |
+| **Skills and MCP** | 25 tools (12 from local MCP servers: time, git, fetch, files) and 11 Agent Skills (`SKILL.md`, loaded on demand; 3 imported from open-source repos). |
+| **Identity-scoped database** | Six PostgreSQL identities (sales, HR, support, finance, management, intern). Preview any table as any identity and see the permission matrix. |
+| **Local coding agent** | `uv run local-agent code` or the Control page. Settings mode changes `agents.json` / `scenarios.json` through validated tools; code mode also edits Python, runs pytest/ruff, and backs up every file. Each write shows a diff and waits for approval. Default model `qwen3.6:35b-a3b-coding`. See [docs/LOCAL_CODING_AGENT.md](docs/LOCAL_CODING_AGENT.md). |
 | **Background jobs** | Chats, agent runs, comparisons, scenarios and downloads keep running when you switch pages. |
 
 ## Scenarios
@@ -51,7 +57,7 @@ its data are fictional.
 | Mixture of agents | [Qwen3 30B ‖ TAIDE 12B ‖ Qwen3 1.7B] → aggregator | 3 local models |
 | Sales memo | DB analyst agent → writer → translator | qwen3 |
 
-![Scenario running: live flow diagram and timeline](docs/screenshots/scenario_running.png)
+![A finished hybrid RAG run: per-step model choice, flow, timeline and steps](docs/screenshots/scenario.png)
 
 ## Measured on an M5 Pro (64 GB)
 
@@ -63,7 +69,8 @@ its data are fictional.
 | Hybrid RAG, end to end | ~10 s (retrieval ~1 s, rerank 0.1–0.6 s, answer ~8 s) |
 | Router → DB agent (4 tool calls) | ~32 s |
 | Mixture of agents (3 models in parallel + aggregator) | ~30 s |
-| Coding agent: inspect → propose → approve → self-correct | ~60 s |
+| Coding agent, qwen3.6:35b-a3b-coding (~80–90 tok/s) | change a scenario model 14 s; add a tool + tests + register it 113–156 s; fix a failing test 23 s (all passed) |
+| Coding agent, qwen3.8:27b (~30 tok/s) | same three tasks passed, 2–4× slower |
 | Breeze-ASR-25 (MLX, converted locally from the official weights) | 88 s of meeting audio in ~6–8 s; ~6.7 % character error rate on the synthetic sample |
 | Whisper large-v3-turbo (MLX) | 5–6 s on the same audio, but it outputs Simplified Chinese and hallucinates an outro, which is why Breeze is the default |
 | Docling (3-page PDF, 4 tables) | 1.2–4 s warm (first call ~17 s, including model load); tables come through intact |
@@ -120,11 +127,13 @@ app/                    Streamlit UI (main.py, views/, i18n.py, jobs.py, flow_ui
 src/local_llm/
   lab/                  scenario engine: nodes, engine, store (validation + history), rag, decide, control
   gateway/              model gateway (FastAPI) + gateway_client.py
+  coder/                local coding agent (workspace tools, agent, terminal REPL)
   agents.py             agent registry (reads data/lab/agents.json), tool policies
+  skills.py, mcp_tools.py  Agent Skills loader and local MCP tool servers
   company_db.py         fictional company in PostgreSQL with department roles
   streaming.py          streaming chat with TTFT / tokens/s
-data/lab/               agents.json, scenarios.json, corpus/ (knowledge base), samples/
-docs/                   SCENARIOS.md, GATEWAY.md, ADOPTION_ROADMAP.md, screenshots/
+data/lab/               agents.json, scenarios.json, skills/, corpus/ (knowledge base), samples/
+docs/                   SCENARIOS.md, GATEWAY.md, LOCAL_CODING_AGENT.md, ADOPTION_ROADMAP.md
 tests/                  engine, RAG, coding-agent planning, gateway, tools (no models needed)
 ```
 
@@ -132,10 +141,12 @@ tests/                  engine, RAG, coding-agent planning, gateway, tools (no m
 
 | | |
 |---|---|
-| ![Knowledge base: BM25, vector, RRF and rerank side by side](docs/screenshots/knowledge.png) | ![Model library: gateway models with one-click download](docs/screenshots/models_gateway.png) |
-| *Knowledge base: four rankings side by side* | *Model library: non-Ollama models served by the gateway* |
-| ![A finished scenario with its result and steps](docs/screenshots/scenario.png) | ![Home](docs/screenshots/home.png) |
-| *A finished run, with its result and per-step details* | *Home* |
+| ![Model library with capability tags](docs/screenshots/models.png) | ![Agent studio](docs/screenshots/agent_studio.png) |
+| *Model library: 107 local models with capability tags* | *Agent studio: model, prompt, tools, skills, DB identity* |
+| ![Knowledge base: pipeline and rerank demo](docs/screenshots/knowledge.png) | ![Local coding agent](docs/screenshots/control.png) |
+| *Knowledge base: BM25, vector, RRF and rerank side by side* | *Control center: the local coding agent* |
+| ![Company database by identity](docs/screenshots/company.png) | ![Adoption roadmap](docs/screenshots/roadmap.png) |
+| *Company database previewed as different identities* | *Adoption roadmap: journey and 12-week plan* |
 
 ## Design notes
 

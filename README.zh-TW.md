@@ -48,24 +48,25 @@ uv run local-agent doctor   # 檢查 server 與已下載模型
 
 ## 平台頁面
 
-| 區塊 | 頁面 | 功能 |
+| 選單 | 頁面 | 功能 |
 | --- | --- | --- |
-| 總覽 | 首頁 | 作品集首頁：兩大目的、精選場景流程圖、系統架構、即時狀態（模型、服務、記憶體） |
-| | 模型庫 | 54 個 Ollama 模型，可依**級距**、**任務類型**、**系列**篩選（含台灣主權 LLM：TAIDE、Breeze、Taiwan-LLM、Twinkle；Cohere；決策模型 nimble）；「非 Ollama」分頁整理語音辨識、語音合成、文件解析／OCR、reranker，並可一鍵下載到模型服務 |
-| | 導入路線圖 | 以平台示範情境為主的八個步驟，每步可直接前往該頁；完整版在 `docs/ADOPTION_ROADMAP.md` |
-| ① 模型測試 | 對話 | 多輪對話、串流輸出、思考過程另外顯示、首字延遲與 tokens/s；視覺模型可附圖 |
-| | 模型比較 | 同一題丟給最多 6 個模型並排比較；未下載的會先自動下載；有「台灣主權 LLM」「Cohere」快速組合；可選裁判模型評分 |
-| | 語音與文件 | 模型服務的測試台：語音轉文字（Breeze-ASR-25／Whisper）、文件解析（Docling）、rerank、agent 用的檔案匣 |
-| ② Agent 測試 | Agent | 對話、工具呼叫、公司資料庫（業務部／人資部／客服部）、研究助理（外部 API）、翻譯、會議與文件助理；逐步標示每次 LLM 呼叫與工具執行；外部工具可設定允許連網、人工核准與次數上限 |
-| | 工具 | 所有工具是本機還是外部、送給模型的工具定義 JSON，並可直接試跑 |
-| | 公司資料庫 | 預覽（含以某部門身分瀏覽）、上傳 CSV／Excel、權限設定（GRANT／REVOKE） |
-| | 部門 Agent 比較 | 同一問題同時問三個部門 agent（同模型、只差資料庫權限），並排比較 |
-| ③ 多 Agent 場景 | 場景展示 | 9 個場景（見下表），即時流程圖＋時間軸＋每一步細節；可直接編輯場景 JSON（即時驗證、diff） |
-| | 知識庫（RAG） | 文件與部門權限、重建索引、**檢索比較**（BM25／向量／RRF／Rerank 並排） |
-| | 總控 Coding Agent | 用自然語言修改所有 agent 與場景的設定與串接；每次寫入顯示 diff 與驗證結果，核准後才存檔，可一鍵復原 |
-| 紀錄 | 執行紀錄 | 所有比較、agent、場景、總控的執行結果（`runs/*.json`） |
+| 首頁 | 首頁 | 即時狀態：服務是否啟動、記憶體使用量、載入中的模型（可卸載）、執行中的工作；9 個場景卡片可直接開啟 |
+| 模型 | 模型庫 | 107 個地端模型（對照 ollama.com 的 local 清單），以**能力標籤**（工具、思考、視覺、程式、embedding、決策、語音、OCR、rerank、台灣、授權…）呈現，可搜尋、篩選、看詳情；「非 Ollama」分頁可一鍵下載到模型服務 |
+| | 對話測試 | 多輪對話、串流、思考過程另外顯示、首字延遲與 tokens/s；視覺模型可附圖 |
+| | 模型比較 | 同一題最多 6 個模型並排；可選裁判模型評分 |
+| | 語音與文件 | 語音轉文字（Breeze-ASR-25／Whisper）、文件解析（Docling）、rerank |
+| Agents | Agent 工作室 | 選模型、寫系統 prompt、選工具與技能、設定資料庫身分，邊測邊改，存成新 agent |
+| | Agents 一覽 | 每個 agent 的模型、工具、技能、資料庫身分與用在哪些場景 |
+| | 多 Agent 比較 | 同一題同時問最多 4 個 agent，可用同一模型或各自的模型 |
+| | 工具與技能 | 25 個工具（含 12 個本機 MCP 工具：time、git、fetch、files）、11 個 Agent Skills（3 個取自開源專案）、外部生態整理 |
+| | 公司資料庫 | 以任一身分預覽資料（業務、人資、客服、財務、管理層、實習生）、權限矩陣、上傳 CSV／Excel |
+| 多 Agent 場景 | 場景展示 | 9 個場景，以模型類型標示；每一步可選相容模型（✅ 已下載者為預設）；定義改用流程圖＋步驟表＋表單編輯 |
+| | 知識庫 RAG | RAG 流程圖；三個需要 rerank 才答得對的示範題；BM25／向量／RRF／Rerank 並排 |
+| 總控 | 總控 Coding Agent | 全地端 coding agent：設定模式只改 agent／場景（經驗證），程式模式可改 Python 並跑 pytest／ruff；每次寫入顯示 diff、核准後才存，可復原 |
+| 更多 | 導入路線圖 | 八步驟旅程圖＋12 週甘特圖，每步可前往對應頁面 |
+| | 執行紀錄 | 活動時間軸，依類型顯示易讀的結果（不再是 JSON） |
 
-對話、Agent、比較、場景、下載都在背景執行：**切換頁面不會中斷**，側欄「背景工作」可看進度。
+對話、Agent、比較、場景、下載都在背景執行：**切換頁面不會中斷**，右上角「工作」可看進度。
 
 ## 多 Agent 場景
 
@@ -100,6 +101,23 @@ Ollama 只跑文字／視覺 LLM 與 embedding。語音辨識、文件解析、r
 
 總控 Coding Agent 的寫入工具也一律經 `HumanInTheLoopMiddleware` 核准，並由 `lab/store.py` 驗證與保留版本（`storage/lab/history/`）。
 
+## 地端 Coding Agent
+
+```sh
+uv run local-agent code                 # 終端機互動（/undo、/changes、/model、/mode、/think）
+uv run local-agent code --mode settings # 只改 agent／場景設定
+```
+
+預設模型 `qwen3.6:35b-a3b-coding`（35B MoE，約 3B active，24GB）。三個固定任務的實測：
+
+| 模型 | 換場景模型 | 新增工具＋測試＋註冊 | 修壞掉的測試 | 速度 |
+| --- | --- | --- | --- | --- |
+| qwen3.6:35b-a3b-coding | ✅ 14 秒 | ✅ 113–156 秒 | ✅ 23 秒 | 約 80–90 tok/s |
+| qwen3.8:27b | ✅ 59 秒 | ✅ 346–439 秒 | ✅ 67 秒 | 約 30 tok/s |
+| qwen3:30b-a3b（非 coding 版） | – | ❌ 32 分鐘後失敗 | – | 約 25 tok/s |
+
+與 OpenCode、Codex、Claude Code 的比較與建議見 [docs/LOCAL_CODING_AGENT.md](docs/LOCAL_CODING_AGENT.md)。注意：通用型 coding agent（如 OpenCode）請在沙箱或專案副本中執行，並在結束後停掉它的背景服務。
+
 ## 台灣主權 LLM 與 Cohere
 
 台灣模型不在 Ollama 官方庫，但 Ollama 可以直接拉 Hugging Face 上的 GGUF（`ollama pull hf.co/<repo>:Q4_K_M`），平台的下載按鈕也用這個方式。
@@ -125,6 +143,7 @@ Ollama 只跑文字／視覺 LLM 與 embedding。語音辨識、文件解析、r
 | `agent_sales`（業務部） | sales、inventory、support；員工基本資料 | 薪資、電話、請假紀錄 |
 | `agent_hr`（人資部） | hr 全部（含薪資） | 業務、庫存、客服 |
 | `agent_support`（客服部） | support；客戶、產品、庫存的部分欄位 | 產品成本、信用額度、訂單 |
+| `agent_finance`／`agent_management`／`agent_intern` | 見平台「公司資料庫 → 身分與權限」 | |
 
 所有角色都只有 SELECT 權限，交易預設唯讀，查詢 5 秒逾時。上傳的資料表放在 `uploads` schema，預設沒有任何部門可讀。密碼在第一次啟動時隨機產生並寫入 `.env`。重建資料：`uv run python -m local_llm.company_db init`。
 
@@ -187,7 +206,8 @@ Streamlit 平台（app/）：main.py 導覽與語言切換、i18n.py、jobs.py �
     → 場景：lab/engine.py（讀 data/lab/scenarios.json）→ LangGraph StateGraph
         → 節點：lab/nodes.py（llm、agent、router、classify、BM25、向量、RRF、rerank、轉錄、文件解析、組合）
         → lab/rag.py 知識庫、lab/decide.py nimble、gateway_client.py 模型服務
-    → 總控：lab/control.py（讀寫工具＋核准）→ lab/store.py（驗證、版本、復原）
+    → 總控：coder/（工作區工具、agent、終端機 REPL）＋ lab/control.py → lab/store.py（驗證、版本、復原）
+    → 技能與 MCP：skills.py（data/lab/skills/）、mcp_tools.py
     → 模型管理：ollama_admin.py、gateway/（FastAPI）
 ```
 
