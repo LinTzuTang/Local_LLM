@@ -1,0 +1,12 @@
+.venv/
+.runtime/
+.env
+models/
+runs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+dist/
+.DS_Store
+storage/

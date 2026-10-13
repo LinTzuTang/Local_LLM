@@ -1,0 +1,3179 @@
+{
+  "checked_date": "2026-10-13",
+  "source": "https://ollama.com/search?c=local 與各模型頁、tags 頁（名稱、介紹原文、參數、context、下載大小、更新月份、能力標籤），以及 Hugging Face GGUF；授權取自模型的 license 層或模型卡，無法取得時標示「請見模型頁」",
+  "source_en": "https://ollama.com/search?c=local plus each model page and tags page (names, original descriptions, parameters, context, download sizes, update month, capability badges), and Hugging Face GGUF; licences come from the model's licence layer or model card, otherwise marked \"See model page\"",
+  "memory_note": "64GB 統一記憶體，macOS 預設約 48GB 可給 GPU；fit=ok 表示可與 embedding 等小模型同時載入，tight 需先卸載其他模型，no 放不下。大小為這台 Mac 的下載量：同一個 tag 同時有 GGUF 與 MLX 版時，Apple Silicon 會下載 MLX 版。",
+  "memory_note_en": "64GB unified memory; by default macOS lets the GPU use about 48GB. fit=ok means the model can be loaded alongside small models such as embeddings, tight means other models must be unloaded first, no means it does not fit. Sizes are the download on this Mac: when a tag has both GGUF and MLX builds, Apple silicon gets the MLX build.",
+  "tasks": {
+    "chat": "通用對話／Agent",
+    "reasoning": "推理",
+    "code": "程式碼",
+    "vision": "視覺／多模態",
+    "ocr": "OCR／文件",
+    "embedding": "RAG Embedding",
+    "translate": "翻譯",
+    "router": "工具路由／小模型",
+    "taiwan": "台灣主權 LLM"
+  },
+  "tasks_en": {
+    "chat": "General chat / agents",
+    "reasoning": "Reasoning",
+    "code": "Code",
+    "vision": "Vision / multimodal",
+    "ocr": "OCR / documents",
+    "embedding": "RAG embedding",
+    "translate": "Translation",
+    "router": "Tool routing / small models",
+    "taiwan": "Taiwan sovereign LLMs"
+  },
+  "models": [
+    {
+      "tag": "qwen3:30b-a3b",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "30B (3B active)",
+      "context": 262144,
+      "size_gb": 19,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "平台預設。MoE 每 token 只啟用 3B，速度接近 8B 模型；此 tag 現為 Thinking-2507，一定會先思考，適合 agent 與推理。",
+      "note_en": "Platform default. MoE with only 3B active per token, so it runs about as fast as an 8B model; this tag is now Thinking-2507 and always thinks first — good for agents and reasoning.",
+      "tasks": [
+        "chat",
+        "reasoning"
+      ],
+      "recommended": true,
+      "default": true
+    },
+    {
+      "tag": "qwen3:30b-a3b-instruct-2507-q4_K_M",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "30B (3B active)",
+      "context": 262144,
+      "size_gb": 19,
+      "updated": "2025-10",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "同一顆 MoE 的不思考版（Instruct-2507），回應快、工具呼叫穩，適合 agent 與對話比較。",
+      "note_en": "Non-thinking Instruct-2507 build of the same MoE: quick replies and reliable tool calls, good for agents and side-by-side chat comparisons.",
+      "tasks": [
+        "chat"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3.6:35b-a3b",
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "size_gb": 24,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3.6 MoE（3B 啟用），可看圖、可保留歷史思考脈絡，是這台最均衡的新一代多模態 agent 模型。",
+      "note_en": "Qwen3.6 MoE (3B active) with image input and thinking preservation — the most balanced new-generation multimodal agent model on this Mac.",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3.6:35b-a3b-coding",
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "size_gb": 24,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3.6 MoE 的 coding 調校版，前端與整個 repo 的 agentic coding 表現更好。",
+      "note_en": "Coding-tuned Qwen3.6 MoE; better at front-end work and repository-level agentic coding.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "qwen3.6:27b",
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "27B",
+      "context": 262144,
+      "size_gb": 19,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3.6 dense 27B：品質比 35B-A3B 更穩，但每 token 計算量大，速度約慢 3–4 倍。",
+      "note_en": "Dense 27B Qwen3.6: steadier quality than the 35B-A3B MoE, but roughly 3–4× slower per token.",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "qwen3.8:27b",
+      "family": "Qwen3.8",
+      "description": "Qwen3.8 delivers substantial gains across coding, professional work, research, and long-horizon agentic tasks.",
+      "params": "27B",
+      "context": 262144,
+      "size_gb": 18,
+      "updated": "2026-09",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "目前最新的 Qwen dense 模型（2026-09），coding、研究與長流程 agent 都強；dense 比 MoE 慢，重品質時用。",
+      "note_en": "The newest dense Qwen (2026-09), strong at coding, research and long-horizon agents; slower than MoE, so use it when quality matters most.",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3:32b",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "32B",
+      "context": 40960,
+      "size_gb": 20,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3 dense 32B，當 MoE 的品質對照組；較慢。",
+      "note_en": "Qwen3 dense 32B, a quality baseline for the MoE models; slower.",
+      "tasks": [
+        "chat",
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "qwen3:14b",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "14B",
+      "context": 40960,
+      "size_gb": 9.3,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "中型 dense，9GB 就有不錯的推理與工具呼叫，可和大型模型同時載入。",
+      "note_en": "Mid-size dense model: decent reasoning and tool calls in 9 GB, and it fits next to a large model.",
+      "tasks": [
+        "chat"
+      ]
+    },
+    {
+      "tag": "qwen3:8b",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "8B",
+      "context": 40960,
+      "size_gb": 5.2,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "日常開發與批次處理的快速選擇，支援工具與思考模式。",
+      "note_en": "A fast pick for everyday development and batch jobs; supports tools and thinking.",
+      "tasks": [
+        "chat"
+      ]
+    },
+    {
+      "tag": "qwen3:4b",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "4B",
+      "context": 262144,
+      "size_gb": 2.5,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "小模型對照組；也可當工具路由或意圖分類。",
+      "note_en": "Small baseline; also works for tool routing and intent classification.",
+      "tasks": [
+        "chat",
+        "router"
+      ]
+    },
+    {
+      "tag": "qwen3:1.7b",
+      "family": "Qwen3",
+      "description": "Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models.",
+      "params": "1.7B",
+      "context": 40960,
+      "size_gb": 1.4,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "1.4GB，框架 smoke test 與流程測試用（總控頁也用它）。",
+      "note_en": "1.4 GB; for framework smoke tests and pipeline checks (the control page uses it).",
+      "tasks": [
+        "chat",
+        "router"
+      ]
+    },
+    {
+      "tag": "qwen3.5:9b",
+      "family": "Qwen3.5",
+      "description": "Qwen 3.5 is a family of open-source multimodal models that delivers exceptional utility and performance.",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 7.6,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3.5 原生多模態（看圖＋工具＋思考），約 7GB 的全能輕量款，可常駐。",
+      "note_en": "Natively multimodal Qwen3.5 (images + tools + thinking): an all-round light model of about 7 GB that can stay loaded.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3.5:4b",
+      "family": "Qwen3.5",
+      "description": "Qwen 3.5 is a family of open-source multimodal models that delivers exceptional utility and performance.",
+      "params": "4B",
+      "context": 262144,
+      "size_gb": 4.0,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "4GB 內可看圖又能呼叫工具，適合大量批次與工具路由。",
+      "note_en": "Image input and tool calling in about 4 GB; good for high-volume batches and tool routing.",
+      "tasks": [
+        "chat",
+        "vision",
+        "router"
+      ]
+    },
+    {
+      "tag": "qwen3.5:0.8b",
+      "family": "Qwen3.5",
+      "description": "Qwen 3.5 is a family of open-source multimodal models that delivers exceptional utility and performance.",
+      "params": "0.8B",
+      "context": 262144,
+      "size_gb": 1.2,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "約 1GB 的多模態小模型，適合分類、路由與流程測試。",
+      "note_en": "A roughly 1 GB multimodal model for classification, routing and pipeline tests.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "qwen3-next:80b",
+      "family": "Qwen3-Next",
+      "description": "The first installment in the Qwen3-Next series with strong performance in terms of both parameter efficiency and inference speed.",
+      "params": "80B (3B active)",
+      "context": 262144,
+      "size_gb": 50,
+      "updated": "2025-12",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "tight",
+      "note": "80B-A3B 超稀疏 MoE：速度像 3B、知識量像 80B；50GB 需先卸載其他模型。",
+      "note_en": "80B-A3B ultra-sparse MoE: the speed of a 3B with the knowledge of an 80B; 50 GB, so unload other models first.",
+      "tasks": [
+        "chat",
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "qwen3.8-flash-next:125b-a6b-q4_K_M",
+      "family": "Qwen3.8",
+      "description": "This experimental preview of the architecture that will underpin Qwen4.",
+      "params": "125B (6B active)",
+      "context": 262144,
+      "size_gb": 120,
+      "updated": "2026-09",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "multilingual",
+        "long_context",
+        "moe"
+      ],
+      "license": "Qwen Community License 1.0（MaaS／AI 工作助理業者商用需另取授權）",
+      "license_en": "Qwen Community License 1.0 (MaaS / AI work-assistant businesses need a separate licence)",
+      "fit": "no",
+      "note": "Qwen4 架構預覽（125B-A6B）；120GB 這台放不下，DGX Spark 也很勉強。",
+      "note_en": "Preview of the Qwen4 architecture (125B-A6B); at 120 GB it does not fit this Mac and is a squeeze even on a DGX Spark.",
+      "tasks": [
+        "chat",
+        "vision",
+        "code"
+      ]
+    },
+    {
+      "tag": "qwen3-coder:30b",
+      "family": "Qwen3-Coder",
+      "description": "Alibaba's performant long context models for agentic and coding tasks.",
+      "params": "30B (3B active)",
+      "context": 262144,
+      "size_gb": 19,
+      "updated": "2025-09",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3-Coder 30B-A3B MoE：快，適合 coding agent 與 256K 長 context。",
+      "note_en": "Qwen3-Coder 30B-A3B MoE: fast, for coding agents and long (256K) context.",
+      "tasks": [
+        "code"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3-coder-next",
+      "family": "Qwen3-Coder",
+      "description": "Qwen3-Coder-Next is a coding-focused language model from Alibaba's Qwen team, optimized for agentic coding workflows and local development.",
+      "params": "80B (3B active)",
+      "context": 262144,
+      "size_gb": 52,
+      "updated": "2026-02",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "tight",
+      "note": "80B-A3B coding 模型，本機最強 coding 之一；52GB 需先卸載其他模型。",
+      "note_en": "80B-A3B coding model, among the best for local coding; 52 GB, so unload other models first.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "qwen2.5-coder:7b",
+      "family": "Qwen2.5-Coder",
+      "description": "The latest series of Code-Specific Qwen models, with significant improvements in code generation, code reasoning, and code fixing.",
+      "params": "7B",
+      "context": 32768,
+      "size_gb": 4.7,
+      "updated": "2025-05",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "code",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "經典 coding 小模型，適合 IDE 自動補全（FIM）；context 32K。",
+      "note_en": "A classic small coding model, good for IDE autocomplete (FIM); 32K context.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "qwen3-vl:8b",
+      "family": "Qwen3-VL",
+      "description": "The most powerful vision-language model in the Qwen model family to date. ",
+      "params": "8B",
+      "context": 262144,
+      "size_gb": 6.1,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "看圖、表格、截圖與影片，6GB；Qwen3.5 已內建看圖，這顆仍是穩定的視覺專用選擇。",
+      "note_en": "Images, tables, screenshots and video in 6 GB; Qwen3.5 now has vision built in, but this remains a dependable vision specialist.",
+      "tasks": [
+        "vision"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3-vl:30b",
+      "family": "Qwen3-VL",
+      "description": "The most powerful vision-language model in the Qwen model family to date. ",
+      "params": "30B (3B active)",
+      "context": 262144,
+      "size_gb": 20,
+      "updated": "2025-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Qwen3-VL 30B-A3B MoE：視覺品質更好、速度仍快。",
+      "note_en": "Qwen3-VL 30B-A3B MoE: better visual quality while staying fast.",
+      "tasks": [
+        "vision"
+      ]
+    },
+    {
+      "tag": "qwen3-embedding:0.6b",
+      "family": "Qwen3",
+      "description": "Building upon the foundational models of the Qwen3 series, Qwen3 Embedding provides a comprehensive range of text embeddings models in various sizes",
+      "params": "0.6B",
+      "context": 32768,
+      "size_gb": 0.6,
+      "updated": "2025-09",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "639MB、32K context、維度可調，速度快。",
+      "note_en": "639 MB, 32K context, adjustable dimensions, fast.",
+      "tasks": [
+        "embedding"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "qwen3-embedding:4b",
+      "family": "Qwen3",
+      "description": "Building upon the foundational models of the Qwen3 series, Qwen3 Embedding provides a comprehensive range of text embeddings models in various sizes",
+      "params": "4B",
+      "context": 40960,
+      "size_gb": 2.5,
+      "updated": "2025-09",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "品質與速度的折衷，40K context。",
+      "note_en": "A balance of quality and speed; 40K context.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "qwen3-embedding:8b",
+      "family": "Qwen3",
+      "description": "Building upon the foundational models of the Qwen3 series, Qwen3 Embedding provides a comprehensive range of text embeddings models in various sizes",
+      "params": "8B",
+      "context": 40960,
+      "size_gb": 4.7,
+      "updated": "2025-09",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "多語言 embedding 排行榜前段，品質最好但較慢。",
+      "note_en": "Near the top of multilingual embedding leaderboards; best quality, slower.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "gemma4:26b",
+      "family": "Gemma 4",
+      "description": "Gemma 4 models are designed to deliver frontier-level performance at each size. They are well-suited for reasoning, agentic workflows, coding, and multimodal understanding.",
+      "params": "26B (4B active)",
+      "context": 262144,
+      "size_gb": 16,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision",
+        "audio"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Google Gemma 4 MoE（26B-A4B），可看圖、聽音訊，速度快、多語言表現佳。",
+      "note_en": "Google Gemma 4 MoE (26B-A4B) with image and audio input; fast, with strong multilingual output.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "gemma4:31b",
+      "family": "Gemma 4",
+      "description": "Gemma 4 models are designed to deliver frontier-level performance at each size. They are well-suited for reasoning, agentic workflows, coding, and multimodal understanding.",
+      "params": "31B",
+      "context": 262144,
+      "size_gb": 19,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision",
+        "audio"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Gemma 4 最大的 dense 版，家族中品質最好，但比 26B MoE 慢。",
+      "note_en": "The largest dense Gemma 4: best quality in the family, slower than the 26B MoE.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "gemma4:12b",
+      "family": "Gemma 4",
+      "description": "Gemma 4 models are designed to deliver frontier-level performance at each size. They are well-suited for reasoning, agentic workflows, coding, and multimodal understanding.",
+      "params": "12B",
+      "context": 262144,
+      "size_gb": 7.7,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision",
+        "audio"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Gemma 4 中型版：約 8GB 就能看圖與聽音訊，256K context。",
+      "note_en": "Mid-size Gemma 4: images and audio in about 8 GB, 256K context.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "gemma4:e4b",
+      "family": "Gemma 4",
+      "description": "Gemma 4 models are designed to deliver frontier-level performance at each size. They are well-suited for reasoning, agentic workflows, coding, and multimodal understanding.",
+      "params": "E4B (4B effective)",
+      "context": 131072,
+      "size_gb": 9.5,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision",
+        "audio"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "裝置端版本（有效 4B），可看圖、聽音訊；Mac 上下載的是 MLX 版，約 9.5GB。",
+      "note_en": "On-device edition (4B effective) with image and audio input; on a Mac the MLX build is downloaded, about 9.5 GB.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "gemma4:e2b",
+      "family": "Gemma 4",
+      "description": "Gemma 4 models are designed to deliver frontier-level performance at each size. They are well-suited for reasoning, agentic workflows, coding, and multimodal understanding.",
+      "params": "E2B (2B effective)",
+      "context": 131072,
+      "size_gb": 7.5,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision",
+        "audio"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "最小的 Gemma 4（有效 2B），可看圖、聽音訊，適合測試多模態流程。",
+      "note_en": "The smallest Gemma 4 (2B effective) with image and audio input; handy for testing multimodal flows.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "translategemma:4b",
+      "family": "Gemma",
+      "description": "A new collection of open translation models built on Gemma 3, helping people communicate across 55 languages.",
+      "params": "4B",
+      "context": 131072,
+      "size_gb": 3.3,
+      "updated": "2026-01",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "translate",
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "gemma",
+      "fit": "ok",
+      "note": "55 種語言翻譯，3.3GB，也能翻譯圖片裡的文字。",
+      "note_en": "Translation across 55 languages in 3.3 GB, including text inside images.",
+      "tasks": [
+        "translate"
+      ]
+    },
+    {
+      "tag": "translategemma:12b",
+      "family": "Gemma",
+      "description": "A new collection of open translation models built on Gemma 3, helping people communicate across 55 languages.",
+      "params": "12B",
+      "context": 131072,
+      "size_gb": 8.1,
+      "updated": "2026-01",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "translate",
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "gemma",
+      "fit": "ok",
+      "note": "翻譯專用（55 種語言），品質與速度平衡，也能翻譯圖片裡的文字。",
+      "note_en": "Translation specialist (55 languages) balancing quality and speed; also translates text in images.",
+      "tasks": [
+        "translate"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "translategemma:27b",
+      "family": "Gemma",
+      "description": "A new collection of open translation models built on Gemma 3, helping people communicate across 55 languages.",
+      "params": "27B",
+      "context": 131072,
+      "size_gb": 17,
+      "updated": "2026-01",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "translate",
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "gemma",
+      "fit": "ok",
+      "note": "TranslateGemma 品質最好的版本，17GB。",
+      "note_en": "The highest-quality TranslateGemma, 17 GB.",
+      "tasks": [
+        "translate"
+      ]
+    },
+    {
+      "tag": "functiongemma",
+      "family": "Gemma",
+      "description": "FunctionGemma is a specialized version of Google's Gemma 3 270M model fine-tuned explicitly for function calling. ",
+      "params": "270M",
+      "context": 32768,
+      "size_gb": 0.3,
+      "updated": "2025-12",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "gemma",
+      "fit": "ok",
+      "note": "270M 的函式呼叫專用模型，適合當工具路由。",
+      "note_en": "A 270M model fine-tuned for function calling; use it as a tool router.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "medgemma1.5:4b",
+      "family": "Gemma",
+      "description": "MedGemma 1.5 4B is an updated version of the MedGemma 4B model.",
+      "params": "4B",
+      "context": 131072,
+      "size_gb": 3.3,
+      "updated": "2026-04",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "long_context"
+      ],
+      "license": "Health AI Developer Foundations 使用條款",
+      "license_en": "Health AI Developer Foundations terms of use",
+      "fit": "ok",
+      "note": "Google 醫療影像與文字模型（Gemma 3 4B），供研究使用，不可直接做臨床診斷。",
+      "note_en": "Google's medical text-and-image model (Gemma 3 4B) for research; not for clinical diagnosis.",
+      "tasks": [
+        "vision"
+      ]
+    },
+    {
+      "tag": "embeddinggemma-2",
+      "family": "Gemma",
+      "description": "EmbeddingGemma 2 is a multimodal embedding model from Google built on the Gemma 4 architecture.",
+      "params": "740M",
+      "context": 262144,
+      "size_gb": 1.3,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "audio",
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context"
+      ],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "note": "文字、圖片、影片、音訊共用同一個 768 維向量空間，支援 100+ 語言，可做多模態檢索。",
+      "note_en": "Maps text, images, video and audio into one 768-dim space, 100+ languages; enables multimodal retrieval.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "embeddinggemma:300m",
+      "family": "Gemma",
+      "description": "EmbeddingGemma is a 300M parameter embedding model from Google.",
+      "params": "300M",
+      "context": 2048,
+      "size_gb": 0.6,
+      "updated": "2025-09",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "gemma",
+      "fit": "ok",
+      "note": "Gemma 3 架構的 300M 文字 embedding，622MB；context 只有 2K。",
+      "note_en": "A 300M text embedding on the Gemma 3 architecture, 622 MB; context is only 2K.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "muse-glimmer:30b",
+      "family": "Meta Muse",
+      "description": "Meta's latest open model built for always-on local agents. 30B parameters, licensed under Apache 2.0 and runs on a single GPU — tuned for tool use, long tasks, and failure recovery.",
+      "params": "30B",
+      "context": 131072,
+      "size_gb": 18,
+      "updated": "2026-08",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Meta 最新開放模型（Apache-2.0），專為本機常駐 agent 設計：工具呼叫、失敗重試、看截圖與文件；Mac 有 MLX 版。",
+      "note_en": "Meta's latest open model (Apache-2.0), built for always-on local agents: tool use, failure recovery, screenshots and documents; an MLX build is available for Macs.",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "llama3.2:3b",
+      "family": "Meta Llama",
+      "description": "Meta's Llama 3.2 goes small with 1B and 3B models. ",
+      "params": "3B",
+      "context": 131072,
+      "size_gb": 2.0,
+      "updated": "2024-09",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "llama3.2",
+      "fit": "ok",
+      "note": "Meta Llama 3.2 3B，最常見的小模型基準，可呼叫工具。",
+      "note_en": "Meta Llama 3.2 3B, the most common small-model baseline, with tool calling.",
+      "tasks": [
+        "chat",
+        "router"
+      ]
+    },
+    {
+      "tag": "ministral-3:14b",
+      "family": "Mistral",
+      "description": "The Ministral 3 family is designed for edge deployment, capable of running on a wide range of hardware.",
+      "params": "14B",
+      "context": 262144,
+      "size_gb": 9.1,
+      "updated": "2025-12",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Mistral 邊緣系列最大版：可看圖、工具呼叫穩，256K context。",
+      "note_en": "The largest of Mistral's edge models: image input, solid tool calling, 256K context.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "ministral-3:8b",
+      "family": "Mistral",
+      "description": "The Ministral 3 family is designed for edge deployment, capable of running on a wide range of hardware.",
+      "params": "8B",
+      "context": 262144,
+      "size_gb": 6.0,
+      "updated": "2025-12",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Ministral 3 8B：6GB 可看圖與呼叫工具，Apache-2.0 可商用。",
+      "note_en": "Ministral 3 8B: images and tool calls in 6 GB, Apache-2.0 for commercial use.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "ministral-3:3b",
+      "family": "Mistral",
+      "description": "The Ministral 3 family is designed for edge deployment, capable of running on a wide range of hardware.",
+      "params": "3B",
+      "context": 262144,
+      "size_gb": 3.0,
+      "updated": "2025-12",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "3GB 的看圖小模型，適合截圖分類與路由。",
+      "note_en": "A 3 GB vision model for screenshot triage and routing.",
+      "tasks": [
+        "chat",
+        "vision",
+        "router"
+      ]
+    },
+    {
+      "tag": "mistral-small3.2:24b",
+      "family": "Mistral",
+      "description": "An update to Mistral Small that improves on function calling, instruction following, and less repetition errors.",
+      "params": "24B",
+      "context": 131072,
+      "size_gb": 15,
+      "updated": "2025-06",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Mistral Small 3.2：函式呼叫與指令遵循穩定、可看圖，歐洲語言強。",
+      "note_en": "Mistral Small 3.2: dependable function calling and instruction following, image input, strong in European languages.",
+      "tasks": [
+        "chat",
+        "vision"
+      ]
+    },
+    {
+      "tag": "magistral:24b",
+      "family": "Mistral",
+      "description": "Magistral is a small, efficient reasoning model with 24B parameters.",
+      "params": "24B",
+      "context": 39936,
+      "size_gb": 14,
+      "updated": "2025-06",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Mistral 的 24B 推理模型，會輸出思考過程；context 只有 39K。",
+      "note_en": "Mistral's 24B reasoning model with visible thinking; context is only 39K.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "devstral-small-2:24b",
+      "family": "Mistral",
+      "description": "24B model that excels at using tools to explore codebases, editing multiple files and power software engineering agents.",
+      "params": "24B",
+      "context": 393216,
+      "size_gb": 15,
+      "updated": "2025-12",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Mistral 的 agentic coding 模型：擅長探索 codebase 與多檔修改，可看圖，384K context。",
+      "note_en": "Mistral's agentic coding model: explores codebases and edits multiple files, accepts images, 384K context.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "mistral-medium-3.5:128b",
+      "family": "Mistral",
+      "description": "Mistral Medium 3.5 is the first flagship model of Mistral AI that merged instruction-following, reasoning, and coding in a single set of 128B weights.",
+      "params": "128B",
+      "context": 262144,
+      "size_gb": 80,
+      "updated": "2026-05",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "multilingual",
+        "long_context"
+      ],
+      "license": "Modified MIT（大型企業有例外）",
+      "license_en": "Modified MIT (exceptions for very large companies)",
+      "fit": "no",
+      "note": "Mistral 旗艦（dense 128B，指令、推理、coding 合一）；80GB 這台放不下。",
+      "note_en": "Mistral's flagship (dense 128B, instructions, reasoning and coding in one); 80 GB does not fit this Mac.",
+      "tasks": [
+        "chat",
+        "vision",
+        "code"
+      ]
+    },
+    {
+      "tag": "phi4-reasoning:14b",
+      "family": "Microsoft Phi",
+      "description": "Phi 4 reasoning and reasoning plus are 14-billion parameter open-weight reasoning models that rival much larger models on complex reasoning tasks. ",
+      "params": "14B",
+      "context": 32768,
+      "size_gb": 11,
+      "updated": "2025-05",
+      "caps": [],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "Microsoft Phi-4 推理版：數學與邏輯強，MIT 授權；context 32K。",
+      "note_en": "Microsoft's Phi-4 reasoning model: strong at math and logic, MIT license; 32K context.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "gpt-oss:20b",
+      "family": "gpt-oss",
+      "description": "OpenAI’s open-weight models designed for powerful reasoning, agentic tasks, and versatile developer use cases.",
+      "params": "21B (3.6B active)",
+      "context": 131072,
+      "size_gb": 14,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "OpenAI 開放權重 MoE（3.6B 啟用），推理強度可調（low／medium／high），工具呼叫穩。",
+      "note_en": "OpenAI's open-weight MoE (3.6B active) with adjustable reasoning effort (low/medium/high) and reliable tool calls.",
+      "tasks": [
+        "reasoning",
+        "chat"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "gpt-oss:120b",
+      "family": "gpt-oss",
+      "description": "OpenAI’s open-weight models designed for powerful reasoning, agentic tasks, and versatile developer use cases.",
+      "params": "117B (5.1B active)",
+      "context": 131072,
+      "size_gb": 65,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "no",
+      "note": "65GB 超過這台記憶體，放 DGX Spark。",
+      "note_en": "65 GB does not fit this Mac; run it on the DGX Spark.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "granite4.2:8b",
+      "family": "IBM Granite",
+      "description": "IBM Granite Models are a family of enterprise-ready, open foundation models that support multilingual capabilities, coding, retrieval-augmented generation (RAG), tool use, thinking and structured JSON output. Released under Apache 2.0 license. ",
+      "params": "8B",
+      "context": 131072,
+      "size_gb": 5.3,
+      "updated": "2026-08",
+      "caps": [],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "IBM 企業向模型：Apache-2.0、內建思考模式、擅長 RAG 與 JSON 輸出；Ollama 未標示工具呼叫。",
+      "note_en": "IBM's enterprise model: Apache-2.0, built-in thinking mode, good at RAG and JSON output; Ollama does not list tool calling.",
+      "tasks": [
+        "chat"
+      ]
+    },
+    {
+      "tag": "granite4.2:30b",
+      "family": "IBM Granite",
+      "description": "IBM Granite Models are a family of enterprise-ready, open foundation models that support multilingual capabilities, coding, retrieval-augmented generation (RAG), tool use, thinking and structured JSON output. Released under Apache 2.0 license. ",
+      "params": "30B",
+      "context": 131072,
+      "size_gb": 18,
+      "updated": "2026-08",
+      "caps": [],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Granite 4.2 最大版（dense 30B），企業文件與 RAG 用，授權寬鬆。",
+      "note_en": "The largest Granite 4.2 (dense 30B) for enterprise documents and RAG, with a permissive license.",
+      "tasks": [
+        "chat"
+      ]
+    },
+    {
+      "tag": "granite4.1-guardian:8b",
+      "family": "IBM Granite",
+      "description": "Granite Guardian 4.1 is a specialized safety and judging model from IBM Research that evaluates whether LLM prompts and responses meet specified harm criteria.",
+      "params": "8B",
+      "context": 131072,
+      "size_gb": 6.9,
+      "updated": "2026-06",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "IBM 安全與評審模型：檢查提示／回答是否有害、幻覺或工具呼叫錯誤，回傳 yes/no；僅英文。",
+      "note_en": "IBM's safety and judging model: checks prompts and answers for harm, hallucination or bad function calls and returns yes/no; English only.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "granite3.2-vision:2b",
+      "family": "IBM Granite",
+      "description": "A compact and efficient vision-language model, specifically designed for visual document understanding, enabling automated content extraction from tables, charts, infographics, plots, diagrams, and more.",
+      "params": "2B",
+      "context": 16384,
+      "size_gb": 2.4,
+      "updated": "2025-02",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "ocr",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "IBM 文件理解小模型：擷取表格、圖表、流程圖；2.4GB，context 16K。",
+      "note_en": "IBM's small document-understanding model: extracts tables, charts and diagrams; 2.4 GB, 16K context.",
+      "tasks": [
+        "ocr",
+        "vision"
+      ]
+    },
+    {
+      "tag": "granite-embedding:278m",
+      "family": "IBM Granite",
+      "description": "The IBM Granite Embedding 30M and 278M models models are text-only dense biencoder embedding models, with 30M available in English only and 278M serving multilingual use cases.",
+      "params": "278M",
+      "context": 512,
+      "size_gb": 0.6,
+      "updated": "2024-12",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "IBM 多語言 embedding（含中文），563MB，Apache-2.0；context 512。",
+      "note_en": "IBM's multilingual embedding (Chinese included), 563 MB, Apache-2.0; 512-token context.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "olmo-3:7b-instruct",
+      "family": "OLMo",
+      "description": "Olmo is a series of Open language models designed to enable the science of language models. These models are pre-trained on the Dolma 3 dataset and post-trained on the Dolci datasets.",
+      "params": "7B",
+      "context": 65536,
+      "size_gb": 4.5,
+      "updated": "2025-12",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Ai2 完全開放（訓練資料、程式、權重）的 7B，研究與教學用。",
+      "note_en": "Ai2's fully open 7B (training data, code and weights) for research and teaching.",
+      "tasks": [
+        "chat"
+      ]
+    },
+    {
+      "tag": "olmo-3.1:32b",
+      "family": "OLMo",
+      "description": "Olmo is a series of Open language models designed to enable the science of language models. These models are pre-trained on the Dolma 3 dataset and post-trained on the Dolci datasets.",
+      "params": "32B",
+      "context": 65536,
+      "size_gb": 19,
+      "updated": "2025-12",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "OLMo 3.1 32B：完全開放的較大版本，可思考；context 64K。",
+      "note_en": "OLMo 3.1 32B: the larger fully open model, with thinking; 64K context.",
+      "tasks": [
+        "chat",
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "glm-4.7-flash",
+      "family": "GLM",
+      "description": "As the strongest model in the 30B class, GLM-4.7-Flash offers a new option for lightweight deployment that balances performance and efficiency.",
+      "params": "30B (3B active)",
+      "context": 202752,
+      "size_gb": 19,
+      "updated": "2026-06",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "智譜 30B-A3B MoE，30B 級最強之一，198K context，MIT 授權；只吃文字。",
+      "note_en": "Zhipu's 30B-A3B MoE, among the strongest in its class, 198K context, MIT license; text only.",
+      "tasks": [
+        "reasoning",
+        "chat"
+      ]
+    },
+    {
+      "tag": "glm-ocr",
+      "family": "GLM",
+      "description": "GLM-OCR is a multimodal OCR model for complex document understanding, built on the GLM-V encoder–decoder architecture.",
+      "params": "0.9B",
+      "context": 131072,
+      "size_gb": 2.2,
+      "updated": "2026-02",
+      "caps": [
+        "tools",
+        "vision"
+      ],
+      "tags": [
+        "ocr",
+        "long_context"
+      ],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "note": "0.9B 的 OCR 模型（2.2GB），複雜版面、表格、公式轉文字快又準。",
+      "note_en": "A 0.9B OCR model (2.2 GB) that quickly and accurately turns complex layouts, tables and formulas into text.",
+      "tasks": [
+        "ocr"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "deepseek-r1:32b",
+      "family": "DeepSeek",
+      "description": "DeepSeek-R1 is a family of open reasoning models with performance approaching that of leading models, such as O3 and Gemini 2.5 Pro.",
+      "params": "32B",
+      "context": 131072,
+      "size_gb": 20,
+      "updated": "2025-07",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "DeepSeek-R1 蒸餾到 Qwen2.5 32B，較舊，當推理對照組。",
+      "note_en": "DeepSeek-R1 distilled into Qwen2.5 32B; older, kept as a reasoning baseline.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "deepseek-r1:8b",
+      "family": "DeepSeek",
+      "description": "DeepSeek-R1 is a family of open reasoning models with performance approaching that of leading models, such as O3 and Gemini 2.5 Pro.",
+      "params": "8B",
+      "context": 131072,
+      "size_gb": 5.2,
+      "updated": "2025-07",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "R1-0528 蒸餾到 Qwen3 8B，5GB 的推理模型。",
+      "note_en": "R1-0528 distilled into Qwen3 8B: a 5 GB reasoning model.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "deepseek-ocr:3b",
+      "family": "DeepSeek",
+      "description": "DeepSeek-OCR is a vision-language model that can perform token-efficient OCR.",
+      "params": "3B",
+      "context": 8192,
+      "size_gb": 6.7,
+      "updated": "2025-11",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "ocr",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "DeepSeek-OCR：用很少的視覺 token 把文件轉成 Markdown；context 8K。",
+      "note_en": "DeepSeek-OCR turns documents into Markdown using few vision tokens; 8K context.",
+      "tasks": [
+        "ocr"
+      ]
+    },
+    {
+      "tag": "lfm2.5:8b",
+      "family": "Liquid LFM",
+      "description": "LFM2.5-8B-A1B, an edge model built for fast, reliable tool calling on consumer hardware.",
+      "params": "8B (1B active)",
+      "context": 128000,
+      "size_gb": 5.2,
+      "updated": "2026-05",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "moe"
+      ],
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)",
+      "fit": "ok",
+      "note": "Liquid AI 8B-A1B MoE，每 token 只算 1B，工具呼叫快又穩，適合裝置端 agent。",
+      "note_en": "Liquid AI's 8B-A1B MoE computes only 1B per token, with fast, reliable tool calls for on-device agents.",
+      "tasks": [
+        "chat",
+        "router"
+      ]
+    },
+    {
+      "tag": "lfm2.5-thinking:1.2b",
+      "family": "Liquid LFM",
+      "description": "LFM2.5 is a new family of hybrid models designed for on-device deployment.",
+      "params": "1.2B",
+      "context": 128000,
+      "size_gb": 0.7,
+      "updated": "2026-01",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context"
+      ],
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)",
+      "fit": "ok",
+      "note": "731MB 的思考小模型，CPU 也跑得快，適合路由前的簡單推理。",
+      "note_en": "A 731 MB thinking model that is fast even on CPU; good for light reasoning before routing.",
+      "tasks": [
+        "reasoning",
+        "router"
+      ]
+    },
+    {
+      "tag": "lfm2:24b",
+      "family": "Liquid LFM",
+      "description": "LFM2 is a family of hybrid models designed for on-device deployment. LFM2-24B-A2B is the largest model in the family, scaling the architecture to 24 billion parameters while keeping inference efficient.",
+      "params": "24B (2B active)",
+      "context": 32768,
+      "size_gb": 14,
+      "updated": "2026-02",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "moe"
+      ],
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)",
+      "fit": "ok",
+      "note": "LFM2 24B-A2B MoE：14GB、每 token 2B，速度快；context 32K。",
+      "note_en": "LFM2 24B-A2B MoE: 14 GB with 2B per token, fast; 32K context.",
+      "tasks": [
+        "chat"
+      ]
+    },
+    {
+      "tag": "rnj-1:8b",
+      "family": "Essential AI",
+      "description": "Rnj-1 is a family of 8B parameter open-weight, dense models trained from scratch by Essential AI, optimized for code and STEM with capabilities on par with SOTA open-weight models.",
+      "params": "8B",
+      "context": 32768,
+      "size_gb": 5.1,
+      "updated": "2025-12",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "code",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Essential AI 從零訓練的 8B：coding 與 STEM 強、可呼叫工具；context 32K。",
+      "note_en": "Essential AI's 8B trained from scratch: strong at coding and STEM, with tool calling; 32K context.",
+      "tasks": [
+        "code",
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "nemotron-3-nano:30b",
+      "family": "NVIDIA Nemotron",
+      "description": "Nemotron-3-Nano is a new Standard for Efficient, Open, and Intelligent Agentic Models, now updated with a 4B parameter count model.",
+      "params": "30B (3.5B active)",
+      "context": 1048576,
+      "size_gb": 24,
+      "updated": "2026-03",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "NVIDIA Open Model License",
+      "fit": "ok",
+      "note": "NVIDIA 30B MoE（3.5B 啟用），1M context，推理與 agent 用。",
+      "note_en": "NVIDIA 30B MoE (3.5B active) with 1M context, for reasoning and agents.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "nemotron-3-nano:4b",
+      "family": "NVIDIA Nemotron",
+      "description": "Nemotron-3-Nano is a new Standard for Efficient, Open, and Intelligent Agentic Models, now updated with a 4B parameter count model.",
+      "params": "4B",
+      "context": 262144,
+      "size_gb": 2.8,
+      "updated": "2026-03",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "NVIDIA Open Model License",
+      "fit": "ok",
+      "note": "Nemotron 3 Nano 4B：約 3GB 的 agent 小模型，可思考與呼叫工具。",
+      "note_en": "Nemotron 3 Nano 4B: an agent model of about 3 GB with thinking and tool calls.",
+      "tasks": [
+        "chat",
+        "router"
+      ]
+    },
+    {
+      "tag": "nemotron-3.5-lightning:30b",
+      "family": "NVIDIA Nemotron",
+      "description": "NVIDIA Nemotron 3.5 Lightning is an open 30B mixture-of-experts (MoE) model with 3B active parameters built for always-on agents.",
+      "params": "30B (3B active)",
+      "context": 1048576,
+      "size_gb": 25,
+      "updated": "2026-08",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "NVIDIA Open Model License",
+      "fit": "ok",
+      "note": "NVIDIA 為常駐 agent 設計的 30B-A3B MoE：吞吐量高、1M context；25GB。",
+      "note_en": "NVIDIA's 30B-A3B MoE built for always-on agents: high throughput and 1M context; 25 GB.",
+      "tasks": [
+        "chat",
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "nemotron-cascade-2:30b",
+      "family": "NVIDIA Nemotron",
+      "description": "An open 30B MoE model from NVIDIA with 3B activated parameters that delivers strong reasoning and agentic capabilities.",
+      "params": "30B (3B active)",
+      "context": 262144,
+      "size_gb": 24,
+      "updated": "2026-03",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "NVIDIA Open Model License",
+      "fit": "ok",
+      "note": "NVIDIA 30B-A3B MoE，強化推理與 agent 能力。",
+      "note_en": "NVIDIA 30B-A3B MoE with stronger reasoning and agent skills.",
+      "tasks": [
+        "reasoning"
+      ]
+    },
+    {
+      "tag": "nemotron3:33b",
+      "family": "NVIDIA Nemotron",
+      "description": "NVIDIA Nemotron 3 Nano Omni is a multimodal large language model that unifies video, audio, image, and text understanding to support enterprise-grade Q&A, summarization, transcription, and document intelligence workflows. ",
+      "params": "33B",
+      "context": 131072,
+      "size_gb": 28,
+      "updated": "2026-04",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "ocr",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "NVIDIA Open Model License",
+      "fit": "ok",
+      "note": "Nemotron 3 Nano Omni：同時理解影片、音訊、圖片與文字，適合會議錄影與文件 OCR；Ollama 目前只接受文字和圖片輸入。",
+      "note_en": "Nemotron 3 Nano Omni understands video, audio, images and text — meeting recordings and document OCR; Ollama currently accepts only text and image input.",
+      "tasks": [
+        "vision",
+        "ocr"
+      ]
+    },
+    {
+      "tag": "ornith:35b",
+      "family": "Ornith",
+      "description": "A self-improving family of open-source models for agentic coding",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "size_gb": 21,
+      "updated": "2026-06",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "以自我改進 RL 訓練的 agentic coding 模型（35B-A3B），MIT 授權。",
+      "note_en": "Agentic coding model trained with self-improving RL (35B-A3B), MIT license.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "ornith:9b",
+      "family": "Ornith",
+      "description": "A self-improving family of open-source models for agentic coding",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 5.6,
+      "updated": "2026-06",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "Ornith 9B：約 6GB 的 coding agent 小模型。",
+      "note_en": "Ornith 9B: a coding-agent model of about 6 GB.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "ornith-1.5:35b",
+      "family": "Ornith",
+      "description": "Chirp Chirp! 🐦 We are introducing Ornith-1.5, a major step toward building foundation models through end-to-end self-improvement.",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "size_gb": 23,
+      "updated": "2026-08",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe"
+      ],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "note": "Ornith 1.5：把自我改進擴大到任務生成，可看圖；Ollama 未標示工具呼叫。",
+      "note_en": "Ornith 1.5 extends self-improvement to task generation and accepts images; Ollama does not list tool calling.",
+      "tasks": [
+        "code",
+        "vision"
+      ]
+    },
+    {
+      "tag": "ornith-1.5:9b",
+      "family": "Ornith",
+      "description": "Chirp Chirp! 🐦 We are introducing Ornith-1.5, a major step toward building foundation models through end-to-end self-improvement.",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 6.6,
+      "updated": "2026-08",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "long_context"
+      ],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "note": "Ornith 1.5 小版本，約 7GB 可看圖。",
+      "note_en": "The small Ornith 1.5, with image input in about 7 GB.",
+      "tasks": [
+        "code",
+        "vision"
+      ]
+    },
+    {
+      "tag": "laguna-xs-2.1",
+      "family": "Laguna",
+      "description": "Laguna XS 2.1 is a 33B total parameter Mixture-of-Experts model with 3B activated parameters per token designed for agentic coding and long-horizon work on a local machine. ",
+      "params": "33B (3B active)",
+      "context": 262144,
+      "size_gb": 20,
+      "updated": "2026-08",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "OpenMDW-1.1",
+      "fit": "ok",
+      "note": "33B-A3B agentic coding MoE，SWE-bench 多語版比 XS.2 高 5.4%；官方仍在調查 macOS 問題，異常時改用 laguna-xs.2。",
+      "note_en": "33B-A3B agentic-coding MoE, +5.4% on SWE-bench Multilingual over XS.2; the publisher is still investigating a macOS issue — fall back to laguna-xs.2 if it misbehaves.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "laguna-xs.2",
+      "family": "Laguna",
+      "description": "Laguna XS.2 is a 33B total parameter Mixture-of-Experts model with 3B activated parameters per token designed for agentic coding and long-horizon work on a local machine.",
+      "params": "33B (3B active)",
+      "context": 131072,
+      "size_gb": 23,
+      "updated": "2026-07",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Laguna 前一版（33B-A3B，Apache-2.0），官方稱 36GB 的 Mac 就跑得動。",
+      "note_en": "The previous Laguna (33B-A3B, Apache-2.0); the publisher says it runs on a 36 GB Mac.",
+      "tasks": [
+        "code"
+      ]
+    },
+    {
+      "tag": "minicpm-v4.5:8b",
+      "family": "MiniCPM",
+      "description": "A GPT-4o Level MLLM for Single Image, Multi Image and High-FPS Video Understanding on Your Phone",
+      "params": "8B",
+      "context": 40960,
+      "size_gb": 6.1,
+      "updated": "2026-06",
+      "caps": [
+        "vision"
+      ],
+      "tags": [],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "note": "MiniCPM-V 4.5（Qwen3-8B＋SigLIP2）：單圖、多圖與高 FPS 影片理解，OCR 不錯；context 40K。",
+      "note_en": "MiniCPM-V 4.5 (Qwen3-8B + SigLIP2): single/multi-image and high-FPS video understanding with good OCR; 40K context.",
+      "tasks": [
+        "vision"
+      ]
+    },
+    {
+      "tag": "minicpm-v4.6:1b",
+      "family": "MiniCPM",
+      "description": "A Pocket-Sized MLLM for Ultra-Efficient Image and Video Understanding on Your Phone",
+      "params": "1B",
+      "context": 262144,
+      "size_gb": 1.6,
+      "updated": "2026-06",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "long_context"
+      ],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "note": "1.6GB 的看圖小模型，效率高，適合大量圖片前處理。",
+      "note_en": "A 1.6 GB vision model, very efficient for bulk image pre-processing.",
+      "tasks": [
+        "vision"
+      ]
+    },
+    {
+      "tag": "bge-m3",
+      "family": "BAAI",
+      "description": "BGE-M3 is a new model from BAAI distinguished for its versatility in Multi-Functionality, Multi-Linguality, and Multi-Granularity.",
+      "params": "567M",
+      "context": 8192,
+      "size_gb": 1.2,
+      "updated": "2024-08",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "note": "多語言、8K context，中文 RAG 首選（知識庫頁預設）。",
+      "note_en": "Multilingual with 8K context; the go-to for Chinese RAG (default on the knowledge page).",
+      "tasks": [
+        "embedding"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "nomic-embed-text",
+      "family": "Nomic",
+      "description": "A high-performing open embedding model with a large token context window.",
+      "params": "137M",
+      "context": 2048,
+      "size_gb": 0.3,
+      "updated": "2024-02",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "英文為主，274MB，當對照組。",
+      "note_en": "English-focused, 274 MB; a baseline.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "nomic-embed-text-v2-moe",
+      "family": "Nomic",
+      "description": "nomic-embed-text-v2-moe is a multilingual MoE text embedding model that excels at multilingual retrieval.",
+      "params": "475M (305M active)",
+      "context": 512,
+      "size_gb": 1.0,
+      "updated": "2025-12",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "多語言 MoE embedding，檢索品質好；context 只有 512。",
+      "note_en": "Multilingual MoE embedding with strong retrieval; context is only 512 tokens.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "snowflake-arctic-embed2",
+      "family": "Snowflake",
+      "description": "Snowflake's frontier embedding model. Arctic Embed 2.0 adds multilingual support without sacrificing English performance or scalability.",
+      "params": "568M",
+      "context": 8192,
+      "size_gb": 1.2,
+      "updated": "2024-12",
+      "caps": [
+        "embedding"
+      ],
+      "tags": [
+        "multilingual",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Snowflake Arctic Embed 2.0：多語言且英文品質不退步，8K context。",
+      "note_en": "Snowflake Arctic Embed 2.0: multilingual without losing English quality, 8K context.",
+      "tasks": [
+        "embedding"
+      ]
+    },
+    {
+      "tag": "command-r:35b-08-2024-q4_K_M",
+      "family": "Cohere",
+      "description": "Command R is a Large Language Model optimized for conversational interaction and long context tasks.",
+      "params": "35B",
+      "context": 131072,
+      "size_gb": 20,
+      "updated": "2024-08",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "ok",
+      "note": "Cohere，128K context，擅長附引用的 RAG 與工具呼叫；非商用授權。",
+      "note_en": "Cohere, 128K context, strong at grounded RAG with citations and tool calling; non-commercial license.",
+      "tasks": [
+        "chat"
+      ],
+      "recommended": true,
+      "url": "https://ollama.com/library/command-r"
+    },
+    {
+      "tag": "command-r7b",
+      "family": "Cohere",
+      "description": "The smallest model in Cohere's R series delivers top-tier speed, efficiency, and quality to build powerful AI applications on commodity GPUs and edge devices.",
+      "params": "7B",
+      "context": 8192,
+      "size_gb": 5.1,
+      "updated": "2025-01",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "multilingual",
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "ok",
+      "note": "Cohere 小模型，RAG 與工具呼叫；context 8K；非商用授權。",
+      "note_en": "Small Cohere model for RAG and tool calls; 8K context; non-commercial license.",
+      "tasks": [
+        "chat"
+      ],
+      "url": "https://ollama.com/library/command-r7b"
+    },
+    {
+      "tag": "command-r-plus:104b-08-2024-q2_K",
+      "family": "Cohere",
+      "description": "Command R+ is a powerful, scalable large language model purpose-built to excel at real-world enterprise use cases.",
+      "params": "104B",
+      "context": 131072,
+      "size_gb": 39,
+      "updated": "2024-08",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "tight",
+      "note": "104B 只有 Q2 量化放得下，品質會打折；非商用授權。",
+      "note_en": "104B fits only at Q2, which costs quality; non-commercial license.",
+      "tasks": [
+        "chat"
+      ],
+      "url": "https://ollama.com/library/command-r-plus"
+    },
+    {
+      "tag": "aya-expanse:8b",
+      "family": "Cohere",
+      "description": "Cohere For AI's language models trained to perform well across 23 different languages.",
+      "params": "8B",
+      "context": 8192,
+      "size_gb": 5.1,
+      "updated": "2024-10",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "translate",
+        "multilingual",
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "ok",
+      "note": "Cohere 的 23 語言（含中文）多語模型；context 8K；非商用授權。",
+      "note_en": "Cohere's multilingual model for 23 languages including Chinese; 8K context; non-commercial license.",
+      "tasks": [
+        "chat",
+        "translate"
+      ],
+      "url": "https://ollama.com/library/aya-expanse"
+    },
+    {
+      "tag": "aya-expanse:32b",
+      "family": "Cohere",
+      "description": "Cohere For AI's language models trained to perform well across 23 different languages.",
+      "params": "32B",
+      "context": 8192,
+      "size_gb": 20,
+      "updated": "2024-10",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "translate",
+        "multilingual",
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "ok",
+      "note": "Aya Expanse 大版本，多語翻譯品質較好；非商用授權。",
+      "note_en": "The larger Aya Expanse with better multilingual translation; non-commercial license.",
+      "tasks": [
+        "chat",
+        "translate"
+      ],
+      "url": "https://ollama.com/library/aya-expanse"
+    },
+    {
+      "tag": "north-mini-code-1.0",
+      "family": "Cohere",
+      "description": "North Mini Code is Cohere's first model for developers — a 30B Mixture-of-Experts model with 3B active parameters, built for agentic software engineering.",
+      "params": "30B (3B active)",
+      "context": 499712,
+      "size_gb": 19,
+      "updated": "2026-06",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Cohere 第一個開發者模型（30B-A3B），Apache-2.0，是這台跑得動、唯一可商用的 Cohere 模型。",
+      "note_en": "Cohere's first developer model (30B-A3B), Apache-2.0 — the only commercially usable Cohere model that runs on this Mac.",
+      "tasks": [
+        "code"
+      ],
+      "url": "https://ollama.com/library/north-mini-code-1.0"
+    },
+    {
+      "tag": "command-a",
+      "family": "Cohere",
+      "description": "111 billion parameter model optimized for demanding enterprises that require fast, secure, and high-quality AI",
+      "params": "111B",
+      "context": 16384,
+      "size_gb": 67,
+      "updated": "2025-03",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "multilingual",
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "no",
+      "note": "111B 超過這台記憶體；非商用授權。",
+      "note_en": "111B does not fit this Mac; non-commercial license.",
+      "tasks": [
+        "chat"
+      ],
+      "url": "https://ollama.com/library/command-a"
+    },
+    {
+      "tag": "nimble:9b",
+      "family": "Nimble",
+      "description": "A 9B decision model from Bespoke Labs for fast, typed classification.",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 9.3,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：輸入文字＋預先定義的問題與選項，回傳選項與機率（Ollama /v1/systemone）。適合 agent 路由與意圖分類；Qwen3.5-9B 微調，平台的決策節點預設使用。另有 nimble:9b-q4_K_M（約 5.6GB）。",
+      "note_en": "A decision model, not a chat model: give it text plus predefined questions and options and it returns an option with probabilities (Ollama /v1/systemone). Good for agent routing and intent classification; fine-tuned from Qwen3.5-9B and used by the platform's decision nodes. There is also nimble:9b-q4_K_M (about 5.6 GB).",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/nimble"
+    },
+    {
+      "tag": "nimble-v3:9b",
+      "family": "Nimble",
+      "description": "A 9B decision model from Bespoke Labs for fast classification, routing, and scoring.",
+      "params": "9B",
+      "context": 32768,
+      "size_gb": 9.3,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "decision"
+      ],
+      "tags": [
+        "non_commercial"
+      ],
+      "license": "CC-BY-NC-4.0（非商用）",
+      "license_en": "CC-BY-NC-4.0 (non-commercial)",
+      "fit": "ok",
+      "note": "Nimble 第三版：分類、路由之外加上 rubric 評分；context 32K。注意授權改為 CC BY-NC 4.0（非商用）。",
+      "note_en": "Nimble v3 adds rubric scoring to classification and routing; 32K context. Note the licence changed to CC BY-NC 4.0 (non-commercial).",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "clef-flash:9b",
+      "family": "Clef",
+      "description": "Clef-Flash is a 9B multimodal model that turns a state and a schema of typed questions into decisions.",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 12,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Cloudflare 的 9B 決策模型，也能判讀圖片（收據、表單、截圖），是決策模型中延遲最低的；Apache-2.0。",
+      "note_en": "Cloudflare's 9B decision model that can also judge images (receipts, forms, screenshots), with the lowest latency among decision models; Apache-2.0.",
+      "tasks": [
+        "router"
+      ],
+      "recommended": true
+    },
+    {
+      "tag": "clef:27b",
+      "family": "Clef",
+      "description": "Clef is a 27B multimodal model created by Cloudflare that turns a state and a schema of typed questions into decisions.",
+      "params": "27B",
+      "context": 262144,
+      "size_gb": 18,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Clef 27B（Qwen3.8-27B 微調），Cloudflare Decision Index 第一名，約比 Flash 慢 5 倍。",
+      "note_en": "Clef 27B (fine-tuned from Qwen3.8-27B) tops Cloudflare's Decision Index; about 5× slower than Flash.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "tev1:4b",
+      "family": "Tev1",
+      "description": "A 4B decision model from Together AI for fast classification.",
+      "params": "4B",
+      "context": 262144,
+      "size_gb": 4.4,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Together AI 的 4B 決策模型（Qwen3.5 微調），一次最多 64 個問題，適合工單路由與政策檢查。",
+      "note_en": "Together AI's 4B decision model (fine-tuned Qwen3.5); up to 64 questions per call, for ticket routing and policy checks.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "tev1:0.8b",
+      "family": "Tev1",
+      "description": "A 4B decision model from Together AI for fast classification.",
+      "params": "0.8B",
+      "context": 262144,
+      "size_gb": 0.8,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Tev1 最小版（812MB），記憶體很緊時用。",
+      "note_en": "The smallest Tev1 (812 MB) for tight memory budgets.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "strands-decider:2b",
+      "family": "Strands",
+      "description": "A 2B decision model from Strands Agents for fast classification, routing, and scoring.",
+      "params": "2B",
+      "context": 4096,
+      "size_gb": 2.0,
+      "updated": "2026-10",
+      "caps": [
+        "decision"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Strands Agents 的 2B 決策模型（MLX，限 Apple Silicon）：選工具、分流、依 rubric 評分；context 只有 4K。",
+      "note_en": "Strands Agents' 2B decision model (MLX, Apple silicon only): picks tools, routes and scores against rubrics; context is only 4K.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "laya",
+      "family": "Laya",
+      "description": "Laya is a 421M decision model from Convai Innovations, fine-tuned from ModernBERT-large.",
+      "params": "421M",
+      "context": 512,
+      "size_gb": 0.8,
+      "updated": "2026-09",
+      "caps": [
+        "decision"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "421M 的 ModernBERT 決策模型：單題不到 10ms、機率經過校準，適合郵件分流與內容安全；context 512。",
+      "note_en": "A 421M ModernBERT decision model: under 10 ms per question with calibrated probabilities, for email triage and content safety; 512-token context.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "kev",
+      "family": "Kev",
+      "description": "Kev scores answers to structured questions about a supplied text state in a single forward pass.",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 6.7,
+      "updated": "2026-10",
+      "caps": [
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Kev 決策模型（預設 9B NVFP4，MLX），只評分不生成文字；需要 Ollama 0.40.4 以上，這台目前 0.40.3，要先升級。",
+      "note_en": "Kev decision models (default 9B NVFP4, MLX) score answers without generating text; needs Ollama 0.40.4+, and this Mac runs 0.40.3, so upgrade first.",
+      "tasks": [
+        "router"
+      ]
+    },
+    {
+      "tag": "hf.co/audreyt/Gemma-3-TAIDE-12b-Chat-2602-GGUF:Q4_K_M",
+      "family": "TAIDE",
+      "description": "以 Gemma-3-12b-pt 為基礎，使用正體中文資料預訓練以及中期訓練，並透過指令微調強化辦公室常用任務和多輪問答對話能力",
+      "params": "12B",
+      "context": 131072,
+      "size_gb": 8.2,
+      "updated": "2026-02",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context"
+      ],
+      "license": "TAIDE Gemma 版授權條款",
+      "license_en": "TAIDE license terms (Gemma edition)",
+      "fit": "ok",
+      "note": "國科會 TAIDE 最新版（2026-02）；社群 GGUF 轉檔，使用時仍須遵守 TAIDE 授權條款。工具呼叫可能不支援。",
+      "note_en": "Latest TAIDE release from Taiwan's National Science and Technology Council (2026-02); community GGUF conversion, use is still subject to the TAIDE license terms. Tool calling may not be supported.",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "recommended": true,
+      "url": "https://huggingface.co/audreyt/Gemma-3-TAIDE-12b-Chat-2602-GGUF"
+    },
+    {
+      "tag": "hf.co/tetf/Llama-3.1-TAIDE-LX-8B-Chat-GGUF:Q4_K_M",
+      "family": "TAIDE",
+      "description": "Llama-3.1-TAIDE-LX-8B-Chat（官方模型卡需同意條款後才能閱讀，未取得原文）",
+      "description_en": "(The official model card requires accepting the terms before it can be read; original text not available.)",
+      "params": "8B",
+      "context": 131072,
+      "size_gb": 5.3,
+      "updated": "2025-02",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context"
+      ],
+      "license": "TAIDE L 類模型社群授權協議",
+      "license_en": "TAIDE L Class Models Community License Agreement",
+      "fit": "ok",
+      "note": "TAIDE 以 Llama 3.1 8B 為基礎的版本；社群 GGUF 轉檔。",
+      "note_en": "TAIDE version based on Llama 3.1 8B; community GGUF conversion.",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "url": "https://huggingface.co/tetf/Llama-3.1-TAIDE-LX-8B-Chat-GGUF"
+    },
+    {
+      "tag": "hf.co/mradermacher/Llama-Breeze2-8B-Instruct-text-only-GGUF:Q4_K_M",
+      "family": "Breeze 2",
+      "description": "Traditional Chinese LLMs Based on LLaMA with Vision-Aware and Function-Calling Capabilities",
+      "params": "8B",
+      "context": 131072,
+      "size_gb": 4.9,
+      "updated": "2025-04",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "llama3.2",
+      "fit": "ok",
+      "note": "聯發科創新基地 Breeze 2；社群「純文字」轉檔（移除視覺）。",
+      "note_en": "Breeze 2 from MediaTek Research; community \"text-only\" conversion (vision removed).",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "recommended": true,
+      "url": "https://huggingface.co/MediaTek-Research/Llama-Breeze2-8B-Instruct"
+    },
+    {
+      "tag": "hf.co/mradermacher/Llama-Breeze2-3B-Instruct-Text-GGUF:Q4_K_M",
+      "family": "Breeze 2",
+      "description": "Traditional Chinese LLMs Based on LLaMA with Vision-Aware and Function-Calling Capabilities",
+      "params": "3B",
+      "context": 131072,
+      "size_gb": 2.2,
+      "updated": "2025-03",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "llama3.2",
+      "fit": "ok",
+      "note": "Breeze 2 小模型；社群純文字轉檔。",
+      "note_en": "Small Breeze 2 model; community text-only conversion.",
+      "tasks": [
+        "chat",
+        "taiwan",
+        "router"
+      ],
+      "url": "https://huggingface.co/MediaTek-Research/Llama-Breeze2-3B-Instruct"
+    },
+    {
+      "tag": "hf.co/second-state/Breeze-7B-Instruct-v1_0-GGUF:Q4_K_M",
+      "family": "Breeze",
+      "description": "Breeze-7B builds on top of Mistral-7B, specifically intended for Traditional Chinese use.",
+      "params": "7B",
+      "context": 32768,
+      "size_gb": 4.5,
+      "updated": "2024-09",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "聯發科第一代 Breeze。",
+      "note_en": "MediaTek's first-generation Breeze.",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "url": "https://huggingface.co/MediaTek-Research/Breeze-7B-Instruct-v1_0"
+    },
+    {
+      "tag": "hf.co/mradermacher/Llama-3.1-Taiwan-8B-Instruct-GGUF:Q4_K_M",
+      "family": "Taiwan-LLM",
+      "description": "Llama-3.1-Taiwan-8B-Instruct（模型卡未提供一句話介紹）",
+      "description_en": "(The model card has no one-line summary.)",
+      "params": "8B",
+      "context": 131072,
+      "size_gb": 4.9,
+      "updated": "2026-08",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context"
+      ],
+      "license": "未標示（推定 llama3.1）",
+      "license_en": "Not stated (presumed llama3.1)",
+      "fit": "ok",
+      "note": "Taiwan-LLM（林彥廷）Llama 3.1 版；授權未標示，推定 Llama 3.1。",
+      "note_en": "Taiwan-LLM (Yen-Ting Lin), Llama 3.1 version; license not stated, presumed Llama 3.1.",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "url": "https://huggingface.co/yentinglin/Llama-3.1-Taiwan-8B-Instruct"
+    },
+    {
+      "tag": "hf.co/chienweichang/Llama-3-Taiwan-8B-Instruct-GGUF:Q4_K_M",
+      "family": "Taiwan-LLM",
+      "description": "Llama-3-Taiwan-8B-Instruct is finetuned on a large corpus of Traditional Mandarin and English data using the Llama-3 architecture.",
+      "params": "8B",
+      "context": 8192,
+      "size_gb": 4.9,
+      "updated": "2024-07",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "commercial_ok"
+      ],
+      "license": "llama3",
+      "fit": "ok",
+      "note": "Taiwan-LLM Llama 3 版。",
+      "note_en": "Taiwan-LLM, Llama 3 version.",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "url": "https://huggingface.co/yentinglin/Llama-3-Taiwan-8B-Instruct"
+    },
+    {
+      "tag": "hf.co/gaianet/Llama-3-Taiwan-70B-Instruct-GGUF:Q3_K_M",
+      "family": "Taiwan-LLM",
+      "description": "Llama-3-Taiwan-70B-Instruct is finetuned on a large corpus of Traditional Mandarin and English data using the Llama-3 architecture.",
+      "params": "70B",
+      "context": 8192,
+      "size_gb": 34.3,
+      "updated": "2024-09",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "commercial_ok"
+      ],
+      "license": "llama3",
+      "fit": "tight",
+      "note": "70B 用 Q3 量化才放得下；需先卸載其他模型，速度慢。",
+      "note_en": "70B only fits with Q3 quantization; unload other models first. Slow.",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "url": "https://huggingface.co/gaianet/Llama-3-Taiwan-70B-Instruct-GGUF"
+    },
+    {
+      "tag": "hf.co/twinkle-ai/gemma-3-4B-T1-it-GGUF:Q4_K_M",
+      "family": "Twinkle AI",
+      "description": "gemma-3-4B-T1-it 是專為中華民國台灣語境打造的繁體中文指令微調模型",
+      "params": "4B",
+      "context": 131072,
+      "size_gb": 2.9,
+      "updated": "2026-01",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "gemma",
+      "fit": "ok",
+      "note": "Twinkle AI 社群（2026-01）。",
+      "note_en": "Twinkle AI community (2026-01).",
+      "tasks": [
+        "chat",
+        "taiwan"
+      ],
+      "url": "https://huggingface.co/twinkle-ai/gemma-3-4B-T1-it-GGUF"
+    },
+    {
+      "tag": "hf.co/lianghsun/Llama-3.2-Taiwan-3B-Instruct-GGUF:Q4_K_M",
+      "family": "Twinkle AI",
+      "description": "使用大量中華民國台灣的繁體中文對話集和多國語言對話集進行模型指令微調",
+      "params": "3B",
+      "context": 131072,
+      "size_gb": 2.2,
+      "updated": "2026-05",
+      "caps": [],
+      "tags": [
+        "taiwan",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "llama3.2",
+      "fit": "ok",
+      "note": "Llama 3.2 3B 台灣微調版。",
+      "note_en": "Llama 3.2 3B fine-tuned for Taiwan.",
+      "tasks": [
+        "chat",
+        "taiwan",
+        "router"
+      ],
+      "url": "https://huggingface.co/lianghsun/Llama-3.2-Taiwan-3B-Instruct-GGUF"
+    }
+  ],
+  "tiers": [
+    {
+      "key": "micro",
+      "name": "微型",
+      "name_en": "Micro",
+      "max_gb": 2,
+      "summary": "≤2GB，幾乎不佔資源，可常駐。",
+      "summary_en": "≤2GB; uses almost no resources and can stay loaded.",
+      "suggested": [
+        "工具路由／意圖分類",
+        "RAG embedding",
+        "框架 smoke test"
+      ],
+      "suggested_en": [
+        "Tool routing / intent classification",
+        "RAG embedding",
+        "Framework smoke tests"
+      ]
+    },
+    {
+      "key": "light",
+      "name": "輕量",
+      "name_en": "Light",
+      "max_gb": 8,
+      "summary": "2–8GB，速度快，可與大型模型同時載入。",
+      "summary_en": "2–8GB; fast, and can be loaded alongside a large model.",
+      "suggested": [
+        "日常對話、摘要、翻譯",
+        "簡單工具呼叫",
+        "看圖／OCR",
+        "大量批次處理"
+      ],
+      "suggested_en": [
+        "Everyday chat, summaries, translation",
+        "Simple tool calls",
+        "Image understanding / OCR",
+        "High-volume batch processing"
+      ]
+    },
+    {
+      "key": "medium",
+      "name": "中型",
+      "name_en": "Medium",
+      "max_gb": 16,
+      "summary": "8–16GB，品質與速度的平衡點。",
+      "summary_en": "8–16GB; the balance point between quality and speed.",
+      "suggested": [
+        "多步驟 agent",
+        "推理與數學",
+        "程式碼輔助",
+        "RAG 答案生成"
+      ],
+      "suggested_en": [
+        "Multi-step agents",
+        "Reasoning and math",
+        "Coding assistance",
+        "RAG answer generation"
+      ]
+    },
+    {
+      "key": "large",
+      "name": "大型",
+      "name_en": "Large",
+      "max_gb": 25,
+      "summary": "16–25GB，這台的主力；一次放一個大型＋小型 embedding。MoE（名稱含 a3b／a4b）每 token 只啟用 3–4B，速度接近輕量模型。",
+      "summary_en": "16–25GB; the workhorse tier on this machine: load one large model plus a small embedding model at a time. MoE models (a3b/a4b in the name) activate only 3–4B parameters per token, so they run almost as fast as light models.",
+      "suggested": [
+        "正式品質評估",
+        "複雜 agent／coding agent",
+        "長文件 RAG",
+        "繁中寫作"
+      ],
+      "suggested_en": [
+        "Formal quality evaluation",
+        "Complex agents / coding agents",
+        "Long-document RAG",
+        "Traditional Chinese writing"
+      ]
+    },
+    {
+      "key": "xl",
+      "name": "超大",
+      "name_en": "Extra large",
+      "max_gb": null,
+      "summary": ">25GB，要先卸載其他模型，或放到 DGX Spark。",
+      "summary_en": ">25GB; unload other models first, or run it on the DGX Spark.",
+      "suggested": [
+        "最高品質 coding",
+        "與雲端模型對照"
+      ],
+      "suggested_en": [
+        "Top-quality coding",
+        "Comparison with cloud models"
+      ]
+    }
+  ],
+  "other_runtimes_note": "這些模型 Ollama 不支援（Ollama 只跑文字／視覺 LLM 與 embedding）。標示「模型閘道」的模型由本機的模型閘道（127.0.0.1:11500）提供，用法和 Ollama 一樣：一鍵下載、第一次使用時載入、閒置後自動卸載；權重存在 models/hf、models/docling、models/mlx。可在「語音與文件」頁試用，agent 也能透過工具使用。其他模型仍需自行安裝套件與權重。",
+  "other_runtimes_note_en": "Ollama does not support these models (Ollama only runs text/vision LLMs and embeddings). Models marked \"Gateway\" are served by the local model gateway (127.0.0.1:11500) and work just like Ollama: one-click download, loaded on first use, unloaded automatically when idle; weights are stored in models/hf, models/docling and models/mlx. Try them on the \"Speech & documents\" page; agents can also use them through tools. The other models still need their packages and weights installed manually.",
+  "other_categories": {
+    "asr": "語音辨識（ASR，語音→文字）",
+    "tts": "語音合成（TTS，文字→語音）",
+    "doc": "文件解析／OCR（PDF、掃描檔→Markdown）",
+    "rerank": "Reranker（RAG 重新排序）"
+  },
+  "other_categories_en": {
+    "asr": "Speech recognition (ASR, speech → text)",
+    "tts": "Speech synthesis (TTS, text → speech)",
+    "doc": "Document parsing / OCR (PDFs, scans → Markdown)",
+    "rerank": "Reranker (RAG re-ranking)"
+  },
+  "mac_labels": {
+    "mlx": "✅ Apple GPU（MLX）",
+    "mps": "🟡 PyTorch MPS／CPU",
+    "cpu": "⚠️ 只能 CPU（較慢）"
+  },
+  "mac_labels_en": {
+    "mlx": "✅ Apple GPU (MLX)",
+    "mps": "🟡 PyTorch MPS / CPU",
+    "cpu": "⚠️ CPU only (slower)"
+  },
+  "other_models": [
+    {
+      "name": "Breeze-ASR-25",
+      "repo": "MediaTek-Research/Breeze-ASR-25",
+      "category": "asr",
+      "params": "1.55B",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-whisper（模型閘道；官方權重在本機轉 MLX）",
+      "runtime_en": "mlx-whisper (model gateway; official weights converted to MLX locally)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "台灣華語、中英夾雜的會議逐字稿與字幕（含時間軸）",
+      "use_en": "Meeting transcripts and subtitles (with timestamps) for Taiwanese Mandarin and mixed Chinese-English speech",
+      "note": "聯發科創新基地，Whisper-large-v2 微調；官方稱比 Whisper 準確率提升近 10%、中英夾雜提升 56%。",
+      "note_en": "MediaTek Research, fine-tuned from Whisper-large-v2; officially reported to be nearly 10% more accurate than Whisper, and 56% better on mixed Chinese-English speech.",
+      "recommended": true,
+      "taiwan": true,
+      "gateway": {
+        "id": "breeze-asr-25",
+        "task": "asr",
+        "backend": "mlx-whisper",
+        "weights": [
+          {
+            "repo": "MediaTek-Research/Breeze-ASR-25",
+            "revision": "cffe7ccb404d025296a00758d0a33468bec3a9d0",
+            "files": [
+              "config.json",
+              "model.safetensors"
+            ],
+            "into": "mlx/breeze-asr-25/.source"
+          }
+        ],
+        "convert": "hf-whisper-to-mlx",
+        "path": "mlx/breeze-asr-25",
+        "size_gb": 3.1,
+        "note": "閘道下載聯發科官方 repo 的 transformers 權重（model.safetensors，3.1GB），在本機轉成 MLX 格式（models/mlx/breeze-asr-25，fp16），轉完刪除原始檔；不使用社群轉檔。",
+        "note_en": "The gateway downloads the transformers weights from MediaTek's official repo (model.safetensors, 3.1GB), converts them to MLX format locally (models/mlx/breeze-asr-25, fp16) and deletes the originals afterwards; community conversions are not used."
+      }
+    },
+    {
+      "name": "Whisper large-v3-turbo",
+      "repo": "openai/whisper-large-v3-turbo",
+      "category": "asr",
+      "params": "0.8B",
+      "license": "mit",
+      "mac": "mlx",
+      "runtime": "mlx-whisper",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "多語通用轉錄，速度快",
+      "use_en": "Fast general-purpose multilingual transcription",
+      "note": "MLX 版：mlx-community/whisper-large-v3-turbo。",
+      "note_en": "MLX version: mlx-community/whisper-large-v3-turbo.",
+      "recommended": false,
+      "gateway": {
+        "id": "whisper-large-v3-turbo",
+        "task": "asr",
+        "backend": "mlx-whisper",
+        "weights": [
+          {
+            "repo": "mlx-community/whisper-large-v3-turbo",
+            "revision": "a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb",
+            "files": [
+              "config.json",
+              "weights.safetensors"
+            ]
+          }
+        ],
+        "size_gb": 1.6,
+        "note": "mlx-community 轉檔（openai/whisper-large-v3-turbo，MIT）。",
+        "note_en": "mlx-community conversion (openai/whisper-large-v3-turbo, MIT)."
+      }
+    },
+    {
+      "name": "Qwen3-ASR（1.7B／0.6B）",
+      "repo": "Qwen/Qwen3-ASR-1.7B",
+      "category": "asr",
+      "params": "1.7B／0.6B",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio／qwen-asr",
+      "install": "uv add mlx-audio",
+      "use": "30 種語言＋22 種中文方言；另有 ForcedAligner 做字級時間對齊",
+      "use_en": "30 languages + 22 Chinese dialects; a separate ForcedAligner provides word-level timestamps",
+      "note": "2026 年初開源；0.6B 速度與準確率平衡最好。",
+      "note_en": "Open-sourced in early 2026; 0.6B offers the best balance of speed and accuracy.",
+      "recommended": true
+    },
+    {
+      "name": "SenseVoice-Small",
+      "repo": "FunAudioLLM/SenseVoiceSmall",
+      "category": "asr",
+      "params": "約 0.23B",
+      "params_en": "about 0.23B",
+      "license": "FunASR 模型授權（自訂，商用前確認）",
+      "license_en": "FunASR model license (custom; check before commercial use)",
+      "mac": "cpu",
+      "runtime": "FunASR",
+      "install": "uv add funasr",
+      "use": "中文為主，極快，也能偵測情緒與聲音事件",
+      "use_en": "Mainly Chinese, very fast; also detects emotions and audio events",
+      "note": "程式碼 MIT，但權重是 FunASR 自訂授權。",
+      "note_en": "The code is MIT, but the weights use FunASR's custom license.",
+      "recommended": false
+    },
+    {
+      "name": "CosyVoice 3",
+      "repo": "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
+      "category": "tts",
+      "params": "0.5B",
+      "license": "apache-2.0（repo；權重請再確認）",
+      "license_en": "apache-2.0 (repo; double-check the weights)",
+      "mac": "mps",
+      "runtime": "官方 CosyVoice repo（PyTorch）",
+      "runtime_en": "Official CosyVoice repo (PyTorch)",
+      "install": "git clone https://github.com/FunAudioLLM/CosyVoice",
+      "use": "9 種語言、18+ 中文方言，幾秒錄音即可複製聲音；可控制情緒、語速",
+      "use_en": "9 languages and 18+ Chinese dialects; clones a voice from a few seconds of audio; emotion and speaking rate are controllable",
+      "note": "聲音複製需取得本人同意並防範濫用。",
+      "note_en": "Voice cloning requires the speaker's consent and safeguards against misuse.",
+      "recommended": true
+    },
+    {
+      "name": "BreezyVoice",
+      "repo": "MediaTek-Research/BreezyVoice",
+      "category": "tts",
+      "params": "—",
+      "license": "見模型卡（未確認）",
+      "license_en": "See model card (unverified)",
+      "mac": "mps",
+      "runtime": "官方 repo（基於 CosyVoice）",
+      "runtime_en": "Official repo (based on CosyVoice)",
+      "install": "見 Hugging Face 模型卡",
+      "install_en": "See the Hugging Face model card",
+      "use": "台灣華語 TTS，可指定注音處理破音字",
+      "use_en": "Taiwanese Mandarin TTS; Zhuyin (Bopomofo) can be specified to disambiguate polyphonic characters",
+      "note": "聯發科創新基地 × 台大；Breeze 2 家族。",
+      "note_en": "MediaTek Research × National Taiwan University; part of the Breeze 2 family.",
+      "recommended": true,
+      "taiwan": true
+    },
+    {
+      "name": "Qwen3-TTS",
+      "repo": "Qwen（Hugging Face：Qwen3-TTS 系列）",
+      "repo_en": "Qwen (Hugging Face: Qwen3-TTS series)",
+      "category": "tts",
+      "params": "—",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio",
+      "install": "uv add mlx-audio",
+      "use": "多語含中文，約 3 秒錄音複製聲音、可設計聲音",
+      "use_en": "Multilingual including Chinese; clones a voice from about 3 seconds of audio and can design new voices",
+      "note": "",
+      "note_en": "",
+      "recommended": false
+    },
+    {
+      "name": "Kokoro-82M",
+      "repo": "hexgrad/Kokoro-82M",
+      "category": "tts",
+      "params": "82M",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio",
+      "install": "uv add mlx-audio",
+      "use": "極輕量、即時；含中文，但只有預設聲音、不能複製",
+      "use_en": "Very lightweight and real-time; supports Chinese, but only preset voices, no voice cloning",
+      "note": "",
+      "note_en": "",
+      "recommended": false
+    },
+    {
+      "name": "PaddleOCR-VL-1.6",
+      "repo": "PaddlePaddle/PaddleOCR-VL-1.6",
+      "category": "doc",
+      "params": "0.9B",
+      "license": "apache-2.0",
+      "mac": "cpu",
+      "runtime": "PaddleOCR 3.x／vLLM",
+      "install": "uv add paddleocr  # 另需 paddlepaddle",
+      "install_en": "uv add paddleocr  # also requires paddlepaddle",
+      "use": "掃描檔、表格、圖表、印章、罕見字的文件解析",
+      "use_en": "Document parsing for scans, tables, charts, seals and rare characters",
+      "note": "2026-05 發布，官方報 OmniDocBench v1.6 96.33%。PaddlePaddle 在 Mac 沒有 GPU 加速，建議放 DGX Spark 用 vLLM。",
+      "note_en": "Released 2026-05; officially reports 96.33% on OmniDocBench v1.6. PaddlePaddle has no GPU acceleration on Mac, so running it on the DGX Spark with vLLM is recommended.",
+      "recommended": true
+    },
+    {
+      "name": "PP-StructureV3",
+      "repo": "PaddleOCR 流程（PP-OCRv5＋版面＋表格／公式／圖表）",
+      "repo_en": "PaddleOCR pipeline (PP-OCRv5 + layout + tables / formulas / charts)",
+      "category": "doc",
+      "params": "多個小模型",
+      "params_en": "Several small models",
+      "license": "apache-2.0",
+      "mac": "cpu",
+      "runtime": "PaddleOCR 3.x",
+      "install": "uv add paddleocr  # 另需 paddlepaddle",
+      "install_en": "uv add paddleocr  # also requires paddlepaddle",
+      "use": "PDF／圖片 → Markdown／JSON，還原閱讀順序",
+      "use_en": "PDF / images → Markdown / JSON, restoring reading order",
+      "note": "傳統多模型流程，與 PaddleOCR-VL（一顆 VLM）是同一家的兩條路。",
+      "note_en": "Traditional multi-model pipeline; it and PaddleOCR-VL (a single VLM) are the same vendor's two approaches.",
+      "recommended": false
+    },
+    {
+      "name": "MinerU 2.5",
+      "repo": "opendatalab/MinerU2.5-2509-1.2B",
+      "category": "doc",
+      "params": "1.2B",
+      "license": "權重見模型卡；MinerU 軟體為 AGPL-3.0",
+      "license_en": "Weights: see model card; MinerU software is AGPL-3.0",
+      "mac": "mps",
+      "runtime": "MinerU",
+      "install": "uv add mineru",
+      "use": "學術論文、報告類 PDF 解析",
+      "use_en": "Parsing PDFs such as academic papers and reports",
+      "note": "AGPL 軟體若對外提供服務需開源，公司使用前請法務確認。",
+      "note_en": "AGPL software must be open-sourced if offered as a service to others; check with legal before using it at the company.",
+      "recommended": false
+    },
+    {
+      "name": "Docling（granite-docling-258M）",
+      "repo": "ibm-granite/granite-docling-258M",
+      "category": "doc",
+      "params": "258M",
+      "license": "apache-2.0（Docling 程式 MIT）",
+      "license_en": "apache-2.0 (Docling code is MIT)",
+      "mac": "mlx",
+      "runtime": "docling",
+      "install": "平台一鍵下載（模型閘道，標準流程）",
+      "install_en": "One-click download in the platform (model gateway, standard pipeline)",
+      "use": "PDF、Word、PPT、HTML → Markdown，最適合當 RAG 前處理",
+      "use_en": "PDF, Word, PPT, HTML → Markdown; ideal for RAG preprocessing",
+      "note": "P3 RAG 預計採用；有 MLX 版本。",
+      "note_en": "Planned for P3 RAG; an MLX version is available.",
+      "recommended": true,
+      "gateway": {
+        "id": "docling",
+        "name": "Docling 標準 PDF 流程（Heron 版面＋TableFormer）",
+        "name_en": "Docling standard PDF pipeline (Heron layout + TableFormer)",
+        "task": "doc",
+        "backend": "docling",
+        "weights": [
+          {
+            "repo": "docling-project/docling-layout-heron",
+            "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+            "files": [
+              "config.json",
+              "model.safetensors",
+              "preprocessor_config.json"
+            ],
+            "into": "docling/docling-project--docling-layout-heron"
+          },
+          {
+            "repo": "docling-project/docling-models",
+            "revision": "v2.3.0",
+            "files": [
+              "model_artifacts/tableformer/accurate/*"
+            ],
+            "into": "docling/docling-project--docling-models"
+          }
+        ],
+        "path": "docling",
+        "size_gb": 0.4,
+        "license": "MIT（Docling）；版面模型 apache-2.0；TableFormer cdla-permissive-2.0",
+        "license_en": "MIT (Docling); layout model apache-2.0; TableFormer cdla-permissive-2.0",
+        "note": "閘道用 Docling 標準流程（不是 granite-docling VLM）：Heron 版面偵測（MPS）＋TableFormer 表格結構（CPU），OCR 用 macOS Vision（ocrmac，支援繁中）；也接受 DOCX、PPTX、HTML、Markdown 與圖片。",
+        "note_en": "The gateway uses Docling's standard pipeline (not the granite-docling VLM): Heron layout detection (MPS) + TableFormer table structure (CPU), with OCR via macOS Vision (ocrmac, supports Traditional Chinese); it also accepts DOCX, PPTX, HTML, Markdown and images."
+      }
+    },
+    {
+      "name": "bge-reranker-v2-m3",
+      "repo": "BAAI/bge-reranker-v2-m3",
+      "category": "rerank",
+      "params": "0.6B",
+      "license": "apache-2.0",
+      "mac": "mps",
+      "runtime": "sentence-transformers（CrossEncoder）",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "多語言，RAG 檢索結果重新排序",
+      "use_en": "Multilingual; re-ranks RAG retrieval results",
+      "note": "Ollama 沒有 reranker API。",
+      "note_en": "Ollama has no reranker API.",
+      "recommended": true,
+      "gateway": {
+        "id": "bge-reranker-v2-m3",
+        "task": "rerank",
+        "backend": "cross-encoder",
+        "weights": [
+          {
+            "repo": "BAAI/bge-reranker-v2-m3",
+            "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+            "files": [
+              "config.json",
+              "model.safetensors",
+              "sentencepiece.bpe.model",
+              "special_tokens_map.json",
+              "tokenizer.json",
+              "tokenizer_config.json"
+            ]
+          }
+        ],
+        "size_gb": 2.3,
+        "options": {
+          "max_length": 1024
+        },
+        "note": "sentence-transformers CrossEncoder，MPS 上以 fp16 執行；每段最多 1024 tokens。",
+        "note_en": "sentence-transformers CrossEncoder, runs in fp16 on MPS; up to 1024 tokens per passage."
+      }
+    },
+    {
+      "name": "Qwen3-Reranker-0.6B",
+      "repo": "Qwen/Qwen3-Reranker-0.6B",
+      "category": "rerank",
+      "params": "0.6B",
+      "license": "apache-2.0",
+      "mac": "mps",
+      "runtime": "sentence-transformers／transformers",
+      "install": "uv add sentence-transformers",
+      "use": "與 Qwen3-Embedding 搭配",
+      "use_en": "Pairs with Qwen3-Embedding",
+      "note": "",
+      "note_en": "",
+      "recommended": false
+    }
+  ]
+}

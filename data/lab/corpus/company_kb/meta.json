@@ -1,0 +1,10 @@
+{
+  "leave_policy.md": {"title": "員工手冊：請假規定", "access": ["all"]},
+  "travel_expense.md": {"title": "差旅與費用報支辦法", "access": ["all"]},
+  "infosec_ai_policy.md": {"title": "資訊安全與生成式 AI 規範", "access": ["all"]},
+  "compensation.md": {"title": "薪資與獎金制度（機密）", "access": ["hr"]},
+  "sales_pricing.md": {"title": "業務報價與折扣授權", "access": ["sales"]},
+  "support_returns.md": {"title": "客服 SOP 與退換貨政策", "access": ["support", "sales"]},
+  "product_faq.md": {"title": "產品型錄 FAQ", "access": ["all"]},
+  "quality_8d.md": {"title": "品質異常處理程序（8D）", "access": ["support"]}
+}

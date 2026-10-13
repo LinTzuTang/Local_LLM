@@ -1,0 +1,1471 @@
+{
+  "_about": "Multi-agent scenarios for Local Agent Lab: nodes (see src/local_llm/lab/nodes.py for types and params) and edges (START/END, optional 'when' for router options). Edited in the UI or by the control-center coding agent; every change is versioned in storage/lab/history.",
+  "categories": {
+    "routing": {
+      "zh": "路由與分派",
+      "en": "Routing"
+    },
+    "rag": {
+      "zh": "檢索增強 RAG",
+      "en": "RAG"
+    },
+    "speech": {
+      "zh": "語音",
+      "en": "Speech"
+    },
+    "documents": {
+      "zh": "文件",
+      "en": "Documents"
+    },
+    "multi_model": {
+      "zh": "多模型",
+      "en": "Multi-model"
+    },
+    "pipeline": {
+      "zh": "流水線",
+      "en": "Pipelines"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "company_router",
+      "category": "routing",
+      "name": {
+        "zh": "公司問答路由（nimble 分派）",
+        "en": "Company Q&A router (nimble dispatch)"
+      },
+      "description": {
+        "zh": "決策模型 nimble 先判斷問題屬於哪個部門，再交給對應的資料庫 agent；不需要公司資料的問題交給一般 LLM。",
+        "en": "The nimble decision model picks the department first, then the matching database agent answers; questions that need no company data go to a plain LLM."
+      },
+      "highlights": {
+        "zh": [
+          "nimble 約 2–3 秒做出決定並給出各選項機率",
+          "部門 agent 只能用自己的資料庫權限"
+        ],
+        "en": [
+          "nimble decides in ~2–3 s and shows a probability per option",
+          "Each department agent only has its own database permissions"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "question",
+          "type": "text",
+          "label": {
+            "zh": "問題",
+            "en": "Question"
+          }
+        }
+      ],
+      "examples": {
+        "zh": [
+          "2026 年營收最高的前三個城市是哪些？",
+          "各部門的在職人數與平均月薪",
+          "目前還沒解決的緊急工單有幾張？",
+          "幫我寫一段歡迎新同事的話"
+        ],
+        "en": [
+          "Which three cities had the highest revenue in 2026?",
+          "Headcount and average salary per department",
+          "How many urgent tickets are still open?",
+          "Write a short welcome note for a new colleague"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "route",
+          "type": "router",
+          "label": {
+            "zh": "部門路由",
+            "en": "Department router"
+          },
+          "params": {
+            "method": "nimble",
+            "model": "nimble:9b",
+            "input": "question",
+            "instructions": "Which department's assistant should answer this question about the company?",
+            "options": {
+              "sales": "Sales data: customers, orders, revenue, products, prices, inventory",
+              "hr": "HR data: employees, departments, salaries, leave, attendance",
+              "support": "Customer support data: tickets, returns, quality issues",
+              "general": "No company data needed: writing, translation, general knowledge"
+            },
+            "output": "route"
+          }
+        },
+        {
+          "id": "sales",
+          "type": "agent",
+          "label": {
+            "zh": "業務部 agent",
+            "en": "Sales agent"
+          },
+          "params": {
+            "agent": "company_sales",
+            "input": "question",
+            "output": "answer"
+          }
+        },
+        {
+          "id": "hr",
+          "type": "agent",
+          "label": {
+            "zh": "人資部 agent",
+            "en": "HR agent"
+          },
+          "params": {
+            "agent": "company_hr",
+            "input": "question",
+            "output": "answer"
+          }
+        },
+        {
+          "id": "support",
+          "type": "agent",
+          "label": {
+            "zh": "客服部 agent",
+            "en": "Support agent"
+          },
+          "params": {
+            "agent": "company_support",
+            "input": "question",
+            "output": "answer"
+          }
+        },
+        {
+          "id": "general",
+          "type": "llm",
+          "label": {
+            "zh": "一般助理",
+            "en": "General assistant"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "system": "You are a friendly assistant at 示範精密工業. Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).",
+            "prompt": "{question}",
+            "output": "answer"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "route"
+        },
+        {
+          "from": "route",
+          "to": "sales",
+          "when": "sales"
+        },
+        {
+          "from": "route",
+          "to": "hr",
+          "when": "hr"
+        },
+        {
+          "from": "route",
+          "to": "support",
+          "when": "support"
+        },
+        {
+          "from": "route",
+          "to": "general",
+          "when": "general"
+        },
+        {
+          "from": "sales",
+          "to": "END"
+        },
+        {
+          "from": "hr",
+          "to": "END"
+        },
+        {
+          "from": "support",
+          "to": "END"
+        },
+        {
+          "from": "general",
+          "to": "END"
+        }
+      ],
+      "output": "answer"
+    },
+    {
+      "id": "hybrid_rag",
+      "category": "rag",
+      "name": {
+        "zh": "混合檢索 RAG（BM25＋向量→RRF→Rerank）",
+        "en": "Hybrid RAG (BM25 + vector → RRF → rerank)"
+      },
+      "description": {
+        "zh": "關鍵字與向量檢索平行執行，用 RRF 融合排名，再用 cross-encoder 重新排序，最後由 LLM 引用出處回答。",
+        "en": "Keyword and vector search run in parallel, RRF fuses the rankings, a cross-encoder reranks, and the LLM answers with citations."
+      },
+      "highlights": {
+        "zh": [
+          "BM25 抓精確詞（產品代號、數字），向量抓語意（含英文問中文文件）",
+          "Rerank 前後排名都看得到",
+          "試試範例第 1 題：融合後第 1 名是錯的段落，Rerank 才把正確段落排上來（看「每一步」裡的 Rerank 表）"
+        ],
+        "en": [
+          "BM25 catches exact terms (product codes, numbers); vectors catch meaning (even English questions over Chinese docs)",
+          "See rankings before and after reranking",
+          "Try the first examples: fusion ranks a wrong passage first and the reranker fixes it (see the Rerank table under Steps)"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "question",
+          "type": "text",
+          "label": {
+            "zh": "問題",
+            "en": "Question"
+          }
+        }
+      ],
+      "examples": {
+        "zh": [
+          "員工可以把客戶合約貼到 ChatGPT 嗎？",
+          "特休沒休完可以遞延到什麼時候？",
+          "去日本出差每天的日支費是多少？",
+          "伺服馬達過熱該怎麼處理？"
+        ],
+        "en": [
+          "How fast must we answer when a customer's line stops?",
+          "What discount can a junior sales rep give?",
+          "Until when can unused annual leave be carried over?",
+          "What is the daily allowance for a business trip to Japan?",
+          "What should I do if a servo motor overheats?"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "bm25",
+          "type": "retrieve_bm25",
+          "label": {
+            "zh": "BM25 關鍵字",
+            "en": "BM25 keywords"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "question",
+            "top_k": 8,
+            "role": "",
+            "output": "bm25_hits"
+          }
+        },
+        {
+          "id": "vector",
+          "type": "retrieve_vector",
+          "label": {
+            "zh": "向量檢索",
+            "en": "Vector search"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "question",
+            "top_k": 8,
+            "role": "",
+            "output": "vector_hits"
+          }
+        },
+        {
+          "id": "fuse",
+          "type": "rrf",
+          "label": {
+            "zh": "RRF 融合",
+            "en": "RRF fusion"
+          },
+          "join": "all",
+          "params": {
+            "inputs": [
+              "bm25_hits",
+              "vector_hits"
+            ],
+            "k": 60,
+            "top_k": 8,
+            "output": "fused"
+          }
+        },
+        {
+          "id": "rerank",
+          "type": "rerank",
+          "label": {
+            "zh": "Rerank",
+            "en": "Rerank"
+          },
+          "params": {
+            "model": "bge-reranker-v2-m3",
+            "query": "question",
+            "input": "fused",
+            "top_n": 4,
+            "output": "context"
+          }
+        },
+        {
+          "id": "answer",
+          "type": "llm",
+          "label": {
+            "zh": "引用回答",
+            "en": "Answer with citations"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "system": "You answer questions about the internal rules of 示範精密工業 (a fictional Taiwanese precision-parts maker) using only the numbered passages. Cite them as [n]. If the passages do not contain the answer, say so. Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).",
+            "prompt": "Passages:\n{context}\n\nQuestion: {question}\n\nAnswer in complete sentences, in the same language as the question above.",
+            "output": "answer"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "bm25"
+        },
+        {
+          "from": "START",
+          "to": "vector"
+        },
+        {
+          "from": "bm25",
+          "to": "fuse"
+        },
+        {
+          "from": "vector",
+          "to": "fuse"
+        },
+        {
+          "from": "fuse",
+          "to": "rerank"
+        },
+        {
+          "from": "rerank",
+          "to": "answer"
+        },
+        {
+          "from": "answer",
+          "to": "END"
+        }
+      ],
+      "output": "answer"
+    },
+    {
+      "id": "corrective_rag",
+      "category": "rag",
+      "name": {
+        "zh": "自我檢查 RAG（改寫→檢索→回答→依據檢查）",
+        "en": "Self-checking RAG (rewrite → retrieve → answer → grounding check)"
+      },
+      "description": {
+        "zh": "先把問題改寫成檢索用語，回答後再由 nimble 檢查答案是否都有文件依據；沒依據就改走保守回覆。",
+        "en": "The question is rewritten for search; after answering, nimble checks that every claim is backed by the passages, otherwise a cautious fallback reply is written."
+      },
+      "highlights": {
+        "zh": [
+          "條件分支：通過檢查 / 改寫保守回覆",
+          "問文件裡沒有的事（例如健身房補助）會走保守回覆"
+        ],
+        "en": [
+          "Conditional branch: grounded vs. cautious fallback",
+          "Ask something the documents don't cover (e.g. a gym subsidy) to see the fallback"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "question",
+          "type": "text",
+          "label": {
+            "zh": "問題",
+            "en": "Question"
+          }
+        }
+      ],
+      "examples": {
+        "zh": [
+          "SM-400 的交期是多久？為什麼？",
+          "國外出差什麼情況可以搭豪華經濟艙？",
+          "公司有沒有提供健身房補助？"
+        ],
+        "en": [
+          "How long is the lead time for the SM-400, and why?",
+          "When may I fly premium economy on an overseas trip?",
+          "Does the company subsidize gym memberships?"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "rewrite",
+          "type": "llm",
+          "label": {
+            "zh": "改寫查詢",
+            "en": "Rewrite query"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Rewrite the question as a short search query in Traditional Chinese containing the key terms (keep product codes and numbers). Output only the query.\n\nQuestion: {question}",
+            "output": "search_query",
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "bm25",
+          "type": "retrieve_bm25",
+          "label": {
+            "zh": "BM25 關鍵字",
+            "en": "BM25 keywords"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "search_query",
+            "top_k": 8,
+            "role": "",
+            "output": "bm25_hits"
+          }
+        },
+        {
+          "id": "vector",
+          "type": "retrieve_vector",
+          "label": {
+            "zh": "向量檢索",
+            "en": "Vector search"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "search_query",
+            "top_k": 8,
+            "role": "",
+            "output": "vector_hits"
+          }
+        },
+        {
+          "id": "fuse",
+          "type": "rrf",
+          "label": {
+            "zh": "RRF 融合",
+            "en": "RRF fusion"
+          },
+          "join": "all",
+          "params": {
+            "inputs": [
+              "bm25_hits",
+              "vector_hits"
+            ],
+            "k": 60,
+            "top_k": 8,
+            "output": "fused"
+          }
+        },
+        {
+          "id": "rerank",
+          "type": "rerank",
+          "label": {
+            "zh": "Rerank",
+            "en": "Rerank"
+          },
+          "params": {
+            "model": "bge-reranker-v2-m3",
+            "query": "question",
+            "input": "fused",
+            "top_n": 4,
+            "output": "context"
+          }
+        },
+        {
+          "id": "answer",
+          "type": "llm",
+          "label": {
+            "zh": "草擬回答",
+            "en": "Draft answer"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "system": "You answer questions about the internal rules of 示範精密工業 (a fictional Taiwanese precision-parts maker) using only the numbered passages. Cite them as [n]. If the passages do not contain the answer, say so. Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).",
+            "prompt": "Passages:\n{context}\n\nQuestion: {question}\n\nAnswer in complete sentences, in the same language as the question above.",
+            "output": "answer"
+          }
+        },
+        {
+          "id": "check",
+          "type": "router",
+          "label": {
+            "zh": "依據檢查",
+            "en": "Grounding check"
+          },
+          "params": {
+            "method": "nimble",
+            "model": "nimble:9b",
+            "input": "Question: {question}\n\nPassages:\n{context}\n\nAnswer: {answer}",
+            "instructions": "Is every factual claim in the answer supported by the passages, and do the passages actually answer the question?",
+            "options": {
+              "grounded": "Yes: the answer is fully supported by the passages",
+              "not_grounded": "No: the answer has unsupported claims or the passages do not answer the question"
+            },
+            "output": "verdict"
+          }
+        },
+        {
+          "id": "final_ok",
+          "type": "template",
+          "label": {
+            "zh": "通過",
+            "en": "Grounded"
+          },
+          "params": {
+            "template": "{answer}\n\n✅ 已通過依據檢查 / grounded (nimble)",
+            "output": "final"
+          }
+        },
+        {
+          "id": "fallback",
+          "type": "llm",
+          "label": {
+            "zh": "保守回覆",
+            "en": "Cautious reply"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "A draft answer could not be verified against the company documents. Write a short reply that says what is uncertain, states only what the passages support, and suggests which department to ask. Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).\n\nQuestion: {question}\n\nPassages:\n{context}\n\nDraft: {answer}",
+            "output": "final"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "rewrite"
+        },
+        {
+          "from": "rewrite",
+          "to": "bm25"
+        },
+        {
+          "from": "rewrite",
+          "to": "vector"
+        },
+        {
+          "from": "bm25",
+          "to": "fuse"
+        },
+        {
+          "from": "vector",
+          "to": "fuse"
+        },
+        {
+          "from": "fuse",
+          "to": "rerank"
+        },
+        {
+          "from": "rerank",
+          "to": "answer"
+        },
+        {
+          "from": "answer",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "final_ok",
+          "when": "grounded"
+        },
+        {
+          "from": "check",
+          "to": "fallback",
+          "when": "not_grounded"
+        },
+        {
+          "from": "final_ok",
+          "to": "END"
+        },
+        {
+          "from": "fallback",
+          "to": "END"
+        }
+      ],
+      "output": "final"
+    },
+    {
+      "id": "dept_rag",
+      "category": "rag",
+      "name": {
+        "zh": "權限感知知識助理",
+        "en": "Permission-aware knowledge assistant"
+      },
+      "description": {
+        "zh": "依提問者的部門過濾可檢索的文件：同一個問題，人資部查得到薪資制度，業務部查不到。",
+        "en": "Retrieval is filtered by the asker's department: the same question finds the pay policy for HR but not for Sales."
+      },
+      "highlights": {
+        "zh": [
+          "權限在檢索階段就過濾，機密段落不會進到 prompt",
+          "試試：以業務部與人資部各問一次「P3 職等月薪範圍」"
+        ],
+        "en": [
+          "Filtering happens at retrieval, so restricted passages never reach the prompt",
+          "Try 'P3 grade salary range' as Sales and then as HR"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "question",
+          "type": "text",
+          "label": {
+            "zh": "問題",
+            "en": "Question"
+          }
+        },
+        {
+          "key": "department",
+          "type": "choice",
+          "label": {
+            "zh": "提問者部門",
+            "en": "Asker's department"
+          },
+          "options": {
+            "sales": {
+              "zh": "業務部",
+              "en": "Sales"
+            },
+            "hr": {
+              "zh": "人資部",
+              "en": "HR"
+            },
+            "support": {
+              "zh": "客服部",
+              "en": "Support"
+            }
+          },
+          "default": "sales"
+        }
+      ],
+      "examples": {
+        "zh": [
+          "P3 職等的月薪範圍是多少？",
+          "業務經理最多可以給多少折扣？",
+          "品質異常什麼時候要啟動 8D？"
+        ],
+        "en": [
+          "What is the monthly salary range for grade P3?",
+          "What is the maximum discount a sales manager may give?",
+          "When must an 8D be started for a quality issue?"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "bm25",
+          "type": "retrieve_bm25",
+          "label": {
+            "zh": "BM25 關鍵字",
+            "en": "BM25 keywords"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "question",
+            "top_k": 8,
+            "role": "{department}",
+            "output": "bm25_hits"
+          }
+        },
+        {
+          "id": "vector",
+          "type": "retrieve_vector",
+          "label": {
+            "zh": "向量檢索",
+            "en": "Vector search"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "question",
+            "top_k": 8,
+            "role": "{department}",
+            "output": "vector_hits"
+          }
+        },
+        {
+          "id": "fuse",
+          "type": "rrf",
+          "label": {
+            "zh": "RRF 融合",
+            "en": "RRF fusion"
+          },
+          "join": "all",
+          "params": {
+            "inputs": [
+              "bm25_hits",
+              "vector_hits"
+            ],
+            "k": 60,
+            "top_k": 8,
+            "output": "fused"
+          }
+        },
+        {
+          "id": "rerank",
+          "type": "rerank",
+          "label": {
+            "zh": "Rerank",
+            "en": "Rerank"
+          },
+          "params": {
+            "model": "bge-reranker-v2-m3",
+            "query": "question",
+            "input": "fused",
+            "top_n": 4,
+            "output": "context"
+          }
+        },
+        {
+          "id": "answer",
+          "type": "llm",
+          "label": {
+            "zh": "部門回答",
+            "en": "Department answer"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "system": "You answer questions about the internal rules of 示範精密工業 (a fictional Taiwanese precision-parts maker) using only the numbered passages. Cite them as [n]. If the passages do not contain the answer, say so. Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan). You serve the {department} department; if the passages do not cover the question, say that the documents available to this department do not include it.",
+            "prompt": "Passages:\n{context}\n\nQuestion: {question}\n\nAnswer in complete sentences, in the same language as the question above.",
+            "output": "answer"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "bm25"
+        },
+        {
+          "from": "START",
+          "to": "vector"
+        },
+        {
+          "from": "bm25",
+          "to": "fuse"
+        },
+        {
+          "from": "vector",
+          "to": "fuse"
+        },
+        {
+          "from": "fuse",
+          "to": "rerank"
+        },
+        {
+          "from": "rerank",
+          "to": "answer"
+        },
+        {
+          "from": "answer",
+          "to": "END"
+        }
+      ],
+      "output": "answer"
+    },
+    {
+      "id": "meeting_minutes",
+      "category": "speech",
+      "name": {
+        "zh": "會議錄音 → 會議紀錄",
+        "en": "Meeting recording → minutes"
+      },
+      "description": {
+        "zh": "Breeze-ASR-25 把台灣華語錄音轉成逐字稿，兩個 LLM 平行產生摘要與待辦事項，再組成會議紀錄。",
+        "en": "Breeze-ASR-25 transcribes Taiwanese-Mandarin audio; two LLMs write the summary and the action items in parallel, then the minutes are assembled."
+      },
+      "highlights": {
+        "zh": [
+          "非 Ollama 模型（語音辨識）與 Ollama LLM 串在同一條流程",
+          "摘要與待辦平行執行"
+        ],
+        "en": [
+          "A non-Ollama model (speech recognition) chained with Ollama LLMs",
+          "Summary and action items run in parallel"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "audio_path",
+          "type": "audio",
+          "label": {
+            "zh": "會議錄音",
+            "en": "Meeting audio"
+          },
+          "default": "data/lab/samples/meeting_zh.wav"
+        }
+      ],
+      "examples": {
+        "zh": [],
+        "en": []
+      },
+      "nodes": [
+        {
+          "id": "asr",
+          "type": "transcribe",
+          "label": {
+            "zh": "語音轉文字",
+            "en": "Speech to text"
+          },
+          "params": {
+            "model": "breeze-asr-25",
+            "input": "audio_path",
+            "language": "zh",
+            "output": "transcript"
+          }
+        },
+        {
+          "id": "summary",
+          "type": "llm",
+          "label": {
+            "zh": "摘要",
+            "en": "Summary"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Summarize this meeting transcript in 4–6 bullet points in Traditional Chinese. Keep names, numbers and dates exact.\n\nTranscript:\n{transcript}",
+            "output": "summary"
+          }
+        },
+        {
+          "id": "actions",
+          "type": "llm",
+          "label": {
+            "zh": "待辦事項",
+            "en": "Action items"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Extract the action items from this meeting transcript as a Markdown table with columns 負責人 | 事項 | 期限. Include only items actually stated; write '未提及' when an owner or date is missing.\n\nTranscript:\n{transcript}",
+            "output": "actions"
+          }
+        },
+        {
+          "id": "minutes",
+          "type": "template",
+          "label": {
+            "zh": "會議紀錄",
+            "en": "Minutes"
+          },
+          "join": "all",
+          "params": {
+            "template": "## 會議摘要 / Summary\n{summary}\n\n## 待辦事項 / Action items\n{actions}\n\n## 逐字稿 / Transcript\n{transcript}",
+            "output": "minutes"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "asr"
+        },
+        {
+          "from": "asr",
+          "to": "summary"
+        },
+        {
+          "from": "asr",
+          "to": "actions"
+        },
+        {
+          "from": "summary",
+          "to": "minutes"
+        },
+        {
+          "from": "actions",
+          "to": "minutes"
+        },
+        {
+          "from": "minutes",
+          "to": "END"
+        }
+      ],
+      "output": "minutes"
+    },
+    {
+      "id": "contract_review",
+      "category": "documents",
+      "name": {
+        "zh": "合約審閱（Docling 解析＋雙 LLM）",
+        "en": "Contract review (Docling + two LLMs)"
+      },
+      "description": {
+        "zh": "Docling 把 PDF 合約（含表格）轉成 Markdown，一個 LLM 抽出關鍵條款，另一個從買方角度找出風險條款。",
+        "en": "Docling turns the PDF contract (tables included) into Markdown; one LLM extracts the key terms while another flags risky clauses for the buyer."
+      },
+      "highlights": {
+        "zh": [
+          "表格解析品質直接影響抽取結果",
+          "兩個審閱角度平行執行"
+        ],
+        "en": [
+          "Table parsing quality drives extraction quality",
+          "Two review angles run in parallel"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "document_path",
+          "type": "document",
+          "label": {
+            "zh": "合約 PDF",
+            "en": "Contract PDF"
+          },
+          "default": "data/lab/samples/supplier_contract.pdf"
+        }
+      ],
+      "examples": {
+        "zh": [],
+        "en": []
+      },
+      "nodes": [
+        {
+          "id": "parse",
+          "type": "parse_document",
+          "label": {
+            "zh": "文件解析",
+            "en": "Parse document"
+          },
+          "params": {
+            "model": "docling",
+            "input": "document_path",
+            "output": "document"
+          }
+        },
+        {
+          "id": "terms",
+          "type": "llm",
+          "label": {
+            "zh": "關鍵條款",
+            "en": "Key terms"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Extract the key terms of this contract as a Markdown table (項目 | 內容): parties, term, prices and payment terms, delivery, late-delivery penalty, warranty, termination, governing law. Write in Traditional Chinese.\n\nContract:\n{document}",
+            "output": "terms"
+          }
+        },
+        {
+          "id": "risks",
+          "type": "llm",
+          "label": {
+            "zh": "風險條款",
+            "en": "Risky clauses"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "You review this supplier contract for 示範精密工業, the buyer. List the 3–5 clauses with the highest risk for the buyer; for each give: clause, why it is risky, suggested change. Write in Traditional Chinese.\n\nContract:\n{document}",
+            "output": "risks"
+          }
+        },
+        {
+          "id": "report",
+          "type": "template",
+          "label": {
+            "zh": "審閱報告",
+            "en": "Review report"
+          },
+          "join": "all",
+          "params": {
+            "template": "## 關鍵條款 / Key terms\n{terms}\n\n## 風險條款 / Risks\n{risks}",
+            "output": "report"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "parse"
+        },
+        {
+          "from": "parse",
+          "to": "terms"
+        },
+        {
+          "from": "parse",
+          "to": "risks"
+        },
+        {
+          "from": "terms",
+          "to": "report"
+        },
+        {
+          "from": "risks",
+          "to": "report"
+        },
+        {
+          "from": "report",
+          "to": "END"
+        }
+      ],
+      "output": "report"
+    },
+    {
+      "id": "support_triage",
+      "category": "routing",
+      "name": {
+        "zh": "客服工單分流＋回覆草稿",
+        "en": "Support ticket triage + reply draft"
+      },
+      "description": {
+        "zh": "nimble 一次判斷負責團隊、緊急程度、是否要求退款；同時檢索客服 SOP；LLM 草擬回覆後由「主管」LLM 依 SOP 校稿。",
+        "en": "nimble answers three questions at once (team, urgency, refund request) while the support SOP is retrieved; one LLM drafts the reply and a 'team lead' LLM checks it against the SOP."
+      },
+      "highlights": {
+        "zh": [
+          "分類與檢索平行執行，草稿等兩邊都完成",
+          "兩階段 LLM：草擬 → 審核"
+        ],
+        "en": [
+          "Classification and retrieval run in parallel; the draft waits for both",
+          "Two LLM stages: draft → review"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "ticket",
+          "type": "text",
+          "label": {
+            "zh": "客戶工單",
+            "en": "Customer ticket"
+          }
+        }
+      ],
+      "examples": {
+        "zh": [
+          "你們上個月出的 SM-400 伺服馬達有 3 台開機就跳 Err-21，我們產線已經停了，請盡快處理，不行的話要退貨退款。",
+          "請問 LG20 線性滑軌多久要上一次油？",
+          "發票抬頭開錯了，麻煩重新開立。"
+        ],
+        "en": [
+          "Three SM-400 servo motors from last month throw Err-21 at start-up and our line is down. Please fix this urgently, otherwise we want a return and refund.",
+          "How often should the LG20 linear guide be lubricated?",
+          "The company name on our invoice is wrong, please reissue it."
+        ]
+      },
+      "nodes": [
+        {
+          "id": "triage",
+          "type": "classify",
+          "label": {
+            "zh": "工單分類",
+            "en": "Ticket triage"
+          },
+          "params": {
+            "model": "nimble:9b",
+            "input": "ticket",
+            "questions": {
+              "team": {
+                "type": "choice",
+                "instructions": "Which team should handle this ticket?",
+                "criteria": {
+                  "technical": "Product malfunction or how-to question",
+                  "quality": "Defects, repeated failures, safety issues",
+                  "billing": "Invoices, payments, refunds",
+                  "shipping": "Delivery, logistics, wrong quantity"
+                }
+              },
+              "urgency": {
+                "type": "score",
+                "instructions": "How urgent is this ticket for the customer?",
+                "criteria": [
+                  "Routine",
+                  "High",
+                  "Urgent"
+                ]
+              },
+              "refund": {
+                "type": "noul",
+                "instructions": "Does the customer ask for a refund or a return?"
+              }
+            },
+            "output": "triage"
+          }
+        },
+        {
+          "id": "bm25",
+          "type": "retrieve_bm25",
+          "label": {
+            "zh": "BM25 關鍵字",
+            "en": "BM25 keywords"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "ticket",
+            "top_k": 8,
+            "role": "support",
+            "output": "bm25_hits"
+          }
+        },
+        {
+          "id": "vector",
+          "type": "retrieve_vector",
+          "label": {
+            "zh": "向量檢索",
+            "en": "Vector search"
+          },
+          "params": {
+            "collection": "company_kb",
+            "input": "ticket",
+            "top_k": 8,
+            "role": "support",
+            "output": "vector_hits"
+          }
+        },
+        {
+          "id": "fuse",
+          "type": "rrf",
+          "label": {
+            "zh": "RRF 融合",
+            "en": "RRF fusion"
+          },
+          "join": "all",
+          "params": {
+            "inputs": [
+              "bm25_hits",
+              "vector_hits"
+            ],
+            "k": 60,
+            "top_k": 8,
+            "output": "fused"
+          }
+        },
+        {
+          "id": "rerank",
+          "type": "rerank",
+          "label": {
+            "zh": "Rerank",
+            "en": "Rerank"
+          },
+          "params": {
+            "model": "bge-reranker-v2-m3",
+            "query": "ticket",
+            "input": "fused",
+            "top_n": 4,
+            "output": "context"
+          }
+        },
+        {
+          "id": "draft",
+          "type": "llm",
+          "label": {
+            "zh": "回覆草稿",
+            "en": "Draft reply"
+          },
+          "join": "all",
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Draft a reply to this customer ticket following the support SOP passages.\n\nTicket: {ticket}\nTriage: team={team}, urgency={urgency}, refund requested={refund}\n\nSOP passages:\n{context}\n\nApologize, confirm the problem, give concrete next steps and response times from the SOP, and the contact channel. Do not promise compensation.\n\nLanguage: write the whole reply in the language the ticket is written in — an English ticket gets an English reply, a Chinese ticket a Traditional-Chinese reply — even though the SOP passages are in Chinese.",
+            "output": "draft"
+          }
+        },
+        {
+          "id": "review",
+          "type": "llm",
+          "label": {
+            "zh": "主管校稿",
+            "en": "Lead review"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "You are the support team lead. Check the draft against the SOP: no promised compensation or root cause, the response time matches the urgency, quality/safety issues are escalated. Output only the final reply, corrected if needed, in the same language as the draft (the customer's language).\n\nSOP passages:\n{context}\n\nDraft:\n{draft}",
+            "output": "reply"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "triage"
+        },
+        {
+          "from": "START",
+          "to": "bm25"
+        },
+        {
+          "from": "START",
+          "to": "vector"
+        },
+        {
+          "from": "bm25",
+          "to": "fuse"
+        },
+        {
+          "from": "vector",
+          "to": "fuse"
+        },
+        {
+          "from": "fuse",
+          "to": "rerank"
+        },
+        {
+          "from": "triage",
+          "to": "draft"
+        },
+        {
+          "from": "rerank",
+          "to": "draft"
+        },
+        {
+          "from": "draft",
+          "to": "review"
+        },
+        {
+          "from": "review",
+          "to": "END"
+        }
+      ],
+      "output": "reply"
+    },
+    {
+      "id": "mixture_of_agents",
+      "category": "multi_model",
+      "name": {
+        "zh": "多模型合議（Mixture of Agents）",
+        "en": "Mixture of agents"
+      },
+      "description": {
+        "zh": "三個不同的地端模型（Qwen3 30B、台灣 TAIDE 12B、Qwen3 1.7B）平行回答，再由彙整者綜合成最佳答案。",
+        "en": "Three different local models (Qwen3 30B, Taiwan's TAIDE 12B, Qwen3 1.7B) answer in parallel; an aggregator merges them into the best answer."
+      },
+      "highlights": {
+        "zh": [
+          "同時載入三個模型（OLLAMA_NUM_PARALLEL=3）",
+          "時間軸可看出三個模型的速度差異"
+        ],
+        "en": [
+          "Three models loaded at once (OLLAMA_NUM_PARALLEL=3)",
+          "The timeline shows the speed of each model"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "question",
+          "type": "text",
+          "label": {
+            "zh": "問題",
+            "en": "Question"
+          }
+        }
+      ],
+      "examples": {
+        "zh": [
+          "用三句話向國中生解釋什麼是地端 AI",
+          "台灣的半導體產業為什麼重要？",
+          "幫我想 3 個公司內部 AI 導入活動的標語"
+        ],
+        "en": [
+          "Explain on-prem AI to a 13-year-old in three sentences",
+          "Why does Taiwan's semiconductor industry matter?",
+          "Suggest 3 slogans for an internal AI adoption campaign"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "qwen",
+          "type": "llm",
+          "label": {
+            "zh": "Qwen3 30B",
+            "en": "Qwen3 30B"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "system": "Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).",
+            "prompt": "{question}",
+            "output": "answer_qwen"
+          }
+        },
+        {
+          "id": "taide",
+          "type": "llm",
+          "label": {
+            "zh": "TAIDE 12B",
+            "en": "TAIDE 12B"
+          },
+          "params": {
+            "model": "hf.co/audreyt/Gemma-3-TAIDE-12b-Chat-2602-GGUF:Q4_K_M",
+            "system": "Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).",
+            "prompt": "{question}",
+            "output": "answer_taide"
+          }
+        },
+        {
+          "id": "small",
+          "type": "llm",
+          "label": {
+            "zh": "Qwen3 1.7B",
+            "en": "Qwen3 1.7B"
+          },
+          "params": {
+            "model": "qwen3:1.7b",
+            "system": "Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).",
+            "prompt": "{question}",
+            "output": "answer_small"
+          }
+        },
+        {
+          "id": "aggregate",
+          "type": "llm",
+          "label": {
+            "zh": "彙整者",
+            "en": "Aggregator"
+          },
+          "join": "all",
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Three local models answered the same question. Write the best final answer, combining their strengths and fixing mistakes. Then add one line starting with '評語 / Notes:' saying what each answer contributed. Answer in the language of the user's question; for Chinese use Traditional Chinese (Taiwan).\n\nQuestion: {question}\n\n[A] qwen3:30b-a3b:\n{answer_qwen}\n\n[B] TAIDE 12B:\n{answer_taide}\n\n[C] qwen3:1.7b:\n{answer_small}",
+            "output": "answer"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "qwen"
+        },
+        {
+          "from": "START",
+          "to": "taide"
+        },
+        {
+          "from": "START",
+          "to": "small"
+        },
+        {
+          "from": "qwen",
+          "to": "aggregate"
+        },
+        {
+          "from": "taide",
+          "to": "aggregate"
+        },
+        {
+          "from": "small",
+          "to": "aggregate"
+        },
+        {
+          "from": "aggregate",
+          "to": "END"
+        }
+      ],
+      "output": "answer"
+    },
+    {
+      "id": "sales_report",
+      "category": "pipeline",
+      "name": {
+        "zh": "業務週報（分析 agent → 撰寫 → 翻譯）",
+        "en": "Sales memo (analyst agent → writer → translator)"
+      },
+      "description": {
+        "zh": "業務部 agent 查資料庫取得數字，撰寫者整理成主管備忘錄，翻譯者產出英文版。",
+        "en": "The sales agent pulls numbers from the database, a writer turns them into a management memo, and a translator produces the English version."
+      },
+      "highlights": {
+        "zh": [
+          "工具呼叫 agent 與一般 LLM 串成流水線",
+          "撰寫者被要求不得捏造數字"
+        ],
+        "en": [
+          "A tool-calling agent chained with plain LLMs",
+          "The writer is told never to invent numbers"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "topic",
+          "type": "text",
+          "label": {
+            "zh": "主題",
+            "en": "Topic"
+          }
+        }
+      ],
+      "examples": {
+        "zh": [
+          "2026 年各城市營收前五名",
+          "目前低於安全存量的產品與倉庫"
+        ],
+        "en": [
+          "Top five cities by revenue in 2026",
+          "Products below safety stock, by warehouse"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "analyst",
+          "type": "agent",
+          "label": {
+            "zh": "分析 agent",
+            "en": "Analyst agent"
+          },
+          "params": {
+            "agent": "company_sales",
+            "input": "topic",
+            "output": "findings"
+          }
+        },
+        {
+          "id": "writer",
+          "type": "llm",
+          "label": {
+            "zh": "撰寫備忘錄",
+            "en": "Write memo"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Write a one-page management memo in Traditional Chinese from these findings of the sales database. Structure: 重點摘要 (3 bullets), 數據 (Markdown table), 建議 (2–3 bullets). Use only numbers from the findings.\n\nTopic: {topic}\n\nFindings:\n{findings}",
+            "output": "memo_zh"
+          }
+        },
+        {
+          "id": "translate",
+          "type": "llm",
+          "label": {
+            "zh": "翻譯英文",
+            "en": "Translate to English"
+          },
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "Translate this memo into natural business English. Keep the Markdown structure, tables and numbers. Output only the translation.\n\n{memo_zh}",
+            "output": "memo_en"
+          }
+        },
+        {
+          "id": "report",
+          "type": "template",
+          "label": {
+            "zh": "雙語備忘錄",
+            "en": "Bilingual memo"
+          },
+          "params": {
+            "template": "{memo_zh}\n\n---\n\n### English version\n\n{memo_en}",
+            "output": "report"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "analyst"
+        },
+        {
+          "from": "analyst",
+          "to": "writer"
+        },
+        {
+          "from": "writer",
+          "to": "translate"
+        },
+        {
+          "from": "translate",
+          "to": "report"
+        },
+        {
+          "from": "report",
+          "to": "END"
+        }
+      ],
+      "output": "report"
+    }
+  ]
+}
