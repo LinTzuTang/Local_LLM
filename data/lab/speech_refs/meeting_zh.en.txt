@@ -1,0 +1,11 @@
+# English reference translation of data/lab/samples/meeting_zh.txt, for chrF / BLEU on the speech page.
+# Written for this project (not a professional translation); one line per spoken line.
+Good morning, everyone. Let's start the week 42 production and sales meeting. First, the production update: this week the CNC line's utilisation rate was 87 percent, up three percentage points from last week.
+On the sales side, Beichen Automation has ordered an additional 500 sets of linear guides, and the customer wants them delivered before October 31.
+This order is held up by the servo motors. Dongsheng Electromechanical has told us the servo motors will be two weeks late; they are now expected to arrive at the plant on October 24.
+Then we won't meet the customer's delivery date. Can we ship part of it first?
+Yes. Decision: we ship 250 sets first and deliver the remaining 250 sets by November 7. Manager Chen, please notify the customer by October 15 and confirm that they agree to a split delivery.
+OK, I'll call the customer this afternoon. Next, a quality issue: the bearing housings in last week's customer complaint had an out-of-tolerance inner diameter, with a defect rate of 2.3 percent.
+The quality assurance section has found the cause: tool wear on lathe number three. Decision: the tools on all lathes will now be checked every eight hours. Wang Jianguo from quality assurance is responsible for re-inspecting all inventory by October 17 and submitting a corrective and preventive action report.
+For the 120 pieces the customer returned, we will send new replacements; I'll check the stock with the warehouse first.
+Finally, the next meeting is moved to Monday, October 20, at 9 a.m. I will email the minutes and action items to everyone after the meeting. Meeting adjourned.

@@ -26,6 +26,7 @@ PHASE_GOALS = {
 
 
 def step(icon, phase, title, page, page_name, short, do, see, stage):
+    """icon: a Material Symbols name."""
     return {
         "icon": icon,
         "phase": phase,
@@ -41,7 +42,7 @@ def step(icon, phase, title, page, page_name, short, do, see, stage):
 
 STEPS = [
     step(
-        "📦",
+        "apps",
         "prepare",
         tr("選模型", "Pick models"),
         "views/models.py",
@@ -62,16 +63,18 @@ STEPS = [
         tr("平台建置", "Platform setup"),
     ),
     step(
-        "⚖️",
+        "balance",
         "prepare",
         tr("比較模型", "Compare models"),
         "views/compare.py",
         tr("模型比較", "Compare models"),
         tr("選出公司預設模型", "Choose the default model"),
         tr(
-            "按「快速組合 → 台灣主權 LLM」，用「繁中寫作」題目跑一次，開啟裁判評分。",
+            "按「快速組合 → 台灣主權 LLM」，用「繁中寫作」題目跑一次，開啟裁判評分。"
+            "語音模型在「語音模型比較」：逐字稿、噪音與電話音質、翻成英文、會議講者。",
             "Pick the 'Taiwan sovereign LLMs' preset, run the Traditional-Chinese writing prompt "
-            "and turn on the judge.",
+            "and turn on the judge. Speech models are on 'Compare speech models': transcripts, "
+            "noise and telephone audio, translation to English, meeting speakers.",
         ),
         tr(
             "同一題各模型的答案、速度、分數並排，決定公司預設模型。",
@@ -80,15 +83,16 @@ STEPS = [
         tr("模型選型", "Model selection"),
     ),
     step(
-        "🔐",
+        "database",
         "prepare",
         tr("準備資料與權限", "Data & permissions"),
         "views/company.py",
         tr("公司資料庫", "Company database"),
         tr("權限由資料庫強制", "Access enforced by the DB"),
         tr(
-            "在「⬆️ 上傳資料」上傳一份 CSV，再到「🔐 權限設定」只開放給業務部。",
-            "Upload a CSV under 'Upload', then open it to Sales only under 'Permissions'.",
+            "在「上傳資料」上傳一份 CSV，再到「身分與權限」只開放給業務部。",
+            "Upload a CSV under 'Upload data', then open it to Sales only under 'Identities & "
+            "permissions'.",
         ),
         tr(
             "權限由資料庫強制：沒開放的部門 agent 根本查不到。",
@@ -97,14 +101,14 @@ STEPS = [
         tr("資料盤點與分級", "Data inventory"),
     ),
     step(
-        "📚",
+        "library_books",
         "pilot",
         tr("文件知識庫", "Document knowledge base"),
         "views/knowledge.py",
         tr("知識庫 RAG", "Knowledge base"),
         tr("混合檢索＋權限過濾", "Hybrid, permission-aware search"),
         tr(
-            "在「🔎 檢索比較」用英文問中文文件，比較 BM25、向量、RRF 與 Rerank 的排名；"
+            "在「檢索比較」用英文問中文文件，比較 BM25、向量、RRF 與 Rerank 的排名；"
             "再以業務部身分查「P3 月薪範圍」。",
             "In 'Compare retrieval' ask an English question over Chinese documents and compare "
             "BM25, vector, RRF and rerank; then search 'P3 salary range' as Sales.",
@@ -117,7 +121,7 @@ STEPS = [
         tr("知識管理", "Knowledge management"),
     ),
     step(
-        "🆚",
+        "compare",
         "pilot",
         tr("部門試點", "Department pilot"),
         "views/agent_compare.py",
@@ -136,7 +140,7 @@ STEPS = [
         tr("受控試點", "Controlled pilot"),
     ),
     step(
-        "🕸️",
+        "hub",
         "pilot",
         tr("多 Agent 流程", "Multi-agent workflows"),
         "views/scenarios.py",
@@ -154,7 +158,7 @@ STEPS = [
         tr("流程自動化", "Workflow automation"),
     ),
     step(
-        "✋",
+        "front_hand",
         "govern",
         tr("外部資料要核准", "Approve external calls"),
         "views/agent.py",
@@ -172,7 +176,7 @@ STEPS = [
         tr("治理與資安", "Governance & security"),
     ),
     step(
-        "🔁",
+        "autorenew",
         "operate",
         tr("持續調整與稽核", "Iterate & audit"),
         "views/control.py",
@@ -272,7 +276,7 @@ def journey() -> str:
         color = PHASES[s["phase"]][2]
         nodes.append(
             f'<a class="rm-node" href="#rm-step-{i}" target="_self" style="--c:{color}">'
-            f'<div class="rm-dot">{s["icon"]}</div>'
+            f'<div class="rm-dot">{ui.icon(s["icon"], size="26px", color=color)}</div>'
             f'<div class="rm-num">{tr("步驟", "STEP")} {i}</div>'
             f'<div class="rm-t">{esc(s["title"])}</div>'
             f'<div class="rm-s">{esc(s["short"])}</div></a>'
@@ -288,7 +292,8 @@ def step_card(i: int, s: dict) -> None:
     with st.container(border=True):
         st.markdown(
             f'<div class="rm-card" id="rm-step-{i}" style="--c:{color}">'
-            f'<div class="rm-card-head"><div class="rm-ic">{s["icon"]}</div><div>'
+            f'<div class="rm-card-head"><div class="rm-ic">'
+            f"{ui.icon(s['icon'], size='24px', color=color)}</div><div>"
             f'<div class="rm-eyebrow">{tr("步驟", "Step")} {i} · {esc(s["stage"])}</div>'
             f'<div class="rm-title">{esc(s["title"])}</div></div></div>'
             f'<div class="rm-lbl">{tr("怎麼做", "WHAT YOU DO")}</div>'
@@ -455,7 +460,7 @@ def plan_chart() -> alt.LayerChart:
 
 st.markdown(CSS, unsafe_allow_html=True)
 ui.page_header(
-    "🗺️",
+    "map",
     tr("導入路線圖", "Adoption roadmap"),
     tr(
         "情境：示範精密工業（虛構，約 300 人）想導入地端 AI，資料不能離開公司。"
@@ -503,7 +508,8 @@ with st.container(border=True):
 st.markdown(f"### {tr('正式導入前還要補的', 'Still needed before production')}")
 needs = [
     (
-        tr("🔑 使用者登入（SSO）", "🔑 User login (SSO)"),
+        "key",
+        tr("使用者登入（SSO）", "User login (SSO)"),
         tr(
             "目前權限依「選哪個 agent」決定，而不是「誰登入」；正式環境要接 AD／SSO。",
             "Permissions follow the chosen agent, not the signed-in user; production needs "
@@ -511,7 +517,8 @@ needs = [
         ),
     ),
     (
-        tr("🧪 評測題庫", "🧪 Evaluation set"),
+        "science",
+        tr("評測題庫", "Evaluation set"),
         tr(
             "每個用途 100–300 題繁中標準答案與攻擊題，換模型前先跑回歸評測。",
             "100–300 Traditional-Chinese reference questions and attack prompts per use case, "
@@ -519,7 +526,8 @@ needs = [
         ),
     ),
     (
-        tr("📊 用量上限", "📊 Usage quotas"),
+        "bar_chart",
+        tr("用量上限", "Usage quotas"),
         tr(
             "依部門與使用者設定用量上限與報表，避免單一部門佔滿 GPU。",
             "Per-department and per-user limits and reports, so no team can hog the GPU.",
@@ -528,7 +536,9 @@ needs = [
 ]
 st.markdown(
     '<div class="rm-need">'
-    + "".join(f"<div><b>{esc(t)}</b><span>{esc(d)}</span></div>" for t, d in needs)
+    + "".join(
+        f"<div><b>{ui.icon(ic)} {esc(t)}</b><span>{esc(d)}</span></div>" for ic, t, d in needs
+    )
     + "</div>",
     unsafe_allow_html=True,
 )

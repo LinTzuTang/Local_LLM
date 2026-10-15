@@ -36,7 +36,7 @@ from local_llm.lab import store
 
 lang = i18n.current()
 ui.page_header(
-    "🤖",
+    "smart_toy",
     tr("Agent 工作室", "Agent studio"),
     tr(
         "在左邊組一個 agent：選模型、寫 system prompt、勾選工具與技能、指定資料庫身分（決定它能看到哪些資料），"
@@ -54,7 +54,7 @@ base_key = st.selectbox(
     tr("從哪個 agent 開始", "Start from"),
     [NEW, *definitions],
     format_func=lambda k: (
-        tr("➕ 新的空白 agent", "➕ New blank agent") if k == NEW else AGENTS[k].label(lang)
+        tr("+ 新的空白 agent", "+ New blank agent") if k == NEW else AGENTS[k].label(lang)
     ),
     **kept("agent_type"),
 )
@@ -95,10 +95,18 @@ with config_col.container(border=True):
         "System prompt", base["system_prompt"], height=170, key=wkey("prompt")
     )
 
-    def tool_label(name: str) -> str:
+    def tool_kind(name: str) -> str:
         info = TOOL_INFO.get(name)
-        icon = "🌐" if info and info.network else ("🗄️" if name.startswith("db_") else "🛠️")
-        return f"{icon} {name}"
+        return "network" if info and info.network else ("db" if name.startswith("db_") else "")
+
+    def tool_label(name: str) -> str:
+        """Option text (multiselect options cannot show icons): a plain-text kind suffix."""
+        kind = tool_kind(name)
+        suffix = {"network": tr("連網", "network"), "db": tr("資料庫", "database")}.get(kind)
+        return f"{name} · {suffix}" if suffix else name
+
+    def tool_icon(name: str) -> str:
+        return {"network": "public", "db": "database"}.get(tool_kind(name), "build")
 
     chosen_tools = st.multiselect(
         tr("工具", "Tools"),
@@ -107,8 +115,10 @@ with config_col.container(border=True):
         format_func=tool_label,
         key=wkey("tools"),
         help=tr(
-            "🛠️ 本機　🗄️ 公司資料庫（依下方身分的權限）　🌐 會連網，需要允許並核准",
-            "🛠️ local · 🗄️ company database (with the identity below) · 🌐 network, needs "
+            ":material/build: 本機　:material/database: 標「資料庫」：公司資料庫（依下方身分的權限）"
+            "　:material/public: 標「連網」：會連網，需要允許並核准",
+            ":material/build: local · :material/database: tagged “database”: company database "
+            "(with the identity below) · :material/public: tagged “network”: goes online, needs "
             "permission and approval",
         ),
     )
@@ -136,17 +146,15 @@ with config_col.container(border=True):
         )
         st.page_link(
             "views/company.py",
-            label=tr("看這個身分能讀哪些資料 →", "See what this identity can read →"),
+            label=tr("看這個身分能讀哪些資料", "See what this identity can read"),
+            icon=":material/database:",
         )
     if chosen_tools or chosen_skills:
         st.markdown(
             ui.badges(
                 [],
-                [
-                    ("🌐 " if TOOL_INFO.get(t) and TOOL_INFO[t].network else "") + t
-                    for t in chosen_tools
-                ]
-                + [f"📘 {k}" for k in chosen_skills],
+                [f":material/{tool_icon(t)}: {t}" for t in chosen_tools]
+                + [f":material/menu_book: {k}" for k in chosen_skills],
             ),
             unsafe_allow_html=True,
         )
@@ -210,7 +218,8 @@ with config_col.container(border=True):
     }
     s1, s2 = st.columns(2)
     if base_key != NEW and s1.button(
-        tr("💾 儲存變更", "💾 Save changes"),
+        tr("儲存變更", "Save changes"),
+        icon=":material/save:",
         type="primary",
         disabled=not (changed and check.ok),
         use_container_width=True,
@@ -218,7 +227,9 @@ with config_col.container(border=True):
         store.save_agent(draft, source="ui")
         st.toast(tr("已儲存（可在總控頁復原）", "Saved (undo from the control center)"))
         st.rerun()
-    with s2.popover(tr("➕ 另存新 agent", "➕ Save as new"), use_container_width=True):
+    with s2.popover(
+        tr("另存新 agent", "Save as new"), icon=":material/add:", use_container_width=True
+    ):
         new_id = st.text_input(
             tr("新 agent 的 id（英文小寫、底線）", "New agent id (lowercase, underscores)"),
             "my_agent" if base_key == NEW else f"{base_key}_copy",
@@ -394,7 +405,11 @@ with chat_col:
                 if t["rejected"]
                 else ""
             )
-            + (tr(" · ⏹️ 已停止", " · ⏹️ stopped") if t["stopped"] else "")
+            + (
+                tr(" · :material/stop_circle: 已停止", " · :material/stop_circle: stopped")
+                if t["stopped"]
+                else ""
+            )
         )
 
     @st.fragment(run_every=1)
@@ -409,10 +424,11 @@ with chat_col:
         detail = job.detail or tr("等待模型回應", "waiting for the model")
         a.info(
             tr(
-                f"⏳ Agent 執行中… {detail} · {job.elapsed():.0f}s（可切換到其他頁面，會在背景繼續）",
-                f"⏳ Agent running… {detail} · {job.elapsed():.0f}s (you can switch pages; it "
+                f"Agent 執行中… {detail} · {job.elapsed():.0f}s（可切換到其他頁面，會在背景繼續）",
+                f"Agent running… {detail} · {job.elapsed():.0f}s (you can switch pages; it "
                 "continues in the background)",
-            )
+            ),
+            icon=":material/progress_activity:",
         )
         if b.button(tr("停止", "Stop"), key=f"stop_{job.id}"):
             job.cancel.set()
@@ -439,7 +455,7 @@ with chat_col:
     elif history and not job and (last := st.session_state.get("agent_last_summary")):
         summary = summary_text(last)
         if last.get("error"):
-            summary = f"⚠️ {last['error']} · {summary}"
+            summary = f":orange[:material/error:] {last['error']} · {summary}"
         if summary:
             st.caption(summary)
 
@@ -449,17 +465,18 @@ with chat_col:
         with st.container(border=True):
             st.warning(
                 tr(
-                    "⏸️ Agent 暫停：以下外部呼叫會把資料送出這台電腦，請決定是否執行。",
-                    "⏸️ Agent paused: the external calls below send data off this computer. Decide "
+                    "Agent 暫停：以下外部呼叫會把資料送出這台電腦，請決定是否執行。",
+                    "Agent paused: the external calls below send data off this computer. Decide "
                     "whether to run them.",
-                )
+                ),
+                icon=":material/pause_circle:",
             )
             decision_labels = {"approve": tr("核准", "Approve"), "reject": tr("拒絕", "Reject")}
             with st.form("approval"):
                 choices = []
                 for i, action in enumerate(request["action_requests"]):
                     runs = TOOL_INFO[action["name"]].text(lang)[0]
-                    st.markdown(f"**🌐 `{action['name']}`** — {runs}")
+                    st.markdown(f":material/public: **`{action['name']}`** — {runs}")
                     args_text = st.text_area(
                         tr(
                             "即將送出的參數（可修改後再核准）",

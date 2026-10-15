@@ -71,6 +71,7 @@ uv run local-agent code --model qwen3.8:27b --ctx 65536 --think on
 uv run local-agent code --root /path/to/copy # 在專案副本上實驗
 uv run local-agent code -p "把 hybrid_rag 的 answer 節點改用 qwen3:1.7b"   # 單次執行
 uv run local-agent code -p "..." --approve-all --log run.json  # 腳本化（請只在副本上用）
+uv run local-agent code --resume             # 繼續最近一段對話（--resume <id> 指定）
 ```
 
 畫面會即時串流模型的思考（淡色）與回答、每次工具呼叫（`→ read_file(...)`）與結果摘要；每個寫入顯示 diff 並詢問：
@@ -78,12 +79,17 @@ uv run local-agent code -p "..." --approve-all --log run.json  # 腳本化（請
 - `y` 核准、`n` 拒絕、`e` 拒絕並輸入理由／改成怎麼做（會告訴 agent）、`a` 核准這回合剩下的全部。
 
 指令：`/undo`（復原這次 session 最新的一筆，程式或設定都可以）、`/undo list`、`/undo 2`、`/changes`、
-`/model`（列出／切換模型，對話保留）、`/mode settings|code`、`/think on|off|auto`、`/clear`、`/exit`。
+`/model`（列出／切換模型，對話保留）、`/mode settings|code`、`/think on|off|auto`、
+`/sessions`（列出存過的對話）、`/resume [n|id]`（接續某段對話）、`/clear`（開新對話，舊的仍保留）、`/exit`。
+
+**對話紀錄**：每次執行後，整段對話（含工具呼叫與結果）會存到 `storage/coder/sessions/<id>.json`
+（不進 git）。terminal 與平台頁面共用同一份紀錄：在 terminal 開始的對話可以在網頁接著聊，反之亦然。
+接續時會沿用原本的模式與上下文設定；原本的模型若已移除，改用目前選的模型。
 每回合結束顯示：時間、模型呼叫、工具呼叫、核准次數、輸出 tokens、tokens/s。
 
 ### 平台頁面：總控 Coding Agent
 
-左側欄可切換「⚙️ 只改設定」與「💻 設定＋程式碼」、選模型（預設為已安裝中最好的 coding 模型，
+左側欄最上方是「對話」選單：新對話，或選一段存過的對話繼續（可刪除）。接著可切換「⚙️ 只改設定」與「💻 設定＋程式碼」、選模型（預設為已安裝中最好的 coding 模型，
 沒安裝會提供下載按鈕）、思考模式、上下文長度。執行在背景工作中進行（切換頁面不會中斷）；
 暫停時出現核准卡片（diff、驗證結果、核准／拒絕＋理由、全部核准）。右側「變更紀錄」分
 「⚙️ 設定版本」與「💻 程式備份」兩個分頁，都可以一鍵復原。

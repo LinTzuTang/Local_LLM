@@ -43,11 +43,24 @@ st.markdown(
     }</p></div>""",
     unsafe_allow_html=True,
 )
-links = st.columns(4)
-links[0].page_link("views/scenarios.py", label=tr("場景展示", "Scenario gallery"), icon="🕸️")
-links[1].page_link("views/agent.py", label=tr("打造一個 Agent", "Build an agent"), icon="🤖")
-links[2].page_link("views/compare.py", label=tr("比較模型", "Compare models"), icon="⚖️")
-links[3].page_link("views/models.py", label=tr("瀏覽模型庫", "Browse models"), icon="📚")
+links = st.columns(5)
+links[0].page_link(
+    "views/scenarios.py", label=tr("場景展示", "Scenario gallery"), icon=":material/hub:"
+)
+links[1].page_link(
+    "views/agent.py", label=tr("打造一個 Agent", "Build an agent"), icon=":material/smart_toy:"
+)
+links[2].page_link(
+    "views/compare.py", label=tr("比較模型", "Compare models"), icon=":material/balance:"
+)
+links[3].page_link(
+    "views/speech.py",
+    label=tr("比較語音模型", "Compare speech models"),
+    icon=":material/graphic_eq:",
+)
+links[4].page_link(
+    "views/models.py", label=tr("瀏覽模型庫", "Browse models"), icon=":material/apps:"
+)
 
 
 # --- live system status --------------------------------------------------------------------------
@@ -82,6 +95,13 @@ def expires_in(stamp: str | None) -> str:
     return tr(f"{max(left, 0) / 60:.0f} 分鐘後卸載", f"unloads in {max(left, 0) / 60:.0f} min")
 
 
+JOB_ICONS = {
+    "running": ":material/progress_activity:",
+    "paused": ":material/pause_circle:",
+    "done": ":material/check_circle:",
+    "error": ":material/error:",
+    "cancelled": ":material/stop_circle:",
+}
 STATUS = {
     "running": ("執行中", "running"),
     "paused": ("等待核准", "waiting for approval"),
@@ -113,7 +133,8 @@ def live_status() -> None:
         f"<span>{dot(bool(gw_version))}{tr('模型閘道', 'Model gateway')} "
         f"{gw_version or tr('未啟動', 'down')}</span>"
         f"<span>{dot(db_ok)}PostgreSQL</span>"
-        f"<span>⏳ {tr('執行中的工作', 'Running tasks')} {len(active)}</span>"
+        f"<span>{ui.icon('pending_actions')} {tr('執行中的工作', 'Running tasks')} "
+        f"{len(active)}</span>"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -163,7 +184,7 @@ def live_status() -> None:
                 st.rerun(scope="fragment")
         for m in gw_loaded:
             x, y = st.columns([5, 1], vertical_alignment="center")
-            kind = {"asr": "asr", "doc": "doc", "rerank": "rerank"}.get(m.get("task"), "chat")
+            kind = m.get("task") if m.get("task") in ui.CAPS else "chat"  # asr, diarize, doc, …
             x.markdown(
                 f"**{m['id']}** · {m.get('device', '')} · {expires_in(m.get('expires_at'))}"
                 + ui.badges([kind], [tr("模型閘道", "gateway")]),
@@ -186,8 +207,8 @@ def live_status() -> None:
         for job in reversed(recent):
             st.page_link(
                 job.page,
-                label=f"{jobs.ICONS[job.status]} {job.title} · {tr(*STATUS[job.status])} · "
-                f"{job.elapsed():.0f}s",
+                label=f"{job.title} · {tr(*STATUS[job.status])} · {job.elapsed():.0f}s",
+                icon=JOB_ICONS.get(job.status, ":material/radio_button_unchecked:"),
             )
             if job.running and job.progress is not None:
                 st.progress(min(max(job.progress, 0.0), 1.0), text=job.detail or None)
@@ -220,12 +241,14 @@ for row in range(0, len(scenarios), 3):
         kinds = sorted({flow_ui.node_kind(n) for n in s["nodes"]} - {None})
         models = [flow_ui.short_model(m) for m in sorted(need["ollama"] | need["gateway"])]
         with col.container(border=True, height=450):
-            st.markdown(f"**{pick(s['name'])}**")
+            icon = flow_ui.category_icon(s.get("category"))
+            st.markdown(f":material/{icon}: **{pick(s['name'])}**")
             st.graphviz_chart(flow_ui.flow_dot(s, compact=True), use_container_width=True)
             st.markdown(ui.badges(kinds, models[:4]), unsafe_allow_html=True)
             st.caption(pick(s.get("description")))
             st.button(
-                tr("開啟 →", "Open →"),
+                tr("開啟", "Open"),
+                icon=":material/arrow_forward:",
                 key=f"open_{s['id']}",
                 on_click=open_scenario,
                 args=(s["id"],),

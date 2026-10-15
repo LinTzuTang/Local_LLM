@@ -18,7 +18,7 @@ from local_llm.agents import AGENTS, build
 from local_llm.config import Settings
 
 ui.page_header(
-    "🆚",
+    "compare",
     tr("多 Agent 比較", "Compare agents"),
     tr(
         "同一個問題同時問你選的 agent（最多 4 個），並排比較答案、權限、步驟與時間。"
@@ -62,10 +62,10 @@ EXAMPLES = {
 }
 # Outcome of one department's run; the run files keep the id, the page shows the label.
 VERDICTS = {
-    "error": tr("⚠️ 執行失敗", "⚠️ Failed"),
-    "stopped": tr("⏹️ 已停止", "⏹️ Stopped"),
-    "denied": tr("🔒 權限不足", "🔒 Permission denied"),
-    "answered": tr("✅ 有回答", "✅ Answered"),
+    "error": ":orange[:material/error:] " + tr("執行失敗", "Failed"),
+    "stopped": ":gray[:material/stop_circle:] " + tr("已停止", "Stopped"),
+    "denied": ":red[:material/lock:] " + tr("權限不足", "Permission denied"),
+    "answered": ":green[:material/check_circle:] " + tr("有回答", "Answered"),
 }
 
 # An English answer saying the role may not see the data (Chinese answers mention 權限).
@@ -228,7 +228,7 @@ def show(result: dict) -> None:
 
 def render(job: jobs.Job) -> None:
     state = job.state
-    st.markdown(f"#### ❓ {state['question']}")
+    st.markdown(f"#### :material/help: {state['question']}")
     keys = list(state["depts"])
     for col, key in zip(st.columns(len(keys)), keys, strict=True):
         with col.container(border=True):
@@ -237,7 +237,7 @@ def render(job: jobs.Job) -> None:
             dept = state["depts"][key]
             role = AGENTS[key].db_role if key in AGENTS else None
             st.markdown(
-                ui.badges([], [dept["model"]] + ([f"🗄️ {role}"] if role else [])),
+                ui.badges([], [dept["model"]] + ([f":material/database: {role}"] if role else [])),
                 unsafe_allow_html=True,
             )
             if dept["done"]:
@@ -246,10 +246,11 @@ def render(job: jobs.Job) -> None:
                 steps = sum(isinstance(m, AIMessage) for m in dept["messages"])
                 st.info(
                     tr(
-                        f"⏳ 執行中 {job.elapsed():.0f}s · 已呼叫 LLM {steps} 次",
-                        f"⏳ Running {job.elapsed():.0f}s · {steps} LLM call{'' if steps == 1 else 's'} so far",
+                        f"執行中 {job.elapsed():.0f}s · 已呼叫 LLM {steps} 次",
+                        f"Running {job.elapsed():.0f}s · {steps} LLM call{'' if steps == 1 else 's'} so far",
                     )
-                    + f"  \n{last_step(dept['messages'])}"
+                    + f"  \n{last_step(dept['messages'])}",
+                    icon=":material/progress_activity:",
                 )
     if job.running:
         a, b = st.columns([5, 1])

@@ -214,17 +214,70 @@ def run_rerank(p: dict, data: dict, step) -> dict:
 
 
 def run_transcribe(p: dict, data: dict, step) -> dict:
-    from .. import gateway_client
+    from .. import asr_metrics, diarization, gateway_client
 
     path = Path(lookup(p.get("input", "audio_path"), data))
-    result = gateway_client.transcribe(path, p.get("model", "breeze-asr-25"), p.get("language"))
+    model = p.get("model", "breeze-asr-25")
+    prompt = render(p["prompt"], data) if p.get("prompt") else None
+    translate = p.get("task", "transcribe") == "translate"
+    call = gateway_client.translate if translate else gateway_client.transcribe
+    result = call(path, model, p.get("language"), prompt=prompt)
     step.inputs["audio"] = path.name
+    # Speech models on the Apple GPU take turns; time spent waiting is not the model's.
+    seconds = max((result.get("seconds") or 0) - (result.get("queue_seconds") or 0), 0)
+    duration = result.get("duration")
     step.detail.update(
-        audio_seconds=result.get("duration"),
+        audio_seconds=duration,
         segments=len(result.get("segments") or []),
-        model_seconds=result.get("seconds"),
+        model_seconds=round(seconds, 2),
+        queue_seconds=result.get("queue_seconds"),
+        load_seconds=result.get("load_seconds"),
+        # Real-time factor: processing time / audio length (lower is faster).
+        rtf=round(seconds / duration, 3) if seconds and duration else None,
     )
-    return {p.get("output", "transcript"): result["text"]}
+    if result.get("truncated"):
+        step.detail["truncated"] = True  # an audio LLM hit its output cap (repetition loop)
+    text, tag = result["text"], model
+    reference = lookup(p["reference"], data) if p.get("reference") else ""
+    if len(asr_metrics.normalize(reference)) >= 5:  # "none" / "無" means no reference
+        score = asr_metrics.cer(reference, text)
+        step.detail["cer"] = score["cer"]
+        tag += f" · CER {score['cer'] * 100:.1f}%"
+    turns = data.get(p["speakers"]) if p.get("speakers") else None
+    if turns:
+        label = p.get("speaker_label") or "講者 {n}"
+        labelled = diarization.label_segments(turns, result.get("segments") or [])
+        sep = ": " if label.isascii() else "："
+        text = diarization.transcript(labelled, label, sep)
+        step.detail["speakers"] = len({t["speaker"] for t in labelled})
+    if p.get("tag_model"):
+        text = f"[{tag}] {text}"
+    return {p.get("output", "transcript"): text}
+
+
+def run_diarize(p: dict, data: dict, step) -> dict:
+    from .. import diarization, gateway_client
+
+    path = Path(lookup(p.get("input", "audio_path"), data))
+    count = p.get("num_speakers")
+    result = gateway_client.diarize(
+        path, int(count) if count else None, model=p.get("model", "speaker-diarization")
+    )
+    turns = result["segments"]
+    step.inputs["audio"] = path.name
+    names = diarization.speaker_names((t["speaker"] for t in turns), "S{n}")
+    step.detail.update(
+        speakers=result["speakers"],
+        turns=len(turns),
+        audio_seconds=result.get("duration"),
+        model_seconds=result.get("seconds"),
+        load_seconds=result.get("load_seconds"),
+    )
+    step.stream = " ".join(
+        f"{names[t['speaker']]} {t['start']:.0f}–{t['end']:.0f}s"
+        for t in diarization.merge_turns(turns)
+    )
+    return {p.get("output", "speaker_turns"): turns}
 
 
 def run_parse(p: dict, data: dict, step) -> dict:
@@ -400,13 +453,72 @@ NODE_TYPES = {
             "#FCE7F3",
             "Speech recognition through the model gateway.",
             {
-                "model": Param("Gateway ASR id.", "breeze-asr-25"),
+                "model": Param(
+                    "Gateway ASR id: breeze-asr-25, whisper-large-v3(-turbo), qwen3-asr-1.7b, "
+                    "qwen3-asr-0.6b, sensevoice-small, fun-asr-nano, or an audio LLM served "
+                    "through Ollama (gemma4:e2b, gemma4:e4b).",
+                    "breeze-asr-25",
+                ),
                 "input": Param("State key with the audio file path.", "audio_path"),
                 "language": Param("Language hint, e.g. zh or en (empty = auto).", None),
+                "prompt": Param(
+                    "Optional context (names, terms) to steer recognition; `{key}` allowed. "
+                    "Ignored by models without a context input (SenseVoice).",
+                    None,
+                ),
+                "reference": Param(
+                    "Optional state key with a reference transcript: the character error rate "
+                    "(CER, script/number/punctuation-normalised) is recorded; 'none' skips it.",
+                    None,
+                ),
+                "tag_model": Param(
+                    "Prefix the transcript with the model id and CER, e.g. `[breeze-asr-25 · "
+                    "CER 6.2%] …`, so a later prompt knows which model wrote it.",
+                    False,
+                ),
+                "task": Param(
+                    "'transcribe' (default) or 'translate': speech -> English text in one step "
+                    "(whisper-large-v3 or an audio LLM such as gemma4:e4b; Breeze, "
+                    "Taiwan-Tongues, large-v3-turbo, Qwen3-ASR and SenseVoice cannot).",
+                    "transcribe",
+                ),
+                "speakers": Param(
+                    "Optional state key with speaker turns from a diarize node: the output "
+                    "becomes a speaker-labelled transcript, one '講者 1：…' line per turn. "
+                    "Needs a model with sentence timestamps (Whisper family, Breeze-ASR-25).",
+                    None,
+                ),
+                "speaker_label": Param(
+                    "Speaker name pattern for `speakers`, with {n} = 1, 2, … in order of first "
+                    "appearance, e.g. 'Speaker {n}'.",
+                    "講者 {n}",
+                ),
                 "output": Param("State key for the transcript.", "transcript"),
             },
             run_transcribe,
             lambda p: [p.get("model", "breeze-asr-25")],
+        ),
+        NodeType(
+            "diarize",
+            {"zh": "說話者分段", "en": "Speaker diarization"},
+            "🗣️",
+            "#FCE7F3",
+            "Who spoke when, through the model gateway (pyannote segmentation + CAM++).",
+            {
+                "model": Param("Gateway diarization id.", "speaker-diarization"),
+                "input": Param("State key with the audio file path.", "audio_path"),
+                "num_speakers": Param(
+                    "Number of speakers if known (empty = estimate from the audio).", None
+                ),
+                "output": Param(
+                    "State key for the speaker turns [{start, end, speaker}] (seconds; "
+                    "speakers numbered 0, 1, … in order of first appearance); pass it to a "
+                    "transcribe node's `speakers`.",
+                    "speaker_turns",
+                ),
+            },
+            run_diarize,
+            lambda p: [p.get("model", "speaker-diarization")],
         ),
         NodeType(
             "parse_document",

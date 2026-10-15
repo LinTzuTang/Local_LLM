@@ -1,8 +1,9 @@
 """Model gateway: an Ollama-style local server for models Ollama cannot run.
 
-Speech-to-text (mlx-whisper), document parsing (Docling) and a reranker (sentence-transformers)
-get what Ollama gives LLMs: download with progress (/api/pull), lazy loading on first use,
-unloading after `keep_alive`, /api/tags and /api/ps, plus OpenAI-style inference endpoints.
+Speech-to-text (mlx-whisper, mlx-audio, and Gemma 4 audio forwarded to the local Ollama),
+document parsing (Docling) and a reranker (sentence-transformers) get what Ollama gives LLMs:
+download with progress (/api/pull), lazy loading on first use, unloading after `keep_alive`,
+/api/tags and /api/ps, plus OpenAI-style inference endpoints.
 
     uv run python -m local_llm.gateway      # http://127.0.0.1:11500, localhost only
 

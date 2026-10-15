@@ -36,7 +36,11 @@ the timeline. The control-center coding agent edits the same JSON.
 - **Routing**: a `router` node writes the chosen option, and its outgoing edges carry
   `"when": "<option>"`. Use `"when": "*"` for a fallback.
 - **Inputs**: inputs can be `text`, `choice` (with `options`), `audio` or `document`. Audio and
-  document inputs are file paths; the UI offers a bundled sample or an upload.
+  document inputs are file paths; the UI offers a bundled sample (`default`) or an upload. With
+  `"samples": [{"path": "data/lab/samples/x.wav", "label": {"zh": …, "en": …}}, …]` the page
+  offers a choice of bundled samples. A text input with `"from_sample": "<audio input key>"` is
+  pre-filled with the chosen sample's reference script (`x.txt` next to `x.wav`, `#` lines and
+  `[voice]` prefixes dropped); for an upload it falls back to the first example.
 
 ## Node types
 
@@ -50,7 +54,8 @@ the timeline. The control-center coding agent edits the same JSON.
 | `retrieve_vector` | Ollama embedding (bge-m3) | Dense search, with the same department filter |
 | `rrf` | — | Reciprocal Rank Fusion: score = Σ 1/(k + rank) |
 | `rerank` | gateway cross-encoder | Reranks passages (bge-reranker-v2-m3) |
-| `transcribe` | gateway ASR | Speech to text (Breeze-ASR-25, Whisper) |
+| `transcribe` | gateway ASR | Speech to text: Breeze-ASR-25, Whisper, Qwen3-ASR, SenseVoice, Fun-ASR-Nano, or Gemma 4 E2B/E4B through Ollama. Optional `prompt` (names, terms), `reference` (records the character error rate) and `tag_model` (prefixes `[model · CER x%]` for a later prompt). `speakers` (a state key with turns from a `diarize` node) makes the output a speaker-labelled transcript, one `講者 1：…` line per turn (`speaker_label` changes the pattern); it needs a model with sentence timestamps (Whisper family, Breeze-ASR-25). `task: "translate"` returns English instead (whisper-large-v3, Gemma 4) |
+| `diarize` | gateway diarization | Who spoke when (pyannote segmentation-3.0 + 3D-Speaker CAM++ through sherpa-onnx, on the CPU). Optional `num_speakers`; writes `[{start, end, speaker}]` to `output` (default `speaker_turns`) for a `transcribe` node's `speakers` |
 | `parse_document` | gateway Docling | PDF/DOCX → Markdown, including tables |
 | `template` | — | Combines state values into text |
 
@@ -68,6 +73,16 @@ Scenarios page lists them under "Node type reference", and the coding agent can 
 - nodes that can't be reached from START, or have no path to END
 
 It warns, without blocking, when a `{key}` isn't produced by any node or input.
+
+`meeting_minutes` chains `diarize` → `transcribe` (with `speakers`) → two parallel `llm`
+nodes, so the summary and the action items can say which speaker raised what.
+
+`asr_model_comparison` is a worked example of parallel branches joined with `"join": "all"`:
+four `transcribe` nodes (each model selectable on the page) feed one `llm` node that compares
+them against a reference transcript. The reference is a text input pre-filled with the bundled
+sample's script through `from_sample`; it offers two samples, a real read-from-script speech
+(`national_day_2026_zh.wav`, source and licence in `data/lab/samples/README.md`) and the
+synthetic meeting. A choice input sets the report language.
 
 Every save keeps the previous version in `storage/lab/history/`, and the control center can
 restore it.

@@ -9,7 +9,7 @@ from local_llm import company_db
 
 lang = current()
 ui.page_header(
-    "🗄️",
+    "database",
     tr("公司資料庫", "Company database"),
     tr(
         f"{company_db.COMPANY}的模擬 PostgreSQL（人名與公司皆為虛構）。用任何<b>資料庫身分</b>預覽資料、"
@@ -49,11 +49,21 @@ info = {t["table"]: t for t in tables}
 access = company_db.access_matrix(ROLES)
 
 # Access modes in the grant editor (stable ids; labels follow the language).
-MODES = {
-    "none": tr("⛔ 不可讀", "⛔ No access"),
-    "all": tr("✅ 全部欄位", "✅ All columns"),
-    "some": tr("🟡 部分欄位", "🟡 Some columns"),
+MODE_NAMES = {
+    "none": tr("不可讀", "No access"),
+    "all": tr("全部欄位", "All columns"),
+    "some": tr("部分欄位", "Some columns"),
 }
+# Radio labels render Markdown icons; table cells cannot, so they get plain-text marks
+# (matrix_style colours cells by these marks).
+MODE_ICONS = {
+    "none": ":gray[:material/block:]",
+    "all": ":green[:material/check_circle:]",
+    "some": ":orange[:material/contrast:]",
+}
+MARKS = {"none": "✗", "all": "✓", "some": "◐"}
+MODES = {k: f"{MODE_ICONS[k]} {v}" for k, v in MODE_NAMES.items()}
+MODE_TEXT = {k: f"{MARKS[k]} {v}" for k, v in MODE_NAMES.items()}
 
 
 def readable(role: str, table: str) -> list[str]:
@@ -69,8 +79,10 @@ def cell(role: str, table: str) -> str:
     columns, total = access[role].get(table, ([], len(info[table]["columns"])))
     mode = mode_of(role, table)
     if mode == "none":
-        return "⛔"
-    return "✅ " + tr("全部", "all") if mode == "all" else f"🟡 {len(columns)}/{total}"
+        return MARKS["none"]
+    if mode == "all":
+        return f"{MARKS['all']} " + tr("全部", "all")
+    return f"{MARKS['some']} {len(columns)}/{total}"
 
 
 def ident_label(role: str) -> str:
@@ -84,7 +96,8 @@ def column_chips(visible: list[str], columns: list[str]) -> str:
         name = html.escape(col)
         if col in visible:
             parts.append(
-                f'<span class="lab-pill" style="background:#ECFDF5;color:#047857">✓ {name}</span>'
+                f'<span class="lab-pill" style="background:#ECFDF5;color:#047857">'
+                f"{ui.icon('check')} {name}</span>"
             )
         else:
             parts.append(
@@ -95,20 +108,20 @@ def column_chips(visible: list[str], columns: list[str]) -> str:
 
 
 def matrix_style(value: str) -> str:
-    if value.startswith("✅"):
+    if value.startswith(MARKS["all"]):
         return "background-color: #ECFDF5; color: #047857"
-    if value.startswith("🟡"):
+    if value.startswith(MARKS["some"]):
         return "background-color: #FFFBEB; color: #B45309"
-    if value.startswith("⛔"):
+    if value.startswith(MARKS["none"]):
         return "background-color: #F8FAFC; color: #94A3B8"
     return ""
 
 
 preview_tab, ident_tab, upload_tab = st.tabs(
     [
-        tr("👀 以身分預覽", "👀 Preview as identity"),
-        tr("🪪 身分與權限", "🪪 Identities & permissions"),
-        tr("⬆️ 上傳資料", "⬆️ Upload data"),
+        ":material/visibility: " + tr("以身分預覽", "Preview as identity"),
+        ":material/badge: " + tr("身分與權限", "Identities & permissions"),
+        ":material/upload: " + tr("上傳資料", "Upload data"),
     ]
 )
 
@@ -145,10 +158,11 @@ with preview_tab:
             )
         )
         if not visible:
-            top_right.markdown(f"### ⛔ {tr('不可讀', 'No access')}")
+            top_right.markdown(f"### {MODE_ICONS['none']} {tr('不可讀', 'No access')}")
         else:
             top_right.markdown(
-                f"### 👁️ {len(visible)} / {len(columns)} " + tr("欄看得到", "columns visible")
+                f"### :material/visibility: {len(visible)} / {len(columns)} "
+                + tr("欄看得到", "columns visible")
             )
         st.markdown(column_chips(visible, columns), unsafe_allow_html=True)
         st.caption(
@@ -192,7 +206,7 @@ with preview_tab:
             [
                 {
                     tr("身分", "Identity"): ident_label(r),
-                    tr("權限", "Access"): MODES[mode_of(r, table)],
+                    tr("權限", "Access"): MODE_TEXT[mode_of(r, table)],
                     tr("看得到", "Visible"): ", ".join(readable(r, table)) or "—",
                     tr("隱藏", "Hidden"): ", ".join(
                         c for c in columns if c not in readable(r, table)
@@ -252,9 +266,10 @@ with ident_tab:
     st.markdown(f"#### {tr('權限矩陣', 'Permission matrix')}")
     st.caption(
         tr(
-            "列＝資料表，欄＝身分。✅ 全部欄位　🟡 部分欄位（可讀/全部）　⛔ 不可讀。資料直接取自 PostgreSQL 的權限檢查。",
-            "Rows = tables, columns = identities. ✅ all columns · 🟡 some columns "
-            "(readable/total) · ⛔ no access. Read straight from PostgreSQL's privilege checks.",
+            "列＝資料表，欄＝身分。✓ 全部欄位　◐ 部分欄位（可讀/全部）　✗ 不可讀。"
+            "資料直接取自 PostgreSQL 的權限檢查。",
+            "Rows = tables, columns = identities. ✓ all columns · ◐ some columns "
+            "(readable/total) · ✗ no access. Read straight from PostgreSQL's privilege checks.",
         )
     )
     matrix = pd.DataFrame(
@@ -357,7 +372,7 @@ with ident_tab:
 
     new_col, del_col = st.columns(2, gap="medium")
     with new_col.container(border=True):
-        st.markdown(f"#### ➕ {tr('新增身分', 'New identity')}")
+        st.markdown(f"#### :material/add: {tr('新增身分', 'New identity')}")
         with st.form("new_identity", clear_on_submit=False, border=False):
             suffix = st.text_input(
                 tr("身分代號（agent_ 後面的部分）", "Identity id (after agent_)"),
@@ -425,7 +440,7 @@ with ident_tab:
                 st.rerun()
 
     with del_col.container(border=True):
-        st.markdown(f"#### 🗑️ {tr('刪除身分', 'Delete identity')}")
+        st.markdown(f"#### :material/delete: {tr('刪除身分', 'Delete identity')}")
         custom = [r for r in ROLES if not IDENT[r]["builtin"]]
         if not custom:
             st.caption(tr("目前沒有自訂身分。", "There are no custom identities."))
@@ -453,7 +468,10 @@ with ident_tab:
                 tr(f"確定刪除 {target}", f"Yes, delete {target}"), key=f"sure_{target}"
             )
             if st.button(
-                tr("刪除", "Delete"), disabled=not sure or bool(users), key="delete_identity"
+                tr("刪除", "Delete"),
+                icon=":material/delete:",
+                disabled=not sure or bool(users),
+                key="delete_identity",
             ):
                 try:
                     company_db.delete_identity(target)
@@ -467,10 +485,10 @@ with upload_tab:
     st.markdown(
         tr(
             "上傳 CSV 或 Excel，會建立成資料庫裡的新資料表。**上傳後預設沒有任何身分能讀**，"
-            "要到「🪪 身分與權限」開放。",
+            "要到「:material/badge: 身分與權限」開放。",
             "Upload a CSV or Excel file to create a new table in the database. **By default no "
-            "identity can read an uploaded table**; grant access under “🪪 Identities & "
-            "permissions”.",
+            "identity can read an uploaded table**; grant access under “:material/badge: "
+            "Identities & permissions”.",
         )
     )
     file = st.file_uploader(tr("選擇檔案", "Choose a file"), type=["csv", "xlsx"])
@@ -524,6 +542,7 @@ with upload_tab:
             )
         if st.button(
             tr("匯入資料庫", "Import into the database"),
+            icon=":material/upload:",
             type="primary",
             disabled=exists and not replace,
         ):
@@ -536,9 +555,10 @@ with upload_tab:
                 # A toast survives the rerun that refreshes the table list.
                 st.toast(
                     tr(
-                        f"已匯入 {n} 筆到 {schema}.{table_name}；到「🪪 身分與權限」開放給需要的身分。",
+                        f"已匯入 {n} 筆到 {schema}.{table_name}；到「身分與權限」開放給需要的身分。",
                         f"Imported {n} rows into {schema}.{table_name}; grant access to the "
-                        "identities that need it under “🪪 Identities & permissions”.",
-                    )
+                        "identities that need it under “Identities & permissions”.",
+                    ),
+                    icon=":material/check_circle:",
                 )
                 st.rerun()

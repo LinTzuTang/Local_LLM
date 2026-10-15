@@ -23,14 +23,15 @@ from local_llm import catalog, ollama_admin
 from local_llm.streaming import collect, stream_chat
 
 ui.page_header(
-    "⚖️",
+    "balance",
     tr("模型比較", "Compare models"),
     tr(
-        "同一個問題依序丟給多個模型（一次跑一個，速度數字才公平），並排比較答案與速度。"
-        "比較在背景執行，可以切換到其他頁面，回來再看結果。",
-        "One prompt goes to several models in turn (one at a time, so the speed numbers are "
-        "fair); compare answers and speed side by side. The comparison runs in the background, "
-        "so you can switch pages and come back for the results.",
+        "同一個問題依序丟給多個語言模型（一次跑一個，速度數字才公平），並排比較答案與速度。"
+        "比較在背景執行，可以切換到其他頁面，回來再看結果。語音模型請到「語音模型比較」。",
+        "One prompt goes to several language models in turn (one at a time, so the speed "
+        "numbers are fair); compare answers and speed side by side. The comparison runs in the "
+        "background, so you can switch pages and come back for the results. Speech models have "
+        "their own page, Compare speech models.",
     ),
 )
 require_ollama()
@@ -114,9 +115,11 @@ options = chat_models + [
     and m["fit"] != "no"
     and catalog.normalize(m["tag"]) not in installed
 ]
+if st.session_state.get("compare_group") not in (None, *GROUP_LABELS):
+    st.session_state.pop("compare_group")  # "speech" moved to its own page (views/speech.py)
 group = st.pills(
     tr("快速組合", "Quick sets"),
-    list(GROUPS),
+    list(GROUP_LABELS),
     format_func=GROUP_LABELS.get,
     **kept("compare_group"),
 )
@@ -282,7 +285,7 @@ def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
 def render(job: jobs.Job) -> None:
     state = job.state
     results = state["results"]
-    st.markdown(f"#### ❓ {state['prompt']}")
+    st.markdown(f"#### :material/help: {state['prompt']}")
     # Three columns per row so up to six models stay readable.
     cols = [c for i in range(0, len(results), 3) for c in st.columns(3)][: len(results)]
     for col, r in zip(cols, results, strict=True):
@@ -313,7 +316,10 @@ def render(job: jobs.Job) -> None:
                 st.caption(stats_caption(r["stats"]))
     if job.running:
         a, b = st.columns([5, 1])
-        a.info(f"⏳ {job.detail or tr('準備中', 'Preparing')} · {job.elapsed():.0f}s")
+        a.info(
+            f"{job.detail or tr('準備中', 'Preparing')} · {job.elapsed():.0f}s",
+            icon=":material/progress_activity:",
+        )
         if b.button(tr("停止", "Stop"), key=f"stop_{job.id}"):
             job.cancel.set()
         return

@@ -1,0 +1,11 @@
+# Reference speaker turns of data/lab/samples/meeting_zh.wav (RTTM). Times: the speech spans between
+# the 0.6 s pauses that scripts/make_samples.py puts after each line; speakers: meeting_zh.txt.
+SPEAKER meeting_zh 1 0.00 11.34 <NA> <NA> 林課長 <NA> <NA>
+SPEAKER meeting_zh 1 12.11 5.66 <NA> <NA> 陳經理 <NA> <NA>
+SPEAKER meeting_zh 1 18.80 8.18 <NA> <NA> 林課長 <NA> <NA>
+SPEAKER meeting_zh 1 27.75 3.54 <NA> <NA> 陳經理 <NA> <NA>
+SPEAKER meeting_zh 1 32.32 12.06 <NA> <NA> 林課長 <NA> <NA>
+SPEAKER meeting_zh 1 45.15 8.94 <NA> <NA> 陳經理 <NA> <NA>
+SPEAKER meeting_zh 1 55.15 15.70 <NA> <NA> 林課長 <NA> <NA>
+SPEAKER meeting_zh 1 71.61 5.19 <NA> <NA> 陳經理 <NA> <NA>
+SPEAKER meeting_zh 1 77.87 9.73 <NA> <NA> 林課長 <NA> <NA>

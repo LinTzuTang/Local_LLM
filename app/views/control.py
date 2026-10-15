@@ -23,6 +23,8 @@ from local_llm.coder.agent import (
     RECOMMENDED_MODEL,
     CoderSession,
     best_coding_model,
+    delete_session,
+    list_sessions,
     ordered_models,
     run_stats,
     thinking_options,
@@ -31,7 +33,7 @@ from local_llm.coder.workspace import PROJECT_ROOT, EditError, Workspace
 from local_llm.lab import control, store
 
 ui.page_header(
-    "🛠️",
+    "terminal",
     tr("總控 Coding Agent", "Control-center coding agent"),
     tr(
         "完全在本機執行的 coding agent：用自然語言修改 agent 與多 agent 場景的設定，"
@@ -49,8 +51,8 @@ ui.page_header(
 require_ollama()
 
 MODE_LABELS = {
-    "settings": ("⚙️ 只改設定", "⚙️ Settings only"),
-    "code": ("💻 設定＋程式碼", "💻 Settings + code"),
+    "settings": (":material/settings: 只改設定", ":material/settings: Settings only"),
+    "code": (":material/code: 設定＋程式碼", ":material/code: Settings + code"),
 }
 CONTEXTS = [32768, 65536, 131072]
 job = jobs.get(st.session_state.get("ctl_job"))
@@ -65,7 +67,96 @@ def tool_models() -> list[str]:
     return ordered_models(names)
 
 
+def stop_job() -> None:
+    if old := jobs.get(st.session_state.pop("ctl_job", None)):
+        old.cancel.set()
+        if old.status == "paused":
+            old.status, old.finished = "cancelled", time.time()
+
+
+def new_conversation() -> None:
+    """Start over; the previous conversation stays saved and can be reopened."""
+    stop_job()
+    for key in ("ctl_session", "ctl_session_key", "ctl_stats"):
+        st.session_state.pop(key, None)
+    st.session_state.ctl_history = []
+    st.session_state.ctl_pick = "__new__"
+
+
+def open_conversation() -> None:
+    """Callback of the conversation picker: resume a saved conversation."""
+    sid = st.session_state.get("_ctl_pick_widget")
+    st.session_state.ctl_pick = sid
+    if sid in (None, "__new__"):
+        new_conversation()
+        return
+    current = st.session_state.get("ctl_session")
+    if current is not None and current.id == sid:
+        return
+    stop_job()
+    installed = tool_models()
+    saved = next((s for s in list_sessions() if s["id"] == sid), {})
+    model = saved.get("model") if saved.get("model") in installed else None
+    model = model or st.session_state.get("ctl_model")
+    session = CoderSession.resume(sid, ollama_url(), model=model)
+    st.session_state.ctl_session = session
+    st.session_state.ctl_history = list(session.history)
+    st.session_state.ctl_model, st.session_state.ctl_mode = session.model, session.mode
+    st.session_state.ctl_ctx = session.context
+    if session.think is not None:
+        st.session_state.ctl_think = session.think
+    st.session_state.ctl_session_key = (session.model, session.mode, session.think, session.context)
+    st.session_state.pop("ctl_stats", None)
+
+
+def conversation_label(sid: str, rows: dict) -> str:
+    if sid == "__new__":
+        return tr("＋ 新對話", "＋ New conversation")
+    row = rows.get(sid, {})
+    when = time.strftime("%m-%d %H:%M", time.localtime(row.get("updated", 0)))
+    turns = tr(f"{row.get('turns', 0)} 則", f"{row.get('turns', 0)} turns")
+    return f"{row.get('title') or sid} · {when} · {turns}"
+
+
 with st.sidebar:
+    saved = {row["id"]: row for row in list_sessions()}
+    current = st.session_state.get("ctl_session")
+    if current is not None and current.id in saved:
+        st.session_state.ctl_pick = current.id
+    pick_options = ["__new__", *saved]
+    if st.session_state.get("ctl_pick") not in pick_options:
+        st.session_state.ctl_pick = "__new__"
+    st.session_state._ctl_pick_widget = st.session_state.ctl_pick
+    st.selectbox(
+        tr("對話", "Conversation"),
+        pick_options,
+        format_func=lambda sid: conversation_label(sid, saved),
+        key="_ctl_pick_widget",
+        on_change=open_conversation,
+        disabled=busy and job.running,
+        help=tr(
+            "每次執行後對話都會存到 storage/coder/sessions/，可以選回來繼續。"
+            "terminal 也能用 `local-agent code --resume`。",
+            "Conversations are saved to storage/coder/sessions/ after every run; pick one to "
+            "continue it. In the terminal: `local-agent code --resume`.",
+        ),
+    )
+    a, b = st.columns(2)
+    a.button(
+        tr("新對話", "New"),
+        on_click=new_conversation,
+        disabled=busy and job.running,
+        use_container_width=True,
+    )
+    if (
+        current is not None
+        and current.id in saved
+        and b.button(tr("刪除這段", "Delete"), disabled=busy, use_container_width=True)
+    ):
+        delete_session(current.id)
+        new_conversation()
+        st.rerun()
+    st.divider()
     st.session_state.setdefault("ctl_mode", "code")
     mode = st.segmented_control(
         tr("範圍", "Scope"),
@@ -82,7 +173,7 @@ with st.sidebar:
     model = st.selectbox(
         tr("Coding agent 模型", "Coding-agent model"),
         models,
-        format_func=lambda m: m + (" ⭐" if m == best_coding_model(models) else ""),
+        format_func=lambda m: m + (" ★" if m == best_coding_model(models) else ""),
         disabled=busy,
         **kept("ctl_model"),
     )
@@ -123,14 +214,6 @@ with st.sidebar:
         ),
         **kept("ctl_ctx"),
     )
-    if st.button(tr("清除對話", "Clear conversation"), disabled=busy and job.running):
-        st.session_state.pop("ctl_session", None)
-        st.session_state.ctl_history = []
-        if old := jobs.get(st.session_state.pop("ctl_job", None)):
-            old.cancel.set()
-            if old.status == "paused":
-                old.status, old.finished = "cancelled", time.time()
-        st.rerun()
     st.caption(
         tr(
             f"專案：`{PROJECT_ROOT.name}` · 模型、程式與資料都不離開這台電腦。"
@@ -249,11 +332,10 @@ def live(job: jobs.Job) -> None:
     for message in run["messages"][run["synced"] :]:
         render_message(message)
     if run.get("live"):
-        st.caption("💭 " + run["live"][-600:])
+        st.caption(":material/psychology: " + run["live"][-600:])
     a, b = st.columns([5, 1])
     a.info(
-        f"⏳ {tr('Coding agent 執行中', 'Coding agent working')}… {job.detail} · "
-        f"{job.elapsed():.0f}s"
+        f"{tr('Coding agent 執行中', 'Coding agent working')}… {job.detail} · {job.elapsed():.0f}s"
     )
     if b.button(tr("停止", "Stop"), key=f"stop_{job.id}"):
         job.cancel.set()
@@ -262,9 +344,9 @@ def live(job: jobs.Job) -> None:
 def stats_text(stats: dict, seconds: float) -> str:
     speed = f" · {stats['tokens_per_s']} tokens/s" if stats["tokens_per_s"] else ""
     return tr(
-        f"⏱ {seconds:.0f} 秒 · {stats['llm_calls']} 次模型呼叫 · {stats['tool_calls']} 次工具呼叫 · "
+        f":material/timer: {seconds:.0f} 秒 · {stats['llm_calls']} 次模型呼叫 · {stats['tool_calls']} 次工具呼叫 · "
         f"輸出 {stats['output_tokens']} tokens{speed}",
-        f"⏱ {seconds:.0f}s · {stats['llm_calls']} model calls · {stats['tool_calls']} tool calls · "
+        f":material/timer: {seconds:.0f}s · {stats['llm_calls']} model calls · {stats['tool_calls']} tool calls · "
         f"{stats['output_tokens']} tokens out{speed}",
     )
 
@@ -286,9 +368,10 @@ def approval_card(job: jobs.Job) -> None:
     with st.container(border=True):
         st.warning(
             tr(
-                "⏸️ Coding agent 想修改以下內容，請檢查 diff 後決定。",
-                "⏸️ The coding agent wants to make these changes. Review the diffs.",
-            )
+                "Coding agent 想修改以下內容，請檢查 diff 後決定。",
+                "The coding agent wants to make these changes. Review the diffs.",
+            ),
+            icon=":material/pause_circle:",
         )
         choices = []
         for i, (action, preview) in enumerate(
@@ -297,14 +380,16 @@ def approval_card(job: jobs.Job) -> None:
             if preview["kind"] == "code":
                 verb = tr("新增檔案", "new file") if preview.get("action") == "create" else ""
                 st.markdown(
-                    f"**✏️ `{action['name']}`** · `{preview['id']}` {verb} "
+                    f"**:material/edit: `{action['name']}`** · `{preview['id']}` {verb} "
                     f"<span style='color:#15803D'>+{preview.get('added', 0)}</span> "
                     f"<span style='color:#B91C1C'>−{preview.get('removed', 0)}</span>",
                     unsafe_allow_html=True,
                 )
             else:
                 target = tr("場景", "scenario") if preview["kind"] == "scenario" else "agent"
-                st.markdown(f"**⚙️ `{action['name']}`** · {target} `{preview['id']}`")
+                st.markdown(
+                    f"**:material/settings: `{action['name']}`** · {target} `{preview['id']}`"
+                )
             st.code(preview["diff"] or "(no change)", "diff")
             for e in preview["errors"]:
                 st.error(e)
@@ -419,7 +504,12 @@ with right:
                 "it. Until then, settings are validated in a fresh Python process with the new code.",
             )
         )
-    config_tab, code_tab = st.tabs([tr("⚙️ 設定版本", "⚙️ Settings"), tr("💻 程式備份", "💻 Code")])
+    config_tab, code_tab = st.tabs(
+        [
+            tr(":material/settings: 設定版本", ":material/settings: Settings"),
+            tr(":material/code: 程式備份", ":material/code: Code"),
+        ]
+    )
     with config_tab:
         st.caption(
             tr("所有設定修改（UI、總控、復原）都會留版本。", "Every settings change is versioned.")
@@ -430,7 +520,7 @@ with right:
         if not entries:
             st.info(tr("還沒有修改。", "No changes yet."))
         for entry in entries:
-            icon = "🕸️" if entry["kind"] == "scenario" else "🤖"
+            icon = ":material/hub:" if entry["kind"] == "scenario" else ":material/smart_toy:"
             source = {
                 "control-center": tr("總控", "agent"),
                 "ui": "UI",
@@ -463,7 +553,7 @@ with right:
         if not changes:
             st.info(tr("還沒有程式修改。", "No code changes yet."))
         for entry in changes:
-            icon = "🆕" if entry["action"] == "create" else "✏️"
+            icon = ":material/add:" if entry["action"] == "create" else ":material/edit:"
             undone = tr(" · 已復原", " · undone") if entry.get("undone_at") else ""
             title = (
                 f"{icon} {entry['path']} · +{entry['added']} −{entry['removed']} · "

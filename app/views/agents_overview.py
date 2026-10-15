@@ -8,7 +8,7 @@ from local_llm.lab import store
 
 lang = current()
 ui.page_header(
-    "👥",
+    "groups",
     tr("Agents 一覽", "All agents"),
     tr(
         "每個 agent 的模型、工具、技能與資料庫身分。在「Agent 工作室」修改或新增；"
@@ -30,9 +30,9 @@ for s in store.scenarios():
 
 GROUPS = {
     "all": tr("全部", "All"),
-    "db": tr("資料庫（依身分權限）", "Database (identity-scoped)"),
-    "tools": tr("其他工具型", "Other tool users"),
-    "plain": tr("純對話", "Chat only"),
+    "db": ":material/database: " + tr("資料庫（依身分權限）", "Database (identity-scoped)"),
+    "tools": ":material/build: " + tr("其他工具型", "Other tool users"),
+    "plain": ":material/chat_bubble: " + tr("純對話", "Chat only"),
 }
 group = st.segmented_control(
     tr("分類", "Group"), list(GROUPS), format_func=GROUPS.get, default="all"
@@ -72,7 +72,11 @@ for row in range(0, len(shown), 2):
                 ui.badges(
                     caps,
                     [f"id: {d['id']}"]
-                    + ([tr("🌐 需連網核准", "🌐 network, approval")] if network else [])
+                    + (
+                        [":material/public: " + tr("需連網核准", "network, approval")]
+                        if network
+                        else []
+                    )
                     + ([f"model: {d['model']}"] if d.get("model") else [])
                     + (
                         [f"{tr('預設模型', 'default model')}: {catalog.default_model()}"]
@@ -88,14 +92,18 @@ for row in range(0, len(shown), 2):
                 label = pick(ident["label"]) if ident else d["db_role"]
                 desc = pick(ident["description"]) if ident else ""
                 rows.append(
-                    f"🗄️ **{tr('資料庫身分', 'Database identity')}**{C}{label}（`{d['db_role']}`）· {desc}"
+                    f":material/database: **{tr('資料庫身分', 'Database identity')}**{C}{label}（`{d['db_role']}`）· {desc}"
                 )
             if d.get("tools"):
                 tool_bits = []
                 for t in d["tools"]:
                     info = TOOL_INFO.get(t)
-                    icon = "🌐" if info and info.network else ("🗄️" if t.startswith("db_") else "🛠️")
-                    tool_bits.append(f"{icon} `{t}`")
+                    icon = (
+                        "public"
+                        if info and info.network
+                        else ("database" if t.startswith("db_") else "build")
+                    )
+                    tool_bits.append(f":material/{icon}: `{t}`")
                 rows.append(f"**{tr('工具', 'Tools')}**{C}" + " ".join(tool_bits))
             else:
                 rows.append(
@@ -105,7 +113,8 @@ for row in range(0, len(shown), 2):
                 rows.append(
                     f"**{tr('技能', 'Skills')}**{C}"
                     + " ".join(
-                        f"📘 `{k}`" + ("" if k in skill_info else tr("（未安裝）", " (missing)"))
+                        f":material/menu_book: `{k}`"
+                        + ("" if k in skill_info else tr("（未安裝）", " (missing)"))
                         for k in d["skills"]
                     )
                 )
@@ -125,9 +134,12 @@ if st.session_state.pop("_open_studio", False):
 
 c1, c2 = st.columns(2)
 c1.page_link(
-    "views/agent.py", label=tr("➕ 在工作室建立新 agent", "➕ Create an agent in the studio")
+    "views/agent.py",
+    label=tr("在工作室建立新 agent", "Create an agent in the studio"),
+    icon=":material/add:",
 )
 c2.page_link(
     "views/agent_compare.py",
-    label=tr("同一題問多個 agent →", "Ask several agents the same question →"),
+    label=tr("同一題問多個 agent", "Ask several agents the same question"),
+    icon=":material/compare:",
 )

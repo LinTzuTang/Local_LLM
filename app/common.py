@@ -2,7 +2,7 @@
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -57,9 +57,10 @@ def installed_names() -> list[str]:
 
 def model_label(tag: str, installed: set[str]) -> str:
     info = catalog.find(tag)
-    mark = "" if catalog.normalize(tag) in installed else "⬇️ "
+    # Select box options cannot show icons, so plain text marks: ↓ to download, ★ recommended.
+    mark = "" if catalog.normalize(tag) in installed else "↓ "
     size = f" ({info['size_gb']}GB)" if info else ""
-    star = " ⭐" if info and info.get("recommended") else ""
+    star = " ★" if info and info.get("recommended") else ""
     return f"{mark}{tag}{size}{star}"
 
 
@@ -207,20 +208,23 @@ def download_control(
         st.rerun()
 
 
-def think_control(model: str | None, key: str, container=st) -> bool:
-    """Thinking toggle that reflects what the model actually supports."""
+def think_control(model: str | None, key: str, container=st, compact: bool = False) -> bool:
+    """Thinking toggle that reflects what the model actually supports.
+
+    compact: explain an always-on toggle in its tooltip instead of a caption (for toolbars).
+    """
     mode = ollama_admin.thinking_mode(model, ollama_url()) if model else "none"
     # Separate widget state per mode, so a forced-on toggle does not carry over to other models.
     key = f"{key}_{mode}"
     label = tr("思考模式", "Thinking")
     if mode == "always":
-        container.toggle(label, value=True, disabled=True, key=key)
-        container.caption(
-            tr(
-                "這個模型一定會先思考，無法關閉（思考內容會另外顯示）。",
-                "This model always thinks first; it cannot be switched off (shown separately).",
-            )
+        note = tr(
+            "這個模型一定會先思考，無法關閉（思考內容會另外顯示）。",
+            "This model always thinks first; it cannot be switched off (shown separately).",
         )
+        container.toggle(label, value=True, disabled=True, key=key, help=note if compact else None)
+        if not compact:
+            container.caption(note)
         return True
     if mode == "none":
         container.toggle(label, value=False, disabled=True, key=key)
@@ -241,7 +245,7 @@ def warn_if_no_tools(model: str | None, needs_tools: bool, container=st) -> None
                 f"{model} 不支援工具呼叫（例如 TAIDE、Breeze 的 GGUF 版本），"
                 "這個 agent 需要查資料庫或呼叫工具，會無法運作。"
                 "請改用 qwen3:30b-a3b 等標示 tools 的模型；"
-                "這個模型可以在「💬 對話」或「⚖️ 模型比較」使用。",
+                "這個模型可以在「對話測試」或「模型比較」使用。",
                 f"{model} does not support tool calling (e.g. the GGUF builds of TAIDE and "
                 "Breeze), so this agent cannot query the database or call tools. Use a model "
                 "with tools such as qwen3:30b-a3b; this one works in Chat and Compare.",
@@ -303,9 +307,19 @@ def stats_caption(stats: Stats | None) -> str:
 
 
 def save_run(kind: str, payload: dict) -> Path:
+    """Write runs/<kind>-<YYYYmmdd-HHMMSS>.json. Two runs of a kind finishing in the same
+    second (background jobs) must not overwrite each other: the stamp moves on a second."""
     RUNS_DIR.mkdir(exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    path = RUNS_DIR / f"{kind}-{stamp}.json"
-    record = {"kind": kind, "recorded_at": datetime.now().astimezone().isoformat(), **payload}
-    path.write_text(json.dumps(record, ensure_ascii=False, indent=2, default=str) + "\n")
-    return path
+    now = datetime.now()
+    record = {"kind": kind, "recorded_at": now.astimezone().isoformat(), **payload}
+    text = json.dumps(record, ensure_ascii=False, indent=2, default=str) + "\n"
+    for extra in range(120):
+        stamp = (now + timedelta(seconds=extra)).strftime("%Y%m%d-%H%M%S")
+        path = RUNS_DIR / f"{kind}-{stamp}.json"
+        try:
+            with path.open("x") as f:  # exclusive: fails if the file exists
+                f.write(text)
+            return path
+        except FileExistsError:
+            continue
+    raise RuntimeError(f"could not find a free file name for a {kind} run")

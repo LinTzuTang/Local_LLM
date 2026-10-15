@@ -193,7 +193,7 @@ class Run:
         }
 
 
-GATEWAY_NODES = {"rerank", "transcribe", "parse_document"}
+GATEWAY_NODES = {"rerank", "transcribe", "diarize", "parse_document"}
 RETRIEVAL_NODES = {"retrieve_bm25", "retrieve_vector"}
 
 

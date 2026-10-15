@@ -770,16 +770,18 @@
         "en": "Meeting recording → minutes"
       },
       "description": {
-        "zh": "Breeze-ASR-25 把台灣華語錄音轉成逐字稿，兩個 LLM 平行產生摘要與待辦事項，再組成會議紀錄。",
-        "en": "Breeze-ASR-25 transcribes Taiwanese-Mandarin audio; two LLMs write the summary and the action items in parallel, then the minutes are assembled."
+        "zh": "說話者分段模型找出誰在什麼時候說話，Breeze-ASR-25 把台灣華語錄音轉成標上講者的逐字稿，兩個 LLM 平行產生摘要與待辦事項（標明由哪位講者提出），再組成會議紀錄。",
+        "en": "A diarization model finds who spoke when, Breeze-ASR-25 turns the Taiwanese-Mandarin audio into a speaker-labelled transcript, and two LLMs write the summary and the action items (with who raised them) in parallel before the minutes are assembled."
       },
       "highlights": {
         "zh": [
-          "非 Ollama 模型（語音辨識）與 Ollama LLM 串在同一條流程",
+          "非 Ollama 模型（說話者分段、語音辨識）與 Ollama LLM 串在同一條流程",
+          "逐字稿標上「講者 1／講者 2」，待辦事項可以對到人",
           "摘要與待辦平行執行"
         ],
         "en": [
-          "A non-Ollama model (speech recognition) chained with Ollama LLMs",
+          "Non-Ollama models (diarization, speech recognition) chained with Ollama LLMs",
+          "The transcript is labelled Speaker 1 / Speaker 2, so action items can name who raised them",
           "Summary and action items run in parallel"
         ]
       },
@@ -800,17 +802,31 @@
       },
       "nodes": [
         {
+          "id": "speakers",
+          "type": "diarize",
+          "label": {
+            "zh": "說話者分段",
+            "en": "Who spoke when"
+          },
+          "params": {
+            "model": "speaker-diarization",
+            "input": "audio_path",
+            "output": "speaker_turns"
+          }
+        },
+        {
           "id": "asr",
           "type": "transcribe",
           "label": {
-            "zh": "語音轉文字",
-            "en": "Speech to text"
+            "zh": "語音轉文字（標上講者）",
+            "en": "Speech to text (by speaker)"
           },
           "params": {
             "model": "breeze-asr-25",
             "input": "audio_path",
             "language": "zh",
-            "output": "transcript"
+            "output": "transcript",
+            "speakers": "speaker_turns"
           }
         },
         {
@@ -822,7 +838,7 @@
           },
           "params": {
             "model": "qwen3:30b-a3b",
-            "prompt": "Summarize this meeting transcript in 4–6 bullet points in Traditional Chinese. Keep names, numbers and dates exact.\n\nTranscript:\n{transcript}",
+            "prompt": "Summarize this meeting transcript in 4–6 bullet points in Traditional Chinese. Each line starts with the speaker label (講者 1, 講者 2, …); different labels are different people. Say which speaker reported or decided what, and infer a speaker's role (e.g. production, sales) only when the transcript makes it clear. Keep names, numbers and dates exact.\n\nTranscript:\n{transcript}",
             "output": "summary"
           }
         },
@@ -835,7 +851,7 @@
           },
           "params": {
             "model": "qwen3:30b-a3b",
-            "prompt": "Extract the action items from this meeting transcript as a Markdown table with columns 負責人 | 事項 | 期限. Include only items actually stated; write '未提及' when an owner or date is missing.\n\nTranscript:\n{transcript}",
+            "prompt": "Extract the action items from this meeting transcript as a Markdown table with columns 負責人 | 事項 | 期限 | 提出者. Each transcript line starts with the speaker label (講者 1, 講者 2, …). 負責人 is the person or team named as responsible; 提出者 is the speaker label of whoever raised or decided the item. Include only items actually stated; write '未提及' when an owner or date is missing.\n\nTranscript:\n{transcript}",
             "output": "actions"
           }
         },
@@ -848,7 +864,7 @@
           },
           "join": "all",
           "params": {
-            "template": "## 會議摘要 / Summary\n{summary}\n\n## 待辦事項 / Action items\n{actions}\n\n## 逐字稿 / Transcript\n{transcript}",
+            "template": "## 會議摘要 / Summary\n{summary}\n\n## 待辦事項 / Action items\n{actions}\n\n## 逐字稿（標上講者）/ Transcript by speaker\n{transcript}",
             "output": "minutes"
           }
         }
@@ -856,6 +872,10 @@
       "edges": [
         {
           "from": "START",
+          "to": "speakers"
+        },
+        {
+          "from": "speakers",
           "to": "asr"
         },
         {
@@ -1458,6 +1478,229 @@
         },
         {
           "from": "translate",
+          "to": "report"
+        },
+        {
+          "from": "report",
+          "to": "END"
+        }
+      ],
+      "output": "report"
+    },
+    {
+      "id": "asr_model_comparison",
+      "category": "speech",
+      "name": {
+        "zh": "語音辨識模型比較",
+        "en": "Speech-recognition model comparison"
+      },
+      "description": {
+        "zh": "同一段錄音平行交給四個語音辨識模型（Breeze-ASR-25、Whisper、Qwen3-ASR、Gemma 4 音訊 LLM），各自對照原稿算出字錯率（CER），再由 LLM 比較錯誤類型並推薦模型。每個節點的模型都可以在左側換掉。",
+        "en": "One recording goes to four speech-recognition models in parallel (Breeze-ASR-25, Whisper, Qwen3-ASR and the Gemma 4 audio LLM); each is scored against the reference transcript (character error rate, CER), then an LLM compares their error types and recommends one. Each node's model can be swapped on the left."
+      },
+      "highlights": {
+        "zh": [
+          "四個語音模型平行執行：三個在模型閘道（MLX，輪流用 GPU）、Gemma 4 在 Ollama",
+          "兩段範例：總統國慶演說（真人、照稿）與虛構會議（合成語音），原稿自動填入，可對照評分",
+          "依序執行、含即時倍率與逐字差異標示的比較，請用「模型比較 → 語音辨識模型」"
+        ],
+        "en": [
+          "Four speech models in parallel: three in the model gateway (MLX, taking turns on the GPU) and Gemma 4 in Ollama",
+          "Two samples, a real read-from-script speech and a synthetic meeting; their scripts fill in the reference automatically",
+          "For a sequential run with real-time factors and highlighted differences, use Compare models → Speech recognition"
+        ]
+      },
+      "inputs": [
+        {
+          "key": "audio_path",
+          "type": "audio",
+          "label": {
+            "zh": "錄音",
+            "en": "Recording"
+          },
+          "default": "data/lab/samples/national_day_2026_zh.wav",
+          "samples": [
+            {
+              "path": "data/lab/samples/national_day_2026_zh.wav",
+              "label": {
+                "zh": "真人：總統國慶演說節錄（4 分 29 秒，照稿宣讀）〔總統府提供〕",
+                "en": "Real voice: President's National Day address, excerpt (4 min 29 s, read from script; courtesy of the Office of the President)"
+              }
+            },
+            {
+              "path": "data/lab/samples/meeting_zh.wav",
+              "label": {
+                "zh": "合成語音：虛構產銷會議（88 秒，兩位講者）",
+                "en": "Synthetic voices: fictional production meeting (88 s, two speakers)"
+              }
+            }
+          ]
+        },
+        {
+          "key": "reference",
+          "type": "text",
+          "from_sample": "audio_path",
+          "label": {
+            "zh": "參考原稿（範例錄音的原稿會自動填入；上傳的錄音沒有原稿請填「無」）",
+            "en": "Reference transcript (filled in for the samples; write 'none' for an upload without one)"
+          }
+        },
+        {
+          "key": "report_language",
+          "type": "choice",
+          "label": {
+            "zh": "報告語言",
+            "en": "Report language"
+          },
+          "options": {
+            "Traditional Chinese (Taiwan)": {
+              "zh": "繁體中文",
+              "en": "Traditional Chinese"
+            },
+            "English": {
+              "zh": "英文",
+              "en": "English"
+            }
+          },
+          "default": "Traditional Chinese (Taiwan)"
+        }
+      ],
+      "examples": {
+        "zh": [
+          "無"
+        ],
+        "en": [
+          "none"
+        ]
+      },
+      "nodes": [
+        {
+          "id": "asr_breeze",
+          "type": "transcribe",
+          "label": {
+            "zh": "Breeze-ASR-25",
+            "en": "Breeze-ASR-25"
+          },
+          "params": {
+            "model": "breeze-asr-25",
+            "input": "audio_path",
+            "language": "zh",
+            "reference": "reference",
+            "tag_model": true,
+            "output": "transcript_breeze"
+          }
+        },
+        {
+          "id": "asr_whisper",
+          "type": "transcribe",
+          "label": {
+            "zh": "Whisper large-v3-turbo",
+            "en": "Whisper large-v3-turbo"
+          },
+          "params": {
+            "model": "whisper-large-v3-turbo",
+            "input": "audio_path",
+            "language": "zh",
+            "reference": "reference",
+            "tag_model": true,
+            "output": "transcript_whisper"
+          }
+        },
+        {
+          "id": "asr_qwen",
+          "type": "transcribe",
+          "label": {
+            "zh": "Qwen3-ASR-1.7B",
+            "en": "Qwen3-ASR-1.7B"
+          },
+          "params": {
+            "model": "qwen3-asr-1.7b",
+            "input": "audio_path",
+            "language": "zh",
+            "reference": "reference",
+            "tag_model": true,
+            "output": "transcript_qwen"
+          }
+        },
+        {
+          "id": "asr_gemma",
+          "type": "transcribe",
+          "label": {
+            "zh": "Gemma 4 E4B（音訊 LLM）",
+            "en": "Gemma 4 E4B (audio LLM)"
+          },
+          "params": {
+            "model": "gemma4:e4b",
+            "input": "audio_path",
+            "language": "zh",
+            "reference": "reference",
+            "tag_model": true,
+            "output": "transcript_gemma"
+          }
+        },
+        {
+          "id": "compare",
+          "type": "llm",
+          "label": {
+            "zh": "比較與推薦",
+            "en": "Compare and recommend"
+          },
+          "join": "all",
+          "params": {
+            "model": "qwen3:30b-a3b",
+            "prompt": "You are evaluating speech-recognition (ASR) models. Several models transcribed the same recording. Each transcript starts with, in brackets, the id of the model that wrote it and, when a reference was given, its measured character error rate (CER; lower is better; script, punctuation and number format were normalised before measuring). Treat Simplified vs Traditional characters, punctuation, and digits vs number words as formatting, not as errors.\n\nReference transcript (what was actually said; 'none' or '無' means there is none):\n{reference}\n\n[A]\n{transcript_breeze}\n\n[B]\n{transcript_whisper}\n\n[C]\n{transcript_qwen}\n\n[D]\n{transcript_gemma}\n\nWrite a short evaluation report:\n1. A Markdown table, best model first: model id | CER (copy it; '—' without a reference) | main error types (homophones, names, numbers, dropped or invented passages) | strengths.\n2. For each model, its 3–5 most important mistakes quoted as `wrong` → `correct` (with a reference), or the passages where the models disagree and the most plausible reading (without one). Quote only text that really appears in that model's transcript.\n3. One recommendation: which model fits Taiwanese meeting transcripts best, and why.\n\nWrite the whole report in {report_language}.",
+            "temperature": 0.2,
+            "output": "comparison"
+          }
+        },
+        {
+          "id": "report",
+          "type": "template",
+          "label": {
+            "zh": "比較報告",
+            "en": "Report"
+          },
+          "params": {
+            "template": "{comparison}\n\n---\n\n## 逐字稿 / Transcripts\n\n**A** {transcript_breeze}\n\n**B** {transcript_whisper}\n\n**C** {transcript_qwen}\n\n**D** {transcript_gemma}",
+            "output": "report"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "START",
+          "to": "asr_breeze"
+        },
+        {
+          "from": "START",
+          "to": "asr_whisper"
+        },
+        {
+          "from": "START",
+          "to": "asr_qwen"
+        },
+        {
+          "from": "START",
+          "to": "asr_gemma"
+        },
+        {
+          "from": "asr_breeze",
+          "to": "compare"
+        },
+        {
+          "from": "asr_whisper",
+          "to": "compare"
+        },
+        {
+          "from": "asr_qwen",
+          "to": "compare"
+        },
+        {
+          "from": "asr_gemma",
+          "to": "compare"
+        },
+        {
+          "from": "compare",
           "to": "report"
         },
         {

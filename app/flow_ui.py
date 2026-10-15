@@ -17,8 +17,50 @@ STATUS = {  # border colour, fill override, pen width
     "error": ("#DC2626", "#FEE2E2", 2.5),
     "cancelled": ("#D97706", "#FEF3C7", 2.0),
 }
-ICON = {"running": "⏳", "done": "✓", "error": "✗", "cancelled": "⏹"}
+# Graphviz cannot draw icon fonts, so diagrams use plain text marks and the node colours.
+ICON = {"running": "●", "done": "✓", "error": "✗", "cancelled": "■"}
+# Step status and node type as Material Symbols, for expanders and other Streamlit labels.
+STATUS_ICON = {
+    "running": ":blue[:material/progress_activity:]",
+    "done": ":green[:material/check_circle:]",
+    "error": ":red[:material/error:]",
+    "cancelled": ":orange[:material/stop_circle:]",
+}
+NODE_ICON = {
+    "llm": "psychology",
+    "agent": "smart_toy",
+    "router": "alt_route",
+    "classify": "label",
+    "retrieve_bm25": "match_case",
+    "retrieve_vector": "scatter_plot",
+    "rrf": "merge",
+    "rerank": "sort",
+    "transcribe": "mic",
+    "diarize": "record_voice_over",
+    "parse_document": "description",
+    "template": "extension",
+}
+# Scenario categories (scenarios.json "category"); unknown ones fall back to a label icon.
+CATEGORY_ICONS = {
+    "routing": "alt_route",
+    "rag": "travel_explore",
+    "speech": "graphic_eq",
+    "documents": "description",
+    "multi_model": "hub",
+    "pipeline": "account_tree",
+    "comparison": "compare_arrows",
+}
 PRIMARY = "#4F46E5"
+
+
+def category_icon(category: str | None) -> str:
+    """Material Symbols name for a scenario category."""
+    return CATEGORY_ICONS.get(category or "", "label")
+
+
+def node_icon(node_type: str) -> str:
+    """':material/x:' for a scenario node type (NODE_TYPES[...].icon is an emoji)."""
+    return f":material/{NODE_ICON.get(node_type, 'circle')}:"
 
 
 def short_model(name: str) -> str:
@@ -42,7 +84,7 @@ def flow_dot(
 ) -> str:
     """Graphviz DOT for a scenario; with a trace, nodes show status, time and the path taken.
 
-    compact: thumbnail style (icon + label only, larger text). models_override: {node_id: model}
+    compact: thumbnail style (label only, larger text). models_override: {node_id: model}
     chosen on the scenario page for this run.
     """
     trace = trace or []
@@ -71,7 +113,7 @@ def flow_dot(
         models = ntype.models({**{k: p.default for k, p in ntype.params.items()}, **params})
         entry = latest.get(node["id"])
         status = entry["status"] if entry else ("skipped" if finished and trace else "pending")
-        title = f"{ntype.icon} {pick(node.get('label')) or node['id']}"
+        title = pick(node.get("label")) or node["id"]
         kind = node_kind({**node, "params": params})
         kind_label = tr(*ui.CAPS[kind][1:3]) if kind else pick(ntype.label)
         sub = " · ".join([kind_label, *(short_model(m) for m in models)])
@@ -84,7 +126,8 @@ def flow_dot(
                 f'<font point-size="9" color="#16A34A">{ICON.get(status, "")} {secs:.1f}s</font>'
             )
         elif status == "running":
-            rows.append('<font point-size="9" color="#2563EB">⏳ running</font>')
+            running = _esc(tr("執行中", "running"))
+            rows.append(f'<font point-size="9" color="#2563EB">● {running}</font>')
         fill, border, width, style = ntype.color, "#CBD5E1", 1.2, "rounded,filled"
         if status in STATUS:
             border, fill_override, width = STATUS[status]
@@ -131,7 +174,7 @@ def timeline(trace: list[dict], running: bool, elapsed: float) -> None:
         ntype = NODE_TYPES[e["type"]]
         rows.append(
             {
-                "step": f"{ntype.icon} {pick(e['label'])}",
+                "step": pick(e["label"]),
                 "start": round(e["start"], 2),
                 "end": round(max(end, e["start"] + 0.05), 2),
                 "seconds": round(end - e["start"], 2),
@@ -168,7 +211,7 @@ def step_details(trace: list[dict], elapsed: float) -> None:
         ntype = NODE_TYPES[e["type"]]
         secs = (e["end"] if e["end"] is not None else elapsed) - e["start"]
         models = ", ".join(e["models"]) or pick(ntype.label)
-        title = f"{ICON.get(e['status'], '·')} {ntype.icon} {pick(e['label'])} · {models}"
+        title = f"{STATUS_ICON.get(e['status'], '·')} {pick(e['label'])} · {models}"
         if e["end"] is not None:
             title += f" · {secs:.1f}s"
         with st.expander(title, expanded=e["status"] == "error"):
@@ -199,20 +242,29 @@ def step_details(trace: list[dict], elapsed: float) -> None:
                 st.markdown(f"**{tr('工具呼叫', 'Tool calls')}**")
                 for t in trail:
                     if "call" in t:
-                        st.markdown(f"🔧 `{t['call']}` `{t['args']}`")
+                        st.markdown(f":material/build: `{t['call']}` `{t['args']}`")
                     else:
                         st.code(t["content"], language="json", wrap_lines=True)
             stats = {
                 k: v
                 for k, v in detail.items()
                 if k in ("output_tokens", "prompt_tokens", "tokens_per_s", "first_token_s",
-                         "audio_seconds", "segments", "model_seconds", "pages", "tables", "usage")
+                         "audio_seconds", "segments", "model_seconds", "rtf", "queue_seconds",
+                         "load_seconds", "truncated", "pages", "tables", "usage", "speakers",
+                         "turns")
                 and v is not None
             }  # fmt: skip
+            if (cer := detail.get("cer")) is not None:
+                st.markdown(
+                    f":material/spellcheck: **{tr('字元錯誤率 CER', 'Character error rate')}** "
+                    f"{cer * 100:.1f}%"
+                )
             if stats:
                 st.caption(" · ".join(f"{k}: {v}" for k, v in stats.items()))
             if thinking := detail.get("thinking"):
-                st.markdown(f"**💭 {tr('思考過程', 'Thinking')}**（{len(thinking)}）")
+                st.markdown(
+                    f":material/psychology: **{tr('思考過程', 'Thinking')}** ({len(thinking)})"
+                )
                 st.code(thinking[-4000:], language=None, wrap_lines=True, height=200)
             if e["status"] == "running" and e.get("stream"):
                 st.markdown(e["stream"] + " ▌")
@@ -237,6 +289,7 @@ def node_kind(node: dict) -> str | None:
         "retrieve_vector": "embedding",
         "rerank": "rerank",
         "transcribe": "asr",
+        "diarize": "diarize",
         "parse_document": "doc",
     }.get(ntype)
 

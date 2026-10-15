@@ -11,7 +11,7 @@ from local_llm import catalog
 from local_llm.lab import rag
 
 ui.page_header(
-    "📚",
+    "library_books",
     tr("知識庫 RAG", "Knowledge base (RAG)"),
     tr(
         "RAG 場景用的文件庫。流程：解析（Markdown 直接讀，PDF/DOCX 交給模型服務的 Docling）→ "
@@ -42,31 +42,31 @@ def pipeline_dot() -> str:
             'color="#CBD5E1", margin="0.12,0.06"]',
             'edge [color="#94A3B8", arrowsize=0.7, fontname="Helvetica", fontsize=9, '
             'fontcolor="#64748B"]',
-            n("docs", tr("📄 文件", "📄 Documents"), "md · pdf · docx", "#F8FAFC"),
+            n("docs", tr("文件", "Documents"), "md · pdf · docx", "#F8FAFC"),
             n("parse", tr("解析＋切段", "Parse + chunk"), "Docling · headings", "#FCE7F3"),
             n("idx", tr("兩種索引", "Two indexes"), "BM25 · bge-m3", "#ECFDF5"),
             n(
                 "q",
-                tr("❓ 問題", "❓ Question"),
+                tr("問題", "Question"),
                 tr("＋提問者部門", "+ asker's department"),
                 "#EEF2FF",
             ),
             n(
                 "acl",
-                tr("🔒 權限過濾", "🔒 Permission filter"),
+                tr("權限過濾", "Permission filter"),
                 tr("只留可讀文件", "readable docs only"),
                 "#FEF3C7",
             ),
-            n("bm25", "🔤 BM25", tr("精確詞、代號", "exact terms, codes"), "#ECFDF5"),
+            n("bm25", "BM25", tr("精確詞、代號", "exact terms, codes"), "#ECFDF5"),
             n(
                 "vec",
-                tr("🧭 向量", "🧭 Vector"),
+                tr("向量", "Vector"),
                 tr("語意、跨語言", "meaning, cross-language"),
                 "#ECFDF5",
             ),
-            n("rrf", "🔗 RRF", "Σ 1/(60+rank)", "#ECFDF5"),
-            n("rr", "🎯 Rerank", "bge-reranker-v2-m3", "#CCFBF1"),
-            n("llm", tr("🧠 LLM 回答", "🧠 LLM answer"), tr("引用 [n]", "cites [n]"), "#EEF2FF"),
+            n("rrf", "RRF", "Σ 1/(60+rank)", "#ECFDF5"),
+            n("rr", "Rerank", "bge-reranker-v2-m3", "#CCFBF1"),
+            n("llm", tr("LLM 回答", "LLM answer"), tr("引用 [n]", "cites [n]"), "#EEF2FF"),
             "docs -> parse -> idx",
             "q -> acl; idx -> acl [style=dotted]",
             "acl -> bm25; acl -> vec; bm25 -> rrf; vec -> rrf",
@@ -105,9 +105,9 @@ def build_work(job: jobs.Job, collection: str, model: str, url: str) -> None:
     for event in rag.build_index(collection, model, url):
         if event["stage"] == "parse":
             job.progress = event["done"] / max(event["total"], 1) * 0.8
-            job.detail = f"📄 {event['doc']}"
+            job.detail = event["doc"]
         elif event["stage"] == "embed":
-            job.progress, job.detail = 0.85, f"🧭 {model} × {event['total']}"
+            job.progress, job.detail = 0.85, f"{model} × {event['total']}"
         else:
             job.state["manifest"] = event
 
@@ -125,7 +125,11 @@ with st.container(border=True):
         index=next((i for i, m in enumerate(embedders) if m.startswith(rag.DEFAULT_EMBED)), 0),
     )
     if b.button(
-        tr("重建索引", "Rebuild index"), type="primary", disabled=building, use_container_width=True
+        tr("重建索引", "Rebuild index"),
+        icon=":material/refresh:",
+        type="primary",
+        disabled=building,
+        use_container_width=True,
     ):
         url = ollama_url()
         jobs.start(
@@ -162,9 +166,9 @@ with st.container(border=True):
 
 tab_search, tab_docs, tab_upload = st.tabs(
     [
-        tr("🔎 檢索比較", "🔎 Compare retrieval"),
-        tr("📄 文件與權限", "📄 Documents & access"),
-        tr("⬆️ 新增文件", "⬆️ Add documents"),
+        ":material/search: " + tr("檢索比較", "Compare retrieval"),
+        ":material/description: " + tr("文件與權限", "Documents & access"),
+        ":material/upload: " + tr("新增文件", "Add documents"),
     ]
 )
 
@@ -198,7 +202,8 @@ with tab_search:
     )
     for i, demo in enumerate(RERANK_DEMOS):
         st.button(
-            f"🎯 {demo}",
+            demo,
+            icon=":material/sort:",
             key=f"kb_demo_{i}",
             on_click=st.session_state.__setitem__,
             args=("kb_query", demo),
@@ -241,11 +246,12 @@ with tab_search:
             if reranked and reranked[0]["before"] != 1:
                 st.success(
                     tr(
-                        f"🎯 Rerank 把融合後第 {reranked[0]['before']} 名的段落拉到第 1 名："
+                        f"Rerank 把融合後第 {reranked[0]['before']} 名的段落拉到第 1 名："
                         f"「{reranked[0]['text'].split(chr(10), 1)[-1][:60]}…」",
-                        f"🎯 Rerank moved fusion's #{reranked[0]['before']} to #1: "
+                        f"Rerank moved fusion's #{reranked[0]['before']} to #1: "
                         f"“{reranked[0]['text'].split(chr(10), 1)[-1][:60]}…”",
-                    )
+                    ),
+                    icon=":material/sort:",
                 )
         except Exception as exc:
             rerank_note = tr(f"無法使用：{exc}", f"unavailable: {exc}")
@@ -266,16 +272,18 @@ with tab_search:
         st.caption(tr(f"檢索 {retrieval_s:.2f}s", f"retrieval {retrieval_s:.2f}s"))
         cols = st.columns(2)
         with cols[0]:
-            st.markdown("**🔤 BM25**")
+            st.markdown("**:material/match_case: BM25**")
             table(bm25)
-            st.markdown("**🔗 RRF** — score = Σ 1/(60 + rank)")
+            st.markdown("**:material/merge: RRF** — score = Σ 1/(60 + rank)")
             for h in fused:
                 h["bm25"], h["vector"] = h["ranks"].get("bm25"), h["ranks"].get("vector")
             table(fused, ("bm25", "vector"))
         with cols[1]:
-            st.markdown(f"**🧭 {tr('向量', 'Vector')}** · `{info['embed_model']}`")
+            st.markdown(
+                f"**:material/scatter_plot: {tr('向量', 'Vector')}** · `{info['embed_model']}`"
+            )
             table(vector)
-            st.markdown(f"**🎯 Rerank** · `bge-reranker-v2-m3` · {rerank_note}")
+            st.markdown(f"**:material/sort: Rerank** · `bge-reranker-v2-m3` · {rerank_note}")
             if reranked:
                 table(reranked, ("before",))
             else:
@@ -346,7 +354,12 @@ with tab_upload:
         exists = (rag.CORPUS_DIR / collection / name).exists()
         if exists:
             st.warning(tr("同名檔案會被覆蓋。", "A file with this name will be replaced."))
-        if st.button(tr("加入文件庫", "Add to collection"), type="primary", disabled=not access):
+        if st.button(
+            tr("加入文件庫", "Add to collection"),
+            icon=":material/add:",
+            type="primary",
+            disabled=not access,
+        ):
             (rag.CORPUS_DIR / collection / name).write_bytes(file.getvalue())
             rag.set_document_meta(collection, name, title, access)
             st.toast(tr("已加入，請重建索引。", "Added; rebuild the index."))

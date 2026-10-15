@@ -1,4 +1,5 @@
 import copy
+import html
 import json
 import time
 import uuid
@@ -13,13 +14,13 @@ import ui
 from common import PROJECT_DIR, installed_names, kept, ollama_url, save_run
 from i18n import pick, tr
 
-from local_llm import catalog
+from local_llm import asr_metrics, catalog
 from local_llm.lab import engine, rag, store
 from local_llm.lab.nodes import NODE_TYPES
 from local_llm.lab.textutil import placeholders
 
 ui.page_header(
-    "🕸️",
+    "hub",
     tr("場景展示", "Scenario gallery"),
     tr(
         "每個場景是一張由節點（模型、agent、檢索、路由）組成的流程圖，用 LangGraph 執行。"
@@ -28,76 +29,135 @@ ui.page_header(
         "LangGraph. Pick one, check the model for each step and run it to watch which node is "
         "active, which model it uses and how long it takes.",
     ),
+    eyebrow=tr("多 Agent 場景", "Scenarios"),
 )
 
+st.markdown(
+    """<style>
+.sc-title {display: flex; align-items: center; gap: 10px; font-size: 1.3rem; font-weight: 750;
+  line-height: 1.3; margin: .1rem 0 0 0; color: #0F172A; flex-wrap: wrap;}
+.sc-title .lab-badges {margin: 0 0 0 4px;}
+.st-key-sc_picker [data-testid="stButtonGroup"] button {min-height: 2rem; padding: 0 9px; gap: 4px;}
+.st-key-sc_picker [data-testid="stButtonGroup"] button p {font-size: .8rem;}
+.st-key-sc_picker [data-testid="stButtonGroup"] [data-testid="stIconMaterial"] {font-size: 1rem;}
+.sc-title > .ms {font-size: 22px; color: var(--lab-primary); background: #EEF2FF; border-radius: 9px;
+  padding: 5px; vertical-align: 0;}
+</style>""",
+    unsafe_allow_html=True,
+)
 UPLOAD_DIR = PROJECT_DIR / "storage" / "lab" / "uploads"
 doc = json.loads(store.SCENARIOS_FILE.read_text())
 scenarios = {s["id"]: s for s in doc["scenarios"]}
-categories = doc.get("categories", {})
 url = ollama_url()
 
-# --- gallery ----------------------------------------------------------------------------------
-cat = st.pills(
-    tr("類別", "Category"),
-    list(categories),
-    format_func=lambda c: pick(categories[c]),
-    **kept("scenario_category"),
-)
-shown = [s for s in scenarios.values() if not cat or s.get("category") == cat]
+# Categories come from the data; one only used by a scenario still gets a readable name.
+FALLBACK_NAMES = {
+    "comparison": {"zh": "模型比較", "en": "Comparison"},
+    "other": {"zh": "其他", "en": "Other"},
+}
+categories = dict(doc.get("categories", {}))
+for s in scenarios.values():
+    c = s.get("category") or "other"
+    title = c.replace("_", " ").title()
+    categories.setdefault(c, FALLBACK_NAMES.get(c, {"zh": title, "en": title}))
+used = {s.get("category") or "other" for s in scenarios.values()}
+categories = {c: v for c, v in categories.items() if c in used}
+
+
+def category_of(s: dict) -> str:
+    return s.get("category") or "other"
+
+
+def category_label(c: str) -> str:
+    return f":material/{flow_ui.category_icon(c)}: {pick(categories[c])}"
+
+
+# --- compact picker: category filter + scenario select box ---------------------------------
 st.session_state.setdefault("scenario_id", next(iter(scenarios)))
 if st.session_state.scenario_id not in scenarios:
     st.session_state.scenario_id = next(iter(scenarios))
-for row in range(0, len(shown), 3):
-    for col, s in zip(st.columns(3), shown[row : row + 3], strict=False):
-        selected = s["id"] == st.session_state.scenario_id
-        kinds = sorted({flow_ui.node_kind(n) for n in s["nodes"]} - {None})
-        with col.container(border=True, height=175):
-            st.markdown(("🔵 " if selected else "") + f"**{pick(s['name'])}**")
-            st.markdown(ui.badges(kinds), unsafe_allow_html=True)
-            if st.button(
-                tr("✓ 已選擇", "✓ Selected") if selected else tr("選擇", "Select"),
-                key=f"pick_{s['id']}",
-                type="primary" if selected else "secondary",
-                disabled=selected,
-            ):
-                st.session_state.scenario_id = s["id"]
-                st.rerun()
+# Arriving from the home page with another category filtered: show all categories.
+chosen_cat = st.session_state.get("scenario_category")
+if chosen_cat and category_of(scenarios[st.session_state.scenario_id]) != chosen_cat:
+    st.session_state.scenario_category = None
 
-scenario = scenarios[st.session_state.scenario_id]
-sid = scenario["id"]
-st.divider()
-st.markdown(f"### {pick(scenario['name'])}")
-st.markdown(pick(scenario.get("description")))
-for line in pick(scenario.get("highlights")) or []:
-    st.markdown(f"- {line}")
+
+def on_category() -> None:
+    """Picking a category jumps to its first scenario (the select box lists only that one)."""
+    cat_ = st.session_state.get("_kept_scenario_category")
+    st.session_state.scenario_category = cat_
+    current_ = scenarios[st.session_state.scenario_id]
+    if cat_ and category_of(current_) != cat_:
+        st.session_state.scenario_id = next(
+            s["id"] for s in scenarios.values() if category_of(s) == cat_
+        )
+
+
+with st.container(border=True, key="sc_picker"):
+    pick_col, cat_col = st.columns([1.12, 2.2], vertical_alignment="center", gap="small")
+    cat_kw = kept("scenario_category")
+    cat_kw["on_change"], cat_kw["args"] = on_category, ()
+    cat = cat_col.pills(
+        tr("類別", "Category"),
+        list(categories),
+        format_func=category_label,
+        label_visibility="collapsed",
+        **cat_kw,
+    )
+    order = sorted(
+        (s for s in scenarios.values() if not cat or category_of(s) == cat),
+        key=lambda s: list(categories).index(category_of(s)),
+    )
+    sid = pick_col.selectbox(
+        tr("場景", "Scenario"),
+        [s["id"] for s in order],
+        format_func=lambda i: (
+            f"{pick(scenarios[i]['name'])}  ·  {pick(categories[category_of(scenarios[i])])}"
+        ),
+        label_visibility="collapsed",
+        **kept("scenario_id"),
+    )
+
+scenario = scenarios[sid]
+kinds = sorted({flow_ui.node_kind(n) for n in scenario["nodes"]} - {None})
+st.markdown(
+    f'<div class="sc-title">{ui.icon(flow_ui.category_icon(category_of(scenario)))}'
+    f"<span>{html.escape(pick(scenario['name']))}</span>"
+    f"{ui.badges(kinds, small=True)}</div>",
+    unsafe_allow_html=True,
+)
+info_col, hl_col = st.columns([1, 1], gap="large")
+info_col.caption(pick(scenario.get("description")))
+if highlights := pick(scenario.get("highlights")) or []:
+    hl_col.caption("\n".join(f"- {line}" for line in highlights))
 
 # --- models for this run ------------------------------------------------------------------------
 overrides: dict[str, str] = {}
 model_nodes = [n for n in scenario["nodes"] if model_choice.selectable(n)]
 with st.container(border=True):
-    st.markdown(f"**{tr('這次使用的模型', 'Models for this run')}**")
-    st.caption(
-        tr(
-            "每一步只列出能用的模型類型：✅ 已下載、⬇️ 需要先下載。預設選已下載的模型，方便直接 demo。",
-            "Each step lists only compatible models: ✅ downloaded, ⬇️ needs a download. "
+    st.markdown(
+        f":material/tune: **{tr('這次使用的模型', 'Models for this run')}**",
+        help=tr(
+            "每一步只列出能用的模型類型：✓ 已下載、↓ 需要先下載。預設選已下載的模型，方便直接 demo。",
+            "Each step lists only compatible models: ✓ downloaded, ↓ needs a download. "
             "Downloaded models are picked by default so the demo just runs.",
-        )
+        ),
     )
-    cols = st.columns(3)
+    cols = st.columns(4)
     for i, node in enumerate(model_nodes):
         options, installed = model_choice.choices(node, url)
         key = f"mdl_{sid}_{node['id']}"
         if st.session_state.get(key) not in options:
             st.session_state[key] = model_choice.default_choice(node, url)
         kind = flow_ui.node_kind(node)
-        label = f"{NODE_TYPES[node['type']].icon} {pick(node.get('label')) or node['id']}"
-        with cols[i % 3]:
+        label = f"{flow_ui.node_icon(node['type'])} {pick(node.get('label')) or node['id']}"
+        with cols[i % 4]:
             overrides[node["id"]] = st.selectbox(
                 label,
                 options,
                 key=key,
                 format_func=lambda m, inst=installed: (
-                    ("✅ " if inst.get(m) else "⬇️ ") + flow_ui.short_model(m)
+                    ("✓ " if inst.get(m) else "↓ ") + flow_ui.short_model(m)
                 ),
                 help=ui.cap_label(kind) if kind else None,
             )
@@ -106,8 +166,8 @@ with st.container(border=True):
             index = rag.manifest(node.get("params", {}).get("collection", "company_kb")) or {}
             st.caption(
                 tr(
-                    f"🧭 向量檢索用 `{index.get('embed_model', rag.DEFAULT_EMBED)}`（由知識庫索引決定，換模型要重建索引）",
-                    f"🧭 Vector search uses `{index.get('embed_model', rag.DEFAULT_EMBED)}` (set by the "
+                    f":material/scatter_plot: 向量檢索用 `{index.get('embed_model', rag.DEFAULT_EMBED)}`（由知識庫索引決定，換模型要重建索引）",
+                    f":material/scatter_plot: Vector search uses `{index.get('embed_model', rag.DEFAULT_EMBED)}` (set by the "
                     "knowledge-base index; rebuild it to change the model)",
                 )
             )
@@ -118,7 +178,7 @@ with st.container(border=True):
         if overrides.get(n["id"]) and overrides[n["id"]] != model_choice.configured_model(n)
     }
     if changed and st.button(
-        tr("💾 把這些模型設為場景預設", "💾 Make these the scenario defaults")
+        tr("把這些模型設為場景預設", "Make these the scenario defaults"), icon=":material/save:"
     ):
         updated = copy.deepcopy(scenario)
         for n in updated["nodes"]:
@@ -207,9 +267,9 @@ def save_upload(file) -> str:
 
 tab_run, tab_def, tab_runs = st.tabs(
     [
-        tr("▶️ 執行", "▶️ Run"),
-        tr("🧩 定義與編輯", "🧩 Definition"),
-        tr("📜 最近執行", "📜 Recent runs"),
+        ":material/play_arrow: " + tr("執行", "Run"),
+        ":material/schema: " + tr("定義與編輯", "Definition"),
+        ":material/history: " + tr("最近執行", "Recent runs"),
     ]
 )
 
@@ -217,11 +277,20 @@ with tab_run:
     left, right = st.columns([1, 1.35], gap="large")
     with left:
         inputs = {}
+        chosen_samples = {}  # audio/document input key -> bundled sample in use (None = upload)
         for spec in scenario.get("inputs", []):
             key, kind, label = spec["key"], spec.get("type", "text"), pick(spec.get("label"))
             wkey = f"in_{sid}_{key}"
             if kind == "text":
                 examples = pick(scenario.get("examples")) or []
+                if source_key := spec.get("from_sample"):
+                    # Pre-filled with the reference script of the chosen sample (e.g. a transcript
+                    # for scoring speech recognition); an upload falls back to the first example.
+                    sample = chosen_samples.get(source_key)
+                    if st.session_state.get(f"{wkey}_for") != sample:
+                        script = sample and asr_metrics.sample_reference(PROJECT_DIR / sample)
+                        st.session_state[wkey] = script or (examples[0] if examples else "")
+                        st.session_state[f"{wkey}_for"] = sample
                 st.session_state.setdefault(wkey, examples[0] if examples else "")
                 inputs[key] = st.text_area(label, key=wkey, height=110)
                 if examples:
@@ -246,13 +315,36 @@ with tab_run:
                 )
             else:  # audio / document: bundled sample or an upload
                 default = spec.get("default")
-                types = ["wav", "mp3", "m4a"] if kind == "audio" else ["pdf", "docx", "md"]
+                samples = {
+                    (x if isinstance(x, str) else x["path"]): (
+                        Path(x).name if isinstance(x, str) else pick(x.get("label")) or x["path"]
+                    )
+                    for x in spec.get("samples") or []
+                }
+                if len(samples) > 1:
+                    st.session_state.setdefault(
+                        f"{wkey}_sample", default if default in samples else next(iter(samples))
+                    )
+                    default = st.selectbox(
+                        tr("範例檔", "Sample"),
+                        list(samples),
+                        format_func=samples.get,
+                        key=f"{wkey}_sample",
+                        disabled=busy,
+                    )
+                types = (
+                    ["wav", "mp3", "m4a", "flac", "ogg", "webm"]
+                    if kind == "audio"
+                    else ["pdf", "docx", "md"]
+                )
                 upload = st.file_uploader(label, type=types, key=wkey)
                 if upload:
                     inputs[key] = save_upload(upload) if upload.size else default
                     st.caption(tr(f"使用上傳的 {upload.name}", f"Using upload {upload.name}"))
+                    chosen_samples[key] = None
                 else:
                     inputs[key] = default
+                    chosen_samples[key] = default
                     exists = default and (PROJECT_DIR / default).exists()
                     st.caption(
                         tr("使用範例檔：", "Using the sample: ")
@@ -265,7 +357,8 @@ with tab_run:
         ready = all(v for v in inputs.values())
         c1, c2 = st.columns([2, 1])
         if c1.button(
-            tr("▶️ 執行場景", "▶️ Run scenario"),
+            tr("執行場景", "Run scenario"),
+            icon=":material/play_arrow:",
             type="primary",
             disabled=busy or not ready,
             use_container_width=True,
@@ -302,11 +395,12 @@ with tab_run:
             st.graphviz_chart(flow_ui.flow_dot(shown_s, trace, finished), use_container_width=True)
             if run and run.status != "pending":
                 state = {
-                    "running": tr("⏳ 執行中", "⏳ Running"),
-                    "done": tr("✅ 完成", "✅ Done"),
-                    "error": tr("⚠️ 失敗", "⚠️ Failed"),
-                    "cancelled": tr("⏹️ 已停止", "⏹️ Stopped"),
+                    "running": tr("執行中", "Running"),
+                    "done": tr("完成", "Done"),
+                    "error": tr("失敗", "Failed"),
+                    "cancelled": tr("已停止", "Stopped"),
                 }.get(run.status, run.status)
+                state = f"{flow_ui.STATUS_ICON.get(run.status, '')} {state}"
                 models = sorted({m for e in trace for m in e["models"]})
                 st.caption(
                     f"{state} · {run.elapsed():.1f}s · "
@@ -387,8 +481,8 @@ with tab_def:
         rows.append(
             {
                 "#": i,
-                tr("步驟", "Step"): f"{ntype.icon} {pick(node.get('label')) or node['id']}",
-                tr("類型", "Kind"): ui.cap_label(kind) if kind else pick(ntype.label),
+                tr("步驟", "Step"): pick(node.get("label")) or node["id"],
+                tr("類型", "Kind"): ui.cap_text(kind) if kind else pick(ntype.label),
                 tr("模型", "Model"): flow_ui.short_model(
                     overrides.get(node["id"]) or model_choice.configured_model(node) or "—"
                 ),
@@ -416,7 +510,7 @@ with tab_def:
         tr("步驟", "Step"),
         list(nodes),
         format_func=lambda k: (
-            f"{NODE_TYPES[nodes[k]['type']].icon} {pick(nodes[k].get('label')) or k}"
+            f"{pick(nodes[k].get('label')) or k}  ·  {pick(NODE_TYPES[nodes[k]['type']].label)}"
         ),
         key=f"edit_node_{sid}",
     )
@@ -440,7 +534,7 @@ with tab_def:
                     "model",
                     options,
                     index=options.index(current) if current in options else 0,
-                    format_func=lambda m, inst=installed: ("✅ " if inst.get(m) else "⬇️ ") + m,
+                    format_func=lambda m, inst=installed: ("✓ " if inst.get(m) else "↓ ") + m,
                     help=help_text,
                 )
             elif name in ("prompt", "system", "template", "instructions"):
@@ -559,7 +653,7 @@ with tab_runs:
         st.info(tr("還沒有執行紀錄。", "No runs yet."))
     for f in files:
         data = json.loads(f.read_text())
-        icon = {"done": "✅", "error": "⚠️", "cancelled": "⏹️"}.get(data.get("status"), "·")
+        icon = flow_ui.STATUS_ICON.get(data.get("status"), ":material/radio_button_unchecked:")
         with st.expander(
             f"{icon} {data.get('recorded_at', '')[:19]} · {data.get('seconds')}s · "
             + ", ".join(flow_ui.short_model(m) for m in data.get("models", []))

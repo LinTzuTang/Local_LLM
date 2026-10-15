@@ -8,7 +8,7 @@ import streamlit as st
 import ui
 from i18n import tr
 
-st.set_page_config(page_title="Local Agent Lab", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Local Agent Lab", page_icon=":material/science:", layout="wide")
 st.logo(str(Path(__file__).parent / "static" / "logo.svg"), size="large")
 ui.inject_css()
 
@@ -25,6 +25,7 @@ pages = {
         page("views/models.py", "模型庫", "Model library", ":material/apps:"),
         page("views/chat.py", "對話測試", "Chat", ":material/chat:"),
         page("views/compare.py", "模型比較", "Compare models", ":material/balance:"),
+        page("views/speech.py", "語音模型比較", "Compare speech models", ":material/graphic_eq:"),
         page("views/media.py", "語音與文件", "Speech & documents", ":material/mic:"),
     ],
     "Agents": [

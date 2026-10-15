@@ -11,7 +11,12 @@ import streamlit as st
 from local_llm import catalog, gateway_client, ollama_admin
 from local_llm.lab.nodes import NODE_TYPES
 
-GATEWAY_TASK = {"transcribe": "asr", "parse_document": "doc", "rerank": "rerank"}
+GATEWAY_TASK = {
+    "transcribe": "asr",
+    "diarize": "diarize",
+    "parse_document": "doc",
+    "rerank": "rerank",
+}
 
 
 @st.cache_data(ttl=15, show_spinner=False)

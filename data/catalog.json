@@ -669,8 +669,7 @@
       "caps": [
         "tools",
         "thinking",
-        "vision",
-        "audio"
+        "vision"
       ],
       "tags": [
         "multilingual",
@@ -680,13 +679,15 @@
       ],
       "license": "apache-2.0",
       "fit": "ok",
-      "note": "Google Gemma 4 MoE（26B-A4B），可看圖、聽音訊，速度快、多語言表現佳。",
-      "note_en": "Google Gemma 4 MoE (26B-A4B) with image and audio input; fast, with strong multilingual output.",
+      "note": "Google Gemma 4 MoE（26B-A4B），可看圖（Ollama 不接受音訊），速度快、多語言表現佳。",
+      "note_en": "Google Gemma 4 MoE (26B-A4B) with image input (Ollama takes no audio); fast, with strong multilingual output.",
       "tasks": [
         "chat",
         "vision"
       ],
-      "recommended": true
+      "recommended": true,
+      "audio_note": "Ollama 不接受這個模型的音訊輸入（回 400：this model does not support audio input）；Gemma 4 只有 E2B／E4B 有音訊編碼器可用。",
+      "audio_note_en": "Ollama does not accept audio input for this model (HTTP 400: this model does not support audio input); among Gemma 4 only E2B and E4B have a usable audio encoder."
     },
     {
       "tag": "gemma4:31b",
@@ -699,8 +700,7 @@
       "caps": [
         "tools",
         "thinking",
-        "vision",
-        "audio"
+        "vision"
       ],
       "tags": [
         "multilingual",
@@ -714,7 +714,9 @@
       "tasks": [
         "chat",
         "vision"
-      ]
+      ],
+      "audio_note": "Ollama 不接受這個模型的音訊輸入（回 400：this model does not support audio input）；Gemma 4 只有 E2B／E4B 有音訊編碼器可用。",
+      "audio_note_en": "Ollama does not accept audio input for this model (HTTP 400: this model does not support audio input); among Gemma 4 only E2B and E4B have a usable audio encoder."
     },
     {
       "tag": "gemma4:12b",
@@ -737,12 +739,14 @@
       ],
       "license": "apache-2.0",
       "fit": "ok",
-      "note": "Gemma 4 中型版：約 8GB 就能看圖與聽音訊，256K context。",
-      "note_en": "Mid-size Gemma 4: images and audio in about 8 GB, 256K context.",
+      "note": "Gemma 4 中型版：約 8GB 就能看圖；Ollama 標示可聽音訊，但實測轉錄會重複、離題，256K context。",
+      "note_en": "Mid-size Gemma 4: images in about 8 GB; Ollama lists audio input, but transcription tests looped and drifted off topic, 256K context.",
       "tasks": [
         "chat",
         "vision"
-      ]
+      ],
+      "audio_note": "Ollama 0.40.3 標示可聽音訊，但實測只聽懂第一句就開始重複或離題，不適合當語音辨識；語音請用 E2B／E4B。",
+      "audio_note_en": "Ollama 0.40.3 lists audio input, but in tests it only got the first sentence right and then looped or drifted off topic, so it is not usable for speech recognition; use E2B or E4B for audio."
     },
     {
       "tag": "gemma4:e4b",
@@ -770,7 +774,9 @@
       "tasks": [
         "chat",
         "vision"
-      ]
+      ],
+      "audio_note": "語音辨識實測可用：模型閘道以 ASR 模型提供（見「非 Ollama」模型）。",
+      "audio_note_en": "Verified for speech recognition: the model gateway serves it as an ASR model (see the non-Ollama models)."
     },
     {
       "tag": "gemma4:e2b",
@@ -798,7 +804,9 @@
       "tasks": [
         "chat",
         "vision"
-      ]
+      ],
+      "audio_note": "語音辨識實測可用：模型閘道以 ASR 模型提供（見「非 Ollama」模型）。",
+      "audio_note_en": "Verified for speech recognition: the model gateway serves it as an ASR model (see the non-Ollama models)."
     },
     {
       "tag": "translategemma:4b",
@@ -2828,13 +2836,15 @@
     "asr": "語音辨識（ASR，語音→文字）",
     "tts": "語音合成（TTS，文字→語音）",
     "doc": "文件解析／OCR（PDF、掃描檔→Markdown）",
-    "rerank": "Reranker（RAG 重新排序）"
+    "rerank": "Reranker（RAG 重新排序）",
+    "diarize": "說話者分段（誰在什麼時候說話）"
   },
   "other_categories_en": {
     "asr": "Speech recognition (ASR, speech → text)",
     "tts": "Speech synthesis (TTS, text → speech)",
     "doc": "Document parsing / OCR (PDFs, scans → Markdown)",
-    "rerank": "Reranker (RAG re-ranking)"
+    "rerank": "Reranker (RAG re-ranking)",
+    "diarize": "Speaker diarization (who spoke when)"
   },
   "mac_labels": {
     "mlx": "✅ Apple GPU（MLX）",
@@ -2883,7 +2893,59 @@
         "path": "mlx/breeze-asr-25",
         "size_gb": 3.1,
         "note": "閘道下載聯發科官方 repo 的 transformers 權重（model.safetensors，3.1GB），在本機轉成 MLX 格式（models/mlx/breeze-asr-25，fp16），轉完刪除原始檔；不使用社群轉檔。",
-        "note_en": "The gateway downloads the transformers weights from MediaTek's official repo (model.safetensors, 3.1GB), converts them to MLX format locally (models/mlx/breeze-asr-25, fp16) and deletes the originals afterwards; community conversions are not used."
+        "note_en": "The gateway downloads the transformers weights from MediaTek's official repo (model.safetensors, 3.1GB), converts them to MLX format locally (models/mlx/breeze-asr-25, fp16) and deletes the originals afterwards; community conversions are not used.",
+        "options": {
+          "translate": false
+        }
+      }
+    },
+    {
+      "name": "Taiwan-Tongues-ASR-CE",
+      "repo": "adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0",
+      "category": "asr",
+      "params": "1.55B",
+      "license": "TRAIL – TWM Responsible AI License v0.1（可商用，附負責任使用限制）",
+      "license_en": "TRAIL – TWM Responsible AI License v0.1 (commercial use allowed, with responsible-use restrictions)",
+      "mac": "mlx",
+      "runtime": "mlx-whisper（模型閘道；官方權重在本機轉 MLX）",
+      "runtime_en": "mlx-whisper (model gateway; official weights converted to MLX locally)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "國語、台語、客語、英語（台語、客語也用 zh 語言代碼，輸出漢字）",
+      "use_en": "Mandarin, Taiwanese Hokkien, Hakka and English (Taiwanese and Hakka also use the zh language code and are written in Chinese characters)",
+      "note": "數位發展部（adi-gov-tw）Taiwan-Tongues-ASR-CE，Whisper-large-v2 微調。授權 TRAIL v0.1：免費使用（含商用）；禁止違法、歧視、深偽等用途，機器產生的內容須標示為機器產生；修改或轉換後的模型若「散布」（含提供下載、API、遠端存取）須以 TRAIL-M 公開。條款：https://huggingface.co/adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0/blob/1180db44b24838d99f16ac8da093bd9238cf4f85/LICENSE",
+      "note_en": "Ministry of Digital Affairs (adi-gov-tw) Taiwan-Tongues-ASR-CE, fine-tuned from Whisper-large-v2. Licence TRAIL v0.1: free use including commercial use; unlawful, discriminatory or deceptive uses are prohibited and machine-generated content must be disclosed as such; a modified or converted model that is distributed (including download, API or remote access) must be released under TRAIL-M. Terms: https://huggingface.co/adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0/blob/1180db44b24838d99f16ac8da093bd9238cf4f85/LICENSE",
+      "recommended": false,
+      "taiwan": true,
+      "gateway": {
+        "id": "taiwan-tongues-asr",
+        "task": "asr",
+        "backend": "mlx-whisper",
+        "weights": [
+          {
+            "repo": "adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0",
+            "revision": "1180db44b24838d99f16ac8da093bd9238cf4f85",
+            "files": [
+              "config.json",
+              "model.safetensors"
+            ],
+            "into": "mlx/taiwan-tongues-asr/.source"
+          }
+        ],
+        "convert": "hf-whisper-to-mlx",
+        "path": "mlx/taiwan-tongues-asr",
+        "size_gb": 3.2,
+        "license": "TRAIL v0.1（可商用；轉換後的權重若散布或對外提供 API 須以 TRAIL-M 公開）",
+        "license_en": "TRAIL v0.1 (commercial use OK; converted weights that are distributed or offered through an API must be released under TRAIL-M)",
+        "license_url": "https://huggingface.co/adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0/blob/1180db44b24838d99f16ac8da093bd9238cf4f85/LICENSE",
+        "note": "閘道下載數位發展部官方 pretrained repo 的 transformers 權重（model.safetensors，3.2GB），和 Breeze-ASR-25 一樣在本機轉成 MLX（models/mlx/taiwan-tongues-asr，fp16），轉完刪除原始檔。轉換屬衍生作品：自用沒問題，但不要把 models/mlx/taiwan-tongues-asr 散布出去或對外提供，除非照 TRAIL-M 公開。另一個 Taiwan-Tongues-ASR-CE-v1.0 是 CTranslate2 格式。",
+        "note_en": "The gateway downloads the transformers weights (model.safetensors, 3.2GB) from the Ministry's official pretrained repo and converts them to MLX locally (models/mlx/taiwan-tongues-asr, fp16), like Breeze-ASR-25, deleting the originals. The conversion is a derivative work: fine for your own use, but do not distribute models/mlx/taiwan-tongues-asr or offer it to others unless you release it under TRAIL-M. The separate Taiwan-Tongues-ASR-CE-v1.0 repo is the CTranslate2 build.",
+        "options": {
+          "decode": {
+            "condition_on_previous_text": false
+          },
+          "translate": false
+        }
       }
     },
     {
@@ -2917,23 +2979,154 @@
         ],
         "size_gb": 1.6,
         "note": "mlx-community 轉檔（openai/whisper-large-v3-turbo，MIT）。",
-        "note_en": "mlx-community conversion (openai/whisper-large-v3-turbo, MIT)."
+        "note_en": "mlx-community conversion (openai/whisper-large-v3-turbo, MIT).",
+        "options": {
+          "decode": {
+            "condition_on_previous_text": false
+          },
+          "translate": false
+        }
       }
     },
     {
-      "name": "Qwen3-ASR（1.7B／0.6B）",
-      "repo": "Qwen/Qwen3-ASR-1.7B",
+      "name": "Whisper large-v3",
+      "repo": "openai/whisper-large-v3",
       "category": "asr",
-      "params": "1.7B／0.6B",
+      "params": "1.55B",
       "license": "apache-2.0",
       "mac": "mlx",
-      "runtime": "mlx-audio／qwen-asr",
-      "install": "uv add mlx-audio",
-      "use": "30 種語言＋22 種中文方言；另有 ForcedAligner 做字級時間對齊",
-      "use_en": "30 languages + 22 Chinese dialects; a separate ForcedAligner provides word-level timestamps",
-      "note": "2026 年初開源；0.6B 速度與準確率平衡最好。",
-      "note_en": "Open-sourced in early 2026; 0.6B offers the best balance of speed and accuracy.",
-      "recommended": true
+      "runtime": "mlx-whisper（模型閘道；官方權重在本機轉 MLX）",
+      "runtime_en": "mlx-whisper (model gateway; official weights converted to MLX locally)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "Whisper 完整版：比 turbo 慢，多語準確率較高；Breeze-ASR-25 的比較基準",
+      "use_en": "The full Whisper: slower than turbo, more accurate across languages; the baseline for Breeze-ASR-25",
+      "note": "OpenAI 官方 repo；模型卡標示 Apache-2.0（程式碼為 MIT）。",
+      "note_en": "OpenAI's official repo; the model card says Apache-2.0 (the code is MIT).",
+      "recommended": false,
+      "gateway": {
+        "id": "whisper-large-v3",
+        "task": "asr",
+        "backend": "mlx-whisper",
+        "weights": [
+          {
+            "repo": "openai/whisper-large-v3",
+            "revision": "06f233fe06e710322aca913c1bc4249a0d71fce1",
+            "files": [
+              "config.json",
+              "model.safetensors"
+            ],
+            "into": "mlx/whisper-large-v3/.source"
+          }
+        ],
+        "convert": "hf-whisper-to-mlx",
+        "path": "mlx/whisper-large-v3",
+        "size_gb": 3.1,
+        "note": "閘道下載 OpenAI 官方 repo 的 model.safetensors（fp16，3.1GB），在本機轉成 MLX（models/mlx/whisper-large-v3），轉完刪除原始檔；和 Breeze-ASR-25 同一流程。",
+        "note_en": "The gateway downloads model.safetensors (fp16, 3.1GB) from OpenAI's official repo, converts it to MLX locally (models/mlx/whisper-large-v3) and deletes the original; the same flow as Breeze-ASR-25.",
+        "options": {
+          "decode": {
+            "condition_on_previous_text": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Qwen3-ASR-1.7B",
+      "repo": "Qwen/Qwen3-ASR-1.7B",
+      "category": "asr",
+      "params": "1.7B",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio（模型閘道）",
+      "runtime_en": "mlx-audio (model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "30 種語言＋22 種中文方言；可給上下文（人名、術語）提高辨識",
+      "use_en": "30 languages + 22 Chinese dialects; accepts context (names, terms) to bias recognition",
+      "note": "2026 年初開源；1.7B 準確率較高。另有 ForcedAligner 做字級時間對齊（未接上閘道）。",
+      "note_en": "Open-sourced in early 2026; 1.7B is the more accurate size. A separate ForcedAligner provides word-level timestamps (not served by the gateway).",
+      "recommended": true,
+      "gateway": {
+        "id": "qwen3-asr-1.7b",
+        "task": "asr",
+        "backend": "mlx-audio",
+        "weights": [
+          {
+            "repo": "Qwen/Qwen3-ASR-1.7B",
+            "revision": "7278e1e70fe206f11671096ffdd38061171dd6e5",
+            "files": [
+              "config.json",
+              "generation_config.json",
+              "preprocessor_config.json",
+              "tokenizer_config.json",
+              "chat_template.json",
+              "vocab.json",
+              "merges.txt",
+              "model-*.safetensors",
+              "model.safetensors.index.json"
+            ]
+          }
+        ],
+        "size_gb": 4.7,
+        "options": {
+          "language_names": true,
+          "prompt_arg": "system_prompt",
+          "generate": {
+            "max_tokens": 8192
+          }
+        },
+        "note": "閘道下載通義千問官方 repo 的 safetensors（bf16），mlx-audio 直接在 Apple GPU 執行，不另外轉檔。輸出多為簡體中文。",
+        "note_en": "The gateway downloads the safetensors (bf16) from Qwen's official repo; mlx-audio runs them on the Apple GPU without conversion. Output is mostly Simplified Chinese."
+      }
+    },
+    {
+      "name": "Qwen3-ASR-0.6B",
+      "repo": "Qwen/Qwen3-ASR-0.6B",
+      "category": "asr",
+      "params": "0.6B",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio（模型閘道）",
+      "runtime_en": "mlx-audio (model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "30 種語言＋22 種中文方言；可給上下文（人名、術語）提高辨識",
+      "use_en": "30 languages + 22 Chinese dialects; accepts context (names, terms) to bias recognition",
+      "note": "0.6B 速度與準確率平衡最好，記憶體約 2GB。",
+      "note_en": "0.6B offers the best balance of speed and accuracy, in about 2 GB of memory.",
+      "recommended": false,
+      "gateway": {
+        "id": "qwen3-asr-0.6b",
+        "task": "asr",
+        "backend": "mlx-audio",
+        "weights": [
+          {
+            "repo": "Qwen/Qwen3-ASR-0.6B",
+            "revision": "5eb144179a02acc5e5ba31e748d22b0cf3e303b0",
+            "files": [
+              "config.json",
+              "generation_config.json",
+              "preprocessor_config.json",
+              "tokenizer_config.json",
+              "chat_template.json",
+              "vocab.json",
+              "merges.txt",
+              "model.safetensors"
+            ]
+          }
+        ],
+        "size_gb": 1.9,
+        "options": {
+          "language_names": true,
+          "prompt_arg": "system_prompt",
+          "generate": {
+            "max_tokens": 8192
+          }
+        },
+        "note": "閘道下載通義千問官方 repo 的 safetensors（bf16），mlx-audio 直接在 Apple GPU 執行，不另外轉檔。輸出多為簡體中文。",
+        "note_en": "The gateway downloads the safetensors (bf16) from Qwen's official repo; mlx-audio runs them on the Apple GPU without conversion. Output is mostly Simplified Chinese."
+      }
     },
     {
       "name": "SenseVoice-Small",
@@ -2943,14 +3136,203 @@
       "params_en": "about 0.23B",
       "license": "FunASR 模型授權（自訂，商用前確認）",
       "license_en": "FunASR model license (custom; check before commercial use)",
-      "mac": "cpu",
-      "runtime": "FunASR",
-      "install": "uv add funasr",
+      "mac": "mlx",
+      "runtime": "mlx-audio（模型閘道；原為 FunASR）",
+      "install": "平台一鍵下載（模型閘道）",
       "use": "中文為主，極快，也能偵測情緒與聲音事件",
       "use_en": "Mainly Chinese, very fast; also detects emotions and audio events",
-      "note": "程式碼 MIT，但權重是 FunASR 自訂授權。",
-      "note_en": "The code is MIT, but the weights use FunASR's custom license.",
-      "recommended": false
+      "note": "程式碼 MIT，但權重是 FunASR 模型授權 1.1（自訂）：可使用、修改、散布，須標示來源與保留模型名稱，阿里巴巴不負任何責任；條款可能單方修改。商用前請法務確認。",
+      "note_en": "The code is MIT, but the weights use the FunASR Model License 1.1 (custom): use, modification and sharing are allowed with attribution and the model name kept, with no liability accepted by Alibaba; the terms may be revised unilaterally. Have legal review it before commercial use.",
+      "recommended": false,
+      "runtime_en": "mlx-audio (model gateway; originally FunASR)",
+      "install_en": "One-click download in the platform (model gateway)",
+      "gateway": {
+        "id": "sensevoice-small",
+        "task": "asr",
+        "backend": "mlx-audio",
+        "weights": [
+          {
+            "repo": "mlx-community/SenseVoiceSmall",
+            "revision": "8ddd966bd96243cff196422f81f0c5d955814792",
+            "files": [
+              "config.json",
+              "model.safetensors",
+              "am.mvn",
+              "chn_jpn_yue_eng_ko_spectok.bpe.model"
+            ]
+          }
+        ],
+        "size_gb": 0.9,
+        "options": {
+          "generate": {
+            "use_itn": true
+          }
+        },
+        "license": "FunASR 模型授權 1.1（自訂，非 OSI；商用前確認）",
+        "license_en": "FunASR Model License 1.1 (custom, not OSI; check before commercial use)",
+        "note": "mlx-community 由官方 FunAudioLLM/SenseVoiceSmall（model.pt）轉成 safetensors，mlx-audio 執行。非自回歸，速度極快；不支援上下文提示；開啟 ITN（標點、數字）。",
+        "note_en": "mlx-community conversion of the official FunAudioLLM/SenseVoiceSmall (model.pt) to safetensors, run with mlx-audio. Non-autoregressive and very fast; no context prompt; ITN (punctuation, numbers) is on."
+      }
+    },
+    {
+      "name": "Fun-ASR-Nano-2512",
+      "repo": "FunAudioLLM/Fun-ASR-Nano-2512",
+      "category": "asr",
+      "params": "0.8B",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio（模型閘道）",
+      "runtime_en": "mlx-audio (model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "中文（含方言、口音）、英文、日文；可給熱詞",
+      "use_en": "Chinese (incl. dialects and accents), English, Japanese; accepts hotwords",
+      "note": "通義實驗室 Fun-ASR 的開源小模型（音訊編碼器＋Qwen3-0.6B），2025 年 12 月釋出，Apache-2.0。",
+      "note_en": "The open small model of Tongyi Lab's Fun-ASR (audio encoder + Qwen3-0.6B), released December 2025, Apache-2.0.",
+      "recommended": false,
+      "gateway": {
+        "id": "fun-asr-nano",
+        "task": "asr",
+        "backend": "mlx-audio",
+        "weights": [
+          {
+            "repo": "mlx-community/Fun-ASR-Nano-2512",
+            "revision": "a7bc96fceaafce39ed6748e0c0fa9a9508b67f86",
+            "files": [
+              "config.json",
+              "model.safetensors",
+              "Qwen3-0.6B/*"
+            ]
+          }
+        ],
+        "size_gb": 1.7,
+        "options": {
+          "prompt_arg": "context",
+          "generate": {
+            "chunk_duration": 60
+          }
+        },
+        "note": "mlx-community 由官方 FunAudioLLM/Fun-ASR-Nano-2512 轉成 safetensors，mlx-audio 執行；輸出簡體中文、開啟 ITN；長錄音每 60 秒一段（整段送入會重複）。",
+        "note_en": "mlx-community conversion of the official FunAudioLLM/Fun-ASR-Nano-2512 to safetensors, run with mlx-audio; outputs Simplified Chinese with ITN on; long recordings are decoded in 60-second chunks (the whole file at once loops)."
+      }
+    },
+    {
+      "name": "Gemma 4 E2B（語音輸入，經 Ollama）",
+      "name_en": "Gemma 4 E2B (audio input, via Ollama)",
+      "repo": "google/gemma-4-E2B-it",
+      "category": "asr",
+      "params": "E2B（有效 2B）",
+      "params_en": "E2B (2B effective)",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "Ollama（MLX）；模型閘道轉送",
+      "runtime_en": "Ollama (MLX); forwarded by the model gateway",
+      "install": "ollama pull gemma4:e2b（或平台下載）",
+      "install_en": "ollama pull gemma4:e2b (or the platform's download button)",
+      "use": "多模態 LLM 當語音辨識：照指示逐字轉錄，可順便指定繁體輸出；沒有時間軸",
+      "use_en": "A multimodal LLM as a speech recogniser: transcribes verbatim on instruction and can be told to write Traditional Chinese; no timestamps",
+      "note": "和「Ollama 模型」裡的同一個模型（同一份權重），只是改用音訊輸入。",
+      "note_en": "The same model (the same weights) as in the Ollama list, used with audio input.",
+      "recommended": false,
+      "gateway": {
+        "id": "gemma4:e2b",
+        "task": "asr",
+        "backend": "ollama-audio",
+        "ollama": "gemma4:e2b",
+        "size_gb": 7.5,
+        "options": {
+          "chunk_seconds": 240
+        },
+        "note": "權重由 Ollama 管理（models/ollama）：下載是 ollama pull，載入／卸載由 Ollama 處理。閘道把音訊轉成 16kHz WAV 放進 /api/chat，並加上「逐字轉錄」指示（不思考、temperature 0）；超過 4 分鐘的錄音在最安靜處切段。",
+        "note_en": "Ollama manages the weights (models/ollama): downloading is ollama pull, and Ollama loads and unloads them. The gateway sends the audio as 16 kHz WAV to /api/chat with a verbatim-transcription instruction (no thinking, temperature 0); recordings over 4 minutes are split at the quietest points."
+      }
+    },
+    {
+      "name": "Gemma 4 E4B（語音輸入，經 Ollama）",
+      "name_en": "Gemma 4 E4B (audio input, via Ollama)",
+      "repo": "google/gemma-4-E4B-it",
+      "category": "asr",
+      "params": "E4B（有效 4B）",
+      "params_en": "E4B (4B effective)",
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "Ollama（MLX）；模型閘道轉送",
+      "runtime_en": "Ollama (MLX); forwarded by the model gateway",
+      "install": "ollama pull gemma4:e4b（或平台下載）",
+      "install_en": "ollama pull gemma4:e4b (or the platform's download button)",
+      "use": "多模態 LLM 當語音辨識：照指示逐字轉錄，可順便指定繁體輸出；沒有時間軸",
+      "use_en": "A multimodal LLM as a speech recogniser: transcribes verbatim on instruction and can be told to write Traditional Chinese; no timestamps",
+      "note": "和「Ollama 模型」裡的同一個模型（同一份權重），只是改用音訊輸入。",
+      "note_en": "The same model (the same weights) as in the Ollama list, used with audio input.",
+      "recommended": true,
+      "gateway": {
+        "id": "gemma4:e4b",
+        "task": "asr",
+        "backend": "ollama-audio",
+        "ollama": "gemma4:e4b",
+        "size_gb": 9.5,
+        "options": {
+          "chunk_seconds": 240
+        },
+        "note": "權重由 Ollama 管理（models/ollama）：下載是 ollama pull，載入／卸載由 Ollama 處理。閘道把音訊轉成 16kHz WAV 放進 /api/chat，並加上「逐字轉錄」指示（不思考、temperature 0）；超過 4 分鐘的錄音在最安靜處切段。",
+        "note_en": "Ollama manages the weights (models/ollama): downloading is ollama pull, and Ollama loads and unloads them. The gateway sends the audio as 16 kHz WAV to /api/chat with a verbatim-transcription instruction (no thinking, temperature 0); recordings over 4 minutes are split at the quietest points."
+      }
+    },
+    {
+      "name": "說話者分段（pyannote segmentation-3.0 + 3D-Speaker CAM++）",
+      "name_en": "Speaker diarization (pyannote segmentation-3.0 + 3D-Speaker CAM++)",
+      "repo": "csukuangfj/sherpa-onnx-pyannote-segmentation-3-0",
+      "category": "diarize",
+      "params": "1.5M + 7M",
+      "license": "MIT（分段）＋ Apache-2.0（聲紋）",
+      "license_en": "MIT (segmentation) + Apache-2.0 (speaker embedding)",
+      "mac": "cpu",
+      "runtime": "sherpa-onnx 1.13.8（onnxruntime，CPU；模型閘道）",
+      "runtime_en": "sherpa-onnx 1.13.8 (onnxruntime, CPU; model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "會議錄音標出「誰在什麼時候說話」，再和語音辨識的時間軸合併成「講者 1：…」逐字稿",
+      "use_en": "Marks who spoke when in a meeting recording; merged with the ASR timestamps into a \"Speaker 1: …\" transcript",
+      "note": "pyannote/segmentation-3.0（CNRS，MIT）由 sherpa-onnx 作者轉成 ONNX，原始 repo 需要登入同意條款，這份轉檔不需要；聲紋模型是阿里巴巴通義實驗室 3D-Speaker 的 CAM++ 中英文進階版（ModelScope iic/speech_campplus_sv_zh_en_16k-common_advanced，Apache-2.0）。共約 34MB，CPU 上處理 1 分鐘錄音只要幾秒。",
+      "note_en": "pyannote/segmentation-3.0 (CNRS, MIT) converted to ONNX by the sherpa-onnx author; the original repo is gated behind a terms form, this conversion is not. The speaker embedding is 3D-Speaker's CAM++ Chinese-English advanced model from Alibaba Tongyi Lab (ModelScope iic/speech_campplus_sv_zh_en_16k-common_advanced, Apache-2.0). About 34 MB in total; a minute of audio takes a few seconds on the CPU.",
+      "recommended": true,
+      "gateway": {
+        "id": "speaker-diarization",
+        "task": "diarize",
+        "backend": "sherpa-diarization",
+        "weights": [
+          {
+            "repo": "csukuangfj/sherpa-onnx-pyannote-segmentation-3-0",
+            "revision": "9403a6902bb58e3d5ae8c7e77c3422de279db2e0",
+            "files": [
+              "model.onnx",
+              "LICENSE"
+            ],
+            "into": "sherpa/speaker-diarization/segmentation"
+          },
+          {
+            "repo": "csukuangfj/speaker-embedding-models",
+            "revision": "0743f301363dec56491a490f6d6cbc9d67f9a3bf",
+            "files": [
+              "3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx"
+            ],
+            "into": "sherpa/speaker-diarization/embedding"
+          }
+        ],
+        "path": "sherpa/speaker-diarization",
+        "size_gb": 0.04,
+        "license": "MIT（pyannote segmentation-3.0）＋ Apache-2.0（3D-Speaker CAM++）",
+        "license_en": "MIT (pyannote segmentation-3.0) + Apache-2.0 (3D-Speaker CAM++)",
+        "options": {
+          "segmentation": "segmentation/model.onnx",
+          "embedding": "embedding/3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx",
+          "threshold": 0.7,
+          "min_duration_on": 0.3,
+          "min_duration_off": 0.5
+        },
+        "note": "閘道從 Hugging Face 下載兩個 ONNX 檔（固定版本）：csukuangfj/sherpa-onnx-pyannote-segmentation-3-0 的 model.onnx（6MB，@9403a69）與 csukuangfj/speaker-embedding-models 的 3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx（28MB，@0743f30），放在 models/sherpa/speaker-diarization。用 sherpa-onnx 在 CPU 上執行，不佔 GPU。",
+        "note_en": "The gateway downloads two pinned ONNX files from Hugging Face: model.onnx from csukuangfj/sherpa-onnx-pyannote-segmentation-3-0 (6 MB, @9403a69) and 3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx from csukuangfj/speaker-embedding-models (28 MB, @0743f30), into models/sherpa/speaker-diarization. Runs with sherpa-onnx on the CPU, so it does not compete for the GPU."
+      }
     },
     {
       "name": "CosyVoice 3",

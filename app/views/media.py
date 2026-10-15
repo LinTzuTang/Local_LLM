@@ -25,10 +25,11 @@ TASK_LABELS = {
     "asr": tr("語音轉文字", "Speech to text"),
     "doc": tr("文件解析", "Document parsing"),
     "rerank": "Rerank",
+    "diarize": tr("說話者分段", "Diarization"),
 }
 
 ui.page_header(
-    "🎙️",
+    "mic",
     tr("語音與文件", "Speech & documents"),
     tr(
         "Ollama 只跑 LLM 與 embedding。語音轉文字、文件解析、reranker 由本機的**模型閘道**提供，用法和 Ollama 一樣：一鍵下載、第一次使用時載入、閒置後自動卸載。資料不會離開這台電腦；每個結果下方都列出實際呼叫的 API。",
@@ -70,9 +71,10 @@ def status_panel() -> None:
                 {
                     tr("模型", "Model"): m["id"],
                     tr("任務", "Task"): TASK_LABELS.get(m["task"], m["task"]),
-                    tr("已下載", "Downloaded"): "✅" if m["installed"] else "—",
+                    # table cells cannot show icons: plain-text marks
+                    tr("已下載", "Downloaded"): "✓" if m["installed"] else "—",
                     tr("大小", "Size"): f"{m['size_gb']} GB",
-                    tr("記憶體中", "In memory"): f"🟢 {ps['device']}" if ps else "—",
+                    tr("記憶體中", "In memory"): f"● {ps['device']}" if ps else "—",
                     tr("卸載時間", "Unloads at"): ((ps or {}).get("expires_at") or "")[11:19],
                 }
             )
@@ -89,7 +91,7 @@ def model_select(task: str, key: str) -> str | None:
 
     def label(model_id: str) -> str:
         m = models[model_id]
-        mark = "" if m["installed"] else "⬇️ "
+        mark = "" if m["installed"] else "↓ "  # select box options cannot show icons
         return f"{mark}{m['name']} ({m['size_gb']} GB)"
 
     choice = st.selectbox(tr("模型", "Model"), options, format_func=label, key=key)
@@ -138,11 +140,12 @@ def wait_for(job: jobs.Job) -> None:
     if not job.running:
         st.rerun()
     st.info(
-        f"⏳ {job.title} · {job.elapsed():.0f}s · "
+        f"{job.title} · {job.elapsed():.0f}s · "
         + tr(
             "第一次使用要先載入模型；可以切換頁面，結果會保留。",
             "The first call loads the model; you can switch pages, the result is kept.",
-        )  # fmt: skip
+        ),  # fmt: skip
+        icon=":material/progress_activity:",
     )
 
 
@@ -180,14 +183,23 @@ def clock(seconds: float) -> str:
 status_panel()
 tab_asr, tab_doc, tab_rerank, tab_inbox = st.tabs(
     [
-        tr("🎙️ 語音轉文字", "🎙️ Speech to text"),
-        tr("📄 文件解析", "📄 Document parsing"),
-        tr("📊 重新排序（Rerank）", "📊 Rerank"),
-        tr("📥 收件匣（給 agent）", "📥 Inbox (for agents)"),
+        ":material/mic: " + tr("語音轉文字", "Speech to text"),
+        ":material/description: " + tr("文件解析", "Document parsing"),
+        ":material/sort: " + tr("重新排序（Rerank）", "Rerank"),
+        ":material/inbox: " + tr("收件匣（給 agent）", "Inbox (for agents)"),
     ]
 )
 
 with tab_asr:
+    st.page_link(
+        "views/speech.py",
+        label=tr(
+            "想並排比較多個語音模型、測噪音與電話音質、翻成英文或分辨會議講者？到「語音模型比較」",
+            "Compare several speech models side by side, test noise and telephone audio, "
+            "translate to English or tell meeting speakers apart: Compare speech models",
+        ),
+        icon=":material/graphic_eq:",
+    )
     left, right = st.columns([1, 1])
     with left:
         picked = pick_file("audio", "asr")
@@ -377,7 +389,8 @@ with tab_inbox:
     if b.button(tr("放入範例檔", "Add the samples")):
         st.success(tr("已加入：", "Added: ") + "、".join(media_tools.add_samples()))
     if c.button(
-        tr("用「會議與文件助理」分析 →", "Analyse with the meetings & documents assistant →")
+        tr("用「會議與文件助理」分析", "Analyse with the meetings & documents assistant"),
+        icon=":material/smart_toy:",
     ):
         st.session_state.agent_type = "meeting_docs"  # preselects it on the Agent page
         st.switch_page("views/agent.py")

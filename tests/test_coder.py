@@ -11,7 +11,14 @@ from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 from local_llm.coder import agent as coder_agent
-from local_llm.coder.agent import CoderSession, _answered, best_coding_model, code_tools
+from local_llm.coder.agent import (
+    CoderSession,
+    _answered,
+    best_coding_model,
+    code_tools,
+    delete_session,
+    list_sessions,
+)
 from local_llm.coder.workspace import (
     EditError,
     PathError,
@@ -297,6 +304,34 @@ def test_rejection_reason_reaches_the_model(ws, monkeypatch):
     assert not (ws.root / "src/pkg/extra.py").exists()
     rejected = next(m for m in added if isinstance(m, ToolMessage))
     assert "use src/pkg/mod.py" in str(rejected.content)
+
+
+def test_sessions_are_saved_listed_and_resumed(ws, monkeypatch):
+    scripts = iter(
+        [
+            [_call("list_agents", {}, 1), AIMessage("it defines g")],
+            [AIMessage("still g")],
+        ]
+    )  # one script per model build: the first session, then the resumed one
+    monkeypatch.setattr(
+        coder_agent, "build_model", lambda *a, **k: ScriptedModel(script=next(scripts))
+    )
+    session = CoderSession("fake", root=ws.root, mode="settings")
+    session.send("what is in mod.py?", lambda r, p: [])
+    (row,) = list_sessions(ws.root)
+    assert row["id"] == session.id and row["title"] == "what is in mod.py?"
+    assert row["turns"] == 1 and row["mode"] == "settings" and "messages" not in row
+    resumed = CoderSession.resume(session.id, root=ws.root)
+    assert resumed.mode == "settings" and resumed.title == session.title
+    assert [type(m) for m in resumed.history] == [type(m) for m in session.history]
+    assert resumed.history[1].tool_calls[0]["name"] == "list_agents"
+    added = resumed.send("and now?", lambda r, p: [])
+    assert added[-1].content == "still g"
+    assert list_sessions(ws.root)[0]["turns"] == 2
+    delete_session(session.id, ws.root)
+    assert list_sessions(ws.root) == []
+    with pytest.raises(ValueError):
+        delete_session("../x", ws.root)
 
 
 # --- configuration tools for another copy of the project -----------------------------------

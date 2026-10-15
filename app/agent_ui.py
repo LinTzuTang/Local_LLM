@@ -25,7 +25,8 @@ def render_step(message):
             decision = tr("直接回答", "answers directly")
         tokens_in, tokens_out = usage.get("input_tokens", "?"), usage.get("output_tokens", "?")
         st.markdown(
-            tr("🧠 **LLM 呼叫**：", "🧠 **LLM call**: ")
+            ":material/psychology: "
+            + tr("**LLM 呼叫**：", "**LLM call**: ")
             + f"`POST {ollama_url()}/api/chat` → {decision}  \n"
             f"<small>{meta.get('model', '')} · "
             + tr(
@@ -36,7 +37,7 @@ def render_step(message):
             unsafe_allow_html=True,
         )
         if reasoning := message.additional_kwargs.get("reasoning_content"):
-            with st.expander(tr("💭 思考", "💭 Thinking")):
+            with st.expander(tr("思考", "Thinking"), icon=":material/psychology:"):
                 st.markdown(reasoning)
         for call in message.tool_calls:
             label = tr(
@@ -50,9 +51,9 @@ def render_step(message):
     elif isinstance(message, ToolMessage):
         info = TOOL_INFO.get(message.name)
         if info and info.network:
-            icon = tr("🌐 **外部呼叫**", "🌐 **External call**")
+            icon = ":material/public: " + tr("**外部呼叫**", "**External call**")
         else:
-            icon = tr("🔧 **本機執行工具**", "🔧 **Local tool run**")
+            icon = ":material/build: " + tr("**本機執行工具**", "**Local tool run**")
         runs = info.text(i18n.current())[0] if info else ""
         where = tr(f"（{runs}）", f" ({runs})") if info else ""
         rejected = was_rejected(message)

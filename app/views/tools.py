@@ -12,7 +12,7 @@ from local_llm.agents import AGENTS, DB_TOOLS, TOOL_INFO, all_tools
 
 lang = current()
 ui.page_header(
-    "🧰",
+    "build",
     tr("工具與技能", "Tools & skills"),
     tr(
         "Agent 能呼叫的<b>工具</b>（本機 Python、公司資料庫、模型閘道、MCP 伺服器、外部 API）與能載入的"
@@ -31,11 +31,11 @@ if installed_skills:  # load_skill is created per agent; show it with every inst
     tools["load_skill"] = skills.skill_tool([s["name"] for s in installed_skills])
 MEDIA = {t.name for t in media_tools.TOOLS}
 GROUPS = {
-    "local": ("💻", tr("本機 Python", "Local Python"), "#15803D"),
-    "db": ("🗄️", tr("公司資料庫", "Company database"), "#0369A1"),
-    "media": ("🎙️", tr("模型閘道／語音文件", "Model gateway / media"), "#BE185D"),
-    "mcp": ("🔌", tr("MCP 伺服器", "MCP servers"), "#6D28D9"),
-    "external": ("🌐", tr("外部 API", "External APIs"), "#C2410C"),
+    "local": ("build", tr("本機 Python", "Local Python"), "#15803D"),
+    "db": ("database", tr("公司資料庫", "Company database"), "#0369A1"),
+    "media": ("mic", tr("模型閘道／語音文件", "Model gateway / media"), "#BE185D"),
+    "mcp": ("power", tr("MCP 伺服器", "MCP servers"), "#6D28D9"),
+    "external": ("public", tr("外部 API", "External APIs"), "#C2410C"),
 }
 GROUP_TEXT = {
     "local": tr(
@@ -76,10 +76,12 @@ def group_of(name: str) -> str:
     return "local"
 
 
-def pill(text: str, color: str) -> str:
+def pill(text: str, color: str, icon: str = "") -> str:
+    """Coloured chip; `icon` is an optional Material Symbols name shown before the text."""
+    mark = ui.icon(icon) + " " if icon else ""
     return (
         f'<span class="lab-badge" style="color:{color};border-color:{color}33;'
-        f'background:{color}0F">{html.escape(text)}</span>'
+        f'background:{color}0F">{mark}{html.escape(text)}</span>'
     )
 
 
@@ -183,14 +185,14 @@ def tool_card(name: str, tool) -> None:
     network = bool(info and info.network)
     with st.container(border=True):
         st.markdown(f"**`{name}`**")
-        bits = [pill(f"{icon} {group_label}", color)]
+        bits = [pill(group_label, color, icon)]
         if network:
-            bits.append(pill(tr("🌐 連網", "🌐 Network"), "#C2410C"))
+            bits.append(pill(tr("連網", "Network"), "#C2410C", "public"))
         elif group != "local":
-            bits.append(pill(tr("💻 本機", "💻 Local"), "#15803D"))
+            bits.append(pill(tr("本機", "Local"), "#15803D", "computer"))
         if network:
-            bits.append(pill(tr("✋ 需人工核准", "✋ Needs approval"), "#B91C1C"))
-            bits.append(pill(tr("預設隱藏", "Hidden by default"), "#64748B"))
+            bits.append(pill(tr("需人工核准", "Needs approval"), "#B91C1C", "front_hand"))
+            bits.append(pill(tr("預設隱藏", "Hidden by default"), "#64748B", "visibility_off"))
         if spec := mcp_tools.TOOL_SPECS.get(name):
             bits.append(pill(f"MCP · {spec.server} → {spec.remote}", "#6D28D9"))
         if name in DB_TOOLS:
@@ -219,15 +221,18 @@ def tool_card(name: str, tool) -> None:
                         f"{', '.join(spec.fixed)}",
                     )
                 )
-        with st.expander(tr("▶ 試跑（不經過模型）", "▶ Try it (no model involved)")):
+        with st.expander(
+            tr("試跑（不經過模型）", "Try it (no model involved)"), icon=":material/play_arrow:"
+        ):
             try_form(name, tool)
 
 
 tools_tab, skills_tab, eco_tab = st.tabs(
     [
-        tr(f"🛠️ 工具（{len(tools)}）", f"🛠️ Tools ({len(tools)})"),
-        tr(f"📘 技能（{len(installed_skills)}）", f"📘 Skills ({len(installed_skills)})"),
-        tr("🌍 生態系", "🌍 Ecosystem"),
+        ":material/build: " + tr(f"工具（{len(tools)}）", f"Tools ({len(tools)})"),
+        ":material/menu_book: "
+        + tr(f"技能（{len(installed_skills)}）", f"Skills ({len(installed_skills)})"),
+        ":material/extension: " + tr("生態系", "Ecosystem"),
     ]
 )
 
@@ -271,7 +276,7 @@ with tools_tab:
     shown_groups = st.segmented_control(
         tr("類型", "Kind"),
         list(GROUPS),
-        format_func=lambda g: f"{GROUPS[g][0]} {GROUPS[g][1]} ({len(by_group[g])})",
+        format_func=lambda g: f":material/{GROUPS[g][0]}: {GROUPS[g][1]} ({len(by_group[g])})",
         selection_mode="multi",
         default=list(GROUPS),
         key="tool_groups",
@@ -299,7 +304,7 @@ with tools_tab:
         if not names:
             continue
         icon, label, _ = GROUPS[group]
-        st.markdown(f"### {icon} {label}")
+        st.markdown(f"### :material/{icon}: {label}")
         st.caption(GROUP_TEXT[group])
         for row in range(0, len(names), 2):
             for col, name in zip(st.columns(2, gap="medium"), names[row : row + 2], strict=False):
@@ -362,11 +367,11 @@ A **skill** is a folder `data/lab/skills/<name>/` whose `SKILL.md` follows the o
     for row in range(0, len(shown), 2):
         for col, s in zip(st.columns(2, gap="medium"), shown[row : row + 2], strict=False):
             with col.container(border=True):
-                st.markdown(f"**📘 `{s['name']}`**")
+                st.markdown(f":material/menu_book: **`{s['name']}`**")
                 bits = [
-                    pill(tr("🌍 外部匯入", "🌍 Imported"), "#6D28D9")
+                    pill(tr("外部匯入", "Imported"), "#6D28D9", "download")
                     if is_imported(s)
-                    else pill(tr("🏭 自製", "🏭 In-house"), "#15803D"),
+                    else pill(tr("自製", "In-house"), "#15803D", "factory"),
                     pill(
                         tr("授權：", "Licence: ")
                         + (
@@ -443,7 +448,7 @@ with eco_tab:
         )
     )
 
-    st.markdown("### 🔌 " + tr("已整合的 MCP 伺服器", "Integrated MCP servers"))
+    st.markdown("### :material/power: " + tr("已整合的 MCP 伺服器", "Integrated MCP servers"))
     st.caption(
         tr(
             "[Model Context Protocol](https://modelcontextprotocol.io) 是開放的工具協定：伺服器列出工具與 JSON schema，"
@@ -472,10 +477,9 @@ with eco_tab:
                         "#6D28D9",
                     ),
                     pill(
-                        tr("🌐 連網", "🌐 network")
-                        if server.network
-                        else tr("💻 離線", "💻 offline"),
+                        tr("連網", "network") if server.network else tr("離線", "offline"),
                         "#C2410C" if server.network else "#15803D",
+                        "public" if server.network else "wifi_off",
                     ),
                     pill(
                         tr("授權：", "licence: ")
@@ -491,10 +495,9 @@ with eco_tab:
                         "#64748B",
                     ),
                     pill(
-                        tr("● 執行中", "● running")
-                        if state["running"]
-                        else tr("○ 未啟動", "○ idle"),
+                        tr("執行中", "running") if state["running"] else tr("未啟動", "idle"),
                         "#15803D" if state["running"] else "#94A3B8",
+                        "radio_button_checked" if state["running"] else "radio_button_unchecked",
                     ),
                 ]
                 st.markdown(
@@ -563,10 +566,11 @@ with eco_tab:
                             [
                                 {
                                     tr("工具", "Tool"): t["name"],
-                                    tr("唯讀", "Read-only"): "✅" if t["read_only"] else "✏️",
-                                    tr("連外", "Open world"): "🌐" if t["open_world"] else "—",
+                                    # table cells cannot show icons: plain-text marks
+                                    tr("唯讀", "Read-only"): "✓" if t["read_only"] else "✗",
+                                    tr("連外", "Open world"): "✓" if t["open_world"] else "—",
                                     tr("交給 agent", "Given to agents"): (
-                                        "✅" if t["exposed"] else "—"
+                                        "✓" if t["exposed"] else "—"
                                     ),
                                     tr("說明", "Description"): t["description"].split("\n")[0],
                                 }
@@ -696,7 +700,9 @@ with eco_tab:
             ),
         ),
     ]
-    st.markdown("### 🚫 " + tr("沒有整合的工具與原因", "Tools not integrated, and why"))
+    st.markdown(
+        "### :material/block: " + tr("沒有整合的工具與原因", "Tools not integrated, and why")
+    )
     st.markdown(
         md_table(
             [tr("項目", "Item"), tr("是什麼", "What"), tr("為什麼沒整合", "Why not")],
@@ -704,7 +710,7 @@ with eco_tab:
         )  # fmt: skip
     )
 
-    st.markdown("### 📘 " + tr("技能來源", "Skill sources"))
+    st.markdown("### :material/menu_book: " + tr("技能來源", "Skill sources"))
     SKILL_SOURCES = [
         (
             "[anthropics/skills](https://github.com/anthropics/skills)",

@@ -2,7 +2,9 @@
 
 Ollama-style management: GET /api/version, /api/tags, /api/ps; POST /api/pull (NDJSON progress),
 DELETE /api/delete, POST /api/unload. Inference, OpenAI-style where a convention exists:
-POST /v1/audio/transcriptions, /v1/rerank, /v1/documents/parse. Errors are {"error": "..."}.
+POST /v1/audio/transcriptions, /v1/audio/translations (speech -> English text),
+/v1/audio/diarize (who spoke when), /v1/rerank, /v1/documents/parse. Errors are
+{"error": "..."}.
 
 Endpoints are plain `def` functions, so FastAPI runs the blocking model work in its thread
 pool and the event loop stays free for /api/ps, progress streams and other requests.
@@ -19,10 +21,10 @@ from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from starlette.exceptions import HTTPException
 
 from . import MAX_UPLOAD_BYTES, VERSION, download
@@ -43,6 +45,18 @@ class ModelRequest(BaseModel):
         if not (self.model or self.name):
             raise GatewayError(400, 'missing "model"')
         return self.model or self.name
+
+
+async def model_request(request: Request) -> ModelRequest:
+    """The JSON body of a management call, whatever its content type: `curl -d '{...}'` sends
+    application/x-www-form-urlencoded, and Ollama accepts that too."""
+    try:
+        return ModelRequest.model_validate_json(await request.body() or b"{}")
+    except ValidationError as exc:
+        raise GatewayError(400, f'invalid request: expected {{"model": "<id>"}} ({exc})') from exc
+
+
+Model = Annotated[ModelRequest, Depends(model_request)]
 
 
 class RerankRequest(BaseModel):
@@ -186,7 +200,7 @@ def create_app(
         return {"models": manager.ps()}
 
     @app.post("/api/pull")
-    async def pull(body: ModelRequest):
+    async def pull(body: Model):
         spec = manager.spec(body.model_id())
         lock = pull_locks.setdefault(spec.id, asyncio.Lock())
 
@@ -200,13 +214,13 @@ def create_app(
         return StreamingResponse(ndjson(events()), media_type="application/x-ndjson")
 
     @app.delete("/api/delete")
-    def delete(body: ModelRequest):
+    def delete(body: Model):
         model = body.model_id()
         manager.delete(model)
         return {"status": "success", "model": model}
 
     @app.post("/api/unload")
-    def unload(body: ModelRequest):
+    def unload(body: Model):
         model = body.model_id()
         return {"status": "unloaded" if manager.unload(model) else "not loaded", "model": model}
 
@@ -225,6 +239,42 @@ def create_app(
         manager.require_installed(manager.spec(model, "asr"))  # fail before copying the upload
         with saved_upload(file) as path:
             out = manager.run(model, "asr", keep, audio=path, language=language, prompt=prompt)
+        return {**out, "model": model, "seconds": round(time.perf_counter() - start, 2)}
+
+    @app.post("/v1/audio/translations")
+    def translations(
+        file: Annotated[UploadFile, File()],
+        model: Annotated[str, Form()] = "whisper-large-v3",
+        language: Annotated[str | None, Form()] = None,
+        prompt: Annotated[str | None, Form()] = None,
+        keep_alive: Annotated[str | None, Form()] = None,
+    ):
+        """Speech in any language -> English text (OpenAI's translations endpoint): Whisper's
+        task="translate", or an instruction for audio LLMs (Gemma 4)."""
+        start = time.perf_counter()
+        keep, language = parse_keep_alive(keep_alive), normalize_language(language)
+        manager.require_installed(manager.spec(model, "asr"))
+        with saved_upload(file) as path:
+            out = manager.run(model, "asr", keep, audio=path, language=language, prompt=prompt,
+                              mode="translate")  # fmt: skip
+        return {**out, "model": model, "seconds": round(time.perf_counter() - start, 2)}
+
+    @app.post("/v1/audio/diarize")
+    def diarize(
+        file: Annotated[UploadFile, File()],
+        model: Annotated[str, Form()] = "speaker-diarization",
+        num_speakers: Annotated[int | None, Form(ge=1, le=20)] = None,
+        threshold: Annotated[float | None, Form(gt=0, lt=2)] = None,
+        keep_alive: Annotated[str | None, Form()] = None,
+    ):
+        """Speaker diarization: {"segments": [{"start", "end", "speaker"}], "speakers",
+        "duration"}; speakers are numbered 0, 1, ... in order of first appearance."""
+        start = time.perf_counter()
+        keep = parse_keep_alive(keep_alive)
+        manager.require_installed(manager.spec(model, "diarize"))
+        with saved_upload(file) as path:
+            out = manager.run(model, "diarize", keep, audio=path, num_speakers=num_speakers,
+                              threshold=threshold)  # fmt: skip
         return {**out, "model": model, "seconds": round(time.perf_counter() - start, 2)}
 
     @app.post("/v1/rerank")

@@ -2,7 +2,8 @@
 
 `CoderSession` is shared by the terminal REPL (`local-agent code`) and the Streamlit control
 center. It keeps the conversation, streams the model's progress, pauses on every write with a
-preview (unified diff + validation) and records the change log used for undo.
+preview (unified diff + validation) and records the change log used for undo. Conversations are
+saved in `storage/coder/sessions/` after every run, so either front end can list and resume them.
 """
 
 import json
@@ -27,6 +28,8 @@ from langchain_core.messages import (
     BaseMessage,
     HumanMessage,
     ToolMessage,
+    messages_from_dict,
+    messages_to_dict,
 )
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
@@ -53,6 +56,8 @@ MODES = ("settings", "code")  # settings only / settings + code
 CODE_WRITE_TOOLS = ("edit_file", "write_file")
 DEFAULT_CONTEXT = 65536  # coding agents need room for files and tool results
 MAX_MODEL_CALLS = 80  # per user turn (approvals do not reset it)
+MAX_OUTPUT_TOKENS = 16384  # per model call; thinking models can spend 8K tokens before answering
+SESSIONS = Path("storage") / "coder" / "sessions"  # under the project folder, next to backups
 
 
 def best_coding_model(installed: Iterable[str]) -> str | None:
@@ -261,7 +266,7 @@ class CoderSession:
             temperature,
         )
         self.history: list[BaseMessage] = []
-        self.started = time.time()
+        self.reset()
         self.undone_config: set[str] = set()
         self._previews: dict[str, dict] = {}
         self._lock = threading.Lock()
@@ -285,7 +290,12 @@ class CoderSession:
             code_read, code_write = code_tools(self.ws)
             tools = code_read + tools + code_write
         settings = Settings(
-            "ollama", self.model, self.base_url, max_tokens=8192, context=self.context, timeout=600
+            "ollama",
+            self.model,
+            self.base_url,
+            max_tokens=MAX_OUTPUT_TOKENS,
+            context=self.context,
+            timeout=600,
         )
         approve = {
             name: {
@@ -407,6 +417,7 @@ class CoderSession:
                     emit("message", message)
         state = self.graph.get_state(self.config).values
         self.history = list(state.get("messages", self.history))
+        self.save()
         if pending is None or (cancel is not None and cancel.is_set()):
             return None
         pending["previews"] = [
@@ -430,6 +441,67 @@ class CoderSession:
             decisions = decide(pending["action_requests"], pending["previews"])
             payload = Command(resume={"decisions": decisions})
         return self.history[before:]
+
+    # -- saved sessions ------------------------------------------------------------------------
+
+    def reset(self) -> None:
+        """Start a new conversation (the previous one stays saved)."""
+        self.history = []
+        self.started = time.time()
+        self.id = time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
+        self.title = ""
+
+    def load(self, session_id: str) -> None:
+        """Switch to a saved conversation, keeping this session's model and settings."""
+        data = load_session(session_id, self.ws.root)
+        self.id, self.title = data["id"], data.get("title", "")
+        self.started = data.get("created", time.time())
+        self.history = _answered(messages_from_dict(data["messages"]))
+
+    def save(self) -> Path | None:
+        """Write the conversation to storage/coder/sessions/<id>.json (skipped while empty)."""
+        if not self.history:
+            return None
+        if not self.title:
+            first = next((m for m in self.history if isinstance(m, HumanMessage)), None)
+            self.title = " ".join(str(first.content).split())[:80] if first else self.id
+        folder = self.ws.root / SESSIONS
+        folder.mkdir(parents=True, exist_ok=True)
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "created": self.started,
+            "updated": time.time(),
+            "model": self.model,
+            "mode": self.mode,
+            "context": self.context,
+            "think": self.think,
+            "root": str(self.ws.root),
+            "turns": sum(isinstance(m, HumanMessage) for m in self.history),
+            "stats": run_stats(self.history),
+            "messages": messages_to_dict(self.history),
+        }
+        path = folder / f"{self.id}.json"
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, default=str))
+        tmp.replace(path)
+        return path
+
+    @classmethod
+    def resume(
+        cls,
+        session_id: str,
+        base_url: str = ollama_admin.DEFAULT_URL,
+        model: str | None = None,
+        root: Path | str = PROJECT_ROOT,
+        **overrides,
+    ) -> "CoderSession":
+        """Continue a saved conversation (optionally with another model or settings)."""
+        data = load_session(session_id, root)
+        options = {k: data[k] for k in ("mode", "context", "think") if k in data}
+        session = cls(model or data["model"], base_url, root=root, **(options | overrides))
+        session.load(session_id)
+        return session
 
     # -- change log and undo ------------------------------------------------------------------
 
@@ -465,6 +537,36 @@ class CoderSession:
             raise EditError("; ".join(result["errors"]))
         self.undone_config.add(change["id"])
         return f"restored the previous version of {change['label']}"
+
+
+def list_sessions(root: Path | str = PROJECT_ROOT, limit: int = 50) -> list[dict]:
+    """Saved conversations of a project, newest first, without their messages."""
+    folder, rows = Path(root) / SESSIONS, []
+    for path in folder.glob("*.json") if folder.exists() else []:
+        try:
+            data = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        data.pop("messages", None)
+        rows.append(data)
+    return sorted(rows, key=lambda r: r.get("updated", 0), reverse=True)[:limit]
+
+
+def _session_path(session_id: str, root: Path | str) -> Path:
+    if not session_id or any(ch in session_id for ch in "/\\."):
+        raise ValueError(f"bad session id {session_id!r}")
+    return Path(root) / SESSIONS / f"{session_id}.json"
+
+
+def load_session(session_id: str, root: Path | str = PROJECT_ROOT) -> dict:
+    path = _session_path(session_id, root)
+    if not path.exists():
+        raise KeyError(f"no saved session {session_id!r}")
+    return json.loads(path.read_text())
+
+
+def delete_session(session_id: str, root: Path | str = PROJECT_ROOT) -> None:
+    _session_path(session_id, root).unlink(missing_ok=True)
 
 
 CHECK_NAMES = tuple(CHECKS)

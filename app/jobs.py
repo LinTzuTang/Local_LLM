@@ -20,7 +20,13 @@ import streamlit as st
 from i18n import tr
 
 KEEP_FINISHED = 40
-ICONS = {"running": "⏳", "paused": "⏸️", "done": "✅", "error": "⚠️", "cancelled": "⏹️"}
+ICONS = {
+    "running": ":material/progress_activity:",
+    "paused": ":orange[:material/pause_circle:]",
+    "done": ":green[:material/check_circle:]",
+    "error": ":red[:material/error:]",
+    "cancelled": ":material/stop_circle:",
+}
 
 
 @dataclass
@@ -164,11 +170,12 @@ def header_popover() -> None:
     """Top-right button listing background tasks (they keep running across pages)."""
     active_jobs = active()
     label = (
-        tr(f"⏳ {len(active_jobs)} 個工作執行中", f"⏳ {len(active_jobs)} running")
+        tr(f"{len(active_jobs)} 個工作執行中", f"{len(active_jobs)} running")
         if active_jobs
         else tr("背景工作", "Tasks")
     )
-    with st.popover(label, use_container_width=True):
+    icon = ":material/progress_activity:" if active_jobs else ":material/task_alt:"
+    with st.popover(label, icon=icon, use_container_width=True):
         st.markdown(
             tr(
                 "**背景工作**（切換頁面不會中斷）",

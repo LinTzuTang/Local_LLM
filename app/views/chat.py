@@ -3,52 +3,95 @@ import base64
 import jobs
 import streamlit as st
 import ui
-from common import model_picker, ollama_backend, require_ollama, stats_caption, think_control
-from i18n import tr
+from common import (
+    kept,
+    model_picker,
+    ollama_backend,
+    require_ollama,
+    stats_caption,
+    think_control,
+)
+from i18n import current, tr
 
 from local_llm import catalog
 from local_llm.streaming import stream_chat
 
-ui.page_header("💬", tr("對話測試", "Chat"))
+ui.page_header(
+    "chat",
+    tr("對話測試", "Chat"),
+    tr(
+        "直接和一個地端模型對話：看它的回答品質、思考過程與速度（首字時間、tokens/s）。",
+        "Talk to one local model directly: answer quality, reasoning and speed "
+        "(time to first token, tokens/s).",
+    ),
+    eyebrow=tr("模型", "Models"),
+)
 require_ollama()
+lang = current()
 
-with st.sidebar:
-    model = model_picker(tr("模型", "Model"), key="chat_model")
-    think = think_control(model, key="chat_think")
-    system = st.text_area(
-        "System prompt",
-        tr(
-            "你是地端助理，請用繁體中文回答。",
-            "You are an on-premises assistant. Answer in English.",
-        ),
-        height=80,
-    )
-    temperature = st.slider("Temperature", 0.0, 1.5, 0.7, 0.1)
-    max_tokens = st.select_slider(
-        tr("最大輸出 tokens", "Max output tokens"), [512, 1024, 2048, 4096, 8192], value=4096
-    )
-    num_ctx = st.select_slider(
-        tr("Context 長度", "Context length"), [4096, 8192, 16384, 32768], value=16384
-    )
-    is_vision = model and "vision" in ((catalog.find(model) or {}).get("caps") or [])
-    image = (
-        st.file_uploader(
+
+def setting(key: str, default) -> dict:
+    """kept() with a default, so the setting survives page switches without a value= clash."""
+    st.session_state.setdefault(key, default)
+    return kept(key)
+
+
+# --- settings bar (main area, no sidebar) ---------------------------------------------------
+with st.container(border=True):
+    bar = st.columns([3.2, 1.3, 1.2, 1.2, 1.1], vertical_alignment="bottom", gap="small")
+    model = model_picker(tr("模型", "Model"), key="chat_model", container=bar[0])
+    with bar[1]:
+        think = think_control(model, key="chat_think", compact=True)
+    is_vision = bool(model and "vision" in ((catalog.find(model) or {}).get("caps") or []))
+    with bar[2].popover(tr("進階設定", "Settings"), icon=":material/tune:", width="stretch"):
+        system = st.text_area(
+            "System prompt",
+            height=90,
+            **setting(
+                f"chat_system_{lang}",
+                tr("你是地端助理，請用繁體中文回答。",
+                   "You are an on-premises assistant. Answer in English."),
+            ),
+        )  # fmt: skip
+        temperature = st.slider("Temperature", 0.0, 1.5, step=0.1, **setting("chat_temp", 0.7))
+        max_tokens = st.select_slider(
+            tr("最大輸出 tokens", "Max output tokens"),
+            [512, 1024, 2048, 4096, 8192],
+            **setting("chat_max_tokens", 4096),
+        )
+        num_ctx = st.select_slider(
+            tr("Context 長度", "Context length"),
+            [4096, 8192, 16384, 32768],
+            **setting("chat_num_ctx", 16384),
+        )
+    with bar[3].popover(
+        tr("附加圖片", "Image"),
+        icon=":material/image:",
+        width="stretch",
+        disabled=not is_vision,
+        help=None if is_vision else tr("所選模型不支援看圖", "The selected model has no vision"),
+    ):
+        upload = st.file_uploader(
             tr("附加圖片（視覺模型）", "Attach an image (vision models)"),
             type=["png", "jpg", "jpeg"],
+            key="chat_image",
         )
-        if is_vision
-        else None
-    )
-    if st.button(tr("清除對話", "Clear chat")):
+    image = upload if is_vision else None
+    if bar[4].button(tr("清除", "Clear"), icon=":material/delete_sweep:", width="stretch"):
         st.session_state.chat_history = []
         st.session_state.pop("chat_job", None)  # a running reply finishes in the background
+    if image:
+        st.caption(
+            tr(f"下一則訊息會附上圖片：{image.name}", f"The next message includes {image.name}")
+        )
 
 if not model:
     st.info(
         tr(
-            "請先在左側選擇已下載的模型，或下載所選模型。",
-            "Pick a downloaded model on the left, or download the selected one.",
-        )
+            "請先在上方選擇已下載的模型，或下載所選模型。",
+            "Pick a downloaded model above, or download the selected one.",
+        ),
+        icon=":material/info:",
     )
     st.stop()
 
@@ -99,7 +142,7 @@ def reply_work(
             else:
                 stats = event.stats
     except Exception as exc:
-        state["answer"] += f"\n\n⚠️ {type(exc).__name__}: {exc}"
+        state["answer"] += f"\n\n**{type(exc).__name__}**: {exc}"
     answer, thinking = state["answer"], state["thinking"]
     if job.cancel.is_set():
         answer += text["stopped"]
@@ -132,7 +175,7 @@ def live_reply(job: jobs.Job) -> None:
                 "you can switch pages; the reply continues in the background",
             )
         )
-        if b.button(tr("停止", "Stop"), key=f"stop_{job.id}"):
+        if b.button(tr("停止", "Stop"), key=f"stop_{job.id}", icon=":material/stop_circle:"):
             job.cancel.set()
 
 

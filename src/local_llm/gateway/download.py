@@ -6,6 +6,9 @@ the user's back), and a cancelled pull simply kills the child. The child first p
 list with sizes (a dry run against the Hub API), then the bytes received so far, taken from
 huggingface_hub's own progress bars through `tqdm_class` (Xet downloads only appear on disk
 when a file is complete, so watching the directory is not enough).
+
+Models served through Ollama (Gemma 4 audio) are pulled by Ollama itself; its progress events
+already have this shape and are passed on unchanged.
 """
 
 import asyncio
@@ -18,6 +21,7 @@ import time
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from . import ollama
 from .convert import CONVERTERS
 from .registry import ModelSpec, Store
 
@@ -44,6 +48,10 @@ async def pull(spec: ModelSpec, store: Store) -> AsyncIterator[dict]:
     if store.installed(spec):
         yield {"status": f"{spec.id} is already downloaded"}
         yield {"status": "success"}
+        return
+    if spec.ollama:
+        async for event in ollama.pull(spec.ollama):
+            yield event
         return
     yield {"status": "pulling manifest"}
     env = {**os.environ, "HF_HUB_OFFLINE": "0"}

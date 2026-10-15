@@ -29,6 +29,11 @@ dependencies = [
     "mcp-server-fetch>=2026.10.10",
     "pyyaml>=6",
     "psutil>=7.2.2",
+    "mlx-audio[stt]>=0.5.9",
+    "opencc>=1.4.2",
+    "sherpa-onnx==1.13.8",
+    "sherpa-onnx-core==1.13.8",
+    "sacrebleu>=2.6.0",
 ]
 
 [project.scripts]
@@ -46,6 +51,11 @@ dev = [
     "playwright>=1.63.0",
     "pytest>=8",
     "ruff>=0.12",
+]
+eval = [
+    "jiwer>=4.0.0",
+    "matplotlib>=3.11.2",
+    "sacrebleu>=2.6.0",
 ]
 
 [tool.ruff]

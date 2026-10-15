@@ -2,7 +2,8 @@
 
 Streams the model's thinking and answer, shows every tool call, renders each proposed write as
 a unified diff and asks y / n / e (reject with a reason) / a (approve the rest of this turn).
-Commands: /undo, /changes, /model, /mode, /think, /clear, /help, /exit.
+Commands: /undo, /changes, /model, /mode, /think, /sessions, /resume, /clear, /help, /exit.
+Conversations are saved after every turn; `--resume` continues the latest one.
 """
 
 import argparse
@@ -13,7 +14,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
@@ -27,6 +28,7 @@ from .agent import (
     RECOMMENDED_MODEL,
     CoderSession,
     best_coding_model,
+    list_sessions,
     ordered_models,
     run_stats,
 )
@@ -41,7 +43,9 @@ HELP = """[bold]Commands[/]
   /model [name|n]  list models or switch (conversation is kept)
   /mode settings|code   settings only, or settings + code
   /think on|off|auto    model thinking
-  /clear           start a new conversation
+  /sessions        list saved conversations
+  /resume [n|id]   continue a saved conversation (default: the latest)
+  /clear           start a new conversation (the current one stays saved)
   /exit            quit
 Approvals: y = approve, n = reject, e = reject with a reason for the agent, a = approve all
 remaining changes of this turn."""
@@ -227,8 +231,32 @@ def handle_command(line: str, session: CoderSession, printer: Printer) -> bool:
     if cmd in ("help", "h", "?"):
         console.print(HELP)
     elif cmd == "clear":
-        session.history = []
+        session.reset()
         console.print("New conversation.", style="green")
+    elif cmd == "sessions":
+        rows = list_sessions(session.ws.root, 20)
+        if not rows:
+            console.print("No saved conversations yet.", style="yellow")
+        for i, row in enumerate(rows, 1):
+            mark = "●" if row["id"] == session.id else " "
+            when = time.strftime("%m-%d %H:%M", time.localtime(row.get("updated", 0)))
+            console.print(
+                f"{mark} {i:>2}. {when} · {row.get('turns', 0)} turns · {row.get('model')} · "
+                f"{_short(row.get('title') or row['id'], 60)}",
+                markup=False,
+            )
+        console.print("Continue one with /resume <number>", style="dim")
+    elif cmd == "resume":
+        rows = list_sessions(session.ws.root, 50)
+        if arg.isdigit() and 1 <= int(arg) <= len(rows):
+            arg = rows[int(arg) - 1]["id"]
+        target = arg or (rows[0]["id"] if rows else "")
+        try:
+            session.load(target)
+        except (KeyError, ValueError) as exc:
+            console.print(f"Cannot resume: {exc}", style="red", markup=False)
+        else:
+            show_recap(session)
     elif cmd == "changes":
         table = Table("#", "when", "type", "change", "state", box=None)
         for i, c in enumerate(session.changes(20), 1):
@@ -318,6 +346,19 @@ def run_turn(session: CoderSession, prompt: str, printer: Printer, approve_all: 
     }
 
 
+def show_recap(session: CoderSession, turns: int = 3) -> None:
+    """The last few exchanges of a resumed conversation."""
+    console.print(f"Resumed: {session.title} ({session.id})", style="green", markup=False)
+    shown = [
+        m
+        for m in session.history
+        if isinstance(m, HumanMessage) or (isinstance(m, AIMessage) and m.content)
+    ][-2 * turns :]
+    for m in shown:
+        who = "you" if isinstance(m, HumanMessage) else "agent"
+        console.print(f"  {who} › {_short(m.content, 160)}", style="dim", markup=False)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="local-agent code", description="Fully local coding agent for this project"
@@ -338,6 +379,8 @@ def main(argv: list[str] | None = None) -> None:
                         help="approve every write without asking (use on a copy)")  # fmt: skip
     parser.add_argument("--log", help="write a JSON record of the run(s) to this file")
     parser.add_argument("--hide-thinking", action="store_true")
+    parser.add_argument("--resume", nargs="?", const="last", metavar="ID",
+                        help="continue a saved conversation (default: the latest)")  # fmt: skip
     args = parser.parse_args(argv)
 
     base_url = args.base_url if args.base_url and "11434" in args.base_url else None
@@ -357,6 +400,14 @@ def main(argv: list[str] | None = None) -> None:
         think=_think(args.think),
         temperature=args.temperature,
     )
+    if args.resume:
+        rows = list_sessions(root, 50)
+        target = rows[0]["id"] if args.resume == "last" and rows else args.resume
+        try:
+            session.load(target)
+        except (KeyError, ValueError) as exc:
+            raise SystemExit(f"Cannot resume {args.resume!r}: {exc}") from exc
+        show_recap(session)
     printer = Printer(show_thinking=not args.hide_thinking)
     console.print(
         Panel.fit(

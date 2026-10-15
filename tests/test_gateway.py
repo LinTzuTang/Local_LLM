@@ -14,7 +14,12 @@ from local_llm.gateway.manager import Manager
 from local_llm.gateway.registry import Store, Weights, load_specs
 from local_llm.gateway.server import create_app, normalize_language, parse_keep_alive
 
-GATEWAY_IDS = {"breeze-asr-25", "whisper-large-v3-turbo", "docling", "bge-reranker-v2-m3"}
+ASR_IDS = {
+    "breeze-asr-25", "taiwan-tongues-asr", "whisper-large-v3-turbo", "whisper-large-v3",
+    "qwen3-asr-1.7b", "qwen3-asr-0.6b", "sensevoice-small", "fun-asr-nano", "gemma4:e2b",
+    "gemma4:e4b",
+}  # fmt: skip
+GATEWAY_IDS = ASR_IDS | {"docling", "bge-reranker-v2-m3", "speaker-diarization"}
 
 
 class FakeBackend(Backend):
@@ -28,8 +33,14 @@ class FakeBackend(Backend):
     def run(self, handle, **inputs):
         if self.task == "asr":
             assert Path(inputs["audio"]).read_bytes() == b"RIFF fake audio"
-            segments = [{"start": 0.0, "end": 1.5, "text": "各位早安"}]
-            return {"text": "各位早安", "segments": segments, "language": "zh", "duration": 1.5}
+            text = "Good morning" if inputs.get("mode") == "translate" else "各位早安"
+            segments = [{"start": 0.0, "end": 1.5, "text": text}]
+            return {"text": text, "segments": segments, "language": "zh", "duration": 1.5}
+        if self.task == "diarize":
+            self.last = inputs
+            n = inputs.get("num_speakers") or 2
+            segments = [{"start": i * 1.0, "end": i + 0.9, "speaker": i % n} for i in range(4)]
+            return {"segments": segments, "speakers": n, "duration": 4.0}
         if self.task == "doc":
             return {"markdown": "# 合約\n\n| a | b |", "pages": 1, "tables": 1}
         # rerank: longer passages that contain the query score higher
@@ -64,8 +75,11 @@ def gateway(tmp_path):
         "mlx-whisper": FakeBackend("asr"),
         "docling": FakeBackend("doc"),
         "cross-encoder": FakeBackend("rerank"),
+        "sherpa-diarization": FakeBackend("diarize"),
     }
-    store = FakeStore(tmp_path, {"breeze-asr-25", "docling", "bge-reranker-v2-m3"})
+    store = FakeStore(
+        tmp_path, {"breeze-asr-25", "docling", "bge-reranker-v2-m3", "speaker-diarization"}
+    )
     manager = Manager(specs, backends, store, keep_alive=300, free=lambda: None)
 
     async def fake_pull(spec, store):
@@ -84,7 +98,9 @@ def test_catalog_lists_the_gateway_models():
     models = catalog.gateway_models()
     assert {m["id"] for m in models} == GATEWAY_IDS
     for m in models:
-        assert m["task"] in {"asr", "doc", "rerank"} and m["size_gb"] > 0 and m["weights"]
+        assert m["task"] in {"asr", "doc", "rerank", "diarize"} and m["size_gb"] > 0
+        assert m.get("weights") or m.get("ollama")  # Hugging Face files, or an Ollama tag
+        assert all(w.get("revision") for w in m.get("weights", []))  # pinned
     specs = load_specs()
     assert specs["breeze-asr-25"].convert == "hf-whisper-to-mlx"
     assert specs["docling"].weights[0].into.startswith("docling/")
@@ -200,6 +216,42 @@ def test_client_functions_against_the_app(gateway, monkeypatch):
     assert events[-1]["status"] == "success"
     with pytest.raises(gateway_client.GatewayError, match="not found"):
         gateway_client.rerank("q", ["a"], model="nope")
+
+
+def test_translation_and_diarization_endpoints(gateway):
+    client, _, backends = gateway
+    files = {"file": ("talk.wav", b"RIFF fake audio")}
+    r = client.post("/v1/audio/translations", files=files,
+                    data={"model": "breeze-asr-25", "language": "zh"})  # fmt: skip
+    assert r.status_code == 200 and r.json()["text"] == "Good morning"
+    r = client.post("/v1/audio/translations", files=files, data={"model": "docling"})
+    assert r.status_code == 400  # not a speech model
+    r = client.post("/v1/audio/diarize", files=files, data={"num_speakers": "3"})
+    body = r.json()
+    assert r.status_code == 200 and body["model"] == "speaker-diarization"
+    assert body["speakers"] == 3 and {"start", "end", "speaker"} <= set(body["segments"][0])
+    assert backends["sherpa-diarization"].last["num_speakers"] == 3
+    r = client.post("/v1/audio/diarize", files=files, data={"num_speakers": "0"})
+    assert r.status_code == 422
+    r = client.post("/v1/audio/diarize", files=files, data={"model": "breeze-asr-25"})
+    assert r.status_code == 400  # an ASR model cannot diarize
+
+
+def test_diarize_and_translate_clients(gateway, monkeypatch):
+    client, _, backends = gateway
+    monkeypatch.setattr(gateway_client, "_client", lambda base_url, timeout=10: client)
+    out = gateway_client.diarize(b"RIFF fake audio", num_speakers=2)
+    assert [s["speaker"] for s in out["segments"]] == [0, 1, 0, 1]
+    assert backends["sherpa-diarization"].last["threshold"] is None
+    assert gateway_client.translate(b"RIFF fake audio", "breeze-asr-25")["text"] == "Good morning"
+
+
+def test_audio_llm_translation_instruction():
+    from local_llm.gateway.backends import audio_instruction
+
+    text = audio_instruction({}, "zh", None, mode="translate")
+    assert "into English" in text and "Traditional" not in text
+    assert "verbatim" in audio_instruction({}, "zh", None)
 
 
 def test_keep_alive_and_language_parsing():

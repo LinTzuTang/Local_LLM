@@ -16,6 +16,7 @@ from pathlib import Path
 
 import flow_ui
 import pandas as pd
+import speech_compare
 import streamlit as st
 import ui
 from common import RUNS_DIR, kept
@@ -24,28 +25,29 @@ from i18n import pick, tr
 from local_llm.lab import store
 from local_llm.lab.nodes import NODE_TYPES
 
-# family -> (icon, zh, en, colour)
+# family -> (Material Symbols icon, zh, en, colour)
 KINDS = {
-    "scenario": ("🕸️", "多 Agent 場景", "Scenario", "#7C3AED"),
-    "compare": ("⚖️", "模型比較", "Model comparison", "#4F46E5"),
-    "agent": ("🤖", "Agent", "Agent", "#0284C7"),
-    "agent_compare": ("🆚", "多 Agent 比較", "Agent comparison", "#0F766E"),
-    "departments": ("🏢", "部門 Agent", "Department agents", "#0F766E"),
-    "control": ("🧑‍💻", "總控 Coding Agent", "Coding agent", "#334155"),
-    "backend": ("🏎️", "後端效能", "Backend benchmark", "#D97706"),
-    "other": ("📄", "其他", "Other", "#64748B"),
+    "scenario": ("hub", "多 Agent 場景", "Scenario", "#7C3AED"),
+    "compare": ("balance", "模型比較", "Model comparison", "#4F46E5"),
+    "agent": ("smart_toy", "Agent", "Agent", "#0284C7"),
+    "agent_compare": ("compare", "多 Agent 比較", "Agent comparison", "#0F766E"),
+    "departments": ("apartment", "部門 Agent", "Department agents", "#0F766E"),
+    "control": ("terminal", "總控 Coding Agent", "Coding agent", "#334155"),
+    "backend": ("speed", "後端效能", "Backend benchmark", "#D97706"),
+    "asr_compare": ("graphic_eq", "語音模型比較", "Speech comparison", "#DB2777"),
+    "other": ("description", "其他", "Other", "#64748B"),
 }
-# status -> (icon, zh, en, colour)
+# status -> (Material Symbols icon, zh, en, colour)
 STATUSES = {
-    "done": ("✓", "完成", "Done", "#15803D"),
-    "error": ("✗", "失敗", "Failed", "#DC2626"),
-    "stopped": ("⏹", "已停止", "Stopped", "#D97706"),
+    "done": ("check_circle", "完成", "Done", "#15803D"),
+    "error": ("error", "失敗", "Failed", "#DC2626"),
+    "stopped": ("stop_circle", "已停止", "Stopped", "#D97706"),
 }
 VERDICTS = {  # department / agent-comparison verdicts
-    "answered": ("✅", "有回答", "Answered", "#15803D"),
-    "denied": ("🔒", "權限不足", "Permission denied", "#B45309"),
-    "error": ("⚠️", "執行失敗", "Failed", "#DC2626"),
-    "stopped": ("⏹️", "已停止", "Stopped", "#64748B"),
+    "answered": ("check_circle", "有回答", "Answered", "#15803D"),
+    "denied": ("lock", "權限不足", "Permission denied", "#B45309"),
+    "error": ("error", "執行失敗", "Failed", "#DC2626"),
+    "stopped": ("stop_circle", "已停止", "Stopped", "#64748B"),
 }
 STAMP = re.compile(r"-\d{8}-\d{6}$")
 READ_ONLY = ("list_", "show_", "get_", "read_", "search_", "describe_", "find_", "view_", "grep")
@@ -75,6 +77,7 @@ CSS = """
 .hx-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 9px;
   border-radius: 999px; font-size: .75rem; font-weight: 650; line-height: 1.55;
   border: 1px solid; white-space: nowrap; }
+.hx-chip .ms { font-size: 14px; vertical-align: 0; }
 .hx-chips .lab-pill { font-size: .74rem; }
 .hx-head .eyebrow { font-size: .78rem; font-weight: 700; letter-spacing: .05em;
   text-transform: uppercase; }
@@ -309,6 +312,13 @@ def summarize(path: str, mtime: float) -> dict:
             "stopped" if stopped else "error" if items and len(failed) == len(items) else status
         )
         snip = next((snippet(entry_answer(r)) for _, r in items if entry_answer(r)), "")
+    elif fam == "asr_compare":
+        asr = speech_compare.history_summary(data)
+        prompt, models, seconds = asr["title"], asr["models"], asr["seconds"]
+        best = speech_compare.best_label(asr["best"])
+        snip = f"{best} — {asr['snippet']}" if best else asr["snippet"]
+        facts["n"] = len(models)
+        status = "error" if asr["error"] else status
     elif fam == "backend":
         rows = [r for r in data.get("results") or [] if isinstance(r, dict)]
         for r in rows:
@@ -359,22 +369,24 @@ def kind_meta(fam: str, kind: str = "") -> tuple[str, str, str]:
     return icon, kind if fam == "other" and kind else tr(zh, en), color
 
 
-def chip(text: str, color: str) -> str:
+def chip(text: str, color: str, icon: str = "") -> str:
+    """Coloured chip; `icon` is an optional Material Symbols name shown before the text."""
+    mark = ui.icon(icon) + " " if icon else ""
     return (
         f'<span class="hx-chip" style="color:{color};border-color:{color}33;'
-        f'background:{color}0F">{esc(text)}</span>'
+        f'background:{color}0F">{mark}{esc(text)}</span>'
     )
 
 
 def status_chip(status: str) -> str:
     icon, zh, en, color = STATUSES.get(status, STATUSES["done"])
-    return chip(f"{icon} {tr(zh, en)}", color)
+    return chip(tr(zh, en), color, icon)
 
 
 def verdict_chip(verdict: str, count: int | None = None) -> str:
-    icon, zh, en, color = VERDICTS.get(verdict, ("•", verdict, verdict, "#64748B"))
-    label = f"{icon} {tr(zh, en)}" + (f" × {count}" if count and count > 1 else "")
-    return chip(label, color)
+    icon, zh, en, color = VERDICTS.get(verdict, ("circle", verdict, verdict, "#64748B"))
+    label = tr(zh, en) + (f" × {count}" if count and count > 1 else "")
+    return chip(label, color, icon)
 
 
 def model_pills(models: list[str], limit: int = 4) -> str:
@@ -458,7 +470,8 @@ def quote(text: str) -> None:
 
 def stat_strip(items: list[tuple[str, str]]) -> None:
     cells = "".join(
-        f'<div class="hx-stat"><div class="v">{esc(v)}</div><div class="k">{esc(k)}</div></div>'
+        f'<div class="hx-stat"><div class="v">{esc(v)}</div>'
+        f'<div class="k">{ui.html_icons(esc(k))}</div></div>'  # labels may hold :material/x:
         for k, v in items
     )
     cols = len(items)
@@ -478,6 +491,92 @@ def close_run() -> None:
         del st.query_params["run"]
 
 
+# --- deleting: runs move to runs/.trash and can be restored until the trash is emptied ---------
+
+TRASH_DIR = RUNS_DIR / ".trash"
+
+
+def delete_runs(names: list[str]) -> None:
+    TRASH_DIR.mkdir(parents=True, exist_ok=True)
+    moved = []
+    for name in names:
+        src = RUNS_DIR / Path(name).name  # names come from the listing; never a path
+        if src.is_file():
+            src.replace(TRASH_DIR / src.name)
+            moved.append(src.name)
+    st.session_state.hist_deleted = moved
+    for key in [k for k in st.session_state if str(k).startswith("hist_sel_")]:
+        del st.session_state[key]
+    close_run()
+
+
+def restore_runs() -> None:
+    for name in st.session_state.pop("hist_deleted", []):
+        src = TRASH_DIR / name
+        if src.is_file() and not (RUNS_DIR / name).exists():
+            src.replace(RUNS_DIR / name)
+
+
+def empty_trash() -> None:
+    for f in TRASH_DIR.glob("*.json"):
+        f.unlink(missing_ok=True)
+    st.session_state.pop("hist_deleted", None)
+
+
+def confirm_delete(names: list[str], label: str, key: str, container=st) -> None:
+    """A delete button that asks once more before moving the runs to the trash."""
+    with container.popover(label, icon=":material/delete:", disabled=not names):
+        st.markdown(
+            tr(
+                f"刪除 **{len(names)}** 筆紀錄？會先移到垃圾桶（`runs/.trash/`），清空前都能復原。",
+                f"Delete **{len(names)}** run{'s' if len(names) != 1 else ''}? They move to the "
+                "trash (`runs/.trash/`) and can be restored until it is emptied.",
+            )
+        )
+        st.button(
+            tr("確定刪除", "Delete"),
+            key=key,
+            type="primary",
+            on_click=delete_runs,
+            args=(names,),
+            icon=":material/delete:",
+        )
+
+
+def trash_bar() -> None:
+    """Undo for the last deletion, and the trash size with a permanent 'empty' action."""
+    deleted = st.session_state.get("hist_deleted") or []
+    in_trash = len(list(TRASH_DIR.glob("*.json"))) if TRASH_DIR.exists() else 0
+    if not deleted and not in_trash:
+        return
+    left, mid, right = st.columns([6, 1.6, 1.8], vertical_alignment="center")
+    if deleted:
+        left.info(
+            tr(f"已刪除 {len(deleted)} 筆紀錄。", f"Deleted {len(deleted)} run(s)."),
+            icon=":material/delete:",
+        )
+        mid.button(
+            tr("復原", "Undo"), on_click=restore_runs, icon=":material/undo:", width="stretch"
+        )
+    else:
+        left.caption(tr(f"垃圾桶裡有 {in_trash} 筆紀錄。", f"{in_trash} run(s) in the trash."))
+    if in_trash:
+        with right.popover(tr("清空垃圾桶", "Empty trash"), icon=":material/delete_forever:"):
+            st.markdown(
+                tr(
+                    f"永久刪除垃圾桶裡的 **{in_trash}** 筆紀錄？這個動作無法復原。",
+                    f"Permanently delete the **{in_trash}** run(s) in the trash? "
+                    "This cannot be undone.",
+                )
+            )
+            st.button(
+                tr("永久刪除", "Delete forever"),
+                key="hist_empty_trash",
+                type="primary",
+                on_click=empty_trash,
+            )
+
+
 # --- list view --------------------------------------------------------------------------------
 
 
@@ -488,16 +587,18 @@ def card_facts(run: dict, scenarios: dict, agents: dict) -> str:
         parts.append(chip(name, "#475569"))
     facts = run["facts"]
     if top := facts.get("top"):
-        parts.append(chip(f"🏆 {flow_ui.short_model(str(top[0]))} {top[1]}/10", "#B45309"))
+        top_text = f"{flow_ui.short_model(str(top[0]))} {top[1]}/10"
+        parts.append(chip(top_text, "#B45309", "emoji_events"))
     for verdict, count in (facts.get("verdicts") or {}).items():
         parts.append(verdict_chip(verdict, count))
     if facts.get("changes"):
         n = facts["changes"]
-        parts.append(chip(tr(f"✏️ {n} 項變更", f"✏️ {n} change{'s' if n > 1 else ''}"), "#334155"))
+        changes = tr(f"{n} 項變更", f"{n} change{'s' if n > 1 else ''}")
+        parts.append(chip(changes, "#334155", "edit"))
     return "".join(parts) + model_pills(run["models"])
 
 
-def run_card(run: dict, scenarios: dict, agents: dict) -> None:
+def run_card(run: dict, scenarios: dict, agents: dict, selecting: bool = False) -> None:
     icon, label, color = kind_meta(run["family"], run["kind"])
     title = run["title"]
     if run["family"] == "scenario":
@@ -508,14 +609,21 @@ def run_card(run: dict, scenarios: dict, agents: dict) -> None:
         snip = run["snippet"]
     meta = f"{status_chip(run['status'])}<br>{esc(ago(run['ts']))}"
     if run["seconds"] is not None:
-        meta += f" · ⏱ {duration(run['seconds'])}"
+        meta += f" · {ui.icon('timer')} {duration(run['seconds'])}"
     facts = card_facts(run, scenarios, agents) if run["family"] != "scenario" else ""
     if run["family"] == "scenario":
         facts = model_pills(run["models"])
     with st.container(border=True):
-        left, right = st.columns([10, 1.7], vertical_alignment="center")
+        if selecting:
+            pick_col, left, right = st.columns([0.45, 9.6, 1.7], vertical_alignment="center")
+            pick_col.checkbox(
+                tr("選取", "Select"), key=f"hist_sel_{run['name']}", label_visibility="collapsed"
+            )
+        else:
+            left, right = st.columns([10, 1.7], vertical_alignment="center")
         left.markdown(
-            f'<div class="hx-row"><div class="hx-icon" style="background:{color}14">{icon}</div>'
+            f'<div class="hx-row"><div class="hx-icon" style="background:{color}14">'
+            f"{ui.icon(icon, size='24px', color=color)}</div>"
             f'<div class="hx-main"><div class="hx-title" title="{esc(title)}">{esc(title)}</div>'
             f'<div class="hx-snip">{esc(snip) or "&nbsp;"}</div>'
             f'<div class="hx-chips">{chip(label, color)}{facts}</div></div>'
@@ -592,7 +700,9 @@ def list_view(runs: list[dict]) -> None:
             tr("狀態", "Status"),
             list(STATUSES),
             selection_mode="multi",
-            format_func=lambda s: f"{STATUSES[s][0]} {tr(STATUSES[s][1], STATUSES[s][2])}",
+            format_func=lambda s: (
+                f":material/{STATUSES[s][0]}: {tr(STATUSES[s][1], STATUSES[s][2])}"
+            ),
             wrap=True,
             **kept("hist_status"),
         )
@@ -600,7 +710,7 @@ def list_view(runs: list[dict]) -> None:
         tr("類型", "Type"),
         order,
         selection_mode="multi",
-        format_func=lambda f: f"{KINDS[f][0]} {kind_meta(f)[1]} · {counts[f]}",
+        format_func=lambda f: f":material/{KINDS[f][0]}: {kind_meta(f)[1]} · {counts[f]}",
         wrap=True,
         **kept("hist_kinds"),
     )
@@ -635,9 +745,30 @@ def list_view(runs: list[dict]) -> None:
             (tr("累計執行時間", "Total run time"), duration(sum(r["seconds"] or 0 for r in shown))),
         ]
     )
+    trash_bar()
     if not shown:
         st.info(tr("沒有符合條件的紀錄。", "No runs match these filters."))
         return
+
+    tools = st.columns([2.2, 2.6, 2.6, 2.6], vertical_alignment="center")
+    selecting = tools[0].toggle(tr("選取刪除", "Select to delete"), key="hist_selecting")
+    if selecting:
+        picked = [r["name"] for r in shown if st.session_state.get(f"hist_sel_{r['name']}")]
+        confirm_delete(
+            picked,
+            tr(f"刪除選取的 {len(picked)} 筆", f"Delete {len(picked)} selected"),
+            "hist_delete_picked",
+            tools[1],
+        )
+        filtered = len(shown) != len(runs)
+        confirm_delete(
+            [r["name"] for r in shown],
+            tr(f"刪除符合篩選的 {len(shown)} 筆", f"Delete all {len(shown)} shown")
+            if filtered
+            else tr(f"刪除全部 {len(shown)} 筆", f"Delete all {len(shown)}"),
+            "hist_delete_shown",
+            tools[2],
+        )
 
     limit = st.session_state.get("hist_limit", PAGE_SIZE)
     current_day = None
@@ -646,7 +777,7 @@ def list_view(runs: list[dict]) -> None:
         if day != current_day:
             current_day = day
             st.markdown(f'<div class="hx-day">{esc(day_label(day))}</div>', unsafe_allow_html=True)
-        run_card(r, scenarios, agents)
+        run_card(r, scenarios, agents, selecting)
     if len(shown) > limit:
         left = len(shown) - limit
         st.button(
@@ -672,16 +803,18 @@ def detail_header(run: dict, data: dict, scenarios: dict, agents: dict) -> None:
     when = datetime.fromtimestamp(run["ts"])
     meta = [
         status_chip(run["status"]),
-        f"<span>🕒 {esc(when.strftime('%Y-%m-%d %H:%M'))} · {esc(ago(run['ts']))}</span>",
+        f"<span>{ui.icon('schedule')} {esc(when.strftime('%Y-%m-%d %H:%M'))} · "
+        f"{esc(ago(run['ts']))}</span>",
     ]
     if run["seconds"] is not None:
-        meta.append(f"<span>⏱ {duration(run['seconds'])}</span>")
+        meta.append(f"<span>{ui.icon('timer')} {duration(run['seconds'])}</span>")
     meta.append(f'<span class="hx-chips">{model_pills(run["models"], limit=8)}</span>')
     meta.append(f'<span class="lab-pill">{esc(run["name"])}</span>')
     with st.container(border=True):
         st.markdown(
             f'<div class="hx-head hx-row"><div class="hx-icon" style="background:{color}14">'
-            f'{icon}</div><div class="hx-main"><div class="eyebrow" style="color:{color}">'
+            f"{ui.icon(icon, size='24px', color=color)}</div>"
+            f'<div class="hx-main"><div class="eyebrow" style="color:{color}">'
             f"{esc(eyebrow)}</div><h2>{esc(title)}</h2>"
             f'<div class="meta">{"".join(meta)}</div></div></div>',
             unsafe_allow_html=True,
@@ -752,9 +885,9 @@ def scenario_view(data: dict, run: dict, scenarios: dict) -> None:
     known = steps and all(s.get("type") in NODE_TYPES and "start" in s for s in steps)
     tab_result, tab_time, tab_steps = st.tabs(
         [
-            tr("📝 結果", "📝 Result"),
-            tr("⏱️ 時間軸", "⏱️ Timeline"),
-            tr(f"🧩 各步驟（{len(steps)}）", f"🧩 Steps ({len(steps)})"),
+            ":material/article: " + tr("結果", "Result"),
+            ":material/timeline: " + tr("時間軸", "Timeline"),
+            ":material/account_tree: " + tr(f"各步驟（{len(steps)}）", f"Steps ({len(steps)})"),
         ]
     )
     with tab_result:
@@ -841,7 +974,7 @@ def compare_view(data: dict, run: dict) -> None:
     if data.get("judge"):
         notes.append(tr("裁判模型：", "Judge: ") + str(data["judge"]))
     if data.get("stopped"):
-        notes.append(tr("⏹ 中途停止", "⏹ stopped early"))
+        notes.append(":material/stop_circle: " + tr("中途停止", "stopped early"))
     st.caption(" · ".join(notes))
     if not results:
         return
@@ -891,7 +1024,7 @@ def compare_view(data: dict, run: dict) -> None:
             judge = r.get("judge") if isinstance(r.get("judge"), dict) else {}
             score = judge.get("score")
             with col.container(border=True):
-                badge = chip(f"🏆 {score}/10", "#B45309") if score is not None else ""
+                badge = chip(f"{score}/10", "#B45309", "emoji_events") if score is not None else ""
                 st.markdown(
                     f'<div class="hx-colhead"><b>{esc(r.get("model", "?"))}</b>{badge}</div>',
                     unsafe_allow_html=True,
@@ -909,7 +1042,7 @@ def compare_view(data: dict, run: dict) -> None:
                 if judge.get("reason"):
                     st.caption(tr("裁判評語：", "Judge: ") + str(judge["reason"]))
                 if r.get("thinking"):
-                    with st.expander(tr("💭 思考過程", "💭 Thinking")):
+                    with st.expander(tr("思考過程", "Thinking"), icon=":material/psychology:"):
                         st.code(r["thinking"][-6000:], language=None, wrap_lines=True)
 
 
@@ -979,19 +1112,22 @@ def turns(messages: list) -> tuple[list[dict], dict | None]:
 def step_title(i: int, step: dict) -> str:
     calls = step["calls"]
     if not calls:
-        return f"{i}. 💬 " + tr("中間回覆", "Interim reply")
+        return f"{i}. :material/chat_bubble: " + tr("中間回覆", "Interim reply")
     names_ = ", ".join(f"`{c['name']}`" for c in calls)
     if any(c["rejected"] for c in calls):
-        icon, state = "⛔", tr("人工拒絕，未執行", "rejected by a human, not run")
+        icon, state = (
+            ":red[:material/block:]",
+            tr("人工拒絕，未執行", "rejected by a human, not run"),
+        )
     elif not all(c["ran"] for c in calls):
-        icon, state = "⏸️", tr("未執行", "not run")
+        icon, state = ":material/pause_circle:", tr("未執行", "not run")
     elif any(c["network"] for c in calls):
-        icon, state = "🌐", tr("外部呼叫", "external call")
+        icon, state = ":material/public:", tr("外部呼叫", "external call")
     else:
-        icon, state = "🔧", tr("本機工具", "local tool")
+        icon, state = ":material/build:", tr("本機工具", "local tool")
     parts = [f"{i}. {icon} {names_}", state]
     if step["seconds"]:
-        parts.append(f"🧠 {step['seconds']:.1f}s")
+        parts.append(f":material/psychology: {step['seconds']:.1f}s")
     tin, tout = step["tokens"]
     if tin or tout:
         parts.append(f"{tin or '?'} → {tout or '?'} tokens")
@@ -1011,7 +1147,7 @@ def as_code(value, limit: int) -> tuple[str, str | None]:
 
 def step_body(step: dict, limit: int = 4000) -> None:
     if step["thinking"]:
-        st.caption(tr("💭 模型的思考", "💭 Model's reasoning"))
+        st.caption(":material/psychology: " + tr("模型的思考", "Model's reasoning"))
         st.code(step["thinking"][-3000:], language=None, wrap_lines=True, height=140)
     for c in step["calls"]:
         if c["args"] is not None:
@@ -1046,7 +1182,7 @@ def answer_box(text: str, height: int = 380) -> None:
         st.markdown(text)
 
 
-def conversation(data: dict, prompt: str, avatar: str = "🤖") -> None:
+def conversation(data: dict, prompt: str, avatar: str = ":material/smart_toy:") -> None:
     messages = [m for m in data.get("messages") or [] if isinstance(m, dict)]
     steps, final = turns(messages)
     with st.chat_message("user"):
@@ -1057,12 +1193,14 @@ def conversation(data: dict, prompt: str, avatar: str = "🤖") -> None:
             step_list(messages)
             section(tr("回答", "Answer"))
         if final and final["thinking"]:
-            with st.expander(tr("💭 思考過程", "💭 Thinking")):
+            with st.expander(tr("思考過程", "Thinking"), icon=":material/psychology:"):
                 st.code(final["thinking"][-6000:], language=None, wrap_lines=True)
         if final and final["text"]:
             st.markdown(final["text"])
         elif data.get("stopped"):
-            st.caption(tr("⏹ 在回答前被停止。", "⏹ Stopped before answering."))
+            st.caption(
+                ":material/stop_circle: " + tr("在回答前被停止。", "Stopped before answering.")
+            )
         else:
             st.caption(tr("沒有最後回答。", "No final answer."))
 
@@ -1076,14 +1214,14 @@ def decisions_summary(decisions) -> Counter:
 
 def decision_chips(decisions) -> str:
     labels = {
-        "approve": ("✅", "核准", "approved", "#15803D"),
-        "reject": ("❌", "拒絕", "rejected", "#DC2626"),
-        "edit": ("✏️", "修改後核准", "edited", "#D97706"),
+        "approve": ("check_circle", "核准", "approved", "#15803D"),
+        "reject": ("cancel", "拒絕", "rejected", "#DC2626"),
+        "edit": ("edit", "修改後核准", "edited", "#D97706"),
     }
     out = []
     for kind, n in decisions_summary(decisions).items():
-        icon, zh, en, color = labels.get(kind, ("•", kind, kind, "#64748B"))
-        out.append(chip(f"{icon} {tr(zh, en)} × {n}", color))
+        icon, zh, en, color = labels.get(kind, ("circle", kind, kind, "#64748B"))
+        out.append(chip(f"{tr(zh, en)} × {n}", color, icon))
     return "".join(out)
 
 
@@ -1106,13 +1244,13 @@ def agent_view(data: dict, run: dict, agents: dict) -> None:
     chips = []
     if policy:
         chips.append(
-            chip(tr("🌐 允許連網", "🌐 Network allowed"), "#0284C7")
+            chip(tr("允許連網", "Network allowed"), "#0284C7", "public")
             if policy.get("allow_network")
-            else chip(tr("🔒 不連網", "🔒 Offline"), "#475569")
+            else chip(tr("不連網", "Offline"), "#475569", "wifi_off")
         )
         if policy.get("approve_external"):
             chips.append(
-                chip(tr("✋ 外部呼叫需核准", "✋ External calls need approval"), "#B45309")
+                chip(tr("外部呼叫需核准", "External calls need approval"), "#B45309", "front_hand")
             )
     if data.get("think"):
         chips.append(ui.badge("thinking"))
@@ -1145,7 +1283,7 @@ def multi_view(data: dict, run: dict, agents: dict) -> None:
             (tr("總耗時", "Wall time"), duration(run["seconds"])),
             *[
                 (
-                    f"{VERDICTS[v][0]} {tr(VERDICTS[v][1], VERDICTS[v][2])}"
+                    f":material/{VERDICTS[v][0]}: {tr(VERDICTS[v][1], VERDICTS[v][2])}"
                     if v in VERDICTS
                     else v,
                     n,
@@ -1178,7 +1316,7 @@ def multi_view(data: dict, run: dict, agents: dict) -> None:
                 if r.get("model") and r.get("model") != data.get("model"):
                     facts.append(str(r["model"]))
                 if isinstance(r.get("seconds"), int | float):
-                    facts.append(f"⏱ {duration(r['seconds'])}")
+                    facts.append(f":material/timer: {duration(r['seconds'])}")
                 messages = [m for m in r.get("messages") or [] if isinstance(m, dict)]
                 steps, _ = turns(messages)
                 tools = sum(len(s["calls"]) for s in steps)
@@ -1215,7 +1353,9 @@ def change_card(call: dict, result: str) -> None:
         (key.removeprefix("changes."), value)
         for key, value in flatten({k: v for k, v in args.items() if k not in TARGET_KEYS})
     ]
-    st.markdown(f"✏️ **`{call.get('name')}`**" + (f" · {esc(target)}" if target else ""))
+    st.markdown(
+        f":material/edit: **`{call.get('name')}`**" + (f" · {esc(target)}" if target else "")
+    )
     if rest and len(rest) <= 12:
         lines = [f"| {tr('欄位', 'Field')} | {tr('新值', 'New value')} |", "| --- | --- |"]
         for key, value in rest:
@@ -1268,7 +1408,7 @@ def control_view(data: dict, run: dict) -> None:
                 )
         if isinstance(data.get("changes"), list | dict) and data["changes"]:
             st.json(data["changes"], expanded=1)
-    with st.chat_message("assistant", avatar="🧑‍💻"):
+    with st.chat_message("assistant", avatar=":material/terminal:"):
         steps, final = turns(messages)
         if steps:
             section(tr(f"過程（{len(steps)} 步）", f"Steps ({len(steps)})"))
@@ -1344,6 +1484,9 @@ def detail_view(run: dict, runs: list[dict]) -> None:
         on_click="ignore",
         width="stretch",
     )
+    with bar[1]:
+        _, del_col = st.columns([3, 1.4])
+        confirm_delete([run["name"]], tr("刪除", "Delete"), "hist_delete_one", del_col)
     newer = runs[idx - 1]["name"] if idx > 0 else None
     older = runs[idx + 1]["name"] if idx + 1 < len(runs) else None
     bar[3].button(
@@ -1379,6 +1522,7 @@ def detail_view(run: dict, runs: list[dict]) -> None:
         "agent_compare": lambda: multi_view(data, run, agents),
         "control": lambda: control_view(data, run),
         "backend": lambda: table_view(data, run),
+        "asr_compare": lambda: speech_compare.history_view(data),
     }
     if not safely(views.get(fam, lambda: generic_view(data, run)), tr("這筆紀錄", "this run")):
         generic_view(data, run)
@@ -1391,7 +1535,7 @@ def detail_view(run: dict, runs: list[dict]) -> None:
 
 st.markdown(CSS, unsafe_allow_html=True)
 ui.page_header(
-    "📜",
+    "history",
     tr("執行紀錄", "Run history"),
     tr(
         "每次模型比較、agent、場景與總控的執行都會自動存檔。點開任何一筆就能重看當時的問題、"
@@ -1404,6 +1548,7 @@ ui.page_header(
 
 runs = all_runs()
 if not runs:
+    trash_bar()
     st.info(
         tr(
             "還沒有紀錄。到「模型比較」、「Agent 工作室」或「場景展示」執行一次就會出現在這裡。",

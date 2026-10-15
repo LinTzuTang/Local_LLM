@@ -2,7 +2,8 @@
 
 A model counts as installed only when its manifest (models/gateway/<id>.json, written at the
 end of a successful pull) exists and every file it lists is still on disk, so an interrupted
-download never looks installed.
+download never looks installed. A model served through Ollama (`ollama` set: audio-capable
+LLMs such as Gemma 4) is installed when Ollama has its tag; Ollama owns those files.
 """
 
 import json
@@ -12,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .. import catalog
-from . import MODELS_DIR
+from . import MODELS_DIR, ollama
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class ModelSpec:
     convert: str | None = None  # post-download step, e.g. "hf-whisper-to-mlx"
     path: str | None = None  # model directory under models/ when it is not the download itself
     options: dict = field(default_factory=dict)
+    ollama: str | None = None  # Ollama tag: the model runs in Ollama, not in the gateway
 
 
 def load_specs() -> dict[str, ModelSpec]:
@@ -43,7 +45,7 @@ def load_specs() -> dict[str, ModelSpec]:
         weights = tuple(
             Weights(w["repo"], w.get("revision"), tuple(w["files"]) if "files" in w else None,
                     w.get("into"))
-            for w in m["weights"]
+            for w in m.get("weights", [])
         )  # fmt: skip
         specs[m["id"]] = ModelSpec(
             id=m["id"],
@@ -56,6 +58,7 @@ def load_specs() -> dict[str, ModelSpec]:
             convert=m.get("convert"),
             path=m.get("path"),
             options=m.get("options", {}),
+            ollama=m.get("ollama"),
         )
     return specs
 
@@ -83,13 +86,19 @@ class Store:
             return None
 
     def installed(self, spec: ModelSpec) -> bool:
+        if spec.ollama:
+            return spec.ollama in ollama.installed()
         manifest = self.manifest(spec)
         return bool(manifest) and all((self.root / f).exists() for f in manifest["files"])
 
     def model_path(self, spec: ModelSpec) -> Path:
+        if spec.ollama:
+            return self.root / "ollama"  # not read: the backend talks to Ollama by tag
         return self.root / self.manifest(spec)["path"]
 
     def size_bytes(self, spec: ModelSpec) -> int | None:
+        if spec.ollama:
+            return ollama.installed().get(spec.ollama)
         manifest = self.manifest(spec)
         return manifest.get("size_bytes") if manifest else None
 
@@ -106,7 +115,12 @@ class Store:
         (self.manifests / f"{spec.id}.json").write_text(json.dumps(record, indent=2) + "\n")
 
     def remove(self, spec: ModelSpec) -> None:
-        """Delete the manifest first (the model stops counting as installed), then the files."""
+        """Delete the manifest first (the model stops counting as installed), then the files.
+
+        A model served through Ollama is deleted in Ollama (the same weights as its chat use)."""
+        if spec.ollama:
+            ollama.delete(spec.ollama)
+            return
         (self.manifests / f"{spec.id}.json").unlink(missing_ok=True)
         dirs = [self.root / w.into for w in spec.weights if w.into]
         if spec.path:

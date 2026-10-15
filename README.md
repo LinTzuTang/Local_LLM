@@ -14,8 +14,11 @@ things:
 1. **Benchmark local LLMs.** Browse 107 local models with capability tags (tools, thinking,
    vision, code, embedding, decision, ASR, OCR, rerank, Taiwan-tuned, licence…), download them
    with one click, and compare up to six models side by side on the same prompt (answers, time
-   to first token, tokens/s, an optional LLM judge). The home page shows which models are loaded,
-   how much memory they use and which tasks are running.
+   to first token, tokens/s, an optional LLM judge). Speech models have their own comparison
+   page: transcripts with CER (also under noise and telephone audio), Chinese-to-English
+   translation (cascade, audio LLM, Whisper, plus a live-input simulation) and meeting speaker
+   diarization with DER. The home page shows which models are loaded, how much memory they use
+   and which tasks are running.
 2. **Demo multi-agent scenarios.** Nine ready-made workflows run as LangGraph graphs: routing
    with a decision model, hybrid RAG, self-checking RAG, permission-aware retrieval, meeting
    audio → minutes, contract review, support triage, a mixture of agents, and an analyst →
@@ -27,6 +30,25 @@ things:
 
 The UI is bilingual (中文 / EN, switch in the top-right corner). The demo company and all of
 its data are fictional.
+
+## What's new (2026-10-15)
+
+- **Speech model comparison** is its own page now, separate from the LLM comparison. It has three modes:
+  - Transcribe: character error rate, optionally with added noise or telephone audio.
+  - Translate: Chinese speech to English, comparing ASR → LLM, audio-LLM direct and Whisper translate, including a live-input simulation.
+  - Meeting: who spoke when, plus a speaker-labelled transcript.
+- **Speech models**: the gateway now serves 10 ASR models and 1 speaker-diarization model.
+  - ASR: Breeze-ASR-25, Whisper large-v3 and v3-turbo, Qwen3-ASR 1.7B and 0.6B, SenseVoice, Fun-ASR-Nano, the Ministry of Digital Affairs' Taiwan-Tongues, and Gemma 4 E2B and E4B.
+  - Speaker diarization: pyannote plus 3D-Speaker.
+- **Real test recording**: an excerpt of the 2026 National Day address, courtesy of the Office of the President. It is 4 min 29 s, read from the official text, with that text and its official English translation, so error rates can be scored against it.
+- **Meeting minutes scenario**: diarizes first, then transcribes, so action items name who raised them.
+- **Coding agent**: conversations are saved and can be resumed, on the web page or with `local-agent code --resume`.
+- **UI**:
+  - The model library is a list.
+  - Chat settings sit above the conversation.
+  - The scenario picker is compact.
+  - One Material icon set is used throughout.
+- **Run history**: delete one or many runs; deleted runs go to a trash folder you can restore from.
 
 ## Highlights
 
