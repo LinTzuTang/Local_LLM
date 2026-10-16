@@ -196,3 +196,17 @@ def test_taiwan_tongues_is_converted_like_breeze():
         assert specs[model].options["decode"] == {"condition_on_previous_text": False}
     assert "decode" not in specs["breeze-asr-25"].options
     assert specs["fun-asr-nano"].options["generate"]["chunk_duration"] == 60
+
+
+def test_english_is_scored_by_words():
+    from local_llm import asr_metrics
+
+    score = asr_metrics.score("It is a great honor to be here", "it's a great honour to be here")
+    assert score["metric"] == "WER" and score["ref_chars"] == 8
+    assert score["errors"] == 2  # "it is" -> "it's": one substitution and one deletion
+    assert (
+        asr_metrics.score("We grew 21% in 2026", "we grew twenty one percent in 2026")["cer"] == 0
+    )
+    assert asr_metrics.score("本週產線稼動率百分之八十七", "本週產線架動率87%")["metric"] == "CER"
+    parts = asr_metrics.alignment("It is a great honor", "it is great honor")
+    assert ("delete", "a ", "") in parts

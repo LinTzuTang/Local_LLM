@@ -1533,6 +1533,13 @@
                 "zh": "合成語音：虛構產銷會議（88 秒，兩位講者）",
                 "en": "Synthetic voices: fictional production meeting (88 s, two speakers)"
               }
+            },
+            {
+              "path": "data/lab/samples/alimeeting_r8001_zh.flac",
+              "label": {
+                "zh": "真實會議：AliMeeting 4 人會議（5 分鐘，遠場，大陸口音）",
+                "en": "Real meeting: AliMeeting, 4 speakers (5 min, far-field, mainland accent)"
+              }
             }
           ]
         },

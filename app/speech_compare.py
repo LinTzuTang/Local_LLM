@@ -10,8 +10,8 @@ office, at a chosen SNR) and as telephone audio (local_llm.audio_aug); the augme
 cached under storage/speech_cache, and the results become a model x condition CER table.
 
 Every speech run is saved as `runs/asr_compare-*.json` with a `mode` field ("transcribe",
-"translate", "meeting"; old runs have none and are transcriptions); `history_view` and
-`history_summary` draw them on the History page.
+"translate", "meeting", "live", "tts", "voice_chat"; old runs have none and are
+transcriptions); `history_view` and `history_summary` draw them on the History page.
 """
 
 import html
@@ -21,8 +21,11 @@ import altair as alt
 import jobs
 import pandas as pd
 import speech_common as sc
+import speech_live
 import speech_meeting
 import speech_translate
+import speech_tts
+import speech_voice
 import streamlit as st
 from common import kept, save_run
 from i18n import tr
@@ -149,14 +152,16 @@ def asr_work(job: jobs.Job, url: str) -> None:
             segments=len(out.get("segments") or []),
             truncated=bool(out.get("truncated")),
             script=asr_metrics.script(out["text"]),
-            score=asr_metrics.cer(reference, out["text"]) if reference else None,
+            score=asr_metrics.score(reference, out["text"], state["language"])
+            if reference
+            else None,
             status="done",
         )
         clean = next(
             (x for x in results if x["model"] == r["model"] and x["condition"] == "clean"), None
         )
         if not reference and clean is not r and clean and clean.get("text"):
-            r["drift"] = asr_metrics.cer(clean["text"], out["text"])
+            r["drift"] = asr_metrics.score(clean["text"], out["text"], state["language"])
     for r in results:
         if r["status"] != "done":  # stopped before this model's turn
             r["status"] = "done"
@@ -209,7 +214,7 @@ def facts(r: dict) -> str:
     if (r.get("load_s") or 0) >= 0.5:
         parts.append(tr("另載入", "plus load") + f" {r['load_s']:.1f}s")
     if r.get("score"):
-        parts.append(f"CER {sc.pct(r['score']['cer'])}")
+        parts.append(f"{r['score'].get('metric', 'CER')} {sc.pct(r['score']['cer'])}")
     elif r.get("drift"):
         parts.append(tr("與乾淨版差異", "vs clean") + f" {sc.pct(r['drift']['cer'])}")
     return " · ".join(parts)
@@ -256,6 +261,18 @@ def model_card(r: dict, names: dict, reference: str) -> None:
                 st.markdown(diff_html(reference, r["text"]), unsafe_allow_html=True)
 
 
+def metric_of(results: list[dict]) -> str:
+    """ "WER" when the runs were scored by words (English), else "CER"."""
+    scores = [r.get("score") or r.get("drift") or {} for r in results]
+    return "WER" if any(x.get("metric") == "WER" for x in scores) else "CER"
+
+
+def metric_help(metric: str) -> str:
+    if metric == "WER":
+        return tr("詞錯誤率 WER（以英文單字計算，越低越好）", "Word error rate (lower is better)")
+    return tr("字錯率 CER（越低越好）", "Character error rate (lower is better)")
+
+
 def summary_table(results: list[dict], names: dict) -> pd.DataFrame:
     rows = []
     for r in results:
@@ -274,13 +291,17 @@ def summary_table(results: list[dict], names: dict) -> pd.DataFrame:
                 "RTF": r.get("rtf"),
                 tr("載入（秒）", "Load (s)"): r.get("load_s"),
                 tr("文字", "Script"): tr(*script) if script else "—",
-                tr("字數", "Characters"): len(asr_metrics.normalize(r["text"], canonical=False)),
+                tr("字數", "Characters"): (
+                    len(asr_metrics.words_en(r["text"]))
+                    if (r.get("score") or {}).get("metric") == "WER"
+                    else len(asr_metrics.normalize(r["text"], canonical=False))
+                ),
             }
         )
     return pd.DataFrame(rows)
 
 
-def table_config(table: pd.DataFrame, reference: str) -> dict:
+def table_config(table: pd.DataFrame, reference: str, metric: str = "CER") -> dict:
     config = {
         "RTF": st.column_config.NumberColumn(
             help=tr(
@@ -295,7 +316,8 @@ def table_config(table: pd.DataFrame, reference: str) -> dict:
     }
     if reference:
         config["CER"] = st.column_config.ProgressColumn(
-            help=tr("字錯率：越低越好", "Character error rate: lower is better"),
+            label=metric,
+            help=metric_help(metric),
             min_value=0.0,
             max_value=max(0.3, float(table["CER"].max() or 0)),
             format="percent",
@@ -312,14 +334,24 @@ def single_summary(results: list[dict], names: dict, reference: str) -> None:
         table = table.sort_values("CER")
     else:
         table = table.drop(columns=["CER", tr("錯字（替換／漏／多）", "Errors (sub / del / ins)")])
+    metric = metric_of(results)
     st.dataframe(
-        table, hide_index=True, width="stretch", column_config=table_config(table, reference)
+        table,
+        hide_index=True,
+        width="stretch",
+        column_config=table_config(table, reference, metric),
     )
     model_col = tr("模型", "Model")
     charts = st.columns(2)
     if reference:
-        charts[0].caption(tr("字錯率 CER（越低越好）", "Character error rate (lower is better)"))
-        charts[0].bar_chart(table, x=model_col, y="CER", horizontal=True, sort="CER")
+        charts[0].caption(metric_help(metric))
+        charts[0].bar_chart(
+            table.rename(columns={"CER": metric}),
+            x=model_col,
+            y=metric,
+            horizontal=True,
+            sort=metric,
+        )
     charts[1].caption(tr("即時倍率 RTF（越低越快）", "Real-time factor (lower is faster)"))
     charts[1].bar_chart(table, x=model_col, y="RTF", horizontal=True, sort="RTF")
 
@@ -369,7 +401,7 @@ def conditions_summary(
         column_config={o: fmt for o in order},
     )
     measure = (
-        tr("字錯率 CER", "CER")
+        metric_help(metric_of(results)).split("（")[0].split(" (")[0]
         if reference
         else tr("與乾淨版逐字稿的差異", "Change from the clean transcript")
     )
@@ -454,7 +486,15 @@ def render(job: jobs.Job) -> None:
             "run one after another on the same recording.",
         )
     ]
-    if reference:
+    if reference and metric_of(results) == "WER":
+        notes.append(
+            tr(
+                "WER 以英文單字計算：先轉小寫、把數字讀成英文、去掉標點再逐字比對。",
+                "WER is computed per word after lower-casing, spelling out numbers and removing "
+                "punctuation.",
+            )
+        )
+    elif reference:
         notes.append(
             tr(
                 "CER 先統一繁簡（OpenCC）、把阿拉伯數字讀成中文、去掉標點與空白再逐字比對。",
@@ -555,10 +595,22 @@ def transcribe_page(url: str, status: dict) -> None:
         "en": tr("英文", "English"),
         "": tr("自動偵測", "Detect"),
     }
+    picked = (chosen[2], chosen[3]) if chosen else None
+    if chosen and chosen[2] == "sample" and st.session_state.get("asr_language_for") != picked:
+        st.session_state.asr_language = sc.sample_language(chosen[3])
+    st.session_state.asr_language_for = picked
     st.session_state.setdefault("asr_language", "zh")
     language = c1.selectbox(
         tr("語言", "Language"), list(languages), format_func=languages.get, **kept("asr_language")
     )
+    if chosen and chosen[2] == "sample" and Path(chosen[3]).stem.endswith("_nan"):
+        c1.caption(
+            tr(
+                "台語錄音：模型沒有台語選項，用最接近的「中文」提示。",
+                "Taiwanese Hokkien: the models have no Hokkien option, so the closest hint, "
+                "Chinese, is used.",
+            )
+        )
     prompt = c2.text_input(
         tr("上下文提示（選填）", "Context prompt (optional)"),
         placeholder=tr("例：人名、產品名、專有名詞", "e.g. names, products, terms"),
@@ -571,7 +623,10 @@ def transcribe_page(url: str, status: dict) -> None:
         **kept("asr_prompt"),
     )
     reference = st.text_area(
-        tr("參考原稿（選填，用來計算字錯率）", "Reference transcript (optional, for the CER)"),
+        tr(
+            "參考原稿（選填，用來計算錯誤率）",
+            "Reference transcript (optional, for the error rate)",
+        ),
         height=110,
         **kept("asr_reference"),
     )
@@ -601,12 +656,13 @@ def transcribe_page(url: str, status: dict) -> None:
     ready = [m for m in selected if status[m]["installed"]]
     conditions = make_conditions(conds or ["clean"], kind, snr)
     runs = len(ready) * len(conditions)
+    plural = "" if len(ready) == 1 else "s"
     label = (
-        tr(f"開始比較（{len(ready)} 個模型）", f"Compare ({len(ready)} models)")
+        tr(f"開始比較（{len(ready)} 個模型）", f"Compare ({len(ready)} model{plural})")
         if len(conditions) == 1
         else tr(
             f"開始比較（{len(ready)} 個模型 × {len(conditions)} 種條件）",
-            f"Compare ({len(ready)} models × {len(conditions)} conditions)",
+            f"Compare ({len(ready)} model{plural} × {len(conditions)} conditions)",
         )
     )
     if st.button(
@@ -616,7 +672,7 @@ def transcribe_page(url: str, status: dict) -> None:
         audio, filename, source, audio_name = chosen
         if len(conditions) > 1:
             audio = sc.cached_audio(audio, filename)
-        babble = [sc.SAMPLES_DIR / s for s in sc.SAMPLES if s != audio_name]
+        babble = [sc.SAMPLES_DIR / s for s in sc.BABBLE_SAMPLES if s != audio_name]
         job = jobs.Job(
             "asr_compare",
             tr(f"比較 {len(ready)} 個語音模型", f"Compare {len(ready)} speech models")
@@ -664,13 +720,14 @@ def open_page_link() -> None:
 
 def history_view(data: dict) -> None:
     """A saved speech run (runs/asr_compare-*.json) on the History page."""
-    mode = data.get("mode") or "transcribe"
-    if mode == "translate":
-        speech_translate.history_view(data)
-    elif mode == "meeting":
-        speech_meeting.history_view(data)
-    else:
-        transcribe_history(data)
+    views = {
+        "translate": speech_translate.history_view,
+        "meeting": speech_meeting.history_view,
+        "live": speech_live.history_view,
+        "tts": speech_tts.history_view,
+        "voice_chat": speech_voice.history_view,
+    }
+    views.get(data.get("mode") or "transcribe", transcribe_history)(data)
     open_page_link()
 
 
@@ -714,7 +771,7 @@ def transcribe_history(data: dict) -> None:
                 table,
                 hide_index=True,
                 width="stretch",
-                column_config=table_config(table, reference),
+                column_config=table_config(table, reference, metric_of(results)),
             )
         cards(results, names, reference)
     if reference:
@@ -724,14 +781,19 @@ def transcribe_history(data: dict) -> None:
 
 def history_summary(data: dict) -> dict:
     """Card fields for the History list: models, best score, total processing time."""
-    mode = data.get("mode") or "transcribe"
-    if mode == "translate":
-        return speech_translate.history_summary(data)
-    if mode == "meeting":
-        return speech_meeting.history_summary(data)
+    summaries = {
+        "translate": speech_translate.history_summary,
+        "meeting": speech_meeting.history_summary,
+        "live": speech_live.history_summary,
+        "tts": speech_tts.history_summary,
+        "voice_chat": speech_voice.history_summary,
+    }
+    if (mode := data.get("mode") or "transcribe") in summaries:
+        return summaries[mode](data)
     results = [r for r in data.get("results") or [] if isinstance(r, dict)]
     clean = [r for r in results if r.get("condition", "clean") == "clean"] or results
     scored = [(r["model"], r["score"]["cer"]) for r in clean if r.get("score")]
+    metric = next((r["score"].get("metric") for r in clean if r.get("score")), None) or "CER"
     seconds = sum(r.get("compute_s") or 0 for r in results)
     models = []
     for r in results:
@@ -746,7 +808,7 @@ def history_summary(data: dict) -> dict:
         "models": models,
         "seconds": round(seconds, 2) if seconds else None,
         "snippet": next((r.get("text", "")[:220] for r in results if r.get("text")), ""),
-        "best": (min(scored, key=lambda x: x[1]), "CER") if scored else None,
+        "best": (min(scored, key=lambda x: x[1]), metric) if scored else None,
         "error": bool(results) and all(r.get("error") for r in results),
     }
 

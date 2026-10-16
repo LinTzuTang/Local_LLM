@@ -1,0 +1,45 @@
+# LibriSpeech test-clean: 20 utterances joined with 0.8 s of silence, 16 kHz mono.
+# Source: LibriSpeech ASR corpus (Panayotov, Chen, Povey, Khudanpur, ICASSP 2015),
+# https://www.openslr.org/12/ (read LibriVox audiobooks).
+# Licence: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); joined and
+# resampled only, the words are unchanged. One line per utterance, in order:
+#    0.00-   6.61s  1089-134686-0025  LibriSpeech test-clean
+#    7.41-  25.37s  1188-133604-0002  LibriSpeech test-clean
+#   26.17-  28.09s  1188-133604-0030  LibriSpeech test-clean
+#   28.89-  45.15s  2094-142345-0011  LibriSpeech test-clean
+#   45.95-  49.52s  2094-142345-0035  LibriSpeech test-clean
+#   50.32-  70.24s  2300-131720-0017  LibriSpeech test-clean
+#   71.04-  92.52s  3729-6852-0003  LibriSpeech test-clean
+#   93.32-  95.11s  4446-2273-0031  LibriSpeech test-clean
+#   95.91-  99.45s  4446-2275-0006  LibriSpeech test-clean
+#  100.25- 104.72s  4970-29095-0006  LibriSpeech test-clean
+#  105.52- 110.98s  5105-28240-0000  LibriSpeech test-clean
+#  111.78- 113.99s  5639-40744-0008  LibriSpeech test-clean
+#  114.79- 118.96s  61-70970-0002  LibriSpeech test-clean
+#  119.76- 123.28s  672-122797-0059  LibriSpeech test-clean
+#  124.08- 129.13s  6930-81414-0024  LibriSpeech test-clean
+#  129.93- 139.15s  7729-102255-0042  LibriSpeech test-clean
+#  139.95- 150.04s  8224-274381-0007  LibriSpeech test-clean
+#  150.84- 172.62s  8230-279154-0025  LibriSpeech test-clean
+#  173.42- 181.13s  8463-287645-0006  LibriSpeech test-clean
+#  181.93- 186.42s  908-31957-0005  LibriSpeech test-clean
+a gentle kick from the tall boy in the bench behind urged stephen to ask a difficult question
+by being studious of color they are studious of division and while the chiaroscurist devotes himself to the representation of degrees of force in one thing unseparated light the colorists have for their function the attainment of beauty by arrangement of the divisions of light
+he knows them both
+do not suppose however that missus poyser was elderly or shrewish in her appearance she was a good looking woman not more than eight and thirty of fair complexion and sandy hair well shapen light footed
+but not more than what's in the bible aunt said dinah
+edison had installed his historic first great central station system in new york on the multiple arc system covered by his feeder and main invention which resulted in a notable saving in the cost of conductors as against a straight two wire system throughout of the tree kind
+madam corrected me with a patronizing air for my pronunciation of the word scevra which means divided saying that it ought to be pronounced sceura and she added that i ought to be very glad to have learned so much on the first day of my arrival in paris telling me that it would be an important day in my life
+there just in front
+i thought it might be sister kate or cousin mike would be happening along
+is thy father willing thee should go away to a school of the world's people
+fast as his legs could carry him servadac had made his way to the top of the cliff
+who touches me am i in bed
+most of all robin thought of his father what would he counsel
+only that one answered the tree
+my tongue refused to articulate my power of speech left me
+relocated footnote governor robinson being on his way east the steamboat on which he was traveling stopped at lexington missouri
+by quick marches through these inaccessible mountains that general freed himself from the superior forces of the covenanters
+we might provisionally though perhaps not quite correctly define memory as that way of knowing about the past which has no analogue in our knowledge of the future such a definition would at least serve to mark the problem with which we are concerned though some expectations may deserve to rank with memory as regards immediacy
+the doctor who attended the injured creature in this case was simply told that she slipped and fell down stairs as she was coming down
+alas i have grieved so i am hard to love

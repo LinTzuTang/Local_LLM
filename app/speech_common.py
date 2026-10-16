@@ -18,8 +18,22 @@ from local_llm import asr_metrics, catalog, gateway_client, media_tools
 
 PAGE = "views/speech.py"
 SAMPLES_DIR = media_tools.SAMPLES_DIR
-# Bundled recordings with a reference script next to them (<name>.txt); see samples/README.md.
-SAMPLES = ["national_day_2026_zh.wav", "meeting_zh.wav"]
+# Sample recordings with a reference script next to them (<name>.txt); see samples/README.md.
+# Most are bundled in data/lab/samples; LOCAL_SAMPLES are built on this machine only
+# (licence forbids derived files in the repo) by scripts/make_speech_samples.py into
+# storage/speech_samples, and are listed only when the file exists.
+SAMPLES = [
+    "national_day_2026_zh.wav",
+    "meeting_zh.wav",
+    "alimeeting_r8001_zh.flac",
+    "palau_hsiao_2026_en.wav",
+    "librispeech_20_en.flac",
+    "hokkien_moe_20_nan.flac",
+]
+LOCAL_SAMPLES = {"hokkien_moe_20_nan.flac"}
+# Babble noise mixes in other speech; kept to the original recordings so results stay
+# comparable with earlier runs.
+BABBLE_SAMPLES = SAMPLES[:4]
 # Speaker turns and an English reference translation for the bundled samples (this project's).
 REFS_DIR = PROJECT_DIR / "data" / "lab" / "speech_refs"
 AUDIO_TYPES = sorted(t.lstrip(".") for t in media_tools.AUDIO_TYPES)
@@ -53,6 +67,23 @@ def pct(value: float | None) -> str:
     return "—" if value is None else f"{value * 100:.1f}%"
 
 
+def sample_path(name: str) -> Path:
+    """Where a sample lives: data/lab/samples, or storage/speech_samples when built locally."""
+    folder = asr_metrics.LOCAL_SAMPLES_DIR if name in LOCAL_SAMPLES else SAMPLES_DIR
+    return folder / name
+
+
+def available_samples() -> list[str]:
+    """The samples to offer: every bundled one, local ones only when they have been built."""
+    return [s for s in SAMPLES if s not in LOCAL_SAMPLES or sample_path(s).exists()]
+
+
+def sample_language(name: str) -> str:
+    """Language hint for a sample: "en" for English ones, else "zh". Taiwanese Hokkien gets
+    "zh" too: none of the installed models has a Hokkien option, and Chinese is closest."""
+    return "en" if Path(name).stem.endswith("_en") else "zh"
+
+
 def sample_label(name: str) -> str:
     return {
         "national_day_2026_zh.wav": tr(
@@ -62,6 +93,22 @@ def sample_label(name: str) -> str:
         "meeting_zh.wav": tr(
             "合成語音：虛構產銷會議（88 秒，兩位講者）",
             "Synthetic voices: fictional production meeting (88 s, two speakers)",
+        ),
+        "palau_hsiao_2026_en.wav": tr(
+            "英文：副總統帛琉英語致詞（4 分 59 秒，台灣口音）",
+            "English: Vice President's speech in Palau (4 min 59 s, Taiwanese accent)",
+        ),
+        "alimeeting_r8001_zh.flac": tr(
+            "真實會議：AliMeeting 4 人會議（5 分鐘，遠場麥克風，大陸口音）",
+            "Real meeting: AliMeeting, 4 speakers (5 min, far-field mic, mainland accent)",
+        ),
+        "librispeech_20_en.flac": tr(
+            "英文有聲書：LibriSpeech 20 句（3 分 6 秒，朗讀）",
+            "English audiobook: LibriSpeech, 20 sentences (3 min 6 s, read aloud)",
+        ),
+        "hokkien_moe_20_nan.flac": tr(
+            "台語：教育部台語辭典例句 20 句（1 分 47 秒，只在本機）",
+            "Taiwanese Hokkien: MOE dictionary, 20 example sentences (1 min 47 s, local only)",
         ),
     }.get(name, name)
 
@@ -79,6 +126,43 @@ def sample_note(name: str) -> str:
             "88 秒的虛構產銷會議（macOS 合成語音），原稿在同資料夾的 meeting_zh.txt。",
             "An 88-second fictional production meeting (macOS synthetic voices); the script "
             "is meeting_zh.txt in the same folder.",
+        ),
+        "palau_hsiao_2026_en.wav": tr(
+            "〔總統府提供〕蕭副總統在帛琉歡迎晚宴的英語致詞，原稿取自總統府英文官網全文，"
+            "依實際口述修改 3 處；英文以詞錯誤率（WER）評分。來源與授權見 "
+            "data/lab/samples/README.md。",
+            "Courtesy of the Office of the President: Vice President Hsiao's English remarks "
+            "at the Palau welcome banquet; the reference is the official English text with 3 "
+            "edits where she deviated. English is scored by word error rate (WER). Source and "
+            "licence: data/lab/samples/README.md.",
+        ),
+        "alimeeting_r8001_zh.flac": tr(
+            "AliMeeting 評測集 R8001_M8004 前 5 分鐘（第 1 聲道），4 人圍桌開會、會搶話。"
+            "逐字稿與講者時間取自資料集；CC BY-SA 4.0，來源見 data/lab/samples/README.md。",
+            "AliMeeting Eval R8001_M8004, first 5 minutes (channel 1): 4 people around a table, "
+            "with overlapping speech. Transcript and speaker turns from the dataset; CC BY-SA 4.0, "
+            "see data/lab/samples/README.md.",
+        ),
+        "librispeech_20_en.flac": tr(
+            "LibriSpeech test-clean（OpenSLR 12）裡英文評測用的 20 句，句間 0.8 秒靜音接成一段；"
+            "錄音來自 LibriVox 有聲書。CC BY 4.0，標示「LibriSpeech (Panayotov et al., 2015)」；"
+            "英文以詞錯誤率（WER）評分。來源見 data/lab/samples/README.md。",
+            "The 20 LibriSpeech test-clean sentences (OpenSLR 12) of the English evaluation, "
+            "joined with 0.8 s of silence; LibriVox audiobook recordings. CC BY 4.0, credit "
+            '"LibriSpeech (Panayotov et al., 2015)"; English is scored by word error rate '
+            "(WER). Source: data/lab/samples/README.md.",
+        ),
+        "hokkien_moe_20_nan.flac": tr(
+            "教育部《臺灣台語常用詞辭典》例句 20 句，參考答案是辭典的台語漢字。授權 CC BY-ND 3.0 TW"
+            "（禁止改作）：接成一段算改作，所以只用 scripts/make_speech_samples.py 在本機產生到 "
+            "storage/（不進 repo），請勿轉散布。模型沒有台語選項，語言用最接近的「中文」；多數模型"
+            "會寫成華語，字錯率會很高。",
+            "20 example sentences of the MOE Dictionary of Frequently-Used Taiwan Taigi; the "
+            "reference is the dictionary's Hokkien 漢字. Licence CC BY-ND 3.0 TW (no "
+            "derivatives): a joined file counts as a derivative, so it is only built locally "
+            "by scripts/make_speech_samples.py into storage/ (not in the repo); do not share "
+            "it. The models have no Hokkien option, so the closest hint, Chinese, is used; most "
+            "models write Mandarin, so error rates are high.",
         ),
     }.get(name, "")
 
@@ -217,16 +301,19 @@ def audio_choice(prefix: str, default: str = SAMPLES[0]) -> tuple | None:
         or "sample"
     )
     if source == "sample":
+        options = available_samples()
         st.session_state.setdefault(f"{prefix}_sample", default)
+        if st.session_state[f"{prefix}_sample"] not in options:
+            st.session_state[f"{prefix}_sample"] = default
         sample = st.selectbox(
             tr("範例錄音", "Sample recording"),
-            SAMPLES,
+            options,
             format_func=sample_label,
             **kept(f"{prefix}_sample"),
         )
-        path = SAMPLES_DIR / sample
+        path = sample_path(sample)
         st.audio(str(path))
-        st.caption(f"`data/lab/samples/{sample}` · " + sample_note(sample))
+        st.caption(f"`{path.relative_to(PROJECT_DIR)}` · " + sample_note(sample))
         return path, sample, source, sample
     if source == "upload":
         upload = st.file_uploader(
@@ -253,7 +340,7 @@ def follow(prefix: str, field: str, chosen: tuple | None, value_for) -> None:
 
 
 def sample_reference(sample: str) -> str:
-    return asr_metrics.sample_reference(SAMPLES_DIR / sample) or ""
+    return asr_metrics.sample_reference(sample_path(sample)) or ""
 
 
 def ref_file(sample: str, suffix: str) -> str:

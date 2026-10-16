@@ -256,8 +256,7 @@ def step_details(trace: list[dict], elapsed: float) -> None:
             }  # fmt: skip
             if (cer := detail.get("cer")) is not None:
                 st.markdown(
-                    f":material/spellcheck: **{tr('字元錯誤率 CER', 'Character error rate')}** "
-                    f"{cer * 100:.1f}%"
+                    f":material/spellcheck: **{detail.get('metric', 'CER')}** {cer * 100:.1f}%"
                 )
             if stats:
                 st.caption(" · ".join(f"{k}: {v}" for k, v in stats.items()))

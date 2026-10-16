@@ -344,6 +344,15 @@ def meeting_page(url: str, status: dict) -> None:
         format_func=lambda m: labels.get(m, m),
         **kept("mt_asr"),
     )
+    # A bundled sample with reference turns starts at its true speaker count: estimating it
+    # over-splits real far-field meetings (see docs/GATEWAY.md); your own audio starts at
+    # "Estimate".
+    picked = (chosen[2], chosen[3]) if chosen else None
+    if st.session_state.get("mt_speakers_for") != picked:
+        ref = sc.ref_file(chosen[3], ".rttm") if chosen and chosen[2] == "sample" else ""
+        count = len({t["speaker"] for t in dz.parse_reference(ref)}) if ref else 0
+        st.session_state.mt_speakers = count if count in SPEAKERS else 0
+        st.session_state.mt_speakers_for = picked
     st.session_state.setdefault("mt_speakers", 0)
     speakers = c2.selectbox(
         tr("講者人數", "Speakers"),

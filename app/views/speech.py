@@ -1,11 +1,15 @@
-"""Compare speech models: transcription (with noise / telephone conditions), speech translation
-and meeting diarization. The modes live in speech_compare, speech_translate and speech_meeting;
-the language-model comparison is views/compare.py."""
+"""Compare speech models: transcription (with noise / telephone conditions), speech translation,
+meeting diarization, simulated live captions, text to speech and a voice-chat assistant. The
+modes live in speech_compare, speech_translate, speech_meeting, speech_live, speech_tts and
+speech_voice; the language-model comparison is views/compare.py."""
 
 import speech_common as sc
 import speech_compare
+import speech_live
 import speech_meeting
 import speech_translate
+import speech_tts
+import speech_voice
 import streamlit as st
 import ui
 from common import gateway_url, kept
@@ -15,12 +19,14 @@ ui.page_header(
     "graphic_eq",
     tr("語音模型比較", "Compare speech models"),
     tr(
-        "同一段錄音交給多個語音模型，並排比較逐字稿、速度與錯誤率；也能測噪音與電話音質、"
-        "中翻英，以及會議裡誰在什麼時候說話。全部在本機執行，比較在背景進行，可以切換頁面。",
+        "同一段錄音交給多個語音模型，並排比較逐字稿、速度與錯誤率；也能測噪音與電話音質、中翻英、"
+        "會議裡誰在什麼時候說話、即時字幕的延遲、文字轉語音的聲音，以及用說的跟本機助理對話。"
+        "全部在本機執行，比較在背景進行，可以切換頁面。",
         "Give the same recording to several speech models and compare transcripts, speed and "
         "error rates side by side; also test noise and telephone audio, Chinese-to-English "
-        "translation, and who spoke when in a meeting. Everything runs on this machine, in the "
-        "background, so you can switch pages.",
+        "translation, who spoke when in a meeting, live-caption latency, text-to-speech voices "
+        "and a spoken conversation with a local assistant. Everything runs on this machine, in "
+        "the background, so you can switch pages.",
     ),
 )
 
@@ -28,6 +34,9 @@ MODES = {
     "transcribe": (tr("逐字稿", "Transcribe"), "subtitles"),
     "translate": (tr("翻成英文", "Translate"), "translate"),
     "meeting": (tr("會議講者", "Meeting"), "record_voice_over"),
+    "live": (tr("串流（即時）", "Live"), "sensors"),
+    "tts": (tr("文字轉語音", "Text to speech"), "text_to_speech"),
+    "voice_chat": (tr("語音對話", "Voice chat"), "forum"),
 }
 left, right = st.columns([3, 1], vertical_alignment="bottom")
 st.session_state.setdefault("speech_mode", "transcribe")
@@ -68,6 +77,28 @@ blurbs = {
         "A diarization model finds who spoke when; merged with speech recognition it gives a "
         "'Speaker 1: …' transcript, and with a reference the diarization error rate (DER).",
     ),
+    "live": tr(
+        "模擬即時字幕：錄音切成 1–5 秒的片段依序送給語音模型，就像講者正在說話；看每段文字晚多久出現、"
+        "會不會越落越多，以及最後的錯誤率。也可以用麥克風錄一段再當成串流重播。",
+        "Simulated live captions: the recording is fed to each speech model in 1–5 s chunks, "
+        "as a speaker would produce it; see how long after each chunk its text appears, "
+        "whether the lag keeps growing, and the final error rate. You can also record with "
+        "the microphone and replay it as a stream.",
+    ),
+    "tts": tr(
+        "同一段文字用不同聲音念出來（macOS 內建語音，本機免費），比較合成速度，並用語音辨識"
+        "「回聽」合成結果、和原文比對錯誤率，看機器聽不聽得懂。",
+        "Speak the same text with different voices (macOS's built-in voices, local and free), "
+        "compare synthesis speed, and transcribe the result back with a speech model "
+        "(round trip) to score how intelligible it is against the input text.",
+    ),
+    "voice_chat": tr(
+        "用說的問問題：語音辨識 → LLM 回答 → 語音合成念出來，全部在本機；或讓 Gemma 4 直接聽錄音回答。"
+        "每一步花多少時間都列出來，可以連續對話幾輪。",
+        "Ask a question out loud: speech recognition → an LLM answers → speech synthesis reads "
+        "it, all on this machine; or let Gemma 4 hear the recording and answer. Each stage's "
+        "time is shown, and the conversation can go on for a few turns.",
+    ),
 }
 st.caption(blurbs[mode])
 
@@ -75,9 +106,12 @@ url = gateway_url()
 status = sc.gateway_status(url)
 if status is None:
     st.stop()
-if mode == "transcribe":
-    speech_compare.transcribe_page(url, status)
-elif mode == "translate":
-    speech_translate.translate_page(url, status)
-else:
-    speech_meeting.meeting_page(url, status)
+pages = {
+    "transcribe": speech_compare.transcribe_page,
+    "translate": speech_translate.translate_page,
+    "meeting": speech_meeting.meeting_page,
+    "live": speech_live.live_page,
+    "tts": speech_tts.tts_page,
+    "voice_chat": speech_voice.voice_page,
+}
+pages.get(mode, speech_compare.transcribe_page)(url, status)

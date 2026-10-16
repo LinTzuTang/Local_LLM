@@ -72,6 +72,48 @@ def other_models(category: str | None = None) -> list[dict]:
     return [m for m in rows if category is None or m["category"] == category]
 
 
+def is_catalog_only(model: dict) -> bool:
+    """Listed for reference only: no `gateway` block, so the platform cannot download or run it
+    yet (the entry says `"status": "catalog"`)."""
+    return not model.get("gateway")
+
+
+def cloud_models(category: str | None = None) -> list[dict]:
+    """Cloud speech models (Azure OpenAI deployments): audio is uploaded, nothing to download."""
+    rows = load_catalog().get("cloud_models", [])
+    return [m for m in rows if category is None or m["category"] == category]
+
+
+def other_url(model: dict) -> str | None:
+    """Official page of a non-Ollama entry: its own `url`, else the Hugging Face repo."""
+    repo = model.get("repo") or ""
+    if model.get("url"):
+        return model["url"]
+    if repo.count("/") == 1 and " " not in repo and "（" not in repo:
+        return f"https://huggingface.co/{repo}"
+    return None
+
+
+COMMERCIAL_PREFIXES = ("apache", "mit", "bsd", "cc-by-4.0", "cc-by-sa", "cc0")
+
+
+def licence_keys(model: dict) -> list[str]:
+    """Licence badges (keys of ui.CAPS) of a non-Ollama entry: its `license_flags`
+    (non_commercial / gated / custom) plus what the licence text itself says."""
+    flags = set(model.get("license_flags") or [])
+    low = (model.get("license_en") or model.get("license") or "").lower()
+    words = low.replace("-", " ").replace("（", " ").replace("(", " ").split()
+    if "nc" in words or "非商用" in low or "non-commercial" in low or "noncommercial" in low:
+        flags.add("non_commercial")
+    keys = []
+    if "non_commercial" in flags:
+        keys.append("non_commercial")
+    elif "custom" not in flags and low.startswith(COMMERCIAL_PREFIXES):
+        keys.append("commercial_ok")
+    keys += [k for k, f in (("custom_license", "custom"), ("gated", "gated")) if f in flags]
+    return keys
+
+
 def gateway_models(task: str | None = None) -> list[dict]:
     """Non-Ollama models served by the model gateway: the entry's `gateway` block plus
     display fields (name, license, recommended) from the entry itself."""

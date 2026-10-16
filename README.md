@@ -31,7 +31,12 @@ things:
 The UI is bilingual (中文 / EN, switch in the top-right corner). The demo company and all of
 its data are fictional.
 
-## What's new (2026-10-15)
+## What's new (2026-10-16)
+
+- **Speech comparison** gains three modes: live captions (simulated streaming), text to speech (macOS system voices, with a transcription round-trip check) and voice chat (speech → text → LLM → speech). Transcription adds Taiwanese Hokkien, an English audiobook, Taiwanese-accented English and a real multi-speaker meeting (AliMeeting) as samples; English is scored by word error rate (WER).
+- **Model library**: 107 non-Ollama models now cover streaming ASR, TTS, voice chat, speech translation, voice activity detection and diarization (listed only, not yet downloadable).
+
+## Earlier (2026-10-15)
 
 - **Speech model comparison** is its own page now, separate from the LLM comparison. It has three modes:
   - Transcribe: character error rate, optionally with added noise or telephone audio.

@@ -33,6 +33,10 @@ CAPS = {
     "doc": ("description", "文件解析", "Doc parsing", "#475569"),
     "rerank": ("sort", "重新排序", "Rerank", "#0F766E"),
     "diarize": ("record_voice_over", "說話者分段", "Diarization", "#9333EA"),
+    "stream": ("subtitles", "串流辨識", "Streaming ASR", "#C026D3"),
+    "voice_chat": ("voice_chat", "語音對話", "Voice chat", "#7C3AED"),
+    "speech_translate": ("interpreter_mode", "語音翻譯", "Speech translation", "#2563EB"),
+    "vad": ("graphic_eq", "人聲偵測", "Voice activity", "#0891B2"),
     "translate": ("translate", "翻譯", "Translation", "#2563EB"),
     "taiwan": ("location_on", "台灣在地", "Taiwan", "#B91C1C"),
     "multilingual": ("language", "多語言", "Multilingual", "#1D4ED8"),
@@ -40,6 +44,9 @@ CAPS = {
     "moe": ("bolt", "MoE 省算力", "MoE", "#CA8A04"),
     "commercial_ok": ("verified", "可商用", "Commercial OK", "#15803D"),
     "non_commercial": ("block", "非商用", "Non-commercial", "#B45309"),
+    "custom_license": ("gavel", "自訂授權", "Custom licence", "#92400E"),
+    "gated": ("lock", "需同意條款", "Gated", "#475569"),
+    "cloud": ("cloud", "雲端", "Cloud", "#EA580C"),
     "installed": ("download_done", "已下載", "Installed", "#15803D"),
 }
 _NAME = re.compile(r"[a-z0-9_]+")

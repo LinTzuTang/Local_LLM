@@ -201,6 +201,68 @@ def test_other_runtime_models_are_complete():
     assert {m["category"] for m in catalog.other_models()} == set(data["other_categories"])
 
 
+SPEECH_CATEGORIES = {"asr", "stream", "tts", "voice_chat", "speech_translate", "vad", "diarize"}
+
+
+def test_other_categories_cover_every_speech_task():
+    data = catalog.load_catalog()
+    assert SPEECH_CATEGORIES <= data["other_categories"].keys()
+    for field in ("other_category_notes", "other_category_notes_en"):
+        assert data[field].keys() == data["other_categories"].keys(), field
+    assert data["lang_labels_en"].keys() == data["lang_labels"].keys()
+    assert data["mac_labels_en"].keys() == data["mac_labels"].keys()
+
+
+def test_catalog_only_entries_link_to_their_repo_and_cannot_be_downloaded():
+    data = catalog.load_catalog()
+    han = re.compile(r"[\u4e00-\u9fff]")
+    names = [m["name"] for m in catalog.other_models()]
+    assert len(names) == len(set(names))
+    served = {m["name"] for m in catalog.gateway_models()}
+    gateway_ids = {m["id"] for m in catalog.gateway_models()}
+    for m in catalog.other_models():
+        assert catalog.is_catalog_only(m) == (m.get("status") == "catalog"), m["name"]
+        assert set(m.get("langs") or []) <= data["lang_labels"].keys(), m["name"]
+        assert set(m.get("license_flags") or []) <= {"non_commercial", "gated", "custom"}
+        if not catalog.is_catalog_only(m):
+            assert m["gateway"]["id"] in gateway_ids
+            continue
+        assert m["name"] not in served, m["name"]
+        if via := m.get("served_by"):  # a mode of a model the gateway already serves
+            assert via in gateway_ids, m["name"]
+        assert m["mac"] == "native" or catalog.other_url(m), m["name"]
+        assert m.get("size_gb") is None or m["size_gb"] >= 0, m["name"]
+        for field in ("name", "params", "license", "runtime", "install", "use", "note"):
+            text = m.get(f"{field}_en") or m[field]
+            assert not han.search(text), (m["name"], field)  # English text is complete
+    for key in SPEECH_CATEGORIES - {"diarize"}:
+        assert any(catalog.is_catalog_only(m) for m in catalog.other_models(key)), key
+
+
+def test_cloud_models_are_separate_and_marked():
+    data = catalog.load_catalog()
+    han = re.compile(r"[\u4e00-\u9fff]")
+    clouds = catalog.cloud_models()
+    assert {m["name"] for m in clouds if m["deployed"]} >= {"whisper", "gpt-4o-transcribe"}
+    assert {m["name"] for m in clouds if not m["deployed"]} >= {"gpt-realtime"}
+    assert not {m["name"] for m in clouds} & {m["name"] for m in catalog.other_models()}
+    for m in clouds:
+        assert m["category"] in data["other_categories"], m["name"]
+        assert isinstance(m["deployed"], bool) and m["url"].startswith("https://")
+        assert m["use"] and m["use_en"] and not han.search(m["use_en"] + m["note_en"])
+        assert "gateway" not in m and "size_gb" not in m  # nothing to download
+    assert data["cloud_note"] and not han.search(data["cloud_note_en"])
+
+
+def test_licence_keys():
+    assert catalog.licence_keys({"license": "apache-2.0"}) == ["commercial_ok"]
+    assert catalog.licence_keys({"license": "cc-by-nc-4.0（非商用）"}) == ["non_commercial"]
+    gated = {"license": "mit", "license_flags": ["gated"]}
+    assert catalog.licence_keys(gated) == ["commercial_ok", "gated"]
+    custom = {"license": "Llama 3.2 Community License", "license_flags": ["custom"]}
+    assert catalog.licence_keys(custom) == ["custom_license"]
+
+
 def test_decision_and_embedding_models_are_not_offered_for_chat():
     assert catalog.is_chat("qwen3:30b-a3b")
     assert not catalog.is_chat("nimble:9b")

@@ -240,9 +240,10 @@ def run_transcribe(p: dict, data: dict, step) -> dict:
     text, tag = result["text"], model
     reference = lookup(p["reference"], data) if p.get("reference") else ""
     if len(asr_metrics.normalize(reference)) >= 5:  # "none" / "無" means no reference
-        score = asr_metrics.cer(reference, text)
+        score = asr_metrics.score(reference, text, p.get("language"))
         step.detail["cer"] = score["cer"]
-        tag += f" · CER {score['cer'] * 100:.1f}%"
+        step.detail["metric"] = score["metric"]
+        tag += f" · {score['metric']} {score['cer'] * 100:.1f}%"
     turns = data.get(p["speakers"]) if p.get("speakers") else None
     if turns:
         label = p.get("speaker_label") or "講者 {n}"

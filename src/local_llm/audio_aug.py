@@ -230,3 +230,26 @@ def band_energy(samples: np.ndarray, lo: float, hi: float, sr: int = SR) -> floa
     freqs = np.fft.rfftfreq(len(samples), 1 / sr)
     total = float(spec.sum())
     return float(spec[(freqs >= lo) & (freqs < hi)].sum() / total) if total else 0.0
+
+
+def join(clips: Sequence[np.ndarray], gap_s: float = 0.8, sr: int = SR) -> np.ndarray:
+    """Clips one after another with ``gap_s`` seconds of silence between them (none after
+    the last), e.g. separate test sentences joined into one longer recording."""
+    gap = np.zeros(int(round(gap_s * sr)), dtype=np.float32)
+    parts: list[np.ndarray] = []
+    for i, clip in enumerate(clips):
+        if i:
+            parts.append(gap)
+        parts.append(np.asarray(clip, dtype=np.float32))
+    return np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
+
+
+def save_flac(path: str | Path, samples: np.ndarray, sr: int = SR) -> Path:
+    """Write mono samples as 16-bit FLAC (lossless, about half the size of a WAV)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pcm = np.clip(np.asarray(samples, dtype=np.float32), -1.0, 1.0).astype("<f4").tobytes()
+    cmd = ["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "f32le", "-ar", str(sr), "-ac", "1"]
+    cmd += ["-i", "-", "-c:a", "flac", "-sample_fmt", "s16", str(path)]
+    subprocess.run(cmd, input=pcm, check=True)
+    return path
