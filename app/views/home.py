@@ -6,6 +6,7 @@ import jobs
 import psutil
 import streamlit as st
 import ui
+import voice_assistant
 from common import GPU_BUDGET_GB, ollama_url
 from i18n import pick, tr
 
@@ -235,8 +236,13 @@ def open_scenario(sid: str) -> None:
     st.session_state["_open_scenario"] = True
 
 
-for row in range(0, len(scenarios), 3):
-    for col, s in zip(st.columns(3, gap="medium"), scenarios[row : row + 3], strict=False):
+# The live voice assistant is a page of its own, not a graph in scenarios.json.
+cards = [*scenarios, None]
+for row in range(0, len(cards), 3):
+    for col, s in zip(st.columns(3, gap="medium"), cards[row : row + 3], strict=False):
+        if s is None:
+            voice_assistant.home_card(col)
+            continue
         need = engine.requirements(s)
         kinds = sorted({flow_ui.node_kind(n) for n in s["nodes"]} - {None})
         models = [flow_ui.short_model(m) for m in sorted(need["ollama"] | need["gateway"])]

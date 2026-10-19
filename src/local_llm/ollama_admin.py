@@ -98,6 +98,11 @@ def thinking_mode(model: str, base_url: str = DEFAULT_URL) -> str:
         return "none"
     if "thinking" not in info.get("capabilities", []):
         return "none"
+    # Newer Ollama builds (MLX models such as Gemma 4, Qwen3.6/3.8) declare the accepted
+    # `think` values; older ones only reveal it through the chat template.
+    declared = info.get("thinking") or {}
+    if "values" in declared:
+        return "optional" if False in declared["values"] else "always"
     return "optional" if "not $.Think" in info.get("template", "") else "always"
 
 

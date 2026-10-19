@@ -20,7 +20,7 @@ from .company_db import make_tools
 from .config import Settings
 from .providers import build_model
 from .tools import calculator, search_models
-from .web_tools import fetch_webpage, get_weather, wikipedia_search
+from .web_tools import fetch_webpage, get_weather, search_places, wikipedia_search
 
 
 @tool
@@ -90,6 +90,13 @@ TOOL_INFO = {
         runs_en="External API: Open-Meteo geocoding + forecast",
         reads_en="Sends: city name",
     ),
+    "search_places": ToolInfo(
+        "外部 API：Open-Meteo 地名查詢＋OpenStreetMap（Nominatim、Overpass）找附近店家",
+        "送出：地名與想找的店家類型（© OpenStreetMap contributors, ODbL）",
+        network=True,
+        runs_en="External APIs: Open-Meteo geocoding + OpenStreetMap (Nominatim, Overpass)",
+        reads_en="Sends: the place name and the kind of shop (© OpenStreetMap contributors, ODbL)",
+    ),
     "wikipedia_search": ToolInfo(
         "外部 API：中文維基百科搜尋＋摘要",
         "送出：搜尋關鍵字",
@@ -117,7 +124,7 @@ EXTERNAL_CALL_LIMIT = 3
 # Tools an agent definition can list by name. Database tools are created per department role
 # (`db_role` in the agent definition), so the same names exist once per role.
 TOOLS = {t.name: t for t in [calculator, current_time, search_models, get_weather,
-                              wikipedia_search, fetch_webpage]}  # fmt: skip
+                              search_places, wikipedia_search, fetch_webpage]}  # fmt: skip
 DB_TOOLS = ("db_list_tables", "db_describe_table", "db_query")
 DB_ROLES = ("agent_sales", "agent_hr", "agent_support")
 

@@ -6,7 +6,8 @@ POST /v1/audio/transcriptions, /v1/audio/translations (speech -> English text),
 /v1/audio/diarize (who spoke when), /v1/audio/stream (true streaming models fed a recording
 frame by frame; NDJSON events), /v1/rerank, /v1/documents/parse. Errors are {"error": "..."}.
 WebSocket /v1/audio/stream/ws: live microphone audio (PCM16 frames) in, caption events out
-(gateway/live.py); only pages served from this machine may connect.
+(gateway/live.py); only pages served from this machine may connect. WebSocket
+/v1/voice/agent/ws: the live voice assistant (gateway/voice.py, local_llm/voice_agent.py).
 
 Endpoints are plain `def` functions, so FastAPI runs the blocking model work in its thread
 pool and the event loop stays free for /api/ps, progress streams and other requests.
@@ -36,6 +37,7 @@ from .live import LiveSession
 from .manager import GatewayError, Manager
 from .registry import Store, load_specs
 from .stream_backends import STREAM_BACKENDS
+from .voice import voice_agent_ws
 
 REAP_INTERVAL_S = 2.0
 DOCUMENT_TYPES = {".pdf", ".docx", ".pptx", ".html", ".htm", ".md", ".png", ".jpg", ".jpeg",
@@ -428,6 +430,22 @@ def create_app(
                 await websocket.close()
             except Exception:
                 pass
+
+    @app.websocket("/v1/voice/agent/ws")
+    async def voice_ws(websocket: WebSocket, asr: str = "zipformer-zh-en-stream",
+                       llm: str = "gemma4:e4b", voice: str = "Meijia",
+                       rate: int = 0, net: bool = False, barge: bool = True, s2tw: bool = True,
+                       keep_alive: str | None = None):  # fmt: skip
+        """Live voice assistant: microphone PCM in, captions, assistant speech (WAV), tool
+        progress and timings out (gateway/voice.py)."""
+        if not local_origin(websocket.headers.get("origin")):
+            await websocket.close(code=1008, reason="only pages on this machine may connect")
+            return
+        try:
+            keep = parse_keep_alive(keep_alive)
+        except GatewayError:
+            keep = None
+        await voice_agent_ws(websocket, manager, asr, llm, voice, rate, net, barge, s2tw, keep)
 
     @app.post("/v1/rerank")
     def rerank(body: RerankRequest):

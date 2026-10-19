@@ -11,6 +11,7 @@ import model_choice
 import pandas as pd
 import streamlit as st
 import ui
+import voice_assistant
 from common import PROJECT_DIR, installed_names, kept, ollama_url, save_run
 from i18n import pick, tr
 
@@ -93,6 +94,7 @@ def on_category() -> None:
         )
 
 
+voice_assistant.gallery_link()
 with st.container(border=True, key="sc_picker"):
     pick_col, cat_col = st.columns([1.12, 2.2], vertical_alignment="center", gap="small")
     cat_kw = kept("scenario_category")

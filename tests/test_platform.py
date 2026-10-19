@@ -270,3 +270,19 @@ def test_decision_and_embedding_models_are_not_offered_for_chat():
     for m in catalog.models():
         special = {"embedding", "decision"} & set(m["caps"])
         assert catalog.is_chat(m["tag"]) == (not special), m["tag"]
+
+
+def test_thinking_mode_reads_declared_values(monkeypatch):
+    from local_llm import ollama_admin
+
+    shows = {
+        "mlx": {"capabilities": ["thinking"], "thinking": {"values": [False, True]}},
+        "always": {"capabilities": ["thinking"], "thinking": {"values": [True]}},
+        "template": {"capabilities": ["thinking"], "template": "{{ if not $.Think }}"},
+        "plain": {"capabilities": ["completion"]},
+    }
+    monkeypatch.setattr(ollama_admin, "show", lambda model, base_url=None: shows[model])
+    assert ollama_admin.thinking_mode("mlx") == "optional"
+    assert ollama_admin.thinking_mode("always") == "always"
+    assert ollama_admin.thinking_mode("template") == "optional"
+    assert ollama_admin.thinking_mode("plain") == "none"

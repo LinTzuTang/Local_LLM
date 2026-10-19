@@ -37,6 +37,12 @@ pages = {
     ],
     tr("多 Agent 場景", "Scenarios"): [
         page("views/scenarios.py", "場景展示", "Scenario gallery", ":material/hub:"),
+        page(
+            "views/voice_assistant.py",
+            "即時語音助理",
+            "Live voice assistant",
+            ":material/support_agent:",
+        ),
         page("views/knowledge.py", "知識庫 RAG", "Knowledge base", ":material/library_books:"),
     ],
     tr("總控", "Control"): [

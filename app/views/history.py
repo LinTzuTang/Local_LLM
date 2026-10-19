@@ -19,6 +19,7 @@ import pandas as pd
 import speech_compare
 import streamlit as st
 import ui
+import voice_assistant
 from common import RUNS_DIR, kept
 from i18n import pick, tr
 
@@ -35,6 +36,7 @@ KINDS = {
     "control": ("terminal", "總控 Coding Agent", "Coding agent", "#334155"),
     "backend": ("speed", "後端效能", "Backend benchmark", "#D97706"),
     "asr_compare": ("graphic_eq", "語音模型比較", "Speech comparison", "#DB2777"),
+    "voice_agent": ("support_agent", "即時語音助理", "Live voice assistant", "#0F766E"),
     "other": ("description", "其他", "Other", "#64748B"),
 }
 # status -> (Material Symbols icon, zh, en, colour)
@@ -319,6 +321,11 @@ def summarize(path: str, mtime: float) -> dict:
         snip = f"{best} — {asr['snippet']}" if best else asr["snippet"]
         facts["n"] = len(models)
         status = "error" if asr["error"] else status
+    elif fam == "voice_agent":
+        va = voice_assistant.history_summary(data)
+        prompt, models, seconds, snip = va["title"], va["models"], va["seconds"], va["snippet"]
+        facts["n"] = va["turns"]
+        facts["tools"] = va["tools"]
     elif fam == "backend":
         rows = [r for r in data.get("results") or [] if isinstance(r, dict)]
         for r in rows:
@@ -1523,6 +1530,7 @@ def detail_view(run: dict, runs: list[dict]) -> None:
         "control": lambda: control_view(data, run),
         "backend": lambda: table_view(data, run),
         "asr_compare": lambda: speech_compare.history_view(data),
+        "voice_agent": lambda: voice_assistant.history_view(data),
     }
     if not safely(views.get(fam, lambda: generic_view(data, run)), tr("這筆紀錄", "this run")):
         generic_view(data, run)

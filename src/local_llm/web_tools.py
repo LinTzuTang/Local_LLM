@@ -13,6 +13,8 @@ import httpx
 import trafilatura
 from langchain.tools import tool
 
+from . import geo_tools
+
 TIMEOUT = 15
 MAX_CHARS = 4000
 HEADERS = {"User-Agent": "Local_LLM-demo/0.1 (on-prem agent platform demo)"}
@@ -81,6 +83,19 @@ def get_weather(city: str) -> str:
         },
         ensure_ascii=False,
     )
+
+
+@tool
+def search_places(location: str, query: str = "早午餐") -> str:
+    """Find shops near a place from OpenStreetMap (external internet APIs: Open-Meteo
+    geocoding, Nominatim and Overpass). `location` is a place name as the user said it, e.g.
+    '內湖', '台北市信義區'; `query` what to look for, e.g. '早午餐', '咖啡', '拉麵'. Returns up to
+    five places within about 1.5 km with distance, opening hours and address when OSM has
+    them. Use only names from the result; never invent places."""
+    try:
+        return json.dumps(geo_tools.nearby(location, query), ensure_ascii=False)
+    except (geo_tools.GeoError, httpx.HTTPError) as exc:
+        return f"Place search error: {exc}"
 
 
 @tool

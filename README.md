@@ -33,6 +33,8 @@ its data are fictional.
 
 ## What's new (2026-10-19)
 
+- **Live voice assistant (a local take on GPT-Live)**: under Scenarios. Streaming ASR, a front model (Gemma 4 E4B by default) that starts answering in about 1 s, background tool calls (weather via Open-Meteo, nearby places via OpenStreetMap) announced with a short filler and spoken when ready, and barge-in. Includes a scripted demo, a background-work board and a latency table; the network lookups are behind an explicit switch.
+
 - **True streaming ASR**: Voxtral 4B Realtime (4-bit), sherpa-onnx Zipformer (zh-en, zh) and streaming Paraformer. Live mode compares true streaming with chunked simulation, and adds **live microphone captions** over a local WebSocket.
 - **Taiwanese Hokkien**: MediaTek Breeze-ASR-26 added; the Hokkien sample can be scored against the dictionary's 漢字 or its Mandarin translation.
 
