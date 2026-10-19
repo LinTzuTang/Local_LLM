@@ -229,10 +229,15 @@ def reference_text(source: str) -> str:
     return "\n".join(line for line in lines if line and not line.startswith("#"))
 
 
-def sample_reference(audio: Path, dirs: tuple[Path, ...] = SAMPLE_DIRS) -> str | None:
+def sample_reference(
+    audio: Path, dirs: tuple[Path, ...] = SAMPLE_DIRS, variant: str | None = None
+) -> str | None:
     """Reference transcript for a sample in one of the sample folders (bundled or built
-    locally): meeting_zh.wav -> meeting_zh.txt next to it."""
-    script = Path(audio).with_suffix(".txt")
+    locally): meeting_zh.wav -> meeting_zh.txt next to it. `variant` picks another reference
+    of the same audio, e.g. "zh" -> hokkien_moe_20_nan.zh.txt (the Mandarin translation of
+    the Taiwanese Hokkien sentences, for models that write Mandarin)."""
+    suffix = f".{variant}.txt" if variant else ".txt"
+    script = Path(audio).with_suffix(suffix)
     folders = {Path(d).resolve() for d in dirs}
     if script.parent.resolve() not in folders or not script.exists():
         return None

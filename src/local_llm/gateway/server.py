@@ -3,8 +3,10 @@
 Ollama-style management: GET /api/version, /api/tags, /api/ps; POST /api/pull (NDJSON progress),
 DELETE /api/delete, POST /api/unload. Inference, OpenAI-style where a convention exists:
 POST /v1/audio/transcriptions, /v1/audio/translations (speech -> English text),
-/v1/audio/diarize (who spoke when), /v1/rerank, /v1/documents/parse. Errors are
-{"error": "..."}.
+/v1/audio/diarize (who spoke when), /v1/audio/stream (true streaming models fed a recording
+frame by frame; NDJSON events), /v1/rerank, /v1/documents/parse. Errors are {"error": "..."}.
+WebSocket /v1/audio/stream/ws: live microphone audio (PCM16 frames) in, caption events out
+(gateway/live.py); only pages served from this machine may connect.
 
 Endpoints are plain `def` functions, so FastAPI runs the blocking model work in its thread
 pool and the event loop stays free for /api/ps, progress streams and other requests.
@@ -12,6 +14,7 @@ pool and the event loop stays free for /api/ps, progress streams and other reque
 
 import asyncio
 import json
+import queue
 import re
 import tempfile
 import threading
@@ -21,16 +24,18 @@ from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile, WebSocket
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError
 from starlette.exceptions import HTTPException
 
 from . import MAX_UPLOAD_BYTES, VERSION, download
-from .backends import BACKENDS
+from .backends import BACKENDS, decode_audio
+from .live import LiveSession
 from .manager import GatewayError, Manager
 from .registry import Store, load_specs
+from .stream_backends import STREAM_BACKENDS
 
 REAP_INTERVAL_S = 2.0
 DOCUMENT_TYPES = {".pdf", ".docx", ".pptx", ".html", ".htm", ".md", ".png", ".jpg", ".jpeg",
@@ -77,6 +82,19 @@ def parse_keep_alive(value: float | str | None) -> float | None:
     if not match:
         raise GatewayError(400, f"invalid keep_alive {value!r}; use seconds or e.g. 5m")
     return float(match[1]) * {"": 1, "s": 1, "m": 60, "h": 3600}[match[2]]
+
+
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
+
+
+def local_origin(origin: str | None) -> bool:
+    """A browser WebSocket from a page on this machine (or no browser at all). Browsers let any
+    web page open ws://127.0.0.1, so pages from elsewhere are refused."""
+    if not origin:
+        return True
+    from urllib.parse import urlparse
+
+    return (urlparse(origin).hostname or "") in LOCAL_HOSTS
 
 
 def normalize_language(value: str | None) -> str | None:
@@ -143,7 +161,7 @@ def create_app(
     puller: Callable = download.pull,
     max_upload_bytes: int = MAX_UPLOAD_BYTES,
 ) -> FastAPI:
-    manager = manager or Manager(load_specs(), BACKENDS, Store())
+    manager = manager or Manager(load_specs(), BACKENDS | STREAM_BACKENDS, Store())
     pull_locks: dict[str, asyncio.Lock] = {}
 
     @asynccontextmanager
@@ -276,6 +294,140 @@ def create_app(
             out = manager.run(model, "diarize", keep, audio=path, num_speakers=num_speakers,
                               threshold=threshold)  # fmt: skip
         return {**out, "model": model, "seconds": round(time.perf_counter() - start, 2)}
+
+    @app.post("/v1/audio/stream")
+    def stream(
+        file: Annotated[UploadFile, File()],
+        model: Annotated[str, Form()] = "zipformer-zh-en-stream",
+        frame_ms: Annotated[int, Form(ge=20, le=2000)] = 160,
+        pace: Annotated[str, Form(pattern="^(fast|realtime)$")] = "fast",
+        keep_alive: Annotated[str | None, Form()] = None,
+    ):
+        """Run a streaming model over a recording fed in `frame_ms` frames, as a microphone
+        would. NDJSON: one line per text change {"t_audio", "t_wall", "text", "final", "seg"}
+        (asr_streaming explains the fields; with pace="fast" t_wall is simulated from the
+        measured compute per frame, with "realtime" the feed waits for each frame), then
+        {"done": true, "duration", "compute_s", "frames", "append_only", "load_seconds", ...}.
+        Closing the connection stops the decode."""
+        import numpy as np
+
+        start = time.perf_counter()
+        keep = parse_keep_alive(keep_alive)
+        manager.require_installed(manager.spec(model, "stream"))
+        with saved_upload(file) as path:
+            # numpy now: an MLX array made in this thread cannot be used in the worker thread
+            # (MLX streams are per thread).
+            samples = np.array(decode_audio(path), dtype=np.float32)
+        lines: queue.Queue = queue.Queue()
+        cancel = threading.Event()
+
+        def work():
+            try:
+                with manager.using(model, "stream", keep) as (backend, handle, load_seconds):
+                    out = backend.run(handle, samples, frame_s=frame_ms / 1000, pace=pace,
+                                      cancel=cancel, emit=lines.put)  # fmt: skip
+                out.pop("events")
+                seconds = round(time.perf_counter() - start, 2)
+                lines.put({"done": True, **out, "model": model, "seconds": seconds,
+                           "load_seconds": round(load_seconds, 2)})  # fmt: skip
+            except Exception as exc:
+                message = exc.message if isinstance(exc, GatewayError) else f"{exc}"
+                lines.put({"error": message})
+            finally:
+                lines.put(None)
+
+        threading.Thread(target=work, name=f"stream-{model}", daemon=True).start()
+
+        def body():
+            try:
+                while (item := lines.get()) is not None:
+                    yield json.dumps(item, ensure_ascii=False) + "\n"
+            finally:  # the client went away: stop decoding
+                cancel.set()
+
+        return StreamingResponse(body(), media_type="application/x-ndjson")
+
+    @app.websocket("/v1/audio/stream/ws")
+    async def stream_ws(websocket: WebSocket, model: str = "zipformer-zh-en-stream",
+                        keep_alive: str | None = None, s2tw: bool = False):  # fmt: skip
+        """Live captions from the microphone. Query: `model` (a streaming model), `s2tw`
+        (also send each text converted to Traditional Chinese as "display"). The client
+        sends binary 16 kHz mono PCM16 frames (~100 ms) and the text {"type": "stop"} when
+        done; the server answers {"type": "ready", ...} once the model is loaded, then the
+        events of gateway/live.py, ending with {"type": "done", ...}, and closes. Closing the
+        socket at any time ends the session."""
+        if not local_origin(websocket.headers.get("origin")):
+            await websocket.close(code=1008, reason="only pages on this machine may connect")
+            return
+        await websocket.accept()
+        try:
+            keep = parse_keep_alive(keep_alive)
+            manager.require_installed(manager.spec(model, "stream"))
+        except GatewayError as exc:
+            await websocket.send_json({"type": "error", "error": exc.message})
+            await websocket.close()
+            return
+        loop = asyncio.get_running_loop()
+        inbox: queue.Queue = queue.Queue()
+        outbox: asyncio.Queue = asyncio.Queue()
+
+        def emit(item) -> None:
+            loop.call_soon_threadsafe(outbox.put_nowait, item)
+
+        def work() -> None:
+            # One thread for the whole session: MLX arrays belong to the thread that made them.
+            try:
+                with manager.using(model, "stream", keep) as (backend, handle, load_seconds):
+                    display = None
+                    if s2tw:
+                        import opencc
+
+                        display = opencc.OpenCC("s2tw").convert
+                    live = LiveSession(backend.session(handle), display=display)
+                    emit({"type": "ready", "model": model, "append_only": live.append_only,
+                          "load_seconds": round(load_seconds, 2)})  # fmt: skip
+                    while (item := inbox.get()) is not None:
+                        for event in live.feed(*item):
+                            emit(event)
+                    for event in live.stop():
+                        emit(event)
+            except Exception as exc:
+                emit({"type": "error", "error": exc.message if isinstance(exc, GatewayError)
+                      else f"{type(exc).__name__}: {exc}"})  # fmt: skip
+            finally:
+                emit(None)
+
+        threading.Thread(target=work, name=f"live-{model}", daemon=True).start()
+
+        async def receive() -> None:
+            try:
+                while True:
+                    message = await websocket.receive()
+                    if message["type"] == "websocket.disconnect":
+                        break
+                    if message.get("bytes"):
+                        inbox.put((message["bytes"], time.perf_counter()))
+                    elif message.get("text") and '"stop"' in message["text"]:
+                        break
+            except Exception:  # the socket went away
+                pass
+            finally:
+                inbox.put(None)
+
+        receiver = asyncio.create_task(receive())
+        open_socket = True
+        while (event := await outbox.get()) is not None:
+            if open_socket:
+                try:
+                    await websocket.send_json(event)
+                except Exception:
+                    open_socket = False  # keep draining so the worker can finish
+        receiver.cancel()
+        if open_socket:
+            try:
+                await websocket.close()
+            except Exception:
+                pass
 
     @app.post("/v1/rerank")
     def rerank(body: RerankRequest):

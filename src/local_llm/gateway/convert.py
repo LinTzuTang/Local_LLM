@@ -1,6 +1,7 @@
 """Convert Hugging Face (transformers) Whisper weights to the MLX layout mlx-whisper loads.
 
-Used for Breeze-ASR-25: MediaTek publishes transformers safetensors, and converting them here
+Used for Breeze-ASR-25 and Breeze-ASR-26: MediaTek publishes transformers safetensors (one
+file, or shards listed in model.safetensors.index.json), and converting them here
 keeps the weights traceable to the official repo instead of a community re-upload. The network
 is OpenAI Whisper, so converting is renaming tensors, plus transposing the two convolution
 kernels (MLX stores them channels-last). Mirrors mlx-examples/whisper/convert.py, which starts
@@ -59,21 +60,33 @@ def model_dims(config: dict) -> dict:
     }
 
 
+def weight_files(source: Path) -> list[Path]:
+    """The safetensors files of a transformers checkpoint: model.safetensors, or the shards
+    named in model.safetensors.index.json (large fp32 checkpoints such as Breeze-ASR-26)."""
+    index = source / "model.safetensors.index.json"
+    if index.exists():
+        shards = sorted(set(json.loads(index.read_text())["weight_map"].values()))
+        return [source / name for name in shards]
+    return [source / "model.safetensors"]
+
+
 def hf_whisper_to_mlx(source: Path, out: Path) -> Path:
-    """source: config.json + model.safetensors -> out: config.json + weights.safetensors (fp16)."""
+    """source: config.json + model.safetensors (or shards) -> out: config.json +
+    weights.safetensors (fp16)."""
     import mlx.core as mx
     from mlx.utils import tree_flatten
     from mlx_whisper import whisper
 
     dims = model_dims(json.loads((source / "config.json").read_text()))
     weights = {}
-    for name, value in mx.load(str(source / "model.safetensors")).items():
-        if name in DROP:
-            continue
-        key = mlx_name(name)
-        if key.endswith(("conv1.weight", "conv2.weight")):
-            value = value.swapaxes(1, 2)
-        weights[key] = value.astype(mx.float16)
+    for path in weight_files(source):
+        for name, value in mx.load(str(path)).items():
+            if name in DROP:
+                continue
+            key = mlx_name(name)
+            if key.endswith(("conv1.weight", "conv2.weight")):
+                value = value.swapaxes(1, 2)
+            weights[key] = value.astype(mx.float16)
 
     # Check names and shapes against a freshly built model before writing anything.
     expected = dict(tree_flatten(whisper.Whisper(whisper.ModelDimensions(**dims)).parameters()))

@@ -38,6 +38,10 @@ def test_sample_reference_reads_both_sample_folders(tmp_path):
     dirs = (bundled, local)
     assert asr_metrics.sample_reference(local / "x_nan.flac", dirs) == "人客遐濟"
     assert asr_metrics.sample_reference(tmp_path / "x_nan.flac", dirs) is None
+    # A second reference of the same audio: the Mandarin translation (x_nan.zh.txt).
+    assert asr_metrics.sample_reference(local / "x_nan.flac", dirs, variant="zh") is None
+    (local / "x_nan.zh.txt").write_text("# header\n客人這麼多\n", encoding="utf-8")
+    assert asr_metrics.sample_reference(local / "x_nan.flac", dirs, variant="zh") == "客人這麼多"
 
 
 def test_parse_voices_dedupes_and_keeps_short_names():

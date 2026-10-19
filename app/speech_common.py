@@ -153,12 +153,14 @@ def sample_note(name: str) -> str:
             "(WER). Source: data/lab/samples/README.md.",
         ),
         "hokkien_moe_20_nan.flac": tr(
-            "教育部《臺灣台語常用詞辭典》例句 20 句，參考答案是辭典的台語漢字。授權 CC BY-ND 3.0 TW"
+            "教育部《臺灣台語常用詞辭典》例句 20 句，參考答案可選辭典的台語漢字或華語翻譯。"
+            "授權 CC BY-ND 3.0 TW"
             "（禁止改作）：接成一段算改作，所以只用 scripts/make_speech_samples.py 在本機產生到 "
             "storage/（不進 repo），請勿轉散布。模型沒有台語選項，語言用最接近的「中文」；多數模型"
             "會寫成華語，字錯率會很高。",
             "20 example sentences of the MOE Dictionary of Frequently-Used Taiwan Taigi; the "
-            "reference is the dictionary's Hokkien 漢字. Licence CC BY-ND 3.0 TW (no "
+            "reference is the dictionary's Hokkien 漢字 or its Mandarin translation. Licence "
+            "CC BY-ND 3.0 TW (no "
             "derivatives): a joined file counts as a derivative, so it is only built locally "
             "by scripts/make_speech_samples.py into storage/ (not in the repo); do not share "
             "it. The models have no Hokkien option, so the closest hint, Chinese, is used; most "
@@ -339,8 +341,53 @@ def follow(prefix: str, field: str, chosen: tuple | None, value_for) -> None:
         st.session_state[f"{prefix}_{field}_for"] = current
 
 
-def sample_reference(sample: str) -> str:
-    return asr_metrics.sample_reference(sample_path(sample)) or ""
+def sample_reference(sample: str, variant: str | None = None) -> str:
+    return asr_metrics.sample_reference(sample_path(sample), variant=variant) or ""
+
+
+# Models that write Taiwanese Hokkien speech as Mandarin: scored against the Mandarin
+# translation by default (the Hokkien sample's .zh.txt reference).
+MANDARIN_FOR_HOKKIEN = {"breeze-asr-26"}
+
+
+def reference_variant(prefix: str, chosen: tuple | None, models: list[str]) -> None:
+    """For a sample with a second reference (the Hokkien sentences' Mandarin translation,
+    <name>.zh.txt), a radio choosing which one fills the `<prefix>_reference` box: the
+    dictionary's 漢字 or its Mandarin translation, the latter by default when a model that
+    writes Mandarin (Breeze-ASR-26) is chosen."""
+    sample = chosen[3] if chosen and chosen[2] == "sample" else None
+    key = f"{prefix}_ref_variant"
+    if not sample or not sample_reference(sample, "zh"):
+        st.session_state.pop(f"{key}_for", None)  # coming back refills the reference
+        return
+    default = "zh" if MANDARIN_FOR_HOKKIEN & set(models) else "nan"
+    if st.session_state.get(f"{key}_default") != (sample, default):
+        st.session_state[key] = default  # a new sample or model choice resets the default
+        st.session_state[f"{key}_default"] = (sample, default)
+    options = {
+        "nan": tr("台語漢字（辭典原文）", "Hokkien 漢字 (the dictionary's text)"),
+        "zh": tr("華語翻譯（辭典對譯）", "Mandarin translation (the dictionary's)"),
+    }
+    variant = st.radio(
+        tr("參考答案", "Reference"),
+        list(options),
+        format_func=options.get,
+        horizontal=True,
+        help=tr(
+            "Breeze-ASR-26 等模型把台語寫成華語，和台語漢字比對錯誤率會偏高；改用辭典的華語翻譯比對"
+            "較公平。換這個選項會重填下面的參考原稿。",
+            "Breeze-ASR-26 and similar models write Hokkien speech as Mandarin, so scoring "
+            "them against the Hokkien 漢字 overstates their errors; the dictionary's Mandarin "
+            "translation is the fairer reference for them. Changing this refills the reference "
+            "box below.",
+        ),
+        **kept(key),
+    )
+    if st.session_state.get(f"{key}_for") != (sample, variant):
+        st.session_state[f"{prefix}_reference"] = sample_reference(
+            sample, None if variant == "nan" else variant
+        )
+        st.session_state[f"{key}_for"] = (sample, variant)
 
 
 def ref_file(sample: str, suffix: str) -> str:

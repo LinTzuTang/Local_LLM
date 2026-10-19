@@ -78,12 +78,14 @@ blurbs = {
         "'Speaker 1: …' transcript, and with a reference the diarization error rate (DER).",
     ),
     "live": tr(
-        "模擬即時字幕：錄音切成 1–5 秒的片段依序送給語音模型，就像講者正在說話；看每段文字晚多久出現、"
-        "會不會越落越多，以及最後的錯誤率。也可以用麥克風錄一段再當成串流重播。",
-        "Simulated live captions: the recording is fed to each speech model in 1–5 s chunks, "
-        "as a speaker would produce it; see how long after each chunk its text appears, "
-        "whether the lag keeps growing, and the final error rate. You can also record with "
-        "the microphone and replay it as a stream.",
+        "即時字幕三種做法：切段模擬（錄音切成 1–5 秒依序送給整段辨識模型）、真串流（串流模型每 "
+        "0.1–0.3 秒收一小段、邊收邊出字），以及麥克風即時（對著麥克風講，字幕當場出現）。看文字"
+        "晚多久出現、定稿要等多久、部分結果改了多少字，以及最後的錯誤率。",
+        "Live captions three ways: chunked simulation (the recording is cut into 1–5 s "
+        "chunks for whole-clip models), true streaming (streaming models get 0.1–0.3 s at a "
+        "time and write text as audio arrives) and live microphone (speak and watch the "
+        "captions appear). See how soon text appears, how long until it is final, how much "
+        "partial text gets revised, and the final error rate.",
     ),
     "tts": tr(
         "同一段文字用不同聲音念出來（macOS 內建語音，本機免費），比較合成速度，並用語音辨識"

@@ -1,0 +1,34 @@
+.lm-root {
+  font-family: var(--st-font, "Source Sans Pro", sans-serif);
+  color: var(--st-text-color, #1c2421);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.lm-bar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.lm-bar button {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.9rem; border-radius: 0.5rem; font: inherit; cursor: pointer;
+  border: 1px solid var(--st-border-color, #d6d6d9);
+  background: var(--st-background-color, #fff); color: inherit;
+}
+.lm-bar .lm-start { background: var(--st-primary-color, #4f46e5); border-color: transparent; color: #fff; }
+.lm-bar button:disabled { opacity: 0.45; cursor: default; }
+.lm-icon { font-family: "Material Symbols Rounded"; font-size: 1.2rem; line-height: 1; }
+.lm-model { font-size: 0.85rem; opacity: 0.75; }
+.lm-status { font-size: 0.9rem; margin-left: auto; }
+.lm-status.lm-error { color: #b91c1c; font-weight: 600; }
+.lm-metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.5rem;
+}
+.lm-metrics > div {
+  border: 1px solid var(--st-border-color, #e5e5e8); border-radius: 0.5rem;
+  padding: 0.45rem 0.7rem; display: flex; flex-direction: column; gap: 0.15rem;
+}
+.lm-label { font-size: 0.78rem; opacity: 0.7; }
+.lm-caption {
+  border: 1px solid var(--st-border-color, #e5e5e8); border-radius: 0.5rem;
+  padding: 0.75rem 0.9rem; height: 260px; overflow-y: auto; font-size: 1.1rem; line-height: 1.6;
+}
+.lm-line { color: var(--st-text-color, #1c2421); }
+.lm-partial { color: #8a8f98; font-style: italic; }

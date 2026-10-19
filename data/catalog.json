@@ -3346,7 +3346,6 @@
       "repo": "MediaTek-Research/Breeze-ASR-26",
       "url": "https://huggingface.co/MediaTek-Research/Breeze-ASR-26",
       "category": "asr",
-      "status": "catalog",
       "params": "1.55B",
       "size_gb": 6.2,
       "langs": [
@@ -3355,16 +3354,42 @@
       ],
       "license": "apache-2.0",
       "mac": "mlx",
-      "runtime": "transformers／mlx-whisper（社群 MLX 轉檔）",
-      "runtime_en": "transformers / mlx-whisper (community MLX conversions)",
-      "install": "uv add mlx-whisper（使用社群轉檔，如 doggy8088/Breeze-ASR-26-MLX）",
-      "install_en": "uv add mlx-whisper (use a community conversion, e.g. doggy8088/Breeze-ASR-26-MLX)",
+      "runtime": "mlx-whisper（模型閘道；官方權重在本機轉 MLX）",
+      "runtime_en": "mlx-whisper (model gateway; official weights converted to MLX locally)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
       "use": "台語（含台華混用）語音轉華語漢字",
       "use_en": "Taiwanese Hokkien (incl. Hokkien-Mandarin code-switching) speech to Mandarin Chinese characters",
       "note": "聯發科創新基地（論文 2026-02）；Whisper large-v2 微調，約 1 萬小時合成台語語料；30 句評測平均 CER 30.1%（Breeze-ASR-25 為 50.0%）；輸出華語漢字，非台語正字或台羅；MLX／GGML／CT2 轉檔皆為社群提供",
       "note_en": "MediaTek Research (paper 2026-02); Whisper large-v2 fine-tune on ~10k h of synthetic Taiwanese Hokkien; avg CER 30.1% on 30 samples (Breeze-ASR-25: 50.0%); outputs Mandarin characters, not Taigi orthography or Tai-lo; MLX/GGML/CT2 ports are community-made",
       "recommended": true,
-      "taiwan": true
+      "taiwan": true,
+      "gateway": {
+        "id": "breeze-asr-26",
+        "task": "asr",
+        "backend": "mlx-whisper",
+        "weights": [
+          {
+            "repo": "MediaTek-Research/Breeze-ASR-26",
+            "revision": "7b992682e7f5ceedd0a41ebec240f01ba469d19e",
+            "files": [
+              "config.json",
+              "model.safetensors.index.json",
+              "model-00001-of-00002.safetensors",
+              "model-00002-of-00002.safetensors"
+            ],
+            "into": "mlx/breeze-asr-26/.source"
+          }
+        ],
+        "convert": "hf-whisper-to-mlx",
+        "path": "mlx/breeze-asr-26",
+        "size_gb": 6.2,
+        "note": "閘道下載聯發科官方 repo 的 transformers 權重（兩個 fp32 分片共 6.2GB，@7b99268），在本機轉成 MLX 格式（models/mlx/breeze-asr-26，fp16 約 3.1GB），轉完刪除原始檔；不使用社群轉檔。模型把台語語音寫成華語漢字（不是台語正字或台羅）。",
+        "note_en": "The gateway downloads the transformers weights from MediaTek's official repo (two fp32 shards, 6.2 GB, @7b99268), converts them to MLX locally (models/mlx/breeze-asr-26, fp16, ~3.1 GB) and deletes the originals; community conversions are not used. The model writes Taiwanese Hokkien speech as Mandarin characters (not Taigi orthography or Tai-lo).",
+        "options": {
+          "translate": false
+        }
+      }
     },
     {
       "name": "FireRedASR2-AED",
@@ -3723,24 +3748,63 @@
       "repo": "csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20",
       "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20",
       "category": "stream",
-      "status": "catalog",
       "params": "約 90M（依 fp32 檔案大小推估）",
       "params_en": "~90M (estimated from fp32 file size)",
-      "size_gb": 0.36,
+      "size_gb": 0.2,
       "langs": [
         "zh",
         "en"
       ],
       "license": "apache-2.0",
       "mac": "onnx",
-      "runtime": "sherpa-onnx",
-      "install": "uv add sherpa-onnx",
+      "runtime": "sherpa-onnx 1.13.8（onnxruntime，CPU；模型閘道）",
+      "install": "平台一鍵下載（模型閘道）",
       "use": "中英夾雜的即時字幕／麥克風串流辨識，CPU 即時",
       "use_en": "Live captions / microphone streaming ASR for mixed Mandarin-English, real-time on CPU",
       "note": "k2-fsa（icefall pruned_transducer_stateless7_streaming），2023-02；int8 版約 0.2 GB；簡體輸出、無標點；模型較舊但最穩定好用",
       "note_en": "k2-fsa (icefall pruned_transducer_stateless7_streaming), Feb 2023; int8 build ~0.2 GB; Simplified Chinese output, no punctuation; older but the most proven zh-en streaming model",
       "recommended": true,
-      "released": "2023-02"
+      "released": "2023-02",
+      "runtime_en": "sherpa-onnx 1.13.8 (onnxruntime, CPU; model gateway)",
+      "install_en": "One-click download in the platform (model gateway)",
+      "gateway": {
+        "id": "zipformer-zh-en-stream",
+        "task": "stream",
+        "backend": "sherpa-online",
+        "weights": [
+          {
+            "repo": "csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20",
+            "revision": "98590b7ed6443e77b714204da2757d75e1a642f4",
+            "files": [
+              "encoder-epoch-99-avg-1.int8.onnx",
+              "decoder-epoch-99-avg-1.onnx",
+              "joiner-epoch-99-avg-1.int8.onnx",
+              "tokens.txt"
+            ],
+            "into": "sherpa/zipformer-zh-en-stream"
+          }
+        ],
+        "path": "sherpa/zipformer-zh-en-stream",
+        "size_gb": 0.2,
+        "options": {
+          "kind": "transducer",
+          "encoder": "encoder-epoch-99-avg-1.int8.onnx",
+          "decoder": "decoder-epoch-99-avg-1.onnx",
+          "joiner": "joiner-epoch-99-avg-1.int8.onnx",
+          "tokens": "tokens.txt",
+          "endpoint": {
+            "rule1": 2.4,
+            "rule2": 0.8,
+            "rule3": 20.0
+          },
+          "languages": [
+            "zh",
+            "en"
+          ]
+        },
+        "note": "閘道從 Hugging Face 下載 int8 編碼器／joiner 與 fp32 解碼器（約 0.2GB，@98590b7），放在 models/sherpa/zipformer-zh-en-stream；sherpa-onnx OnlineRecognizer 在 CPU 上邊收音邊辨識，句尾靜音 0.8 秒判定一句結束。輸出簡體、無標點，英文為大寫。",
+        "note_en": "The gateway downloads the int8 encoder/joiner and fp32 decoder from Hugging Face (~0.2 GB, @98590b7) into models/sherpa/zipformer-zh-en-stream; sherpa-onnx's OnlineRecognizer decodes on the CPU as audio arrives, and 0.8 s of trailing silence ends an utterance. Output is Simplified Chinese without punctuation; English comes out in capitals."
+      }
     },
     {
       "name": "sherpa-onnx Streaming Zipformer 中文（2025-06-30）",
@@ -3748,7 +3812,6 @@
       "repo": "csukuangfj/sherpa-onnx-streaming-zipformer-zh-int8-2025-06-30",
       "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-zh-int8-2025-06-30",
       "category": "stream",
-      "status": "catalog",
       "params": "約 160M（依 int8 檔案大小推估）",
       "params_en": "~160M (estimated from int8 file size)",
       "size_gb": 0.17,
@@ -3758,14 +3821,58 @@
       "license": "—（模型卡未標示授權；sherpa-onnx／icefall 程式碼為 apache-2.0）",
       "license_en": "— (no licence stated on the model card; sherpa-onnx / icefall code is apache-2.0)",
       "mac": "onnx",
-      "runtime": "sherpa-onnx",
-      "install": "uv add sherpa-onnx",
+      "runtime": "sherpa-onnx 1.13.8（onnxruntime，CPU；模型閘道，僅供本機測試）",
+      "install": "平台一鍵下載（模型閘道）",
       "use": "純中文（普通話）串流辨識，官方目前最新的中文 streaming 模型",
       "use_en": "Mandarin-only streaming ASR; the newest official sherpa-onnx Chinese streaming model",
       "note": "k2-fsa，2025-06；由 icefall multi-zh-hans Zipformer-large 轉出；另有 xlarge 版（約 0.77 GB，較慢）；模型卡未標授權，商用前需確認",
       "note_en": "k2-fsa, Jun 2025; converted from yuekai/icefall-asr-multi-zh-hans-zipformer-large; an xlarge variant exists (csukuangfj/sherpa-onnx-streaming-zipformer-zh-xlarge-int8-2025-06-30, ~0.77 GB, slower); licence not stated, verify before commercial use",
       "recommended": false,
-      "released": "2025-06"
+      "released": "2025-06",
+      "runtime_en": "sherpa-onnx 1.13.8 (onnxruntime, CPU; model gateway, local testing only)",
+      "install_en": "One-click download in the platform (model gateway)",
+      "license_flags": [
+        "custom"
+      ],
+      "gateway": {
+        "id": "zipformer-zh-2025-stream",
+        "task": "stream",
+        "backend": "sherpa-online",
+        "weights": [
+          {
+            "repo": "csukuangfj/sherpa-onnx-streaming-zipformer-zh-int8-2025-06-30",
+            "revision": "ad658fa0201659a09ea3c176129a191c77ecae8f",
+            "files": [
+              "encoder.int8.onnx",
+              "decoder.onnx",
+              "joiner.int8.onnx",
+              "tokens.txt"
+            ],
+            "into": "sherpa/zipformer-zh-2025-stream"
+          }
+        ],
+        "path": "sherpa/zipformer-zh-2025-stream",
+        "size_gb": 0.17,
+        "license": "未標示（模型卡與上游 yuekai/icefall-asr-multi-zh-hans-zipformer-large 皆未標授權；不建議商用）",
+        "license_en": "not stated (neither the card nor upstream yuekai/icefall-asr-multi-zh-hans-zipformer-large states a licence; not recommended for commercial use)",
+        "options": {
+          "kind": "transducer",
+          "encoder": "encoder.int8.onnx",
+          "decoder": "decoder.onnx",
+          "joiner": "joiner.int8.onnx",
+          "tokens": "tokens.txt",
+          "endpoint": {
+            "rule1": 2.4,
+            "rule2": 0.8,
+            "rule3": 20.0
+          },
+          "languages": [
+            "zh"
+          ]
+        },
+        "note": "只供本機測試：模型卡未標授權，商用前須向作者確認。閘道下載 int8 編碼器／joiner 與解碼器（約 0.17GB，@ad658fa），CPU 執行；只有中文，輸出簡體、無標點。",
+        "note_en": "Local testing only: the card states no licence, so check with the authors before any commercial use. The gateway downloads the int8 encoder/joiner and decoder (~0.17 GB, @ad658fa); runs on the CPU; Mandarin only, Simplified output without punctuation."
+      }
     },
     {
       "name": "X-ASR-zh-en",
@@ -3795,7 +3902,6 @@
       "repo": "funasr/paraformer-zh-streaming",
       "url": "https://huggingface.co/funasr/paraformer-zh-streaming",
       "category": "stream",
-      "status": "catalog",
       "params": "220M",
       "size_gb": 0.88,
       "langs": [
@@ -3804,15 +3910,54 @@
       ],
       "license": "apache-2.0",
       "mac": "onnx",
-      "runtime": "FunASR（PyTorch）／sherpa-onnx",
-      "runtime_en": "FunASR (PyTorch) / sherpa-onnx",
-      "install": "uv add funasr",
+      "runtime": "sherpa-onnx 1.13.8（ONNX 轉檔，CPU；模型閘道）",
+      "runtime_en": "sherpa-onnx 1.13.8 (ONNX conversion, CPU; model gateway)",
+      "install": "平台一鍵下載（模型閘道，ONNX 版）",
       "use": "中文（普通話）即時辨識，以 600 ms 區塊輸出",
       "use_en": "Real-time Mandarin ASR emitting text in 600 ms chunks",
       "note": "阿里達摩院 FunASR（ModelScope 版 iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8404-online）；apache-2.0 以 tag apache-2.0-20260804 為準；Mac 建議用 ONNX 版 csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en",
       "note_en": "Alibaba DAMO FunASR (ModelScope: iic/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8404-online); apache-2.0 applies at tag apache-2.0-20260804; on Mac prefer the ONNX port csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en (int8 ~0.24 GB)",
       "recommended": false,
-      "released": "2024-02"
+      "released": "2024-02",
+      "install_en": "One-click download in the platform (model gateway, ONNX build)",
+      "gateway": {
+        "id": "paraformer-zh-en-stream",
+        "task": "stream",
+        "backend": "sherpa-online",
+        "weights": [
+          {
+            "repo": "csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en",
+            "revision": "8e40c43232a1c5c66c82111efc5820d3accca11b",
+            "files": [
+              "encoder.int8.onnx",
+              "decoder.int8.onnx",
+              "tokens.txt"
+            ],
+            "into": "sherpa/paraformer-zh-en-stream"
+          }
+        ],
+        "path": "sherpa/paraformer-zh-en-stream",
+        "size_gb": 0.24,
+        "license": "apache-2.0（ONNX 轉檔卡片；FunASR 原始權重自 tag apache-2.0-20260804 起為 apache-2.0）",
+        "license_en": "apache-2.0 (ONNX conversion card; the FunASR weights are apache-2.0 from tag apache-2.0-20260804)",
+        "options": {
+          "kind": "paraformer",
+          "encoder": "encoder.int8.onnx",
+          "decoder": "decoder.int8.onnx",
+          "tokens": "tokens.txt",
+          "endpoint": {
+            "rule1": 2.4,
+            "rule2": 0.8,
+            "rule3": 20.0
+          },
+          "languages": [
+            "zh",
+            "en"
+          ]
+        },
+        "note": "閘道下載 sherpa-onnx 作者的 ONNX int8 轉檔 csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en（約 0.24GB，@8e40c43），轉自 ModelScope damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8404-online（即 HF funasr/paraformer-zh-streaming 的同一個 220M 模型）。CPU 執行，600 ms 一段出字，輸出簡體、無標點。",
+        "note_en": "The gateway downloads the sherpa-onnx author's int8 ONNX conversion csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en (~0.24 GB, @8e40c43), converted from ModelScope damo/speech_paraformer_asr_nat-zh-cn-16k-common-vocab8404-online (the same 220M model as HF funasr/paraformer-zh-streaming). Runs on the CPU, emits text in 600 ms steps, Simplified Chinese without punctuation."
+      }
     },
     {
       "name": "Kyutai STT 1B（en/fr）",
@@ -3833,8 +3978,8 @@
       "install": "uvx --with moshi-mlx python -m moshi_mlx.run_inference --hf-repo kyutai/stt-1b-en_fr-mlx audio.wav",
       "use": "英、法語低延遲串流辨識（0.5 秒延遲）＋語意 VAD，適合語音代理",
       "use_en": "Low-latency English/French streaming ASR (0.5 s delay) with semantic VAD, good for voice agents",
-      "note": "Kyutai，2025-06；官方 MLX 版 kyutai/stt-1b-en_fr-mlx；不支援中文；權重 CC-BY-4.0（需標示出處）",
-      "note_en": "Kyutai, Jun 2025; official MLX build kyutai/stt-1b-en_fr-mlx; no Chinese; weights CC-BY-4.0 (attribution required)",
+      "note": "Kyutai，2025-06；官方 MLX 版 kyutai/stt-1b-en_fr-mlx；不支援中文；權重 CC-BY-4.0（需標示出處）；本機評測（獨立環境，官方 MLX 權重 @2b99572）：台灣口音英語 WER 7.4%、LibriSpeech 4.8%，RTF 約 0.43；moshi-mlx 0.3.0 需要 mlx 0.26 與 huggingface-hub 0.28，和平台衝突，所以未接入模型閘道",
+      "note_en": "Kyutai, Jun 2025; official MLX build kyutai/stt-1b-en_fr-mlx; no Chinese; weights CC-BY-4.0 (attribution required); evaluated here in a separate environment (official MLX weights @2b99572): Taiwan-accented English WER 7.4%, LibriSpeech 4.8%, RTF about 0.43; moshi-mlx 0.3.0 needs mlx 0.26 and huggingface-hub 0.28, which conflict with the platform, so it is not in the model gateway",
       "recommended": false,
       "released": "2025-06"
     },
@@ -3955,7 +4100,6 @@
       "repo": "mistralai/Voxtral-Mini-4B-Realtime-2602",
       "url": "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602",
       "category": "stream",
-      "status": "catalog",
       "params": "4B（3.4B LLM＋0.97B 音訊編碼器）",
       "params_en": "4B (3.4B LLM + 0.97B audio encoder)",
       "size_gb": 8.86,
@@ -3971,15 +4115,112 @@
       ],
       "license": "apache-2.0",
       "mac": "mlx",
-      "runtime": "vLLM／transformers ≥5.2／mlx-audio（社群）",
-      "runtime_en": "vLLM / transformers >=5.2 / mlx-audio (community)",
-      "install": "uv add mlx-audio",
+      "runtime": "mlx-audio 0.5.9（社群 MLX fp16 轉檔，Apple GPU；模型閘道）",
+      "runtime_en": "mlx-audio 0.5.9 (community MLX fp16 conversion, Apple GPU; model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
       "use": "13 語（含中文）即時轉寫，延遲 80 ms～2.4 s 可調，建議 480 ms",
       "use_en": "Realtime transcription in 13 languages incl. Chinese, delay configurable 80 ms to 2.4 s (480 ms recommended)",
-      "note": "Mistral，2026-02（Voxtral Transcribe 2）；開放權重；Mac 用社群 MLX 版 mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16 或 voxmlx（官方標示未測試）；不支援說話者分離",
-      "note_en": "Mistral, Feb 2026 (Voxtral Transcribe 2); open weights; on Mac use community MLX mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16 or voxmlx (marked untested by Mistral); no diarization",
+      "note": "Mistral，2026-02（Voxtral Transcribe 2）；開放權重；Mac 用社群 MLX 版 mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16 或 voxmlx（官方標示未測試）；不支援說話者分離；本機實測 fp16 跟不上即時（RTF 約 2.3，受記憶體頻寬限制），即時用途請用 4-bit 版",
+      "note_en": "Mistral, Feb 2026 (Voxtral Transcribe 2); open weights; on Mac use community MLX mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16 or voxmlx (marked untested by Mistral); no diarization; measured here, fp16 is slower than real time (RTF about 2.3, memory-bandwidth bound), so use the 4-bit build for live captions",
+      "recommended": false,
+      "released": "2026-02",
+      "install_en": "One-click download in the platform (model gateway)",
+      "gateway": {
+        "id": "voxtral-mini-4b-realtime",
+        "task": "stream",
+        "backend": "mlx-audio-realtime",
+        "weights": [
+          {
+            "repo": "mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16",
+            "revision": "9977a0f5c0fce8472083af92957497118adc412b",
+            "files": [
+              "config.json",
+              "model.safetensors",
+              "tekken.json"
+            ],
+            "into": "mlx/voxtral-mini-4b-realtime"
+          }
+        ],
+        "path": "mlx/voxtral-mini-4b-realtime",
+        "size_gb": 8.9,
+        "options": {
+          "transcription_delay_ms": 480,
+          "languages": [
+            "multi",
+            "zh",
+            "en"
+          ],
+          "cache_limit_gb": 4,
+          "realtime": false
+        },
+        "note": "閘道下載 mlx-community 的 fp16 轉檔（8.9GB，@9977a0f；官方 Mistral 權重的格式轉換，未量化），用 mlx-audio 的 VoxtralStreamingSession 邊收音邊解碼（因果編碼器，延遲 480 ms）。不需指定語言；只會往後加字、不會改前面的字。",
+        "note_en": "The gateway downloads mlx-community's fp16 conversion (8.9 GB, @9977a0f; a format conversion of Mistral's official weights, not quantised) and decodes with mlx-audio's VoxtralStreamingSession as audio arrives (causal encoder, 480 ms delay). No language setting; it only appends text, never rewrites earlier words.",
+        "realtime_note": "這台 Mac（M5 Pro）跟不上即時：fp16 實測 RTF 約 2.3（比說話慢），定稿延遲累積到 60–220 秒。瓶頸是記憶體頻寬（每 80 ms 解碼一步都要讀約 8.9 GB 權重），不是記憶體容量。即時用途請改用 4-bit 版（RTF 約 0.5、定稿約 0.7 秒）。",
+        "realtime_note_en": "Not usable for streaming on this Mac (M5 Pro): fp16 measured RTF about 2.3 (slower than speech), with finalisation lag growing to 60-220 s. The bottleneck is memory bandwidth (about 8.9 GB of weights read for every 80 ms decode step), not memory capacity. For live use take the 4-bit build (RTF about 0.5, finalisation about 0.7 s)."
+      }
+    },
+    {
+      "name": "Voxtral Mini 4B Realtime（4-bit MLX）",
+      "name_en": "Voxtral Mini 4B Realtime (4-bit MLX)",
+      "repo": "mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+      "url": "https://huggingface.co/mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+      "category": "stream",
+      "params": "4B（3.4B LLM＋0.97B 音訊編碼器）",
+      "params_en": "4B (3.4B LLM + 0.97B audio encoder)",
+      "size_gb": 3.1,
+      "langs": [
+        "multi",
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es"
+      ],
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio 0.5.9（社群 MLX 4-bit 量化，Apple GPU；模型閘道）",
+      "runtime_en": "mlx-audio 0.5.9 (community MLX 4-bit quantisation, Apple GPU; model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
+      "use": "同 Voxtral Mini 4B Realtime，量化成 4-bit 讓 Mac 跟得上即時",
+      "use_en": "Same model as Voxtral Mini 4B Realtime, quantised to 4-bit so a Mac can keep up in real time",
+      "note": "mlx-community 從 Mistral 官方權重量化的 4-bit 版（3.1GB）；本機實測 RTF 約 0.5、定稿延遲約 0.7 秒，國語與英語朗讀準確，但多人遠場會議漏字比 fp16 多",
+      "note_en": "mlx-community's 4-bit quantisation of Mistral's official weights (3.1 GB); measured here at RTF about 0.5 and about 0.7 s to final text, accurate on read Mandarin and English, but drops more words than fp16 in far-field multi-speaker meetings",
       "recommended": true,
-      "released": "2026-02"
+      "released": "2026-02",
+      "gateway": {
+        "id": "voxtral-mini-4b-realtime-4bit",
+        "task": "stream",
+        "backend": "mlx-audio-realtime",
+        "weights": [
+          {
+            "repo": "mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+            "revision": "fdebf7b2af834a1db4b8a3c99ab7480b333adf9e",
+            "files": [
+              "config.json",
+              "model.safetensors",
+              "model.safetensors.index.json",
+              "tekken.json"
+            ],
+            "into": "mlx/voxtral-mini-4b-realtime-4bit"
+          }
+        ],
+        "path": "mlx/voxtral-mini-4b-realtime-4bit",
+        "size_gb": 3.1,
+        "options": {
+          "transcription_delay_ms": 480,
+          "languages": [
+            "multi",
+            "zh",
+            "en"
+          ],
+          "cache_limit_gb": 4
+        },
+        "note": "閘道下載 mlx-community 的 4-bit 量化版（3.1GB，@fdebf7b），用 mlx-audio 的 VoxtralStreamingSession 邊收音邊解碼（延遲 480 ms），只往後加字。",
+        "note_en": "The gateway downloads mlx-community's 4-bit quantisation (3.1 GB, @fdebf7b) and decodes with mlx-audio's VoxtralStreamingSession as audio arrives (480 ms delay); it only appends text."
+      }
     },
     {
       "name": "Moonshine Streaming（Medium）",

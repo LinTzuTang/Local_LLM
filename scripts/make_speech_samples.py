@@ -11,7 +11,9 @@ line per clip, `#` header lines with the source and licence):
   allows redistribution with attribution, so the file is in the repo.
 - MOE 臺灣台語常用詞辭典 example sentences (CC BY-ND 3.0 TW): storage/speech_samples/
   hokkien_moe_20_nan.flac. NoDerivatives forbids sharing a joined (derived) file, so it is
-  only built locally, in a gitignored folder; the reference is the dictionary's 漢字.
+  only built locally, in a gitignored folder; the reference is the dictionary's 漢字, and
+  hokkien_moe_20_nan.zh.txt next to it holds the dictionary's Mandarin translation of each
+  sentence (the reference for models that write Mandarin, such as Breeze-ASR-26).
 
 Inputs are the evaluation's manifests (storage/speech_eval/data/<dataset>.json), its result
 files (storage/speech_eval/results/asr_<dataset>.json, for which clips were used) and the
@@ -51,6 +53,14 @@ DATASETS = {
             "Licence: CC BY-ND 3.0 TW. NoDerivatives: this joined file is built locally only",
             "(storage/, not in the repo) and must not be redistributed. Reference = 漢字.",
         ],
+        # A second reference: the dictionary's Mandarin translation of each sentence.
+        "variants": {
+            "zh": (
+                "mandarin",
+                "reference = the dictionary's Mandarin translation (華語對譯) of each "
+                "sentence, for models that write Mandarin (e.g. Breeze-ASR-26).",
+            )
+        },
     },
 }
 
@@ -76,9 +86,14 @@ def build(name: str) -> Path:
         seconds = len(clip) / audio_aug.SR
         lines.append(f"# {offset:7.2f}-{offset + seconds:7.2f}s  {m['id']}  {m['source']}")
         offset += seconds + GAP_S
+    timing = lines[len(spec["header"]) :]
     lines += [m["ref"].strip() for m in items]
     out = audio_aug.save_flac(spec["out"], audio_aug.join(clips, GAP_S))
     out.with_suffix(".txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    for variant, (field, note) in spec.get("variants", {}).items():
+        header = [f"# {h}" for h in spec["header"]] + [f"# This file: {note}"]
+        text = header + timing + [m[field].strip() for m in items]
+        out.with_suffix(f".{variant}.txt").write_text("\n".join(text) + "\n", encoding="utf-8")
     print(f"{out.relative_to(ROOT)}: {len(items)} clips, {offset - GAP_S:.1f} s")
     return out
 

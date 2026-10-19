@@ -7,7 +7,8 @@ calls `reap()` every few seconds; a model in the middle of a request is never un
 
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -112,15 +113,24 @@ class Manager:
 
     def run(self, model: str, task: str, keep_alive: float | None = None, **inputs) -> dict:
         """Load the model if needed, run one request, then restart its keep_alive timer."""
+        with self.using(model, task, keep_alive) as (backend, handle, load_seconds):
+            output = backend.run(handle, **inputs)
+        return {**output, "load_seconds": round(load_seconds, 2)}
+
+    @contextmanager
+    def using(
+        self, model: str, task: str, keep_alive: float | None = None
+    ) -> Iterator[tuple[Backend, Any, float]]:
+        """Hold a loaded model for one request, however long (a streaming session):
+        yields (backend, handle, load seconds); the keep_alive timer starts afterwards."""
         spec = self.spec(model, task)
         self.require_installed(spec)
         entry, load_seconds = self._acquire(spec)
         try:
             with entry.lock:
-                output = self.backends[spec.backend].run(entry.handle, **inputs)
+                yield self.backends[spec.backend], entry.handle, load_seconds
         finally:
             self._done(entry, self.keep_alive if keep_alive is None else keep_alive)
-        return {**output, "load_seconds": round(load_seconds, 2)}
 
     def _acquire(self, spec: ModelSpec) -> tuple[Loaded, float]:
         with self._load_locks[spec.id]:  # concurrent first requests load the model once

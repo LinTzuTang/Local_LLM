@@ -8,9 +8,9 @@ chunk by chunk, a lag-per-chunk chart, the lag at the end and the final CER / WE
 captions; optionally the whole recording is also transcribed at once, to show what chunking
 costs in accuracy.
 
-This is not true streaming: the installed models take a whole clip at a time. Streaming models
-(sherpa-onnx Zipformer, Paraformer-streaming, Kyutai STT, Nemotron/Parakeet streaming) are
-listed in the model library but not downloaded; cloud realtime APIs are mentioned as text only.
+This is not true streaming: these models take a whole clip at a time. The page's other method,
+"true streaming" (speech_stream), runs real streaming models (sherpa-onnx Zipformer /
+Paraformer, Voxtral Realtime) frame by frame; cloud realtime APIs are mentioned as text only.
 """
 
 from pathlib import Path
@@ -19,6 +19,8 @@ import altair as alt
 import jobs
 import pandas as pd
 import speech_common as sc
+import speech_mic
+import speech_stream
 import streamlit as st
 from common import kept, save_run
 from i18n import pick, tr
@@ -32,19 +34,11 @@ CHUNKS = [1.0, 1.5, 2.0, 3.0, 5.0]
 MAX_MODELS = 3
 DEFAULT_MODELS = ["qwen3-asr-0.6b", "sensevoice-small", "whisper-large-v3-turbo"]
 SAVED = ("model", "text", "chunks", "stats", "score", "offline", "error")
-# True local streaming models (the model library lists them; none is downloaded).
-STREAMING = [
-    ("sherpa-onnx streaming Zipformer (zh-en)",
-     "k2-fsa；中英雙語、CPU 即可，延遲數百毫秒",
-     "k2-fsa; bilingual Chinese-English, runs on the CPU, a few hundred ms of latency"),
-    ("FunASR Paraformer-zh-streaming",
-     "阿里達摩院；中文串流，600 ms 一段", "Alibaba DAMO; Chinese streaming in 600 ms chunks"),
-    ("Kyutai STT", "英法語串流，延遲約 0.5–2.5 秒",
-     "English / French streaming, about 0.5–2.5 s of delay"),
-    ("NVIDIA Nemotron / Parakeet streaming",
-     "英文為主的低延遲串流（FastConformer cache-aware）",
-     "Low-latency streaming, mainly English (cache-aware FastConformer)"),
-]  # fmt: skip
+METHODS = {  # key -> (zh, en, icon); tr() runs on the page, not at import
+    "chunk": ("切段模擬", "Chunked simulation", "content_cut"),
+    "stream": ("真串流", "True streaming", "stream"),
+    "mic": ("麥克風即時", "Live microphone", "mic"),
+}
 
 
 # -- worker (no Streamlit calls) ------------------------------------------------------------
@@ -368,27 +362,26 @@ def live_view(job: jobs.Job) -> None:
 
 
 def streaming_info() -> None:
-    """The true streaming models (in the model library, not downloaded) and cloud options."""
-    sep = tr("：", ": ")
-    lines = "\n".join(f"- **{name}**{sep}{tr(zh, en)}" for name, zh, en in STREAMING)
+    """Where true streaming is, the streaming models not in the gateway, and cloud options."""
     library = [m for m in catalog.other_models("stream") if not m.get("gateway")]
-    if library:
-        names = [pick({"zh": m["name"], "en": m.get("name_en") or m["name"]}) for m in library]
-        lines += tr(
-            f"\n\n模型庫共列出 {len(names)} 個串流模型：" + "、".join(names) + "。",
-            f"\n\nThe model library lists {len(names)} streaming models: "
-            + ", ".join(names) + ".",
-        )  # fmt: skip
+    names = [pick({"zh": m["name"], "en": m.get("name_en") or m["name"]}) for m in library]
     st.info(
         tr(
-            "**真正的串流（邊講邊送）需要串流模型**。目前安裝的模型一次只吃一整段音訊，所以這裡用"
-            "切段來模擬。下列本機串流模型已列在模型庫，**尚未下載**：\n",
-            "**True streaming (audio sent while you speak) needs a streaming model.** The "
-            "installed models take a whole clip at a time, so this page simulates it with "
-            "chunks. These local streaming models are listed in the model library, **not "
-            "downloaded**:\n",
+            "**切段模擬**把整段辨識模型當成串流用。要看真正邊收音邊出字的模型（sherpa-onnx "
+            "Zipformer／Paraformer、Voxtral Realtime），選上面的「真串流」。",
+            "**Chunked simulation** uses whole-clip models as if they streamed. For models that "
+            "really decode while audio arrives (sherpa-onnx Zipformer / Paraformer, Voxtral "
+            "Realtime), choose **True streaming** above.",
         )
-        + lines
+        + (
+            tr(
+                "\n\n模型庫另列出這些串流模型（尚未接進平台）：" + "、".join(names) + "。",
+                "\n\nThe model library also lists these streaming models (not in the platform "
+                "yet): " + ", ".join(names) + ".",
+            )
+            if names
+            else ""
+        )
         + tr(
             "\n\n雲端選項（只列出，本頁不連線）：Azure OpenAI `gpt-realtime-whisper`、"
             "`gpt-live-transcribe`（Realtime API，WebSocket 串流轉錄）。",
@@ -409,17 +402,40 @@ def streaming_info() -> None:
 
 
 def live_page(url: str, status: dict) -> None:
-    labels = sc.names()
-    installed = [m for m in labels if status.get(m, {}).get("installed")]
+    st.session_state.setdefault("lv_method", "chunk")
+    method = (
+        st.segmented_control(
+            tr("做法", "Method"),
+            list(METHODS),
+            format_func=lambda m: f":material/{METHODS[m][2]}: {tr(*METHODS[m][:2])}",
+            help=tr(
+                "切段模擬：整段辨識模型每次收 1–5 秒。真串流：串流模型每 0.1–0.3 秒收一小段，"
+                "邊收邊出字。麥克風即時：對著麥克風講，串流模型即時出字幕。",
+                "Chunked simulation: whole-clip models get 1–5 s at a time. True streaming: "
+                "streaming models get 0.1–0.3 s at a time and write text as audio arrives. "
+                "Live microphone: speak and a streaming model captions you live.",
+            ),
+            **kept("lv_method"),
+        )
+        or "chunk"
+    )
+    if method == "mic":
+        speech_mic.mic_page(url, status)
+        return
     chosen = sc.audio_choice("lv", default="meeting_zh.wav")
     if st.session_state.get("lv_source") == "record":
         st.caption(
             tr(
-                "錄完後會把這段錄音當成串流重播（切段依序送出）；不是邊講邊送。",
-                "After you stop recording, the take is replayed as a stream (sent chunk by "
-                "chunk); it is not sent while you speak.",
+                "錄完後會把這段錄音當成串流重播（依序送出）；不是邊講邊送。",
+                "After you stop recording, the take is replayed as a stream (sent piece by "
+                "piece); it is not sent while you speak.",
             )
         )
+    if method == "stream":
+        speech_stream.stream_page(url, status, chosen)
+        return
+    labels = sc.names()
+    installed = [m for m in labels if status.get(m, {}).get("installed")]
     a, b, c = st.columns(3)
     st.session_state.setdefault("lv_chunk", 2.0)
     chunk = a.select_slider(
@@ -526,6 +542,9 @@ def live_page(url: str, status: dict) -> None:
 
 
 def history_view(data: dict) -> None:
+    if data.get("method") == "stream":
+        speech_stream.history_view(data)
+        return
     names = sc.names()
     rows = [r | {"status": "done"} for r in data.get("results") or [] if isinstance(r, dict)]
     bits = [tr("錄音：", "Audio: ") + f"`{data.get('audio', '?')}`"]
@@ -548,6 +567,8 @@ def history_view(data: dict) -> None:
 
 def history_summary(data: dict) -> dict:
     # Cached across languages (history.summarize): ids only, no tr().
+    if data.get("method") == "stream":
+        return speech_stream.history_summary(data)
     rows = [r for r in data.get("results") or [] if isinstance(r, dict)]
     scored = [(r["model"], r["score"]["cer"]) for r in rows if r.get("score")]
     metric = next((r["score"].get("metric") for r in rows if r.get("score")), None) or "CER"

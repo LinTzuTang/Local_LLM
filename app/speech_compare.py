@@ -589,6 +589,7 @@ def transcribe_page(url: str, status: dict) -> None:
 
     chosen = sc.audio_choice("asr")
     sc.follow("asr", "reference", chosen, sc.sample_reference)
+    sc.reference_variant("asr", chosen, selected)
     c1, c2 = st.columns([1, 2])
     languages = {
         "zh": tr("中文", "Chinese"),

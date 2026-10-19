@@ -31,6 +31,7 @@ Ollama 只跑文字／視覺 LLM 與 embedding（外加 Gemma 4 E2B／E4B 的音
 | id | 任務 | 執行方式 | 磁碟 | 來源 |
 | --- | --- | --- | --- | --- |
 | `breeze-asr-25` | 語音轉文字 | mlx-whisper（Apple GPU） | 3.08 GB | 聯發科官方 `MediaTek-Research/Breeze-ASR-25` 的 safetensors，下載後在本機轉成 MLX（`gateway/convert.py`），轉完刪除原始檔 |
+| `breeze-asr-26` | 語音轉文字（台語 → 華語漢字） | mlx-whisper | 3.1 GB（下載 6.2 GB） | 聯發科官方 `MediaTek-Research/Breeze-ASR-26`（BreezeASR-Taigi，Apache-2.0）的兩個 fp32 分片，下載後在本機轉成 MLX fp16，轉完刪除原始檔；輸出華語漢字，不是台語正字或台羅 |
 | `taiwan-tongues-asr` | 語音轉文字（國語、台語、客語、英語） | mlx-whisper | 3.22 GB | 數位發展部 `adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0` 的 safetensors，和 Breeze 一樣在本機轉 MLX |
 | `whisper-large-v3-turbo` | 語音轉文字 | mlx-whisper | 1.61 GB | `mlx-community/whisper-large-v3-turbo` |
 | `whisper-large-v3` | 語音轉文字 | mlx-whisper | 3.08 GB | OpenAI 官方 `openai/whisper-large-v3` 的 safetensors，和 Breeze 一樣在本機轉 MLX |
@@ -40,12 +41,21 @@ Ollama 只跑文字／視覺 LLM 與 embedding（外加 Gemma 4 E2B／E4B 的音
 | `fun-asr-nano` | 語音轉文字 | mlx-audio | 1.68 GB | `mlx-community/Fun-ASR-Nano-2512`（官方 `FunAudioLLM/Fun-ASR-Nano-2512` 轉檔） |
 | `gemma4:e2b`、`gemma4:e4b` | 語音轉文字 | 轉送到 Ollama（MLX runner） | 7.48／9.46 GB | Ollama 的 `gemma4:e2b`／`gemma4:e4b`，就是「Ollama 模型」裡同一份權重 |
 | `speaker-diarization` | 說話者分段（誰在什麼時候說話） | sherpa-onnx 1.13.8（onnxruntime，CPU，不佔 GPU） | 0.03 GB | pyannote segmentation-3.0 的 ONNX 轉檔 `csukuangfj/sherpa-onnx-pyannote-segmentation-3-0`（MIT，6 MB）＋ 3D-Speaker CAM++ 中英文進階版 `csukuangfj/speaker-embedding-models` 的 `3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx`（Apache-2.0，28 MB） |
+| `zipformer-zh-en-stream` | 真串流語音辨識（中英） | sherpa-onnx OnlineRecognizer（CPU） | 0.2 GB | `csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20`（Apache-2.0），int8 編碼器／joiner＋fp32 解碼器 |
+| `paraformer-zh-en-stream` | 真串流語音辨識（中英） | sherpa-onnx OnlineRecognizer（CPU） | 0.24 GB | `csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en` int8（Apache-2.0；轉自 FunASR paraformer-zh-streaming，官方權重自 tag `apache-2.0-20260804` 起為 Apache-2.0） |
+| `zipformer-zh-2025-stream` | 真串流語音辨識（中文） | sherpa-onnx OnlineRecognizer（CPU） | 0.17 GB | `csukuangfj/sherpa-onnx-streaming-zipformer-zh-int8-2025-06-30`：**模型卡未標授權，只供本機測試，不建議商用** |
+| `voxtral-mini-4b-realtime` | 真串流語音辨識（多語含中英） | mlx-audio `VoxtralStreamingSession`（Apple GPU） | 8.9 GB | `mlx-community/Voxtral-Mini-4B-Realtime-2602-fp16`（官方 Mistral 權重的 MLX 格式轉換，未量化，Apache-2.0） |
+| `voxtral-mini-4b-realtime-4bit` | 真串流語音辨識（多語含中英） | 同上 | 3.1 GB | `mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit`（4-bit 量化，Apache-2.0）；本機 RTF 約 0.5，即時用途用這個 |
 | `docling` | 文件解析 | Docling 標準流程：Heron 版面（MPS）＋TableFormer（CPU），OCR 用 macOS Vision（ocrmac，繁中） | 0.38 GB | `docling-project/docling-layout-heron`、`docling-project/docling-models`（v2.3.0） |
 | `bge-reranker-v2-m3` | reranker | sentence-transformers CrossEncoder，MPS fp16 | 2.29 GB | `BAAI/bge-reranker-v2-m3` |
 
 Hugging Face 來源都釘在固定 commit（`data/catalog.json` 的 `revision`）。
 
 **說話者分段**：pyannote 官方的 `pyannote/segmentation-3.0` 要登入同意條款才能下載；sherpa-onnx 作者的 ONNX 轉檔不需要，授權同為 MIT（repo 內附 CNRS 的 LICENSE）。聲紋模型來自阿里巴巴通義實驗室 3D-Speaker（ModelScope `iic/speech_campplus_sv_zh_en_16k-common_advanced`，Apache-2.0）。分群門檻預設 0.7（catalog `options.threshold`）：0.5 在 88 秒會議錄音會多分出一位講者；知道人數時傳 `num_speakers` 最準。88 秒錄音在 CPU 上約 3 秒。
+
+**Breeze-ASR-26**：模型卡與論文都沒有指定 Whisper 語言標記或提示（generation_config 的語言留空＝自動偵測）；平台和其他模型一樣傳 `language=zh`，評測另跑自動偵測對照（`scripts/speech_eval/run_breeze26.py`）。官方權重是兩個 fp32 分片，`convert.py` 依 `model.safetensors.index.json` 讀取。
+
+**真串流**（`/v1/audio/stream`，`task: "stream"`）：`sherpa-online` 後端用 sherpa-onnx 的 OnlineRecognizer，每收到一小段音訊就解碼，句尾靜音 0.8 秒（`options.endpoint.rule2`）判定一句結束並定稿；`mlx-audio-realtime` 後端用 mlx-audio 的 Voxtral 串流 session（因果編碼器、解碼固定落後 480 ms），只往後加字。實作在 `gateway/stream_backends.py`，延遲與改字的計算在 `src/local_llm/asr_streaming.py`；麥克風即時字幕的 WebSocket 邏輯在 `gateway/live.py`（`LiveSession`），每個連線一條執行緒、整段期間佔用該模型。全精度 Voxtral（`voxtral-mini-4b-realtime`）在 M5 Pro 上 RTF 約 2.3、跟不上即時（記憶體頻寬瓶頸），catalog 標 `options.realtime: false`：「真串流」列表標示「跟不上即時」並顯示警告，「麥克風即時」不列出；即時請用 4-bit 版。mlx-audio 逐段解碼會讓 MLX 快取無限成長（88 秒錄音行程 footprint 達 40–48 GB），所以 Voxtral session 期間把 MLX 快取上限設為 `options.cache_limit_gb`（4 GB），結束後還原。Kyutai STT 需要 `moshi-mlx`，它要求 mlx 0.26 與 huggingface-hub 0.28，和本專案的 mlx 0.32／hub 1.x 衝突，所以沒有接進閘道。
 
 **語音翻成英文**（`/v1/audio/translations`）：`whisper-large-v3` 用 Whisper 內建的 `task="translate"`；Gemma 4 E2B／E4B 改用「翻成英文」的指令。`whisper-large-v3-turbo` 訓練時拿掉了翻譯；Breeze-ASR-25 與 Taiwan-Tongues 實測收到翻譯指令仍輸出中文，三者在 catalog 標 `"translate": false`，呼叫時回 400。Qwen3-ASR、SenseVoice、Fun-ASR 也只會轉錄。
 
@@ -140,6 +150,8 @@ Breeze-ASR-25 不受這些影響，沒有修改。
 | POST | `/v1/audio/transcriptions` | multipart：`file`、`model`、`language`（選填，`zh`／`en`…）、`prompt`（選填，上下文：人名、術語）、`keep_alive` → `{"text","segments":[{"start","end","text"}],"language","duration","model","seconds","load_seconds","queue_seconds"}`；Gemma 另有 `ollama_load_seconds`、`truncated` |
 | POST | `/v1/audio/translations` | 同上的 multipart（`model` 預設 `whisper-large-v3`；`language` 是說話的語言）→ 同上的欄位，`text` 是英文 |
 | POST | `/v1/audio/diarize` | multipart：`file`、`model=speaker-diarization`、`num_speakers`（選填，1–20；不填就估計）、`threshold`（選填，分群門檻，越低分出越多人）、`keep_alive` → `{"segments":[{"start","end","speaker"}],"speakers","duration","model","seconds","load_seconds"}`；講者依第一次出現的順序編號 0、1、… |
+| POST | `/v1/audio/stream` | multipart：`file`、`model`（串流模型，預設 `zipformer-zh-en-stream`）、`frame_ms`（每次送出的音訊長度，20–2000，預設 160）、`pace`（`fast`＝以最快速度送、時間用量到的處理時間推算；`realtime`＝真的等每段音訊到齊）、`keep_alive` → NDJSON：文字每變一次一行 `{"t_audio","t_wall","text","final","seg"}`（`text` 是目前這句的假設；`final` 表示定稿），最後 `{"done":true,"duration","compute_s","frames","append_only","model","seconds","load_seconds"}`；中途斷線即停止解碼 |
+| WebSocket | `/v1/audio/stream/ws?model=…&s2tw=0/1` | 麥克風即時字幕：用戶端送二進位 16 kHz 單聲道 PCM16（約 100 ms 一段），結束時送文字 `{"type":"stop"}`；伺服器先回 `{"type":"ready","append_only","load_seconds"}`，之後 `{"type":"partial"/"final","text","t_audio","t_wall","seg"[,"display"]}`、`{"type":"speech_start"/"speech_end","t_audio"}`（線上音量 VAD）、`{"type":"metric","kind":"first"/"final","utterance","latency"}`，最後 `{"type":"done","text","summary","first_latencies","final_latencies",…}` 後關閉；斷線即結束。只接受來自本機頁面（Origin 為 127.0.0.1／localhost）或沒有 Origin 的連線，其他回 403。`s2tw=1` 時另附繁體 `display`，`text` 保留模型原始輸出 |
 | POST | `/v1/rerank` | `{"model","query","documents":[...],"top_n"}` → `{"model","results":[{"index","relevance_score","document"}],"seconds"}`（分數由高到低） |
 | POST | `/v1/documents/parse` | multipart：`file`（PDF、DOCX、PPTX、HTML、MD、圖片）、`model=docling` → `{"markdown","pages","tables"（表格數）,"model","seconds"}` |
 
@@ -153,6 +165,8 @@ curl http://127.0.0.1:11500/v1/audio/transcriptions -F file=@data/lab/samples/me
 curl http://127.0.0.1:11500/v1/audio/translations -F file=@data/lab/samples/meeting_zh.wav \
   -F model=whisper-large-v3 -F language=zh
 curl http://127.0.0.1:11500/v1/audio/diarize -F file=@data/lab/samples/meeting_zh.wav -F num_speakers=2
+curl -N http://127.0.0.1:11500/v1/audio/stream -F file=@data/lab/samples/meeting_zh.wav \
+  -F model=zipformer-zh-en-stream -F frame_ms=160
 curl http://127.0.0.1:11500/v1/documents/parse -F file=@data/lab/samples/supplier_contract.pdf
 curl http://127.0.0.1:11500/v1/rerank -H 'content-type: application/json' \
   -d '{"query": "逾期交貨罰多少？", "documents": ["每日 0.2% 違約金", "員工餐廳菜單"]}'
@@ -167,6 +181,7 @@ from local_llm import gateway_client as gw
 gw.transcribe(Path("meeting.wav"), language="zh")["text"]
 gw.translate(Path("meeting.wav"), "whisper-large-v3", "zh")["text"]  # 英文
 gw.diarize(Path("meeting.wav"), num_speakers=2)["segments"]  # [{"start", "end", "speaker"}]
+gw.stream_transcribe(Path("meeting.wav"), "zipformer-zh-en-stream")["events"]  # 真串流
 gw.parse_document(Path("contract.pdf"))["markdown"]
 gw.rerank("逾期罰款", ["段落一", "段落二"], top_n=1)  # [{"index", "relevance_score", "document"}]
 for event in gw.pull("docling"):
@@ -183,6 +198,7 @@ for event in gw.pull("docling"):
   - **逐字稿**：同一段錄音（範例、上傳或麥克風錄音）依序交給選定的語音模型，並排顯示逐字稿、處理時間、即時倍率，有原稿時計算 CER 並標出差異。可加上**噪音與電話音質條件**（`src/local_llm/audio_aug.py`：白／粉紅／人聲嘈雜／辦公室噪音，指定 SNR；電話＝300–3400 Hz 帶通、8 kHz、μ-law），增強過的 WAV 快取在 `storage/speech_cache/`，結果是模型 × 條件的 CER 表與圖。
   - **翻成英文**：串接（語音模型 → Ollama LLM，TranslateGemma 用官方提示格式）、直接（Gemma 4 聽音訊寫英文）、Whisper 內建翻譯三種做法並排，列出首字時間、總時間，有參考譯文時算 chrF／BLEU（sacrebleu）；「模擬即時輸入」把錄音切成 N 秒片段依序處理，看英文落後講者多久。
   - **會議講者**：`/v1/audio/diarize` ＋語音辨識，合併成「講者 1：…」逐字稿與時間軸圖；有參考（RTTM 或「開始 結束 講者」）時算 DER。範例會議的參考時間軸與英文參考譯文在 `data/lab/speech_refs/`（本專案自製）。
+  - **串流（即時）**：「切段模擬」把錄音切成 1–5 秒交給整段辨識模型；「真串流」用 `/v1/audio/stream` 把錄音以 100–320 ms 一段送給串流模型，畫面上看部分結果（灰字）變成定稿，結束後列出首字延遲、定稿延遲（中位數／p90）、RTF、改字比例與 CER／WER，可拖動重播；「麥克風即時」由瀏覽器元件（`app/static/live_mic/`，AudioWorklet 擷取、降頻成 16 kHz PCM16）經 WebSocket 直送閘道，即時顯示字幕與延遲，停止後連同錄音存成執行紀錄（`source: "mic"`，錄音在 `storage/speech_cache/mic/`）。
   - 很多模型輸出簡體字，頁面預設以 OpenCC `s2tw` 轉繁體顯示；存檔保留原始輸出。
 - 場景「會議錄音 → 會議紀錄」（`meeting_minutes`）：先用 `diarize` 節點分出講者，`transcribe` 節點（`speakers` 參數）輸出標上講者的逐字稿，摘要與待辦事項因此能標出由誰提出。
 - 場景「語音辨識模型比較」（`asr_model_comparison`）：四個語音模型平行轉錄，各自對照原稿算 CER，再由 LLM 比較錯誤類型並推薦。

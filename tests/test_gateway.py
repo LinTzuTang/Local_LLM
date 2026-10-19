@@ -9,17 +9,23 @@ from fastapi.testclient import TestClient
 
 from local_llm import catalog, gateway_client, media_tools
 from local_llm.gateway import convert
+from local_llm.gateway import server as gateway_server
 from local_llm.gateway.backends import Backend
 from local_llm.gateway.manager import Manager
 from local_llm.gateway.registry import Store, Weights, load_specs
 from local_llm.gateway.server import create_app, normalize_language, parse_keep_alive
+from local_llm.gateway.stream_backends import StreamBackend, drive
 
 ASR_IDS = {
     "breeze-asr-25", "taiwan-tongues-asr", "whisper-large-v3-turbo", "whisper-large-v3",
     "qwen3-asr-1.7b", "qwen3-asr-0.6b", "sensevoice-small", "fun-asr-nano", "gemma4:e2b",
-    "gemma4:e4b",
+    "gemma4:e4b", "breeze-asr-26",
 }  # fmt: skip
-GATEWAY_IDS = ASR_IDS | {"docling", "bge-reranker-v2-m3", "speaker-diarization"}
+STREAM_IDS = {
+    "zipformer-zh-en-stream", "paraformer-zh-en-stream", "zipformer-zh-2025-stream",
+    "voxtral-mini-4b-realtime", "voxtral-mini-4b-realtime-4bit",
+}  # fmt: skip
+GATEWAY_IDS = ASR_IDS | STREAM_IDS | {"docling", "bge-reranker-v2-m3", "speaker-diarization"}
 
 
 class FakeBackend(Backend):
@@ -50,6 +56,36 @@ class FakeBackend(Backend):
         self.released += 1
 
 
+class FakeSession:
+    """Says one more character per frame of audio; commits after every third frame."""
+
+    def __init__(self):
+        self.frames, self.text = 0, ""
+
+    def feed(self, samples):
+        self.frames += 1
+        self.text += "字"
+        if self.frames % 3 == 0:
+            text, self.text = self.text, ""
+            return [(text, True)]
+        return [(self.text, False)]
+
+    def close(self):
+        return [(self.text, True)] if self.text else []
+
+
+class FakeStreamBackend(StreamBackend):
+    def __init__(self):
+        self.loads = 0
+
+    def load(self, spec, path):
+        self.loads += 1
+        return {}, "fake"
+
+    def session(self, handle):
+        return FakeSession()
+
+
 class FakeStore(Store):
     def __init__(self, root: Path, installed: set[str]):
         super().__init__(root)
@@ -76,10 +112,11 @@ def gateway(tmp_path):
         "docling": FakeBackend("doc"),
         "cross-encoder": FakeBackend("rerank"),
         "sherpa-diarization": FakeBackend("diarize"),
+        "sherpa-online": FakeStreamBackend(),
     }
-    store = FakeStore(
-        tmp_path, {"breeze-asr-25", "docling", "bge-reranker-v2-m3", "speaker-diarization"}
-    )
+    installed = {"breeze-asr-25", "docling", "bge-reranker-v2-m3", "speaker-diarization",
+                 "zipformer-zh-en-stream"}  # fmt: skip
+    store = FakeStore(tmp_path, installed)
     manager = Manager(specs, backends, store, keep_alive=300, free=lambda: None)
 
     async def fake_pull(spec, store):
@@ -98,7 +135,7 @@ def test_catalog_lists_the_gateway_models():
     models = catalog.gateway_models()
     assert {m["id"] for m in models} == GATEWAY_IDS
     for m in models:
-        assert m["task"] in {"asr", "doc", "rerank", "diarize"} and m["size_gb"] > 0
+        assert m["task"] in {"asr", "doc", "rerank", "diarize", "stream"} and m["size_gb"] > 0
         assert m.get("weights") or m.get("ollama")  # Hugging Face files, or an Ollama tag
         assert all(w.get("revision") for w in m.get("weights", []))  # pinned
     specs = load_specs()
@@ -246,6 +283,45 @@ def test_diarize_and_translate_clients(gateway, monkeypatch):
     assert gateway_client.translate(b"RIFF fake audio", "breeze-asr-25")["text"] == "Good morning"
 
 
+def test_stream_endpoint_sends_timed_events(gateway, monkeypatch):
+    np = pytest.importorskip("numpy")
+    client, manager, backends = gateway
+    one_second = np.zeros(16000, dtype=np.float32)
+    monkeypatch.setattr(gateway_server, "decode_audio", lambda path: one_second)
+    monkeypatch.setattr(gateway_client, "_client", lambda base_url, timeout=10: client)
+    out = gateway_client.stream_transcribe(b"RIFF fake audio", frame_ms=200)
+    events = out["events"]
+    assert out["done"] and out["frames"] == 5 and out["duration"] == 1.0
+    assert [e["final"] for e in events] == [False, False, True, False, False, True]
+    assert events[2]["text"] == "字字字" and events[2]["seg"] == 0 and events[3]["seg"] == 1
+    assert [e["t_audio"] for e in events] == [0.2, 0.4, 0.6, 0.8, 1.0, 1.0]
+    assert all(e["t_wall"] >= e["t_audio"] for e in events)
+    assert backends["sherpa-online"].loads == 1 and manager.ps()[0]["busy"] is False
+    files = {"file": ("a.wav", b"RIFF fake audio")}
+    r = client.post("/v1/audio/stream", files=files, data={"model": "breeze-asr-25"})
+    assert r.status_code == 400  # a whole-file ASR model does not stream
+    r = client.post("/v1/audio/stream", files=files, data={"pace": "slow"})
+    assert r.status_code == 422
+    r = client.post("/v1/audio/stream", files=files, data={"model": "paraformer-zh-en-stream"})
+    assert r.status_code == 404 and "pull it first" in r.json()["error"]
+
+
+def test_drive_simulates_real_time_and_can_stop():
+    import threading
+
+    np = pytest.importorskip("numpy")
+    samples = np.zeros(16000 * 2, dtype=np.float32)
+    out = drive(FakeSession(), samples, frame_s=0.5)
+    assert out["frames"] == 4 and out["compute_s"] >= 0
+    # Fast compute: each frame's text is ready (simulated) right after the frame arrived.
+    assert [e["t_audio"] for e in out["events"]] == [0.5, 1.0, 1.5, 2.0, 2.0]
+    assert all(0 <= e["t_wall"] - e["t_audio"] < 0.05 for e in out["events"])
+    stop = threading.Event()
+    stop.set()
+    stopped = drive(FakeSession(), samples, frame_s=0.5, cancel=stop)
+    assert stopped["stopped"] and stopped["frames"] == 0 and stopped["events"] == []
+
+
 def test_audio_llm_translation_instruction():
     from local_llm.gateway.backends import audio_instruction
 
@@ -322,6 +398,18 @@ def test_whisper_conversion_covers_every_tensor(tmp_path):
     assert model.dims.n_text_layer == layers and model.encoder.conv1.weight.shape == (d, 3, 80)
 
 
+def test_conversion_reads_sharded_checkpoints(tmp_path):
+    (tmp_path / "model.safetensors").write_bytes(b"")
+    assert convert.weight_files(tmp_path) == [tmp_path / "model.safetensors"]
+    index = {"weight_map": {"a": "model-00002-of-00002.safetensors",
+                            "b": "model-00001-of-00002.safetensors",
+                            "c": "model-00001-of-00002.safetensors"}}  # fmt: skip
+    (tmp_path / "model.safetensors.index.json").write_text(json.dumps(index))
+    assert [p.name for p in convert.weight_files(tmp_path)] == [
+        "model-00001-of-00002.safetensors", "model-00002-of-00002.safetensors"
+    ]  # fmt: skip
+
+
 @pytest.fixture
 def inbox(tmp_path, monkeypatch):
     monkeypatch.setattr(media_tools, "INBOX_DIR", tmp_path / "inbox")
@@ -362,3 +450,148 @@ def test_inbox_tools_report_a_stopped_gateway(inbox, monkeypatch):
 
     monkeypatch.setattr(gateway_client, "transcribe", refuse)
     assert "start_gateway.sh" in media_tools.transcribe_audio.invoke({"filename": "m.wav"})
+
+
+def test_voxtral_session_joins_characters_split_across_tokens():
+    from local_llm.gateway.stream_backends import VoxtralSession
+
+    # 早 is e6 97 a9 in UTF-8; token 11 carries its first two bytes, token 12 the last one.
+    vocab = {11: "各位".encode() + b"\xe6\x97", 12: b"\xa9", 13: "安".encode(), 2: b""}
+
+    class Tokenizer:
+        def token_bytes(self, token_id):
+            return vocab[token_id]
+
+    class Inner:
+        def __init__(self):
+            self.generated, self._pos, self.done, self.pending = [], 0, False, []
+
+        def feed(self, samples):
+            self.pending.append(int(samples[0]))
+
+        def close(self):
+            self.pending.append(2)  # end of stream
+
+        def step(self, max_decode_tokens=32):
+            if self.pending:
+                token = self.pending.pop(0)
+                self.generated.append(token)
+                self._pos += 1
+                self.done = token == 2
+
+    class Model:
+        _tokenizer = Tokenizer()
+
+        def create_streaming_session(self, transcription_delay_ms=None):
+            return Inner()
+
+    session = VoxtralSession(Model(), 480)
+    assert session.feed([11]) == [("各位", True)]  # the half character waits
+    assert session.feed([12]) == [("早", True)]
+    assert session.feed([13]) == [("安", True)]
+    assert session.close() == []  # the end token adds no text
+
+
+class EnergySession:
+    """Writes a character for each loud frame; commits after three quiet frames (endpoint)."""
+
+    append_only = False
+
+    def __init__(self):
+        self.text, self.quiet = "", 0
+
+    def feed(self, samples):
+        np = pytest.importorskip("numpy")
+        if float(np.sqrt(np.mean(np.square(samples)))) > 0.05:
+            self.text += "字"
+            self.quiet = 0
+            return [(self.text, False)]
+        self.quiet += 1
+        if self.text and self.quiet >= 3:
+            text, self.text = self.text, ""
+            return [(text, True)]
+        return []
+
+    def close(self):
+        text, self.text = self.text, ""
+        return [(text, True)] if text else []
+
+
+def speech_pcm(pattern):
+    """PCM16 bytes: (seconds, loud?) pieces of 16 kHz noise or near-silence."""
+    np = pytest.importorskip("numpy")
+    rng = np.random.default_rng(1)
+    parts = [rng.normal(0, 0.3 if loud else 0.0005, int(s * 16000)) for s, loud in pattern]
+    return (np.clip(np.concatenate(parts), -1, 1) * 32767).astype("<i2").tobytes()
+
+
+def test_live_session_frames_events_and_latency():
+    from local_llm.gateway.live import LiveSession
+
+    pcm = speech_pcm([(0.5, False), (1.0, True), (1.5, False), (1.0, True), (1.0, False)])
+    now = {"t": 100.0}
+    live = LiveSession(EnergySession(), clock=lambda: now["t"])
+    events, step = [], 3201  # odd byte count: frames split inside a sample
+    for i in range(0, len(pcm), step):
+        now["t"] += step / 32000  # the audio arrives in real time, decoding takes no time
+        events += live.feed(pcm[i : i + step])
+    events += live.stop()
+    kinds = [e["type"] for e in events]
+    starts = [e["t_audio"] for e in events if e["type"] == "speech_start"]
+    assert len(starts) == 2 and abs(starts[0] - 0.5) < 0.1 and abs(starts[1] - 3.0) < 0.1
+    assert kinds.count("speech_end") == 2
+    finals = [e for e in events if e["type"] == "final"]
+    assert len(finals) == 2 and all(set(e["text"]) == {"字"} for e in finals)
+    metrics = [e for e in events if e["type"] == "metric"]
+    assert [m["kind"] for m in metrics].count("first") == 2
+    assert [m["kind"] for m in metrics].count("final") == 2
+    assert all(0 <= m["latency"] < 0.6 for m in metrics)
+    done = events[-1]
+    assert (
+        done["type"] == "done"
+        and done["duration"] == 5.0
+        and done["text"] == "".join(e["text"] for e in finals)
+    )
+    assert done["summary"]["utterances"] == 2 and done["first_median_s"] is not None
+    assert live.feed(b"\x00\x00") == [] and live.stop() == []  # closed
+
+
+def test_live_websocket_streams_and_refuses_other_origins(gateway):
+    from starlette.websockets import WebSocketDisconnect
+
+    client, _, backends = gateway
+    backends["sherpa-online"].session = lambda handle: EnergySession()
+    pcm = speech_pcm([(0.3, False), (0.8, True), (1.0, False)])
+    with client.websocket_connect("/v1/audio/stream/ws?model=zipformer-zh-en-stream") as ws:
+        ready = ws.receive_json()
+        assert ready["type"] == "ready" and ready["append_only"] is False
+        for i in range(0, len(pcm), 3200):  # 100 ms frames
+            ws.send_bytes(pcm[i : i + 3200])
+        ws.send_text('{"type": "stop"}')
+        events = []
+        while True:
+            event = ws.receive_json()
+            events.append(event)
+            if event["type"] == "done":
+                break
+    types = {e["type"] for e in events}
+    assert {"partial", "final", "speech_start", "speech_end", "metric"} <= types
+    assert events[-1]["text"].startswith("字") and events[-1]["duration"] == 2.1
+    with client.websocket_connect("/v1/audio/stream/ws?model=paraformer-zh-en-stream") as ws:
+        error = ws.receive_json()
+        assert error["type"] == "error" and "pull it first" in error["error"]
+    with pytest.raises(WebSocketDisconnect) as refused:
+        with client.websocket_connect(
+            "/v1/audio/stream/ws", headers={"origin": "https://example.com"}
+        ) as ws:
+            ws.receive_json()
+    assert refused.value.code == 1008
+
+
+def test_live_session_adds_display_text():
+    from local_llm.gateway.live import LiveSession
+
+    live = LiveSession(EnergySession(), clock=lambda: 0.0, display=lambda t: t.replace("字", "字!"))
+    events = live.feed(speech_pcm([(0.2, True)]))
+    text = [e for e in events if e["type"] == "partial"]
+    assert text and text[-1]["text"] == "字" * len(text) and text[-1]["display"].endswith("!")
