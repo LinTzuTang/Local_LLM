@@ -88,7 +88,12 @@ def _answer(turn: dict, base: str, model: str, messages: list[dict], images=None
 
 def voice_work(job: jobs.Job, url: str, base: str) -> None:
     state = job.state
-    turn, history = state["turn"], state["history"]
+    turn, previous = state["turn"], state["previous"]
+    history = [
+        {"question": t.get("question") or SPOKEN, "answer": t["answer"]}
+        for t in previous
+        if t.get("answer") and not t.get("error")
+    ]
     audio = Path(state["audio"])
     started = time.perf_counter()
     if turn["path"] == "cascade":
@@ -127,7 +132,7 @@ def voice_work(job: jobs.Job, url: str, base: str) -> None:
     turn["wall_s"] = round(time.perf_counter() - started, 2)
     turn["stage"] = "done"
     job.progress = 1.0
-    state["run_path"] = str(_save(state, history + [turn]))
+    state["run_path"] = str(_save(state, previous + [turn]))
 
 
 def _save(state: dict, turns: list[dict]) -> Path:
@@ -209,11 +214,13 @@ def show_turn(turn: dict, labels: dict, autoplay: bool = False, running: bool = 
         elif running and stage == "asr":
             st.caption(tr("辨識中…", "Transcribing…"))
     with st.chat_message("assistant", avatar=":material/smart_toy:"):
-        st.caption(
-            path_label(turn["path"]) + " · "
-            + (f"{labels.get(turn['asr'], turn['asr'])} → " if turn["path"] == "cascade" else "")
-            + (labels.get(turn["llm"], turn["llm"]))
-        )  # fmt: skip
+        path, asr, llm = turn.get("path"), turn.get("asr"), turn.get("llm")
+        if path in PATHS and llm:
+            st.caption(
+                path_label(path) + " · "
+                + (f"{labels.get(asr, asr)} → " if path == "cascade" and asr else "")
+                + labels.get(llm, llm)
+            )  # fmt: skip
         if turn.get("error"):
             st.error(turn["error"])
             return
@@ -234,7 +241,7 @@ def latency_metrics(turn: dict) -> None:
         return
     cols = st.columns(5)
     cols[0].metric(tr("語音辨識", "Speech recognition"),
-                   f"{turn['asr_s']:.2f}s" if turn["path"] == "cascade" else "—")  # fmt: skip
+                   f"{turn['asr_s']:.2f}s" if turn.get("path") == "cascade" else "—")  # fmt: skip
     cols[1].metric(tr("LLM 首字", "LLM first token"), f"{turn['llm_first_s']:.2f}s")
     cols[2].metric(tr("LLM 完成", "LLM done"), f"{turn['llm_s']:.2f}s")
     cols[3].metric(tr("語音合成", "Speech synthesis"), f"{turn['tts_s']:.2f}s")
@@ -464,11 +471,7 @@ def voice_page(url: str, status: dict) -> None:
         disabled=bool(job and job.running) or not ready,
     ):  # fmt: skip
         audio, name = asked
-        history = [
-            {"question": t.get("question") or SPOKEN, "answer": t.get("answer")}
-            for t in turns
-            if t.get("answer") and not t.get("error")
-        ]
+        previous = [{k: v for k, v in t.items() if k != "job"} for t in turns if not t.get("error")]
         turn = {
             "path": config["path"], "asr": config["asr"], "llm": config["llm"],
             "question_file": str(audio), "source": name, "stage": "waiting",
@@ -481,7 +484,7 @@ def voice_page(url: str, status: dict) -> None:
             state={
                 "audio": str(audio),
                 "turn": turn,
-                "history": history,
+                "previous": previous,
                 "voice_zh": config["voice_zh"],
                 "voice_en": config["voice_en"],
                 "rate": config["rate"],
@@ -504,7 +507,10 @@ def history_view(data: dict) -> None:
     turns = [t for t in data.get("turns") or [] if isinstance(t, dict)]
     voices = data.get("voices") or {}
     st.caption(
-        tr(f"語音對話 · {len(turns)} 輪", f"Voice chat · {len(turns)} turns")
+        tr(
+            f"語音對話 · {len(turns)} 輪",
+            f"Voice chat · {len(turns)} turn{'' if len(turns) == 1 else 's'}",
+        )
         + (f" · {voices.get('zh', '')} / {voices.get('en', '')}" if voices else "")
     )
     for turn in turns:
@@ -529,7 +535,7 @@ def history_summary(data: dict) -> dict:
     first = next((t for t in turns if t.get("answer")), {})
     snippet = (first.get("question") or "") + " → " + (first.get("answer") or "")
     return {
-        "title": f"voice chat · {len(turns)} turns",
+        "title": f"voice chat · {len(turns)} turn{'' if len(turns) == 1 else 's'}",
         "models": models,
         "seconds": round(sum(t.get("total_s") or 0 for t in turns), 2) or None,
         "snippet": snippet.strip(" →")[:220],

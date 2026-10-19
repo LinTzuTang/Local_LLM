@@ -65,7 +65,11 @@ def system_prompt(language: str | None = "zh") -> str:
         "plain spoken text: no Markdown, lists, headings, tables, code, URLs or emoji. Reply "
         "in the language the user speaks; for Chinese, use Traditional Chinese as used in "
         "Taiwan. If the question was misheard and makes no sense, ask the user to repeat it."
-        + (" The user is speaking Chinese." if language == "zh" else "")
+        + {
+            "zh": " The user is speaking Chinese: reply in Traditional Chinese.",
+            "en": " The user is speaking English: reply in English, even if earlier turns "
+            "were in Chinese.",
+        }.get(language or "", "")
     )
 
 

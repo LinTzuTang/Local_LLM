@@ -105,6 +105,7 @@ def test_voice_chat_messages_keep_the_last_turns():
     assert msgs[1]["content"] == "q5" and msgs[-1]["content"] == "new"
     assert len(sl.messages(history, "new", "sys", max_turns=0)) == 2
     assert "Traditional Chinese" in sl.system_prompt("zh")
+    assert "reply in English" in sl.system_prompt("en") and "speaking" not in sl.system_prompt(None)
 
 
 def test_speakable_drops_markup_thinking_and_emoji():
