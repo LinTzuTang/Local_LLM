@@ -80,12 +80,13 @@ blurbs = {
     "live": tr(
         "即時字幕三種做法：切段模擬（錄音切成 1–5 秒依序送給整段辨識模型）、真串流（串流模型每 "
         "0.1–0.3 秒收一小段、邊收邊出字），以及麥克風即時（對著麥克風講，字幕當場出現）。看文字"
-        "晚多久出現、定稿要等多久、部分結果改了多少字，以及最後的錯誤率。",
+        "晚多久出現、定稿要等多久、部分結果改了多少字，以及最後的錯誤率；「評測總表」列出本機與雲端串流模型的實測結果。",
         "Live captions three ways: chunked simulation (the recording is cut into 1–5 s "
         "chunks for whole-clip models), true streaming (streaming models get 0.1–0.3 s at a "
         "time and write text as audio arrives) and live microphone (speak and watch the "
         "captions appear). See how soon text appears, how long until it is final, how much "
-        "partial text gets revised, and the final error rate.",
+        "partial text gets revised, and the final error rate; Benchmark lists the measured "
+        "results of local and cloud streaming models.",
     ),
     "tts": tr(
         "同一段文字用不同聲音念出來（macOS 內建語音，本機免費），比較合成速度，並用語音辨識"

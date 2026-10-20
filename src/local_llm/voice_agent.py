@@ -42,12 +42,16 @@ from . import geo_tools
 from .speech_live import speakable
 
 OLLAMA_URL = "http://127.0.0.1:11434"
-# Chosen by measuring the three demo turns (16 runs per model, thinking off): Gemma 4 E4B,
-# Qwen3.6 35B-A3B, Gemma 4 12B and Qwen3.8 27B made every tool decision right; E4B decided
-# fastest (median 0.10 s, warm) and needs the least memory. qwen3:1.7b missed 5 of 18.
-DEFAULT_LLM = "gemma4:e4b"
-CANDIDATE_LLMS = ("gemma4:e4b", "qwen3.6:35b-a3b-coding", "gemma4:12b", "qwen3.8:27b",
-                  "qwen3:1.7b")  # fmt: skip
+# Chosen on the seven test conversations of data/lab/voice_scripts.json (2026-10-20, thinking
+# off, scored by scripts/speech_eval/run_front_llm.py; ten models screened, the best four run
+# twice more): Gemma 4 12B got every decision right, never made anything up and sounded the
+# most natural, and loads in 7.7 GB (E4B: 9.4 GB); it starts talking ~0.5 s after the user
+# stops. E4B is the fastest (~0.3 s) but missed 4 of 46 (an English "night markets nearby?",
+# a lookup announced but not called). Gemma 4 26B is right too but misreads numbers aloud;
+# Qwen3.6 35B is right but needs 23.6 GB. qwen3:1.7b, Gemma 4 E2B and Breeze2 8B got half wrong.
+DEFAULT_LLM = "gemma4:12b"
+CANDIDATE_LLMS = ("gemma4:12b", "gemma4:e4b", "gemma4:26b", "qwen3.6:35b-a3b-coding",
+                  "qwen3.8:27b", "gemma4:31b", "qwen3:1.7b")  # fmt: skip
 DEFAULT_VOICE = "Meijia"
 ALWAYS_THINKS = {"qwen3:30b-a3b"}
 CALL_LIMIT = 6  # lookups per tool per session when the network switch is on
@@ -63,8 +67,8 @@ TOOL_SPECS = [
         "function": {
             "name": "get_weather",
             "description": (
-                "查詢某個地點現在的天氣與今天的降雨機率（Open-Meteo）。只有在知道使用者在哪裡時"
-                "才呼叫；不知道地點就先問使用者。"
+                "查詢某個地點現在的天氣，以及今天、明天的氣溫與降雨機率（Open-Meteo）。"
+                "只有在知道使用者在哪裡時才呼叫；不知道地點就先問使用者。"
             ),
             "parameters": {
                 "type": "object",
@@ -104,9 +108,73 @@ TOOL_SPECS = [
 TOOL_NAMES = tuple(t["function"]["name"] for t in TOOL_SPECS)
 
 
-def system_prompt(memory: dict, allow_network: bool, now: datetime | None = None) -> str:
-    """The front agent's instructions: spoken Taiwanese Mandarin, when to ask and when to
-    call a tool. `memory` holds what the conversation established (the user's location)."""
+# The rules above are in Chinese, and a small front model then answers English in Chinese
+# (measured: "What's the weather like today?" got 「你現在在哪裡？」), so an English turn gets
+# this rule in English as well.
+ENGLISH_RULE = (
+    "The user is speaking English: reply only in natural spoken English, never in Chinese "
+    '(ask "Where are you right now?" when you need their location).'
+)
+# Without the last results in view, follow-up questions ("第一家開到幾點？") were answered with
+# invented opening hours by every larger model (measured): the spoken answer named only the
+# shops and distances. The results go with the user's latest words, not into the system
+# prompt or the history: those stay the same from turn to turn, so Ollama reuses its cache
+# (in the system prompt, Gemma 4 12B's decision slowed from 0.2 s to 1.2 s by the third turn).
+LOOKUP_RULE = (
+    "（參考資料，不要念出來）最近查到的資料如下。使用者追問時只能根據這些資料回答；"
+    "資料裡沒有的（例如沒有列出營業時間），就直接說查到的資料裡沒有，不要猜。"
+)
+LOOKUP_RULE_EN = (
+    "(Reference, not to be read out) The latest lookup results are below. Answer follow-up "
+    "questions only from them; if something is not there (say, no opening hours), say the "
+    "results do not include it instead of guessing."
+)
+
+
+def lookup_text(name: str, result: dict) -> str:
+    """A lookup result kept for follow-up questions, as short plain text (about half the
+    tokens of tool_digest's JSON: it is read again with every later turn)."""
+    if name == "get_weather":
+
+        def day(label: str, d: dict | None) -> str:
+            if not d:
+                return ""
+            return (f"；{label} {d.get('min_c')}–{d.get('max_c')}°C {d.get('condition')}，"
+                    f"降雨機率 {d.get('rain_chance_pct')}%")  # fmt: skip
+
+        return (f"{result.get('location')} 現在 {result.get('temperature_c')}°C "
+                f"{result.get('condition')}" + day("今天", result.get("today"))
+                + day("明天", result.get("tomorrow")))  # fmt: skip
+    if name == "search_places":
+        rows = []
+        for i, p in enumerate(result.get("places", [])[:6], 1):
+            bits = [p.get("name"), f"{p.get('distance_m')} 公尺"]
+            bits += [x for x in (p.get("opening_hours"), p.get("address")) if x]
+            rows.append(f"{i}. " + "，".join(str(b) for b in bits))
+        head = f"{result.get('location')} 附近的{result.get('query')}"
+        note = f"（{result['note']}）" if result.get("note") else ""
+        return f"{head}{note}：" + "；".join(rows)
+    return tool_digest(name, result)
+
+
+def with_lookups(text: str, lookups: dict[str, str], english: bool = False) -> str:
+    """The user's words for the LLM, preceded by the latest lookup results when there are any."""
+    if not lookups:
+        return text
+    rule = LOOKUP_RULE_EN if english else LOOKUP_RULE
+    lines = "\n".join(f"- {name}: {digest}" for name, digest in lookups.items())
+    said = "The user just said: " if english else "（使用者剛才說）"
+    return f"{rule}\n{lines}\n\n{said}{text}"
+
+
+LOOKUP_CHARS = 1200
+
+
+def system_prompt(memory: dict, allow_network: bool, now: datetime | None = None,
+                  english: bool = False) -> str:  # fmt: skip
+    """The front agent's instructions: spoken Taiwanese Mandarin (English when the user speaks
+    English), when to ask and when to call a tool. `memory` holds what the conversation
+    established (the user's location)."""
     now = now or datetime.now()
     lines = [
         "你是在使用者電腦上執行的即時語音助理，你說的每句話都會被語音合成念出來。",
@@ -116,7 +184,8 @@ def system_prompt(memory: dict, allow_network: bool, now: datetime | None = None
     ]
     if allow_network:
         lines += [
-            "3. 使用者問天氣但你不知道他在哪裡時，不要猜地點，只要簡短反問：「你現在在哪裡？」",
+            "3. 使用者問天氣但你不知道他在哪裡時，不要猜地點，只要簡短反問：「你現在在哪裡？」"
+            "但問題裡已經說了地名（例如「那高雄呢？」「台中明天會下雨嗎？」），就直接查那個地方，不要反問。",
             "4. 知道地點後要查天氣就呼叫 get_weather；問附近的店家、早午餐、咖啡或餐廳就呼叫"
             " search_places。「這附近」「這裡」指使用者目前的位置。",
             "5. 需要查詢時直接呼叫工具，不要只回答要去查。"
@@ -132,15 +201,33 @@ def system_prompt(memory: dict, allow_network: bool, now: datetime | None = None
     lines.append(f"現在時間：{now:%Y-%m-%d} 星期{WEEKDAYS[now.weekday()]} {now:%H:%M}。")
     if memory.get("location"):
         lines.append(f"使用者目前的位置：{memory['location']}（使用者先前說的）。")
+    if english:
+        lines.append(ENGLISH_RULE)
     return "\n".join(lines)
 
 
-def compose_prompt() -> str:
-    """Instructions for turning a tool result into the spoken answer."""
+def compose_prompt(english: bool = False) -> str:
+    """Instructions for turning a tool result into the spoken answer. English turns get them
+    in English: with Chinese instructions and Chinese place names in the result, Gemma 4 12B
+    answered English questions in Chinese (measured)."""
+    if english:
+        return "\n".join([
+            "You are a live voice assistant; what you say is read aloud. Answer the user's "
+            "last question from the lookup result the system gives you.",
+            "Speak natural, short English: two or three sentences, no Markdown, lists, emoji "
+            "or URLs. Never answer in Chinese; say Chinese place names in English or pinyin.",
+            "Weather: the temperature and conditions now and today's chance of rain, plus a "
+            "short tip (an umbrella or not); if the user asked about tomorrow, give "
+            "tomorrow's temperatures and chance of rain instead.",
+            "Places: name two or three with their rough distance; only places in the result, "
+            "never invented ones; say so honestly when the result found other kinds of places.",
+            "If the lookup failed, apologise briefly and say you could not find it.",
+        ])  # fmt: skip
     return "\n".join([
         "你是即時語音助理，你的回答會被念出來。根據系統提供的查詢結果回答使用者剛才的問題。",
         "用台灣慣用的繁體中文口語，兩到三句、不超過 80 個字，不用 Markdown、條列、表情符號或網址。",
-        "天氣：說現在的溫度和天氣、今天的降雨機率，再給一句簡短建議（例如要不要帶傘）。",
+        "天氣：說現在的溫度和天氣、今天的降雨機率，再給一句簡短建議（例如要不要帶傘）；"
+        "使用者問的是明天，就改說明天的氣溫和降雨機率。",
         "店家：挑兩到三家說店名和大約距離；只能說結果裡有的店，不要編造；如果結果說明找到的不是"
         "早午餐店而是附近其他店，要老實說。距離用「大約幾百公尺」的說法。",
         "查詢失敗時，簡短道歉並說明查不到。",
@@ -236,7 +323,10 @@ def synthesize(text: str, voice: str, rate: int | None = None) -> tuple[bytes, f
 
 _SENTENCE_END = "。！？!?；;…\n"
 REPAIR = "（系統：請直接呼叫工具查詢，不要回覆文字。）"
-PROMISE = re.compile(r"(幫你|我來|我先|讓我)?(查|找)(一下|看看|查|找)|let me (check|look)", re.I)
+# It says it will look something up but calls nothing (measured with Gemma 4 E4B: 「我幫你搜尋一下
+# 內湖附近的早午餐店。」, 「我需要先幫你查詢一下板橋明天的天氣狀況。」): ask once more for the call.
+PROMISE = re.compile(r"(幫你|我來|我先|讓我)?(查|找)(一下|看看|查|找)|(搜尋|查詢|搜)一下|"
+                     r"let me (check|look|search|find)", re.I)  # fmt: skip
 _CJK = re.compile(r"[一-鿿]")
 
 
@@ -258,6 +348,14 @@ def split_sentences(buffer: str, final: bool = False, soft: int = 18) -> tuple[l
 
 
 _PUNCT = " \t\n，,。.！!？?、；;：:…「」\"'"
+
+
+def join_pieces(said: str, piece: str) -> str:
+    """Spoken pieces joined back into the shown text: English needs the space that splitting
+    at a comma or full stop stripped ("zero," + "so you" -> "zero, so you")."""
+    if said and piece and said[-1].isascii() and piece[0].isascii() and not said[-1].isspace():
+        return f"{said} {piece}"
+    return said + piece
 
 
 def after_prefix(text: str, prefix: str) -> str | None:
@@ -356,6 +454,7 @@ class VoiceAgent:
         self.inbox: queue.Queue = queue.Queue()
         self.history: list[dict] = []  # plain {"role", "content"} turns for the LLM
         self.memory: dict = {}
+        self.lookups: dict[str, str] = {}  # tool name -> its last result, for follow-ups
         self.turns: list[dict] = []
         self.calls: list[dict] = []
         self.speeches: dict[str, dict] = {}
@@ -584,9 +683,11 @@ class VoiceAgent:
         """Front agent: answer, ask, or start tool calls and say a filler at once."""
         epoch = self.epoch
         tools = TOOL_SPECS if self.allow_network else None
+        english = is_english(turn["user"])
+        said = with_lookups(turn["user"], dict(self.lookups), english)
         messages = self._messages(
-            system_prompt(self.memory, self.allow_network),
-            [{"role": "user", "content": turn["user"]}],
+            system_prompt(self.memory, self.allow_network, english=english),
+            [{"role": "user", "content": said}],
         )
         started = self.clock()
         turn["llm_start"] = self.now()
@@ -647,7 +748,9 @@ class VoiceAgent:
 
     def _start_tool(self, turn: dict, name: str, args: dict) -> None:
         place = str(args.get("location") or "").strip()
-        if place and _CJK.search(place):
+        # A Latin place name is kept only from an English turn (from a Chinese one it is the
+        # model's transliteration, which the next tool call should not reuse).
+        if place and (_CJK.search(place) or is_english(turn["user"])):
             self.memory["location"] = geo_tools.clean_place(place)
         count = self.call_counts.get(name, 0)
         call = {"call_id": f"c{len(self.calls)}", "turn": turn["turn"], "name": name,
@@ -679,6 +782,9 @@ class VoiceAgent:
                    counted: bool = True) -> None:  # fmt: skip
         call.update(end=self.now(), ok="error" not in result, summary=summary,
                     seconds=round(seconds, 3), result=result)  # fmt: skip
+        if call["ok"]:
+            with self.lock:
+                self.lookups[call["name"]] = lookup_text(call["name"], result)[:LOOKUP_CHARS]
         self.emit({"type": "tool_end", "call_id": call["call_id"], "ok": call["ok"],
                    "summary": summary, "seconds": call["seconds"], "end": call["end"],
                    "result": _short(call["name"], result)})  # fmt: skip
@@ -690,11 +796,19 @@ class VoiceAgent:
     def _answer_from_tool(self, call: dict) -> None:
         turn = self.turns[call["turn"]]
         epoch = self.epoch
-        note = (
-            f"（系統：{call['name']} 的查詢結果如下，請據此回答使用者剛才的問題"
-            f"「{turn['user']}」。）\n{tool_digest(call['name'], call['result'])}"
-        )
-        messages = self._messages(compose_prompt(), [{"role": "user", "content": note}])
+        english = is_english(turn["user"])
+        if english:
+            note = (
+                f"(System: the {call['name']} result is below. Answer the user's question "
+                f'"{turn["user"]}" from it, in spoken English.)\n'
+                f"{tool_digest(call['name'], call['result'])}"
+            )
+        else:
+            note = (
+                f"（系統：{call['name']} 的查詢結果如下，請據此回答使用者剛才的問題"
+                f"「{turn['user']}」。）\n{tool_digest(call['name'], call['result'])}"
+            )
+        messages = self._messages(compose_prompt(english), [{"role": "user", "content": note}])
         started = self.clock()
         call["compose_start"] = self.now()
         self.emit({"type": "llm", "turn": turn["turn"], "phase": "start", "what": "compose"})
@@ -767,7 +881,7 @@ class VoiceAgent:
             with self.lock:
                 seq = speech["seq"]
                 speech["seq"] += 1
-                speech["text"] += text
+                speech["text"] = join_pieces(speech["text"], text)
                 self.unplayed.add((speech["speech_id"], seq))
                 turn = self.turns[speech["turn"]] if speech["turn"] is not None else None
                 if turn is not None and turn.get("first_audio_sent") is None:
@@ -861,8 +975,9 @@ def _short(name: str, result: dict) -> dict:
             "attribution": result.get("attribution"),
         }
     if name == "get_weather":
-        return {k: result.get(k) for k in ("location", "temperature_c", "condition", "today",
-                                           "rain_chance_next_6h_pct", "source")}  # fmt: skip
+        keys = ("location", "temperature_c", "condition", "today", "tomorrow",
+                "rain_chance_next_6h_pct", "source")  # fmt: skip
+        return {k: result.get(k) for k in keys}
     return result
 
 

@@ -18,6 +18,7 @@ from pathlib import Path
 import altair as alt
 import jobs
 import pandas as pd
+import speech_bench
 import speech_common as sc
 import speech_mic
 import speech_stream
@@ -38,6 +39,7 @@ METHODS = {  # key -> (zh, en, icon); tr() runs on the page, not at import
     "chunk": ("切段模擬", "Chunked simulation", "content_cut"),
     "stream": ("真串流", "True streaming", "stream"),
     "mic": ("麥克風即時", "Live microphone", "mic"),
+    "results": ("評測總表", "Benchmark", "leaderboard"),
 }
 
 
@@ -410,10 +412,12 @@ def live_page(url: str, status: dict) -> None:
             format_func=lambda m: f":material/{METHODS[m][2]}: {tr(*METHODS[m][:2])}",
             help=tr(
                 "切段模擬：整段辨識模型每次收 1–5 秒。真串流：串流模型每 0.1–0.3 秒收一小段，"
-                "邊收邊出字。麥克風即時：對著麥克風講，串流模型即時出字幕。",
+                "邊收邊出字。麥克風即時：對著麥克風講，串流模型即時出字幕。"
+                "評測總表：本機與雲端串流模型的實測結果（不會執行）。",
                 "Chunked simulation: whole-clip models get 1–5 s at a time. True streaming: "
                 "streaming models get 0.1–0.3 s at a time and write text as audio arrives. "
-                "Live microphone: speak and a streaming model captions you live.",
+                "Live microphone: speak and a streaming model captions you live. Benchmark: the "
+                "measured results of local and cloud streaming models (nothing runs).",
             ),
             **kept("lv_method"),
         )
@@ -421,6 +425,9 @@ def live_page(url: str, status: dict) -> None:
     )
     if method == "mic":
         speech_mic.mic_page(url, status)
+        return
+    if method == "results":
+        speech_bench.benchmark_page()
         return
     chosen = sc.audio_choice("lv", default="meeting_zh.wav")
     if st.session_state.get("lv_source") == "record":

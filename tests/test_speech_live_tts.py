@@ -14,6 +14,7 @@ LISTING = """\
 Bubbles             en_US    # Hello! My name is Bubbles.
 Eddy (中文（台灣）)       zh_TW    # 你好，我叫Eddy。
 Eddy (英文（美國）)       en_US    # Hello! My name is Eddy.
+Flo (中文（台灣）)        zh_TW    # 你好，我叫Flo。
 Meijia (中文（台灣）)     zh_TW    # 你好，我叫美佳。
 Meijia (中文（台灣）)     zh_TW    # 你好，我叫美佳。
 Samantha            en_US    # Hello! My name is Samantha.
@@ -58,7 +59,9 @@ def test_voices_filters_locales_and_novelty(monkeypatch):
     monkeypatch.setattr(tts, "available", lambda: True)
     monkeypatch.setattr(tts, "_listing", lambda: LISTING)
     rows = tts.voices()
-    assert [r["short"] for r in rows] == ["Eddy", "Meijia", "Tingting", "Eddy", "Samantha"]
+    assert [r["short"] for r in rows] == ["Flo", "Meijia", "Tingting", "Samantha"]  # Flo for Eddy
+    every = tts.voices(eloquence=True)
+    assert [r["short"] for r in every] == ["Eddy", "Flo", "Meijia", "Tingting", "Eddy", "Samantha"]
     assert "Bubbles" not in {r["short"] for r in rows}  # novelty
     assert "Thomas" not in {r["short"] for r in rows}  # French: not a default locale
     assert "Bubbles" in {r["short"] for r in tts.voices(None, novelty=True)}
@@ -116,3 +119,10 @@ def test_speakable_drops_markup_thinking_and_emoji():
     text = "<think>plan</think>## 建議\n- **大安森林公園** 😀\n- 看 [官網](https://x.tw)\n"
     assert sl.speakable(text) == "建議 大安森林公園 看 官網"
     assert sl.speakable("1. First\n2. Second") == "First Second"
+
+
+def test_voice_quality_prefers_downloaded_versions():
+    ids = ["com.apple.voice.compact.zh-TW.Meijia", "com.apple.voice.premium.zh-TW.Meijia",
+           "com.apple.voice.enhanced.zh-TW.Meijia", "com.apple.eloquence.zh-TW.Flo"]  # fmt: skip
+    assert max(ids, key=tts.voice_quality) == "com.apple.voice.premium.zh-TW.Meijia"
+    assert tts.voice_quality(ids[2]) == 2 and tts.voice_quality(ids[3]) == 1

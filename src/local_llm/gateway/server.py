@@ -433,7 +433,7 @@ def create_app(
 
     @app.websocket("/v1/voice/agent/ws")
     async def voice_ws(websocket: WebSocket, asr: str = "zipformer-zh-en-stream",
-                       llm: str = "gemma4:e4b", voice: str = "Meijia",
+                       llm: str = "gemma4:12b", voice: str = "Meijia",
                        rate: int = 0, net: bool = False, barge: bool = True, s2tw: bool = True,
                        keep_alive: str | None = None):  # fmt: skip
         """Live voice assistant: microphone PCM in, captions, assistant speech (WAV), tool

@@ -71,6 +71,7 @@ testpaths = ["tests"]
 [tool.ruff.lint.per-file-ignores]
 # UI pages hold long Traditional Chinese copy and markdown tables.
 "app/views/*" = ["E501"]
+"app/voice_panel.py" = ["E501"]  # the live voice assistant's page body, shared with the gallery
 # Schema DDL and Chinese sample-data templates.
 "src/local_llm/company_db.py" = ["E501"]
 # Bilingual descriptions of the MCP servers and tools.

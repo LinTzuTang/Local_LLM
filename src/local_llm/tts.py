@@ -5,8 +5,9 @@
     path = tts.synthesize("你好，今天天氣很好。", "Meijia", rate=190)  # 16-bit WAV
 
 `say -v '?'` lists the installed voices; `voices()` keeps the ones for Taiwan Mandarin
-(zh_TW), Mainland Mandarin (zh_CN), Cantonese (zh_HK) and US / UK English by default and
-leaves out the novelty voices (Bubbles, Zarvox, Bad News, ...). Better neural voices
+(zh_TW), Mainland Mandarin (zh_CN), Cantonese (zh_HK) and US / UK English by default,
+leaves out the novelty voices (Bubbles, Zarvox, Bad News, ...) and lists the eight Eloquence
+voices (Eddy, Flo, Reed, ...: one synthesiser) as Flo alone. Better neural voices
 (Premium / Enhanced) can be added in System Settings > Accessibility > Spoken Content and then
 appear here under the same name. Rendering writes 16-bit PCM WAV directly
 (`--data-format=LEI16@<rate>`), so no conversion step is needed.
@@ -33,6 +34,12 @@ NOVELTY = {
     "Good News", "Hysterical", "Jester", "Organ", "Pipe Organ", "Superstar", "Trinoids",
     "Whisper", "Wobble", "Zarvox",
 }  # fmt: skip
+# Eight names, one synthesiser (com.apple.eloquence.*): the same timing and prosody, only
+# pitch and timbre differ (a sentence takes exactly as long in each), so they sound alike.
+# One stands for them: Flo, the clearest in a speech-recognition round trip (2026-10-20,
+# Qwen3-ASR-0.6B: zh_TW 3.0% CER, the others 4.5-13.4%; en_US 8% WER, the others 12%).
+ELOQUENCE = {"Eddy", "Flo", "Grandma", "Grandpa", "Reed", "Rocko", "Sandy", "Shelley"}
+ELOQUENCE_PICK = "Flo"
 _LINE = re.compile(r"^(?P<name>.+?)\s+(?P<locale>[a-z]{2,3}_[A-Za-z0-9]+)\s+#\s?(?P<sample>.*)$")
 
 
@@ -70,14 +77,21 @@ def _listing() -> str:
     return subprocess.run(["say", "-v", "?"], capture_output=True, text=True, check=True).stdout
 
 
-def voices(locales: tuple[str, ...] | None = DEFAULT_LOCALES, novelty: bool = False) -> list[dict]:
+def voices(
+    locales: tuple[str, ...] | None = DEFAULT_LOCALES,
+    novelty: bool = False,
+    eloquence: bool = False,
+) -> list[dict]:
     """Installed `say` voices for these locales (None = all), novelty voices left out unless
-    asked for; sorted by the order of `locales`, then name. Empty when `say` is missing."""
+    asked for and the Eloquence family as Flo alone unless `eloquence`; sorted by the order
+    of `locales`, then name. Empty when `say` is missing."""
     if not available():
         return []
     rows = parse_voices(_listing())
     if not novelty:
         rows = [v for v in rows if v["name"] not in NOVELTY]
+    if not eloquence:
+        rows = [v for v in rows if v["short"] not in ELOQUENCE or v["short"] == ELOQUENCE_PICK]
     if locales is not None:
         rows = [v for v in rows if v["locale"] in locales]
         rows.sort(key=lambda v: (locales.index(v["locale"]), v["name"]))
@@ -155,14 +169,24 @@ def _ns_voice_id(voice: str, rows: list[dict] | None = None):
 
     row = find(voice, rows)
     short, locale = (row["short"], row["locale"]) if row else (voice, None)
+    found = []
     for vid in AppKit.NSSpeechSynthesizer.availableVoices():
         attrs = AppKit.NSSpeechSynthesizer.attributesForVoice_(vid)
         name = re.sub(r"\s*\(.*\)$", "", str(attrs.get(AppKit.NSVoiceName) or ""))
         if name == short and (
             locale is None or attrs.get(AppKit.NSVoiceLocaleIdentifier) == locale
         ):
-            return vid
-    return None
+            found.append(vid)
+    # A voice downloaded in better quality is listed next to its compact version under the
+    # same name: use the best one installed.
+    return max(found, key=voice_quality) if found else None
+
+
+def voice_quality(identifier) -> int:
+    """3 premium, 2 enhanced, 1 anything else (compact, Eloquence), from the voice id
+    (com.apple.voice.enhanced.zh-TW.Meijia)."""
+    ident = str(identifier)
+    return 3 if ".premium." in ident else 2 if ".enhanced." in ident else 1
 
 
 def read_aiff(data: bytes) -> tuple["object", int]:

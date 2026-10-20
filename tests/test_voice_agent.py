@@ -100,6 +100,7 @@ def test_weather_reports_now_today_and_rain(fake):
     assert result["temperature_c"] == 24.5 and result["condition"] == "陰"
     assert result["today"] == {"min_c": 21.0, "max_c": 27.0, "rain_chance_pct": 60,
                                "condition": "陣雨"}  # fmt: skip
+    assert result["tomorrow"] is None  # the fixture has one day only
     assert result["rain_chance_next_6h_pct"] == 60
     assert "降雨機率 60%" in geo_tools.weather_summary(result)
     geo_tools.weather("內湖")  # cached: no second round of requests
@@ -111,9 +112,19 @@ def test_geocode_strips_nearby_words_and_falls_back_to_short_name(fake):
     assert geo_tools.clean_place("內湖這附近") == "內湖"
     geo_tools.geocode("台北市內湖區")
     assert handler.requests[0].url.params["name"] == "台北市內湖區"
-    fake(geocode=[])
+    fake(geocode=[], nominatim=[])
     with pytest.raises(geo_tools.GeoError):
         geo_tools.geocode("不存在的地方")
+
+
+def test_geocode_asks_nominatim_when_geonames_has_no_major_place(fake):
+    village = {**NEIHU, "name": "板橋", "population": None, "feature_code": "PPL"}
+    fake(geocode=[village])  # only a village in GeoNames: OpenStreetMap is asked
+    place = geo_tools.geocode("西門町")
+    assert place["name"] == NOMINATIM[0]["name"] and place["country_code"] == "TW"
+    district = {**NEIHU, "name": "板橋區", "feature_code": "PPLA2"}
+    fake(geocode=[district])
+    assert geo_tools.geocode("板橋區")["name"] == "板橋區"
 
 
 def test_nearby_brunch_merges_sources_ranks_and_attributes(fake):
@@ -200,7 +211,7 @@ class ScriptedLLM:
 
     def __call__(self, base, model, messages, tools, think, max_tokens, cancel=None):
         self.calls.append({"messages": messages, "tools": tools})
-        last = messages[-1]["content"]
+        last = messages[-1]["content"].split("（使用者剛才說）")[-1]  # after the lookup results
         time.sleep(self.delay)
         if last.startswith("（系統：get_weather"):
             yield {"content": "內湖現在二十四度，陰天。"}
@@ -297,6 +308,10 @@ def test_demo_conversation_asks_then_looks_up_in_background_and_remembers_place(
     s.say("謝謝這附近有什麼好吃的早午餐店嗎", 8.0, 10.0)
     s.wait(lambda: s.idles() >= 3)
     assert s.tool_args[-1] == ("search_places", {"location": "內湖", "query": "早午餐"})
+    # the weather result came along with the third turn's words, not in the system prompt
+    third = [c for c in s.llm.calls if "早午餐店嗎" in c["messages"][-1]["content"]][0]["messages"]
+    assert voice_agent.LOOKUP_RULE in third[-1]["content"] and "get_weather" in third[-1]["content"]
+    assert voice_agent.LOOKUP_RULE not in third[0]["content"]
     assert any(e["text"] == "不客氣！我幫你找一下內湖附近的早午餐店。" for e in s.of("audio"))
 
     summary = s.agent.close()
@@ -406,3 +421,50 @@ def test_early_commit_at_speech_end_and_only_new_words_from_the_final():
     assert voice_agent.after_prefix("謝謝，這附近", "謝謝這") == "附近"
     assert voice_agent.after_prefix("你好", "謝謝") is None
     a.close()
+
+
+def test_english_turns_get_english_rules_and_spaced_pieces():
+    assert voice_agent.ENGLISH_RULE not in voice_agent.system_prompt({}, True)
+    assert voice_agent.ENGLISH_RULE in voice_agent.system_prompt({}, True, english=True)
+    assert not voice_agent._CJK.search(voice_agent.compose_prompt(english=True))
+    lookups = {"search_places": '{"places": [{"name": "營養早午餐"}]}'}
+    said = voice_agent.with_lookups("第一家開到幾點？", lookups)
+    assert said.startswith(voice_agent.LOOKUP_RULE) and "營養早午餐" in said
+    assert said.endswith("第一家開到幾點？")
+    assert voice_agent.with_lookups("hi", {}) == "hi"
+    assert voice_agent.LOOKUP_RULE_EN in voice_agent.with_lookups("When?", lookups, english=True)
+    assert voice_agent.join_pieces("zero,", "so you") == "zero, so you"
+    assert voice_agent.join_pieces("好，", "我幫你查") == "好，我幫你查"
+
+
+def test_geocode_queries_cover_geonames_gaps():
+    assert geo_tools.geocode_queries("台北")[:2] == ["台北", "台北市"]
+    assert "臺南市" in geo_tools.geocode_queries("台南")
+    assert geo_tools.geocode_queries("Xinyi Taipei")[1:] == ["Taipei", "Xinyi"]
+
+
+def test_promise_catches_lookups_announced_without_a_call():
+    for said in (
+        "我幫你搜尋一下內湖附近的早午餐店。",
+        "我需要先幫你查詢一下板橋明天的天氣狀況。",
+        "好，我幫你查一下天氣。",
+        "Sure, let me search for coffee shops.",
+    ):
+        assert voice_agent.PROMISE.search(said), said
+    assert not voice_agent.PROMISE.search("我可以幫你查天氣、找附近的餐廳。")
+
+
+def test_lookup_text_keeps_what_follow_ups_need():
+    weather = {"location": "內湖", "temperature_c": 24, "condition": "陰",
+               "today": {"min_c": 21, "max_c": 27, "rain_chance_pct": 60, "condition": "陣雨"},
+               "tomorrow": None}  # fmt: skip
+    assert voice_agent.lookup_text("get_weather", weather) == (
+        "內湖 現在 24°C 陰；今天 21–27°C 陣雨，降雨機率 60%"
+    )
+    places = {"location": "內湖", "query": "早午餐", "places": [
+        {"name": "營養早午餐", "distance_m": 350, "opening_hours": "Mo-Su 06:30-14:00",
+         "address": "成功路三段187巷2號", "kind": "餐廳"}]}  # fmt: skip
+    text = voice_agent.lookup_text("search_places", places)
+    assert (
+        text == "內湖 附近的早午餐：1. 營養早午餐，350 公尺，Mo-Su 06:30-14:00，成功路三段187巷2號"
+    )

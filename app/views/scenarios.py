@@ -12,6 +12,7 @@ import pandas as pd
 import streamlit as st
 import ui
 import voice_assistant
+import voice_panel
 from common import PROJECT_DIR, installed_names, kept, ollama_url, save_run
 from i18n import pick, tr
 
@@ -49,6 +50,8 @@ st.markdown(
 UPLOAD_DIR = PROJECT_DIR / "storage" / "lab" / "uploads"
 doc = json.loads(store.SCENARIOS_FILE.read_text())
 scenarios = {s["id"]: s for s in doc["scenarios"]}
+# The local GPT-Live is a live session rather than a graph, but is picked like any scenario.
+scenarios.setdefault(voice_assistant.SCENARIO["id"], voice_assistant.SCENARIO)
 url = ollama_url()
 
 # Categories come from the data; one only used by a scenario still gets a readable name.
@@ -94,7 +97,6 @@ def on_category() -> None:
         )
 
 
-voice_assistant.gallery_link()
 with st.container(border=True, key="sc_picker"):
     pick_col, cat_col = st.columns([1.12, 2.2], vertical_alignment="center", gap="small")
     cat_kw = kept("scenario_category")
@@ -121,7 +123,9 @@ with st.container(border=True, key="sc_picker"):
     )
 
 scenario = scenarios[sid]
-kinds = sorted({flow_ui.node_kind(n) for n in scenario["nodes"]} - {None})
+kinds = sorted({flow_ui.node_kind(n) for n in scenario["nodes"]} - {None}) or scenario.get(
+    "kinds", []
+)
 st.markdown(
     f'<div class="sc-title">{ui.icon(flow_ui.category_icon(category_of(scenario)))}'
     f"<span>{html.escape(pick(scenario['name']))}</span>"
@@ -132,6 +136,9 @@ info_col, hl_col = st.columns([1, 1], gap="large")
 info_col.caption(pick(scenario.get("description")))
 if highlights := pick(scenario.get("highlights")) or []:
     hl_col.caption("\n".join(f"- {line}" for line in highlights))
+if sid == voice_assistant.SCENARIO["id"]:
+    voice_panel.panel(page="views/scenarios.py")
+    st.stop()
 
 # --- models for this run ------------------------------------------------------------------------
 overrides: dict[str, str] = {}

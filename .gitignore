@@ -10,3 +10,6 @@ __pycache__/
 dist/
 .DS_Store
 storage/
+
+# Azure realtime test from another session (own .venv)
+scripts/realtime-audio-quickstart-py/

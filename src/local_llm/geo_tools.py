@@ -4,7 +4,8 @@ Every call here sends data off this machine (read-only requests, no keys):
 
 - geocode(name): Open-Meteo's geocoding API (GeoNames data), which knows Chinese place names
   such as 「內湖」; results are cached for a day.
-- weather(location): geocode + Open-Meteo forecast (now, today's range, rain chance).
+- weather(location): geocode + Open-Meteo forecast (now, today's and tomorrow's range and
+  rain chance).
 - nearby(location, query): geocode + one OpenStreetMap Overpass query for cafés, restaurants
   and fast food within RADIUS_M, ranked in Python: places whose name or tags say brunch
   first, then breakfast shops, and only when OSM has too few of those, the nearest cafés and
@@ -101,23 +102,99 @@ def clean_place(name: str) -> str:
 
 def geocode(name: str) -> dict:
     """{"name", "label", "lat", "lon", "country_code", "timezone"} of the best match, or
-    GeoError. Tries the full name, then without a trailing 區/市/鄉/鎮 and the last part
-    of 「台北市內湖區」-style names (GeoNames lists 「內湖」)."""
+    GeoError. Tries the spellings of `geocode_queries` in order and takes the first major
+    place in Taiwan (an administrative area or a place with a population: 「板橋」 alone is a
+    village in Yunlin, 「板橋區」 the New Taipei district). With only minor places in Taiwan,
+    asks Nominatim (OpenStreetMap knows districts and landmarks GeoNames lacks: 信義區,
+    西門町, 台北車站) and falls back to the first minor place, then to any result."""
     name = clean_place(name)
     if not name:
         raise GeoError("no place name given")
+    minor = abroad = fallback = None
+    for query in geocode_queries(name):
+        rows = _cached(("geo", query), GEOCODE_TTL_S, lambda q=query: _geocode_rows(q))
+        taiwan = [r for r in rows[:5] if r.get("country_code") == "TW"]
+        if major := next((r for r in taiwan if _major(r)), None):
+            return _place([major])
+        minor = minor or (taiwan[0] if taiwan else None)
+        abroad = abroad or next((r for r in rows[:5] if _major(r)), None)
+        fallback = fallback or rows
+    if abroad and not minor:  # "Tokyo": a city elsewhere, not a gap in Taiwan's data
+        return _place([abroad])
+    try:
+        if found := _nominatim_place(name):
+            return found
+    except (httpx.HTTPError, json.JSONDecodeError, KeyError, ValueError):
+        pass  # OpenStreetMap unavailable: keep what GeoNames had
+    if minor or fallback:
+        return _place([minor] if minor else fallback)
+    raise GeoError(f"no location found for {name!r}")
+
+
+def _major(row: dict) -> bool:
+    code = str(row.get("feature_code") or "")
+    return bool(row.get("population")) or code.startswith(("PPLA", "PPLC", "ADM"))
+
+
+def _nominatim_place(name: str) -> dict | None:
+    """A place in Taiwan by name from Nominatim, as geocode() returns it, or None."""
+
+    def fetch() -> list[dict]:
+        with _nominatim_lock:
+            wait = _nominatim_last[0] + NOMINATIM_INTERVAL_S - time.monotonic()
+            if wait > 0:
+                time.sleep(wait)
+            try:
+                with _client() as client:
+                    response = client.get(NOMINATIM_URL, params={
+                        "q": name, "format": "jsonv2", "limit": 1, "countrycodes": "tw",
+                        "addressdetails": 1, "accept-language": "zh-TW",
+                    })  # fmt: skip
+                    response.raise_for_status()
+                    return response.json()
+            finally:
+                _nominatim_last[0] = time.monotonic()
+
+    rows = _cached(("nomgeo", name), GEOCODE_TTL_S, fetch)
+    if not rows:
+        return None
+    row, address = rows[0], rows[0].get("address") or {}
+    label = row.get("name") or name
+    area = address.get("city") or address.get("county") or address.get("state")
+    district = address.get("suburb") or address.get("city_district") or address.get("town")
+    extra = "".join(p for p in (area, district) if p and p != label)
+    return {
+        "name": label,
+        "label": f"{label}（{extra}）" if extra else label,
+        "lat": float(row["lat"]),
+        "lon": float(row["lon"]),
+        "country_code": "TW",
+        "timezone": "Asia/Taipei",
+    }
+
+
+def geocode_queries(name: str) -> list[str]:
+    """The spellings to try for a place name. GeoNames (behind Open-Meteo) has gaps: it lists
+    「內湖」 but not 「台北市內湖區」, 「台北市」 but not 「台北」 or 「臺北」, 「板橋區」 but
+    「板橋」 only as a village, and 「台南」 only as places in China. So: the name, without a
+    trailing 區/市/鄉/鎮, the part after 市/縣, a two-character name with 市 and 區 added, 台 and 臺
+    swapped, and for "Xinyi Taipei" each word from the last (the city: "Xinyi" alone finds
+    信宜 in China first)."""
     tries = [name]
     short = re.sub(r"(區|市|鄉|鎮|district|city)$", "", name, flags=re.I).strip()
-    if short and short not in tries:
-        tries.append(short)
+    tries.append(short)
     if m := re.search(r"[市縣]\s*(.+?)[區鄉鎮]?$", name):
-        if m[1] not in tries:
-            tries.append(m[1])
-    for query in tries:
-        rows = _cached(("geo", query), GEOCODE_TTL_S, lambda q=query: _geocode_rows(q))
-        if rows:
-            return _place(rows)
-    raise GeoError(f"no location found for {name!r}")
+        tries.append(m[1])
+    for t in list(tries):
+        if re.fullmatch(r"[\u4e00-\u9fff]{2}", t):
+            tries += [t + "市", t + "區"]
+    for t in list(tries):
+        if "台" in t or "臺" in t:
+            tries.append(t.replace("臺", "台") if "臺" in t else t.replace("台", "臺"))
+    words = name.split()
+    if len(words) > 1:
+        tries += reversed(words)
+    return list(dict.fromkeys(t for t in tries if t))
 
 
 def _geocode_rows(query: str) -> list[dict]:
@@ -130,11 +207,8 @@ def _geocode_rows(query: str) -> list[dict]:
 def _place(rows: list[dict]) -> dict:
     """The most likely result: Open-Meteo orders by relevance and population; among the top
     results prefer a populated place in Taiwan (this is a Taiwan demo) when there is one."""
-    best = rows[0]
-    for row in rows[:5]:
-        if row.get("country_code") == "TW" and row.get("population"):
-            best = row
-            break
+    taiwan = [r for r in rows[:5] if r.get("country_code") == "TW"]
+    best = next((r for r in taiwan if r.get("population")), taiwan[0] if taiwan else rows[0])
     parts = [best.get("admin2"), best.get("admin3")]
     label = best.get("name", "")
     extra = "".join(p for p in parts if p and p != label)
@@ -152,7 +226,8 @@ def _place(rows: list[dict]) -> dict:
 
 
 def weather(location: str) -> dict:
-    """Current weather and today's outlook at a place name (any language Open-Meteo knows)."""
+    """Current weather and the outlook for today and tomorrow at a place name (any language
+    Open-Meteo knows)."""
     place = geocode(location)
     key = ("wx", round(place["lat"], 3), round(place["lon"], 3))
     data = _cached(key, WEATHER_TTL_S, lambda: _forecast(place))
@@ -182,6 +257,18 @@ def _forecast(place: dict) -> dict:
     times, probs = hourly.get("time") or [], hourly.get("precipitation_probability") or []
     upcoming = [p for t, p in zip(times, probs, strict=False) if t[:13] >= now][:6]
     upcoming = [p for p in upcoming if p is not None]
+
+    def day(i: int) -> dict | None:
+        if len(daily.get("temperature_2m_max") or []) <= i:
+            return None
+        code = daily["weather_code"][i]
+        return {
+            "min_c": daily["temperature_2m_min"][i],
+            "max_c": daily["temperature_2m_max"][i],
+            "rain_chance_pct": daily["precipitation_probability_max"][i],
+            "condition": WEATHER_CODES.get(code, str(code)),
+        }
+
     return {
         "time": current["time"],
         "temperature_c": current["temperature_2m"],
@@ -189,12 +276,8 @@ def _forecast(place: dict) -> dict:
         "humidity_pct": current.get("relative_humidity_2m"),
         "wind_kmh": current.get("wind_speed_10m"),
         "condition": WEATHER_CODES.get(current["weather_code"], str(current["weather_code"])),
-        "today": {
-            "min_c": daily["temperature_2m_min"][0],
-            "max_c": daily["temperature_2m_max"][0],
-            "rain_chance_pct": daily["precipitation_probability_max"][0],
-            "condition": WEATHER_CODES.get(daily["weather_code"][0], str(daily["weather_code"][0])),
-        },
+        "today": day(0),
+        "tomorrow": day(1),
         "rain_chance_next_6h_pct": max(upcoming) if upcoming else None,
     }
 

@@ -1,0 +1,326 @@
+{
+ "_about": "Test conversations for the local GPT-Live (live voice assistant). The page plays them as a virtual microphone (each line spoken by a macOS voice, after the assistant has finished; a barge line cuts in while it reads a lookup result). `expect` is what the front LLM should do with each line: decision ask | tool | answer (any of the list; a reply ending in a question mark counts as ask), and for a tool the tool name and a place the location argument should contain (any of the list, case-insensitive). scripts/speech_eval/run_front_llm.py scores front LLMs against it.",
+ "scripts": [
+  {
+   "id": "weather_places_zh",
+   "lang": "zh",
+   "name": {
+    "zh": "中文：問天氣 → 反問地點 → 找早午餐 → 插話",
+    "en": "Mandarin: weather → asked where → brunch places → barge-in"
+   },
+   "lines": [
+    {
+     "text": "今天天氣如何？",
+     "expect": {
+      "decision": [
+       "ask"
+      ]
+     }
+    },
+    {
+     "text": "我在內湖。",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "get_weather",
+      "location": [
+       "內湖"
+      ]
+     }
+    },
+    {
+     "text": "謝謝，這附近有什麼好吃的早午餐店嗎？",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "search_places",
+      "location": [
+       "內湖"
+      ]
+     }
+    },
+    {
+     "text": "好，那就第一家吧，謝謝！",
+     "barge": true,
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "weather_places_en",
+   "lang": "en",
+   "name": {
+    "zh": "英文：問天氣 → 反問地點 → 找咖啡店 → 插話",
+    "en": "English: weather → asked where → coffee shops → barge-in"
+   },
+   "lines": [
+    {
+     "text": "What's the weather like today?",
+     "expect": {
+      "decision": [
+       "ask"
+      ]
+     }
+    },
+    {
+     "text": "I'm in Xinyi, Taipei.",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "get_weather",
+      "location": [
+       "Xinyi",
+       "Taipei",
+       "台北",
+       "臺北",
+       "信義"
+      ]
+     }
+    },
+    {
+     "text": "Thanks. Are there any good coffee shops nearby?",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "search_places",
+      "location": [
+       "Xinyi",
+       "Taipei",
+       "台北",
+       "臺北",
+       "信義"
+      ]
+     }
+    },
+    {
+     "text": "Great, the first one then, thanks!",
+     "barge": true,
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "tomorrow_followup_zh",
+   "lang": "zh",
+   "name": {
+    "zh": "中文：明天會下雨嗎 → 換個城市追問",
+    "en": "Mandarin: rain tomorrow? → same question, another city"
+   },
+   "lines": [
+    {
+     "text": "台中明天會下雨嗎？",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "get_weather",
+      "location": [
+       "台中",
+       "臺中"
+      ]
+     }
+    },
+    {
+     "text": "那高雄呢？",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "get_weather",
+      "location": [
+       "高雄"
+      ]
+     }
+    },
+    {
+     "text": "好，謝謝。",
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "landmark_cafe_zh",
+   "lang": "zh",
+   "name": {
+    "zh": "中文：說要去西門町 → 找咖啡廳 → 問營業時間",
+    "en": "Mandarin: going to Ximending → cafés → opening hours"
+   },
+   "lines": [
+    {
+     "text": "我等一下要去西門町。",
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    },
+    {
+     "text": "那附近有好喝的咖啡廳嗎？",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "search_places",
+      "location": [
+       "西門"
+      ]
+     }
+    },
+    {
+     "text": "第一家開到幾點？",
+     "expect": {
+      "decision": [
+       "answer",
+       "tool"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "chitchat_zh",
+   "lang": "zh",
+   "name": {
+    "zh": "中文：閒聊，不需要查詢",
+    "en": "Mandarin: small talk, no lookups"
+   },
+   "lines": [
+    {
+     "text": "你好，你可以幫我做什麼？",
+     "expect": {
+      "decision": [
+       "answer"
+      ]
+     }
+    },
+    {
+     "text": "推薦一個週末在家可以做的放鬆活動。",
+     "expect": {
+      "decision": [
+       "answer"
+      ]
+     }
+    },
+    {
+     "text": "謝謝你，再見。",
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "change_topic_barge_zh",
+   "lang": "zh",
+   "name": {
+    "zh": "中文：在板橋找拉麵 → 插話改問明天天氣",
+    "en": "Mandarin: ramen in Banqiao → cut in to ask about tomorrow"
+   },
+   "lines": [
+    {
+     "text": "我在板橋。",
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    },
+    {
+     "text": "這附近有拉麵店嗎？",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "search_places",
+      "location": [
+       "板橋"
+      ]
+     }
+    },
+    {
+     "text": "等一下，先幫我看明天要不要帶傘。",
+     "barge": true,
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "get_weather",
+      "location": [
+       "板橋"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "night_market_en",
+   "lang": "en",
+   "name": {
+    "zh": "英文：高雄明天會下雨嗎 → 找夜市 → 插話",
+    "en": "English: rain in Kaohsiung tomorrow? → night markets → barge-in"
+   },
+   "lines": [
+    {
+     "text": "Is it going to rain in Kaohsiung tomorrow?",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "get_weather",
+      "location": [
+       "Kaohsiung",
+       "高雄"
+      ]
+     }
+    },
+    {
+     "text": "Thanks. Are there any good night markets nearby?",
+     "expect": {
+      "decision": [
+       "tool"
+      ],
+      "tool": "search_places",
+      "location": [
+       "Kaohsiung",
+       "高雄"
+      ]
+     }
+    },
+    {
+     "text": "Perfect, thank you!",
+     "barge": true,
+     "expect": {
+      "decision": [
+       "answer",
+       "ask"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

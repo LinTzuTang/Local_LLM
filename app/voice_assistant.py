@@ -3,12 +3,16 @@ the History view of a saved session (views/voice_assistant.py draws the page).
 
 The conversation itself runs in the model gateway (WebSocket /v1/voice/agent/ws,
 local_llm/voice_agent.py); the component (app/static/voice_agent) streams the microphone or
-the scripted demo to it, plays the assistant's speech and draws everything live. When a
-session ends its summary comes back here and is saved as runs/voice_agent-*.json.
+a test script to it, plays the assistant's speech and draws everything live. When a session
+ends its summary comes back here and is saved as runs/voice_agent-*.json. voice_panel.py draws
+the settings and the session (on its own page and in the scenario gallery).
 """
 
 import base64
 import html
+import json
+import re
+import tempfile
 import wave
 from functools import cache
 from pathlib import Path
@@ -31,12 +35,31 @@ ASSISTANT_VOICE = voice_agent.DEFAULT_VOICE
 # formant voices that the streaming models mostly mishear (measured: 「今天天氣如何」 came out
 # as 「先先先如何」), so the user is Tingting, a natural Mandarin voice unlike Meijia's.
 USER_VOICE = "Tingting"
-DEMO_LINES = [
-    ("今天天氣如何？", False),
-    ("我在內湖。", False),
-    ("謝謝，這附近有什麼好吃的早午餐店嗎？", False),
-    ("好，那就第一家吧，謝謝！", True),  # spoken while the assistant reads the list
-]
+USER_VOICE_EN = "Samantha"
+SCRIPTS_FILE = Path(__file__).resolve().parents[1] / "data" / "lab" / "voice_scripts.json"
+
+
+def load_scripts() -> dict:
+    """Test scripts: a whole conversation without a microphone, from data/lab/voice_scripts.json
+    (each line also says what the front LLM should do with it; run_front_llm.py scores that),
+    plus "custom" and "upload", whose lines come from the page."""
+    try:
+        doc = json.loads(SCRIPTS_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        doc = {"scripts": []}
+    out = {
+        s["id"]: {**s["name"], "lines": [(ln["text"], bool(ln.get("barge"))) for ln in s["lines"]]}
+        for s in doc["scripts"]
+    }
+    out["custom"] = {"zh": "自訂台詞（語音合成）", "en": "Your own lines (synthesised)",
+                     "lines": []}  # fmt: skip
+    out["upload"] = {"zh": "上傳錄音", "en": "Uploaded recordings", "lines": []}
+    return out
+
+
+TEST_SCRIPTS = load_scripts()
+DEMO_LINES = next(iter(TEST_SCRIPTS.values()))["lines"]  # the custom script's starting text
+BARGE_PREFIX = re.compile(r"^\s*(插話|barge(-in)?)\s*[:：]\s*", re.IGNORECASE)
 BARGE_AFTER_MS = 2200
 GPT_LIVE_URL = "https://openai.com/index/continuous-voice-interaction-with-gpt-live/"
 
@@ -67,25 +90,57 @@ def demo_pcm(text: str, voice: str) -> str:
     return base64.b64encode(frames).decode()
 
 
-def demo_data(voice: str) -> dict:
-    return {
-        "lines": [{"text": t, "barge": b, "pcm": demo_pcm(t, voice)} for t, b in DEMO_LINES],
-        "barge_after_ms": BARGE_AFTER_MS,
-    }
+def parse_lines(text: str) -> list[tuple[str, bool]]:
+    """Custom script lines: one utterance per non-empty line; a line starting with 「插話：」 or
+    "barge:" is the barge-in (only the last such line is kept, the others are dropped)."""
+    out = []
+    for raw in (text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        barge = bool(BARGE_PREFIX.match(line))
+        line = BARGE_PREFIX.sub("", line).strip()
+        if line:
+            out.append((line, barge))
+    bargers = [i for i, (_, b) in enumerate(out) if b]
+    return [p for i, p in enumerate(out) if not p[1] or i == bargers[-1]]
+
+
+def upload_pcm(data: bytes, name: str) -> str:
+    """An uploaded recording as base64 16 kHz mono PCM16, as the component feeds it."""
+    import numpy as np
+
+    from local_llm import audio_aug
+
+    with tempfile.NamedTemporaryFile(suffix=Path(name).suffix or ".wav") as f:
+        f.write(data)
+        f.flush()
+        samples = audio_aug.load(f.name, 16000)
+    pcm = (np.clip(samples, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+    return base64.b64encode(pcm).decode()
+
+
+def demo_payload(lines: list[dict]) -> dict:
+    return {"lines": lines, "barge_after_ms": BARGE_AFTER_MS}
+
+
+def demo_data(pairs: list[tuple[str, bool]], voice: str) -> dict:
+    """A test script's lines spoken by a macOS voice, as the component's demo data."""
+    return demo_payload([{"text": t, "barge": b, "pcm": demo_pcm(t, voice)} for t, b in pairs])
 
 
 def labels() -> dict:
     return {
         "mic": tr("開始對話（麥克風）", "Talk (microphone)"),
-        "demo": tr("播放示範對話", "Play the demo conversation"),
+        "demo": tr("播放測試腳本", "Play the test script"),
         "stop": tr("結束", "End"),
         "chat": tr("對話", "Conversation"),
         "board": tr("背景工作", "Background work"),
         "timeline": tr("時間軸：說話與工具同時進行", "Timeline: talking and tools overlap"),
         "metrics": tr("每一輪的延遲", "Latency per turn"),
         "idle": tr(
-            "按「開始對話」用麥克風，或播放示範對話。",
-            "Press Talk to use the microphone, or play the demo.",
+            "按「開始對話」用麥克風，或播放測試腳本（不用麥克風）。",
+            "Press Talk to use the microphone, or play the test script (no microphone).",
         ),  # fmt: skip
         "connecting": tr("連線模型閘道…", "Connecting to the model gateway…"),
         "loading_asr": tr("載入串流辨識模型…", "Loading the streaming ASR model…"),
@@ -99,8 +154,8 @@ def labels() -> dict:
         "failed": tr("已中斷。", "Stopped."),
         "closed": tr("連線中斷。", "The connection closed."),
         "empty": tr(
-            "說「今天天氣如何？」試試看，或按「播放示範對話」看完整流程。",
-            "Try asking 「今天天氣如何？」 (what's the weather today), or play the demo.",
+            "說「今天天氣如何？」試試看，或按「播放測試腳本」看完整流程。",
+            "Try asking 「今天天氣如何？」 (what's the weather today), or play the test script.",
         ),
         "you": tr("你", "You"),
         "hearing": tr("辨識中…", "hearing…"),
@@ -139,8 +194,8 @@ def labels() -> dict:
         "m_response": tr("回應", "Response"),
         "m_tool": tr("工具", "Tool"),
         "m_answer": tr("答案", "Answer"),
-        "demo_step": tr("示範：使用者第", "Demo: user line"),
-        "demo_barge": tr("示範插話", "Demo barge-in"),
+        "demo_step": tr("測試腳本：使用者第", "Test script: user line"),
+        "demo_barge": tr("測試插話", "Test barge-in"),
         "denied": tr(
             "麥克風權限被拒絕。請在瀏覽器網址列左側允許麥克風，再按一次。",
             "Microphone permission was denied. Allow it in the browser's address bar and try "
@@ -388,6 +443,41 @@ def flow_dot(compact: bool = False) -> str:
 
 
 PAGE = "views/voice_assistant.py"
+# The scenario gallery's entry: drawn by voice_panel instead of the graph runner.
+SCENARIO = {
+    "id": "gpt_live_voice",
+    "category": "speech",
+    "name": {"zh": "地端版 GPT-Live（邊聊邊查）", "en": "Local GPT-Live (talk while it looks up)"},
+    "description": {
+        "zh": "GPT-Live 風格的即時語音對話：串流辨識邊聽邊轉文字，"
+        "前台 LLM 決定直接回答、反問或查詢；要查時助理先說一句話撐住對話，"
+        "天氣、店家查詢在背景執行，查到再念出結果，隨時可以插話打斷。"
+        "可以用麥克風，或播放測試腳本（合成語音或上傳錄音當麥克風輸入）。",
+        "en": "A GPT-Live-style live voice conversation: streaming ASR transcribes as you "
+        "speak, a front LLM answers, asks back or looks something up; for a lookup the "
+        "assistant says a line first, the weather or places search runs in the background "
+        "and the result is spoken when it arrives; interrupt at any time. Use the "
+        "microphone, or play a test script (synthesised speech or uploaded recordings "
+        "as the microphone).",
+    },
+    "highlights": {
+        "zh": [
+            "前台 LLM（Gemma 4 12B）約 0.5 秒決定回答、反問或查詢，7 段測試對話判斷全對",
+            "工具在背景跑，對話不中斷；查到後同一個 LLM 整理成口語",
+            "插話 0.2 秒內停下；每一輪的延遲與時間軸都記錄下來",
+        ],
+        "en": [
+            "The front LLM (Gemma 4 12B) decides in about 0.5 s to answer, ask or look up; "
+            "every decision right on the 7 test conversations",
+            "Tools run in the background without pausing the conversation; the same LLM "
+            "turns the result into speech",
+            "Barge-in stops it within 0.2 s; every turn's latency and timeline are recorded",
+        ],
+    },
+    "kinds": ["stream", "voice_chat", "tools", "tts"],
+    "nodes": [],
+    "edges": [],
+}
 
 
 def blurb() -> str:
@@ -413,16 +503,3 @@ def home_card(col) -> None:
         if st.button(tr("開啟", "Open"), icon=":material/arrow_forward:", type="primary",
                      key="open_voice_assistant"):  # fmt: skip
             st.switch_page(PAGE)
-
-
-def gallery_link() -> None:
-    """A pointer from the scenario gallery: this scenario is a live page, not a graph."""
-    with st.container(border=True):
-        text, link = st.columns([4, 1.2], vertical_alignment="center")
-        text.markdown(
-            f":material/support_agent: **{tr('即時語音助理', 'Live voice assistant')}** · "
-            + tr("另一個頁面的即時場景", "a live scenario on its own page")
-        )
-        text.caption(blurb())
-        link.page_link(PAGE, label=tr("開啟即時語音助理", "Open the live assistant"),
-                       icon=":material/arrow_forward:")  # fmt: skip
