@@ -23,8 +23,31 @@ NAMES = {  # models outside the gateway catalog
 }
 
 
-def CHUNK_NOTES() -> str:  # noqa: N802 - text, filled in from the chunked evaluation
-    return ""
+def chunk_notes() -> str:
+    """What the chunked evaluation showed (run_chunked.py, 2026-10-21)."""
+    return tr(
+        "- **偵測停頓再轉最划算**：準確度接近整段辨識（Qwen3-ASR-1.7B 國慶演說 2.9%、英語 1.1%），"
+        "一句說完約 0.8 秒定稿；代價是說話途中看不到字，第一句要等講完（約 2 秒）。\n"
+        "- **固定切段要切 5 秒以上**：切 1 秒會切在字中間，錯字率 14–117%；2 秒在照稿與合成錄音"
+        "仍有 7–26%（真實會議更高）；5 秒接近停頓偵測的準確度，但定稿要多等 2.5 秒。\n"
+        "- **Whisper 架構最怕短切段**：Breeze-ASR-25、Whisper turbo 切 1 秒時會亂補字，"
+        "錯字率超過 100%。\n"
+        "- **和真串流比**：Qwen3-ASR-1.7B＋停頓偵測在國慶演說（2.9% 對 3.7%）、"
+        "真實會議（25.3% 對 50.2%）都比 Voxtral 4-bit 準，定稿時間相近（0.8 對 0.7 秒）；"
+        "真串流的好處是邊說邊出字。",
+        "- **Cutting at pauses is the best deal**: nearly as accurate as the whole file "
+        "(Qwen3-ASR-1.7B: 2.9% on the National Day speech, 1.1% WER in English) and final about "
+        "0.8 s after each sentence; but nothing shows while you talk, and the first sentence "
+        "waits until it ends (about 2 s).\n"
+        "- **Fixed chunks need 5 s or more**: 1 s chunks cut words in half (14–117% errors), "
+        "2 s still 7–26% on read and synthetic speech (more on the real meeting); 5 s comes "
+        "close to cutting at pauses but finalises 2.5 s later.\n"
+        "- **Whisper models suffer most from short chunks**: Breeze-ASR-25 and Whisper turbo "
+        "invent words on 1 s chunks (over 100% errors).\n"
+        "- **Against true streaming**: Qwen3-ASR-1.7B cut at pauses beats Voxtral 4-bit on the "
+        "speech (2.9% vs 3.7%) and the real meeting (25.3% vs 50.2%) at a similar final latency "
+        "(0.8 vs 0.7 s); true streaming shows words while you talk.",
+    )
 
 
 def load() -> dict | None:
@@ -91,7 +114,7 @@ def rate_cell(r: dict | None) -> str:
     """An error rate as table text: 「1.2%」, 「—」 not run, 「限流」 rate-limited (no score)."""
     if r is None or r["error_rate"] is None:
         return "—"
-    if not r["valid"]:
+    if not r.get("valid", True):  # chunked runs have no rate-limit flag
         return tr("限流", "rate-limited")
     return f"{r['error_rate'] * 100:.1f}%"
 
@@ -127,6 +150,7 @@ def chunked_frame(data: dict, labels: dict) -> pd.DataFrame:
     """Whole-clip models used live: one row per model and method, error rate per recording and
     the latency on the National Day speech (none for the whole file, which is not live)."""
     samples = sample_names()
+    asr_names = sc.names()  # whole-clip ASR models (labels holds the streaming ones)
     runs = data.get("chunked_runs") or []
     by_key = {(r["model"], r["method"], r["sample"]): r for r in runs}
     rows = []
@@ -135,14 +159,19 @@ def chunked_frame(data: dict, labels: dict) -> pd.DataFrame:
             if not any(k[0] == model and k[1] == method for k in by_key):
                 continue
             row = {
-                tr("模型", "Model"): labels.get(model, model),
+                tr("模型", "Model"): asr_names.get(model, model),
                 tr("做法", "Method"): method_name(method),
             }
             for sample, title in samples.items():
                 row[title] = rate_cell(by_key.get((model, method, sample)))
             lat = by_key.get((model, method, LATENCY_SAMPLE)) or {}
-            row[tr("第一個字（秒）", "First text (s)")] = lat.get("first_partial_s")
-            row[tr("定稿中位數（秒）", "Final, median (s)")] = lat.get("final_median_s")
+            first, final = (
+                tr("第一個字（秒）", "First text (s)"),
+                tr("定稿中位數（秒）", "Final, median (s)"),
+            )
+            for key, col in (("first_partial_s", first), ("final_median_s", final)):
+                value = lat.get(key)
+                row[col] = f"{value:.2f}" if value is not None else "—"
             rows.append(row)
     return pd.DataFrame(rows)
 
@@ -270,15 +299,13 @@ def benchmark_page() -> None:
             use_container_width=True,
             column_config={
                 **{t: st.column_config.TextColumn(help=rate_help, width="small") for t in titles},
-                tr("第一個字（秒）", "First text (s)"): st.column_config.NumberColumn(
-                    format="%.2f", width="small"
-                ),
-                tr("定稿中位數（秒）", "Final, median (s)"): st.column_config.NumberColumn(
-                    format="%.2f", width="small"
+                tr("第一個字（秒）", "First text (s)"): st.column_config.TextColumn(width="small"),
+                tr("定稿中位數（秒）", "Final, median (s)"): st.column_config.TextColumn(
+                    width="small"
                 ),
             },
         )
-        st.markdown(CHUNK_NOTES())
+        st.markdown(chunk_notes())
     with st.expander(tr("每段錄音的明細", "Every run"), icon=":material/table_rows:"):
         st.dataframe(detail_frame(data, labels), hide_index=True, use_container_width=True)
         local_at, cloud_at = str(data.get("local_at", ""))[:10], str(data.get("cloud_at", ""))[:10]
