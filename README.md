@@ -19,7 +19,7 @@ things:
    translation (cascade, audio LLM, Whisper, plus a live-input simulation) and meeting speaker
    diarization with DER. The home page shows which models are loaded, how much memory they use
    and which tasks are running.
-2. **Demo multi-agent scenarios.** Nine ready-made workflows run as LangGraph graphs: routing
+2. **Demo multi-agent scenarios.** Nine ready-made workflows run as LangGraph graphs, plus a live voice assistant (a local GPT-Live): routing
    with a decision model, hybrid RAG, self-checking RAG, permission-aware retrieval, meeting
    audio → minutes, contract review, support triage, a mixture of agents, and an analyst →
    writer → translator pipeline. Each run has a live flow diagram and a timeline, and every
@@ -31,7 +31,15 @@ things:
 The UI is bilingual (中文 / EN, switch in the top-right corner). The demo company and all of
 its data are fictional.
 
-## What's new (2026-10-19)
+## What's new (2026-10-21)
+
+- **Local GPT-Live in the Scenario gallery**: pick "Local GPT-Live (talk while it looks up)" there to run it in place. Seven **test scripts** (weather and places in Chinese and English, rain tomorrow, a café near a landmark, small talk, cutting in with a new question), your own lines or uploaded recordings stand in for the microphone.
+- **Front model is now Gemma 4 12B**: on those seven conversations across ten models it made every decision right, invented nothing and sounded the most natural, in less memory (7.7 GB) than E4B; E4B (about 0.2 s faster) can still be picked in the settings.
+- **A smarter assistant**: English turns are answered in English; follow-ups ("when does the first one close?") use the last lookup and say when it lacks the answer; a question that names a place is looked up directly; the weather adds tomorrow; place names prefer Taiwan's administrative areas and fall back to OpenStreetMap.
+- **Streaming benchmark**: Compare speech models → Live → Benchmark lists local and cloud (Azure) streaming models on the same four recordings: error rate, latency and memory.
+- **Voices**: macOS's eight Eloquence voices (one synthesiser) are listed as Flo alone; an Enhanced or Premium download of a voice is used automatically.
+
+## 2026-10-19
 
 - **Live voice assistant (a local take on GPT-Live)**: under Scenarios. Streaming ASR, a front model (Gemma 4 E4B by default) that starts answering in about 1 s, background tool calls (weather via Open-Meteo, nearby places via OpenStreetMap) announced with a short filler and spoken when ready, and barge-in. Includes a scripted demo, a background-work board and a latency table; the network lookups are behind an explicit switch.
 
@@ -90,6 +98,7 @@ its data are fictional.
 | Support triage + reply | [nimble triage (team, urgency, refund) ‖ SOP retrieval] → draft → lead review | nimble, bge-m3, reranker, qwen3 |
 | Mixture of agents | [Qwen3 30B ‖ TAIDE 12B ‖ Qwen3 1.7B] → aggregator | 3 local models |
 | Sales memo | DB analyst agent → writer → translator | qwen3 |
+| Local GPT-Live (talk while it looks up) | streaming ASR → front LLM answers / asks / looks up → [background tools: weather, places] → speech; barge-in | zipformer, gemma4:12b, macOS voices |
 
 ![A finished hybrid RAG run: per-step model choice, flow, timeline and steps](docs/screenshots/scenario.png)
 

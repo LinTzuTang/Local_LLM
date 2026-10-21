@@ -23,6 +23,10 @@ NAMES = {  # models outside the gateway catalog
 }
 
 
+def CHUNK_NOTES() -> str:  # noqa: N802 - text, filled in from the chunked evaluation
+    return ""
+
+
 def load() -> dict | None:
     try:
         return json.loads(DATA.read_text(encoding="utf-8"))
@@ -110,6 +114,37 @@ def notes(model: str, info: dict, runs: list[dict], samples: dict) -> str:
     if model == "voxtral-mini-4b-realtime":
         out.append(tr("這台 Mac 跟不上即時", "too slow for real time here"))
     return tr("；", "; ").join(out)
+
+
+def method_name(method: str) -> str:
+    if method.startswith("chunk"):
+        return tr(f"切段 {method[5:]} 秒", f"{method[5:]} s chunks")
+    return {"vad": tr("偵測停頓再轉", "Cut at pauses"),
+            "whole": tr("整段（對照）", "Whole file (reference)")}.get(method, method)  # fmt: skip
+
+
+def chunked_frame(data: dict, labels: dict) -> pd.DataFrame:
+    """Whole-clip models used live: one row per model and method, error rate per recording and
+    the latency on the National Day speech (none for the whole file, which is not live)."""
+    samples = sample_names()
+    runs = data.get("chunked_runs") or []
+    by_key = {(r["model"], r["method"], r["sample"]): r for r in runs}
+    rows = []
+    for model in data.get("chunked_models") or []:
+        for method in data.get("chunked_methods") or []:
+            if not any(k[0] == model and k[1] == method for k in by_key):
+                continue
+            row = {
+                tr("模型", "Model"): labels.get(model, model),
+                tr("做法", "Method"): method_name(method),
+            }
+            for sample, title in samples.items():
+                row[title] = rate_cell(by_key.get((model, method, sample)))
+            lat = by_key.get((model, method, LATENCY_SAMPLE)) or {}
+            row[tr("第一個字（秒）", "First text (s)")] = lat.get("first_partial_s")
+            row[tr("定稿中位數（秒）", "Final, median (s)")] = lat.get("final_median_s")
+            rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def detail_frame(data: dict, labels: dict) -> pd.DataFrame:
@@ -214,6 +249,36 @@ def benchmark_page() -> None:
             "cannot take one call per utterance; rate-limited recordings get no score.",
         )
     )
+    if data.get("chunked_runs"):
+        title = tr("一般模型用在即時字幕：切段與偵測停頓再轉",
+                   "Whole-clip models live: chunks and cutting at pauses")  # fmt: skip
+        st.markdown(f"**{title}**")
+        st.caption(
+            tr(
+                "整段辨識模型（Qwen3-ASR、Breeze、Whisper…）不能邊聽邊出字，要做即時字幕只能"
+                "把聲音切成小段送：固定每 N 秒切一段，或偵測到停頓（0.6 秒）再把一整句送去轉。"
+                "時間的算法和上表的本機串流相同（依實測運算時間換算）。",
+                "Whole-clip models (Qwen3-ASR, Breeze, Whisper…) cannot write while they "
+                "listen; for live captions the audio goes in pieces: every N seconds, or a "
+                "whole sentence once a 0.6 s pause is heard. Timing is simulated as for the "
+                "local streaming models above.",
+            )
+        )
+        st.dataframe(
+            chunked_frame(data, labels),
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                **{t: st.column_config.TextColumn(help=rate_help, width="small") for t in titles},
+                tr("第一個字（秒）", "First text (s)"): st.column_config.NumberColumn(
+                    format="%.2f", width="small"
+                ),
+                tr("定稿中位數（秒）", "Final, median (s)"): st.column_config.NumberColumn(
+                    format="%.2f", width="small"
+                ),
+            },
+        )
+        st.markdown(CHUNK_NOTES())
     with st.expander(tr("每段錄音的明細", "Every run"), icon=":material/table_rows:"):
         st.dataframe(detail_frame(data, labels), hide_index=True, use_container_width=True)
         local_at, cloud_at = str(data.get("local_at", ""))[:10], str(data.get("cloud_at", ""))[:10]
