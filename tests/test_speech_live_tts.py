@@ -56,6 +56,9 @@ def test_parse_voices_dedupes_and_keeps_short_names():
 
 
 def test_voices_filters_locales_and_novelty(monkeypatch):
+    from local_llm import neural_tts
+
+    monkeypatch.setattr(neural_tts, "available", lambda name: False)  # macOS voices only
     monkeypatch.setattr(tts, "available", lambda: True)
     monkeypatch.setattr(tts, "_listing", lambda: LISTING)
     rows = tts.voices()

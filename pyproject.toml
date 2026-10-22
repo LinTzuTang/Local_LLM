@@ -34,6 +34,7 @@ dependencies = [
     "sherpa-onnx==1.13.8",
     "sherpa-onnx-core==1.13.8",
     "sacrebleu>=2.6.0",
+    "misaki[zh]>=0.9.4",
 ]
 
 [project.scripts]

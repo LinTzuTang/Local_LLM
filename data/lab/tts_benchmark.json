@@ -1,0 +1,220 @@
+{
+ "date": "2026-10-22",
+ "text": "meeting_zh.txt",
+ "asr": {
+  "offline": "qwen3-asr-1.7b",
+  "stream": "zipformer-zh-en-stream"
+ },
+ "rows": [
+  {
+   "voice": "Tingting",
+   "label": "Tingting",
+   "source": [
+    "macOS 內建合成",
+    "macOS built-in"
+   ],
+   "size_gb": null,
+   "licence": "macOS",
+   "limits": [
+    "中英文、數字、中英夾雜都能念（英文帶中文口音）；聲音較機械。",
+    "Chinese, English, numbers and mixed text are fine (English with an accent); sounds robotic."
+   ],
+   "load_s": 1.74,
+   "rtf": 0.0095,
+   "first_s": 0.052,
+   "max_s": 0.088,
+   "cer_offline": 0.0081,
+   "cer_stream": 0.0071,
+   "rms_db": -17.4
+  },
+  {
+   "voice": "Meijia",
+   "label": "Meijia",
+   "source": [
+    "macOS 內建合成",
+    "macOS built-in"
+   ],
+   "size_gb": null,
+   "licence": "macOS",
+   "limits": [
+    "中英文、數字、中英夾雜都能念（英文帶中文口音）；聲音較機械。",
+    "Chinese, English, numbers and mixed text are fine (English with an accent); sounds robotic."
+   ],
+   "load_s": 0.2,
+   "rtf": 0.0099,
+   "first_s": 0.053,
+   "max_s": 0.081,
+   "cer_offline": 0.0215,
+   "cer_stream": 0.0216,
+   "rms_db": -14.3
+  },
+  {
+   "voice": "Kokoro 雲希",
+   "label": "Kokoro 雲希",
+   "source": [
+    "Kokoro-82M・MLX",
+    "Kokoro-82M, MLX"
+   ],
+   "size_gb": 0.3,
+   "licence": "Apache-2.0",
+   "limits": [
+    "只能念中文（大陸口音）：數字 OK；整句英文改用 macOS Samantha 念，中文句子裡的英文字母（如 CNC）會被跳過。",
+    "Chinese only (Mainland accent): numbers are fine; English sentences go to macOS Samantha, and Latin letters inside Chinese (e.g. CNC) are skipped."
+   ],
+   "load_s": 2.13,
+   "rtf": 0.0294,
+   "first_s": 0.134,
+   "max_s": 0.226,
+   "cer_offline": 0.0242,
+   "cer_stream": 0.0372,
+   "rms_db": -16.3
+  },
+  {
+   "voice": "Kokoro 曉北",
+   "label": "Kokoro 曉北",
+   "source": [
+    "Kokoro-82M・MLX",
+    "Kokoro-82M, MLX"
+   ],
+   "size_gb": 0.3,
+   "licence": "Apache-2.0",
+   "limits": [
+    "只能念中文（大陸口音）：數字 OK；整句英文改用 macOS Samantha 念，中文句子裡的英文字母（如 CNC）會被跳過。",
+    "Chinese only (Mainland accent): numbers are fine; English sentences go to macOS Samantha, and Latin letters inside Chinese (e.g. CNC) are skipped."
+   ],
+   "load_s": 0.42,
+   "rtf": 0.0282,
+   "first_s": 0.152,
+   "max_s": 0.259,
+   "cer_offline": 0.0134,
+   "cer_stream": 0.031,
+   "rms_db": -16.1
+  },
+  {
+   "voice": "MediaTek VITS（台灣）",
+   "label": "MediaTek VITS",
+   "source": [
+    "聯發科 VITS・sherpa-onnx",
+    "MediaTek VITS, sherpa-onnx"
+   ],
+   "size_gb": 0.12,
+   "licence": "Apache-2.0",
+   "limits": [
+    "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母（如 CNC）會被跳過；咬字較不清楚（回聽錯字率約 15%）。",
+    "Chinese characters only: numbers are spelled out first, English sentences go to macOS Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear (about 15% round-trip errors)."
+   ],
+   "load_s": 0.57,
+   "rtf": 0.1693,
+   "first_s": 0.589,
+   "max_s": 0.989,
+   "cer_offline": 0.1503,
+   "cer_stream": 0.2313,
+   "rms_db": -16.0
+  },
+  {
+   "voice": "Qwen3-TTS Vivian",
+   "label": "Qwen3-TTS Vivian",
+   "source": [
+    "Qwen3-TTS 0.6B 內建聲音・MLX",
+    "Qwen3-TTS 0.6B preset, MLX"
+   ],
+   "size_gb": 2.5,
+   "licence": "Apache-2.0",
+   "limits": [
+    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
+    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each sentence, a little slow to talk live (streaming playback would fix it)."
+   ],
+   "load_s": 3.64,
+   "rtf": 0.2735,
+   "first_s": 1.198,
+   "max_s": 2.569,
+   "cer_offline": 0.0162,
+   "cer_stream": 0.0443,
+   "rms_db": -16.0
+  },
+  {
+   "voice": "Qwen3-TTS Uncle Fu",
+   "label": "Qwen3-TTS Uncle Fu",
+   "source": [
+    "Qwen3-TTS 0.6B 內建聲音・MLX",
+    "Qwen3-TTS 0.6B preset, MLX"
+   ],
+   "size_gb": 2.5,
+   "licence": "Apache-2.0",
+   "limits": [
+    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
+    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each sentence, a little slow to talk live (streaming playback would fix it)."
+   ],
+   "load_s": 1.07,
+   "rtf": 0.274,
+   "first_s": 1.552,
+   "max_s": 2.653,
+   "cer_offline": 0.0107,
+   "cer_stream": 0.0752,
+   "rms_db": -16.0
+  },
+  {
+   "voice": "Qwen3-TTS 台灣腔（複製）",
+   "label": "Qwen3-TTS 台灣腔",
+   "source": [
+    "Qwen3-TTS 0.6B 聲音複製・MLX",
+    "Qwen3-TTS 0.6B clone, MLX"
+   ],
+   "size_gb": 2.5,
+   "licence": "Apache-2.0",
+   "limits": [
+    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
+    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each sentence, a little slow to talk live (streaming playback would fix it)."
+   ],
+   "load_s": 0.98,
+   "rtf": 0.37,
+   "first_s": 1.681,
+   "max_s": 2.719,
+   "cer_offline": 0.0162,
+   "cer_stream": 0.0071,
+   "rms_db": -16.2
+  },
+  {
+   "voice": "VoxCPM2 台灣腔（複製）",
+   "label": "VoxCPM2 台灣腔",
+   "source": [
+    "VoxCPM2 聲音複製・MLX",
+    "VoxCPM2 clone, MLX"
+   ],
+   "size_gb": 3.2,
+   "licence": "Apache-2.0",
+   "limits": [
+    "多語言（30 種），中英夾雜、數字 OK；繁體字要先轉簡體；很慢（每句約 3.6 秒），只適合預先合成。",
+    "30 languages, mixed text and numbers are fine; reads Simplified; slow (about 3.6 s a sentence), pre-render only."
+   ],
+   "load_s": 1.4,
+   "rtf": 0.852,
+   "first_s": 3.601,
+   "max_s": 6.997,
+   "cer_offline": 0.0189,
+   "cer_stream": 0.0294,
+   "rms_db": -16.6
+  },
+  {
+   "voice": "Breeze-TTS-2 台灣腔（複製）",
+   "label": "Breeze-TTS-2 台灣腔",
+   "source": [
+    "Breeze-TTS-2 聲音複製・MLX・非商用",
+    "Breeze-TTS-2 clone, MLX, non-commercial"
+   ],
+   "size_gb": 7.6,
+   "licence": "research / non-commercial",
+   "limits": [
+    "中英文、數字、中英夾雜都 OK；最慢（每句約 5 秒，合成比說話還慢），只適合預先合成；只限研究、非商業使用。",
+    "Chinese, English, numbers and mixed text are fine; slowest (about 5 s a sentence, slower than speech), pre-render only; research and non-commercial use only."
+   ],
+   "load_s": 9.78,
+   "rtf": 1.0982,
+   "first_s": 4.863,
+   "max_s": 9.814,
+   "cer_offline": 0.0323,
+   "cer_stream": 0.0368,
+   "rms_db": -16.2
+  }
+ ]
+}

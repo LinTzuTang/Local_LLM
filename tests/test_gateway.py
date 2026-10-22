@@ -24,6 +24,7 @@ ASR_IDS = {
 STREAM_IDS = {
     "zipformer-zh-en-stream", "paraformer-zh-en-stream", "zipformer-zh-2025-stream",
     "voxtral-mini-4b-realtime", "voxtral-mini-4b-realtime-4bit",
+    "x-asr-zh-en-160ms", "x-asr-zh-en-480ms",
 }  # fmt: skip
 GATEWAY_IDS = ASR_IDS | STREAM_IDS | {"docling", "bge-reranker-v2-m3", "speaker-diarization"}
 

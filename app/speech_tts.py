@@ -1,27 +1,51 @@
-"""Text-to-speech mode of the speech-model page: compare voices of macOS's built-in `say`.
+"""Text-to-speech mode of the speech-model page: compare voices for the voice assistant.
 
-No TTS model is installed, so the mode uses the voices that come with macOS (local and free,
-local_llm.tts). The same text is spoken by 1-4 voices; each gets its synthesis time and
-real-time factor, and an intelligibility check: the "round trip" transcribes the generated
-audio with an installed speech model and scores it against the input text (CER for Chinese,
-WER for English, asr_metrics.score). Neural TTS models (Kokoro, Qwen3-TTS, CosyVoice 3,
-BreezyVoice) are listed in the model library but not downloaded.
+The voices: macOS's built-in ones and the local neural models (local_llm.neural_tts: MediaTek
+VITS, Kokoro, Qwen3-TTS, VoxCPM2, Breeze-TTS-2), each labelled with where it
+comes from. The same text, by default the fictional production meeting, is spoken by 1-4
+voices one sentence at a time, as the cascade assistant speaks (tts.timed_sentences): each
+voice gets its loading time, the first sentence's delay (how long the assistant would stay
+silent), the real-time factor, a verdict on whether it can talk live, and an intelligibility
+check: the "round trip" transcribes the audio with an installed speech model and scores it
+against the input text (CER for Chinese, WER for English, asr_metrics.score). "Benchmark"
+shows the measured table (data/lab/tts_benchmark.json, scripts/speech_eval/run_tts_bench.py).
 """
 
+import json
+import re
 from pathlib import Path
 
+import altair as alt
 import jobs
 import pandas as pd
 import speech_common as sc
 import streamlit as st
 from common import PROJECT_DIR, kept, save_run
-from i18n import pick, tr
+from i18n import tr
 
-from local_llm import asr_metrics, catalog, gateway_client, tts
+from local_llm import asr_metrics, gateway_client, tts
 
 MAX_VOICES = 4
 RATES = [0, 140, 160, 180, 200, 220, 250]  # words per minute; 0 = the voice's default
 DEFAULT_ASR = "qwen3-asr-1.7b"
+MEETING = PROJECT_DIR / "data" / "lab" / "samples" / "meeting_zh.txt"
+BENCHMARK = PROJECT_DIR / "data" / "lab" / "tts_benchmark.json"
+# Usable live: the first sentence renders within LIVE_FIRST_S and synthesis keeps well ahead of
+# playback (RTF below LIVE_RTF), so later sentences are ready before the previous one ends.
+LIVE_FIRST_S = 1.0
+LIVE_RTF = 0.5
+
+
+def meeting_text() -> str:
+    """The fictional production meeting's lines (meeting_zh.txt without the voice tags)."""
+    try:
+        text = MEETING.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    return "\n".join(re.sub(r"^\[[^\]]+\]\s*", "", ln) for ln in text.splitlines()
+                     if ln.startswith("["))  # fmt: skip
+
+
 EXAMPLES = {
     "zh": (
         "各位同仁早安。今天的會議有三個重點：第一，第三季營收成長百分之十二；第二，新產線預計"
@@ -36,11 +60,17 @@ EXAMPLES = {
 # (short name, locale): voices that exist in several languages are named in the system's
 # language ("Flo (中文（台灣）)"), so defaults match on the short name and locale.
 DEFAULT_VOICES = {
-    "zh": [("Meijia", "zh_TW"), ("Tingting", "zh_CN"), ("Flo", "zh_TW")],
+    "zh": [
+        ("Kokoro 曉北", "zh_CN"),
+        ("Qwen3-TTS 台灣腔", "zh_TW"),
+        ("MediaTek VITS", "zh_TW"),
+        ("Meijia", "zh_TW"),
+    ],  # fmt: skip
     "en": [("Samantha", "en_US"), ("Daniel", "en_GB"), ("Flo", "en_US")],
 }
-SAVED = ("voice", "short", "locale", "file", "seconds", "duration", "rtf", "transcript",
-         "asr_s", "score", "error")  # fmt: skip
+SAVED = ("voice", "short", "locale", "source", "limits", "file", "seconds", "duration", "rtf",
+         "load_s", "first_s", "max_s", "sentences", "transcript", "asr_s", "score",
+         "error")  # fmt: skip
 LOCALES = {
     "zh_TW": ("台灣華語", "Taiwan Mandarin"),
     "zh_CN": ("中國大陸華語", "Mainland Mandarin"),
@@ -54,8 +84,26 @@ def locale_name(locale: str) -> str:
     return tr(*LOCALES[locale]) if locale in LOCALES else locale
 
 
+def source_name(v: dict) -> str:
+    src = v.get("source")
+    return tr(*src) if isinstance(src, list | tuple) else src or tr(*tts.MACOS_SOURCE)
+
+
 def voice_label(v: dict) -> str:
-    return f"{v['short']} · {locale_name(v['locale'])}"
+    return f"{v['short']} · {locale_name(v['locale'])} · {source_name(v)}"
+
+
+def live_verdict(first_s: float | None, rtf: float | None) -> tuple[str, str]:
+    """(icon colour, text): can this voice speak for the live assistant?"""
+    if first_s is None or rtf is None:
+        return "gray", ""
+    if first_s <= LIVE_FIRST_S and rtf < LIVE_RTF:
+        return "green", tr("可即時對話", "Fast enough to talk live")
+    if rtf < 1:
+        return "orange", tr(
+            f"勉強：每句先等 {first_s:.1f} 秒", f"Borderline: {first_s:.1f} s per sentence"
+        )
+    return "red", tr("太慢，只適合預先合成", "Too slow: pre-render only")
 
 
 def text_language(text: str) -> str:
@@ -79,9 +127,9 @@ def tts_work(job: jobs.Job, url: str) -> None:
         r["status"] = "running"
         job.detail, job.progress = f"{n}/{len(rows)} {r['short']}", (n - 1) / len(rows)
         try:
-            out = tts.timed_synthesize(text, r["voice"], state["rate"] or None)
-            r.update(file=str(out["path"]), seconds=out["seconds"], duration=out["duration"],
-                     rtf=out["rtf"])  # fmt: skip
+            out = tts.timed_sentences(text, r["voice"], state["rate"] or None)
+            keys = ("seconds", "duration", "rtf", "load_s", "first_s", "max_s", "sentences")
+            r.update({k: out[k] for k in keys}, file=str(out["path"]))
             if state["asr"]:
                 job.detail = f"{n}/{len(rows)} {r['short']} · {state['asr']}"
                 heard = gateway_client.transcribe(out["path"], state["asr"], language, base_url=url)
@@ -97,7 +145,7 @@ def tts_work(job: jobs.Job, url: str) -> None:
         "asr_compare",
         {
             "mode": "tts",
-            "engine": "macos-say",
+            "engine": "mixed",
             "text": text,
             "language": language,
             "rate": state["rate"] or None,
@@ -124,10 +172,15 @@ def _relative(path: str) -> str:
 
 
 def facts(r: dict) -> str:
-    parts = [
+    parts = []
+    if r.get("first_s") is not None:
+        parts.append(tr(f"首句 {r['first_s']:.2f}s", f"first sentence {r['first_s']:.2f}s"))
+    parts += [
         tr(f"合成 {r['seconds']:.2f}s", f"synthesis {r['seconds']:.2f}s"),
         tr(f"音訊 {r['duration']:.1f}s", f"audio {r['duration']:.1f}s"),
     ]
+    if r.get("load_s"):
+        parts.append(tr(f"準備 {r['load_s']:.1f}s", f"warm-up {r['load_s']:.1f}s"))
     if r.get("rtf"):
         parts.append(f"RTF {r['rtf']:.3f} · {1 / r['rtf']:.0f}×")
     if r.get("score"):
@@ -138,7 +191,9 @@ def facts(r: dict) -> str:
 def card(r: dict, text: str) -> None:
     with st.container(border=True):
         st.markdown(f"**{r['short']}**")
-        st.caption(f"{locale_name(r['locale'])} · `{r['voice']}`")
+        st.caption(f"{locale_name(r['locale'])} · {source_name(r)}")
+        if r.get("limits") and r["limits"][0]:
+            st.caption(f":material/info: {tr(*r['limits'])}")
         if r["status"] == "waiting":
             st.info(tr("等待中…", "Waiting…"))
             return
@@ -158,6 +213,9 @@ def card(r: dict, text: str) -> None:
         else:
             st.caption(tr("音檔已清除。", "The audio file has been removed."))
         if r.get("seconds") is not None:
+            colour, verdict = live_verdict(r.get("first_s"), r.get("rtf"))
+            if verdict:
+                st.badge(verdict, color=colour)
             st.caption(facts(r))
         if r.get("transcript") is not None:
             st.markdown(tr("**語音辨識聽到的**", "**What speech recognition heard**"))
@@ -183,10 +241,12 @@ def summary(rows: list[dict], asr: str | None) -> None:
         [
             {
                 voice: voice_label(r),
+                tr("首句（秒）", "First sentence (s)"): r.get("first_s"),
                 tr("合成（秒）", "Synthesis (s)"): r["seconds"],
                 tr("音訊（秒）", "Audio (s)"): r["duration"],
                 "RTF": r.get("rtf"),
                 metric: (r.get("score") or {}).get("cer"),
+                tr("即時對話", "Live use"): live_verdict(r.get("first_s"), r.get("rtf"))[1],
             }
             for r in done
         ]
@@ -230,9 +290,13 @@ def summary(rows: list[dict], asr: str | None) -> None:
 
 def notes(asr: str | None, labels: dict) -> None:
     text = tr(
-        "引擎：macOS 內建 `say`（本機、免費）。合成時間是 `say` 輸出 WAV 的實際時間。",
-        "Engine: macOS's built-in `say` (local and free). Synthesis time is how long `say` "
-        "took to write the WAV.",
+        "像助理一樣一句一句合成（先用一句短句把模型載入、預熱，不計入）。「首句」是第一句合成完的時間＝"
+        f"助理要沉默多久才開口；首句 ≤ {LIVE_FIRST_S:.0f} 秒且 RTF < {LIVE_RTF} 才算「可即時對話」"
+        "（後面的句子能在前一句播完前準備好）。全部在本機執行。",
+        "Rendered one sentence at a time, as the assistant speaks (a short line loads and warms "
+        "the model first, not counted). First sentence = how long the assistant stays silent "
+        f"before it talks; ≤ {LIVE_FIRST_S:.0f} s with RTF < {LIVE_RTF} counts as fast enough "
+        "to talk live (each next sentence is ready before the previous one ends). All local.",
     )
     if asr:
         text += tr(
@@ -272,27 +336,26 @@ def live_view(job: jobs.Job) -> None:
     render(job)
 
 
-def better_models() -> None:
-    names = [pick({"zh": m["name"], "en": m.get("name_en") or m["name"]})
-             for m in catalog.other_models("tts")]  # fmt: skip
-    names = names or ["Kokoro-82M", "Qwen3-TTS", "CosyVoice 3", "BreezyVoice"]
-    st.info(
+def voice_sources() -> None:
+    st.caption(
         tr(
-            "**更自然的語音合成模型**已列在模型庫，**尚未下載**："
-            + "、".join(names)
-            + "（BreezyVoice 是聯發科的台灣華語 TTS）。雲端選項（只列出、不連線）：Azure OpenAI "
-            "`gpt-4o-mini-tts`。",
-            "**More natural TTS models** are listed in the model library, **not downloaded**: "
-            + ", ".join(names)
-            + " (BreezyVoice is MediaTek's Taiwan Mandarin TTS). Cloud option (listed only, not "
-            "connected): Azure OpenAI `gpt-4o-mini-tts`.",
-        ),
-        icon=":material/record_voice_over:",
-    )
-    st.page_link(
-        "views/models.py",
-        label=tr("到模型庫看語音合成模型", "See TTS models in the model library"),
-        icon=":material/library_books:",
+            "聲音來源：**macOS 內建**（免下載）；**MediaTek VITS**（聯發科，台灣口音，sherpa-onnx"
+            "）；"
+            "**Kokoro-82M**、**Qwen3-TTS 0.6B**、**VoxCPM2**、**Breeze-TTS-2**（mlx-audio 在 Apple "
+            "晶片上執行）。標「台灣腔（複製）」的聲音是用一段台灣講者的錄音（BreezyVoice 的範例講"
+            "者）"
+            "複製出來的口音。每個聲音能不能念英文、數字等限制寫在結果卡上。Qwen3-TTS、VoxCPM2 念"
+            "繁體字"
+            "會走音，送進模型前先轉成簡體（只影響念法）。BreezyVoice 太慢（約語音長度 12 倍）已移"
+            "除。",
+            "Voice sources: **macOS built-in** (nothing to download); **MediaTek VITS** (Taiwanese "
+            "accent, sherpa-onnx); **Kokoro-82M**, **Qwen3-TTS 0.6B**, **VoxCPM2** and "
+            "**Breeze-TTS-2** (mlx-audio on Apple silicon). Voices marked 台灣腔（複製） clone a "
+            "Taiwanese speaker (BreezyVoice's example speaker). Each result card says what the "
+            "voice cannot do (English, numbers, ...). Qwen3-TTS and VoxCPM2 mispronounce "
+            "Traditional characters, so they read the text converted to Simplified. BreezyVoice "
+            "was removed: about 12x slower than real time.",
+        )
     )
 
 
@@ -300,30 +363,59 @@ def better_models() -> None:
 
 
 def _use_example(lang: str) -> None:
-    st.session_state.tts_text = EXAMPLES[lang]
+    st.session_state.tts_text = meeting_text() if lang == "meeting" else EXAMPLES[lang]
     st.session_state.tts_voices = []  # picked again for the example's language
 
 
 def tts_page(url: str, status: dict) -> None:
+    st.session_state.setdefault("tts_view", "try")
+    view = (
+        st.segmented_control(
+            tr("檢視", "View"),
+            ["try", "bench"],
+            format_func=lambda v: {
+                "try": f":material/play_arrow: {tr('自己試', 'Try it')}",
+                "bench": f":material/leaderboard: {tr('評測總表', 'Benchmark')}",
+            }[v],
+            required=True,
+            **kept("tts_view"),
+        )
+        or "try"
+    )
+    if view == "bench":
+        benchmark_view()
+        return
     if not tts.available():
         st.warning(
             tr("找不到 macOS 的 `say` 指令，這個模式只能在 Mac 上使用。",
                "macOS's `say` command was not found; this mode only works on a Mac."),
             icon=":material/warning:",
         )  # fmt: skip
-        better_models()
         return
     labels = sc.names()
-    a, b = st.columns(2)
-    a.button(tr("中文範例", "Chinese example"), icon=":material/edit_note:",
+    a, b, c0 = st.columns(3)
+    a.button(tr("產銷會議（虛構）", "Production meeting"), icon=":material/groups:",
+             on_click=_use_example, args=("meeting",), width="stretch")  # fmt: skip
+    b.button(tr("中文短句", "Short Chinese"), icon=":material/edit_note:",
              on_click=_use_example, args=("zh",), width="stretch")  # fmt: skip
-    b.button(tr("英文範例", "English example"), icon=":material/edit_note:",
-             on_click=_use_example, args=("en",), width="stretch")  # fmt: skip
-    st.session_state.setdefault("tts_text", EXAMPLES["zh"])
-    text = st.text_area(tr("要念出來的文字", "Text to speak"), height=110, **kept("tts_text"))
+    c0.button(tr("英文範例", "English example"), icon=":material/edit_note:",
+              on_click=_use_example, args=("en",), width="stretch")  # fmt: skip
+    st.session_state.setdefault("tts_text", meeting_text() or EXAMPLES["zh"])
+    text = st.text_area(
+        tr("要念出來的文字（一行一句）", "Text to speak (one sentence per line)"),
+        height=180,
+        help=tr(
+            "預設是測試用的虛構產銷會議（9 句、約 88 秒），原稿在 data/lab/samples/meeting_zh.txt。"
+            "較慢的聲音（VoxCPM2、Breeze-TTS-2）整份要 1–2 分鐘。",
+            "Defaults to the fictional production meeting used in the tests (9 lines, about "
+            "88 s), data/lab/samples/meeting_zh.txt. Slow voices (VoxCPM2, Breeze-TTS-2) take a m"
+            "inute or two.",
+        ),
+        **kept("tts_text"),
+    )
     language = text_language(text)
 
-    voices = tts.voices()
+    voices = tts.voices(neural="all")
     by_name = {v["name"]: v for v in voices}
     if not st.session_state.get("tts_voices"):
         wanted = DEFAULT_VOICES[language]
@@ -338,11 +430,12 @@ def tts_page(url: str, status: dict) -> None:
         format_func=lambda n: voice_label(by_name[n]),
         max_selections=MAX_VOICES,
         help=tr(
-            "只列出台灣華語、中國大陸華語、粵語與英語的內建聲音，已排除特效聲音。"
-            "到「系統設定 > 輔助使用 > 朗讀內容」可下載更好的「高品質」聲音。",
-            "Built-in voices for Taiwan and Mainland Mandarin, Cantonese and English, novelty "
-            "voices left out. Better 'Enhanced' / 'Premium' voices can be downloaded in System "
-            "Settings > Accessibility > Spoken Content.",
+            "每個聲音後面標出來源：macOS 內建，或本機的神經網路模型。macOS 只列台灣華語、中國大陸"
+            "華語、粵語與英語，"
+            "已排除特效聲音。",
+            "Each voice says where it comes from: macOS built-in, or a local neural model. macOS "
+            "voices for Taiwan and Mainland Mandarin, Cantonese and English, novelty voices "
+            "left out.",
         ),
         **kept("tts_voices"),
     )
@@ -352,6 +445,7 @@ def tts_page(url: str, status: dict) -> None:
         tr("語速（每分鐘字數）", "Rate (words per minute)"),
         RATES,
         format_func=lambda r: str(r) if r else tr("預設", "default"),
+        help=tr("只對 macOS 內建聲音有效。", "macOS voices only."),
         **kept("tts_rate"),
     )
     asr_options = [m for m in labels if status.get(m, {}).get("installed")]
@@ -371,7 +465,7 @@ def tts_page(url: str, status: dict) -> None:
             tr("辨識模型", "Speech model"), asr_options,
             format_func=lambda m: labels.get(m, m), **kept("tts_asr"),
         )  # fmt: skip
-    better_models()
+    voice_sources()
 
     job = jobs.get(st.session_state.get("tts_job"))
     busy = bool(job and job.running)
@@ -394,6 +488,8 @@ def tts_page(url: str, status: dict) -> None:
                         "voice": n,
                         "short": by_name[n]["short"],
                         "locale": by_name[n]["locale"],
+                        "source": list(tts.source(by_name[n])),
+                        "limits": list(tts.limits(by_name[n])),
                         "status": "waiting",
                     }
                     for n in picked
@@ -414,7 +510,8 @@ def tts_page(url: str, status: dict) -> None:
 
 def history_view(data: dict) -> None:
     rows = [r | {"status": "done"} for r in data.get("results") or [] if isinstance(r, dict)]
-    bits = [tr("引擎：macOS `say`", "Engine: macOS `say`")]
+    bits = [tr("逐句合成", "one sentence at a time")] if data.get("engine") == "mixed" else [
+        tr("引擎：macOS `say`", "Engine: macOS `say`")]  # fmt: skip
     if data.get("rate"):
         bits.append(tr(f"語速 {data['rate']}", f"rate {data['rate']} wpm"))
     if data.get("asr"):
@@ -436,10 +533,157 @@ def history_summary(data: dict) -> dict:
     metric = next((r["score"].get("metric") for r in rows if r.get("score")), None) or "CER"
     voices = ", ".join(r.get("short") or r.get("voice", "?") for r in rows)
     return {
-        "title": f"TTS · macOS say · {voices}",
+        "title": f"TTS · {voices}",
         "models": [m for m in [data.get("asr")] if m],
         "seconds": round(sum(r.get("seconds") or 0 for r in rows), 2) or None,
         "snippet": (data.get("text") or "")[:220],
         "best": (min(scored, key=lambda x: x[1]), metric) if scored else None,
         "error": bool(rows) and all(r.get("error") for r in rows),
     }
+
+
+# -- benchmark --------------------------------------------------------------------------------
+
+
+def load_benchmark() -> dict | None:
+    try:
+        return json.loads(BENCHMARK.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def benchmark_frame(data: dict) -> pd.DataFrame:
+    rows = []
+    for r in data["rows"]:
+        colour, verdict = live_verdict(r.get("first_s"), r.get("rtf"))
+        rows.append({
+            "voice": r["label"],
+            "source": tr(*r["source"]),
+            "first_s": r.get("first_s"),
+            "rtf": r.get("rtf"),
+            "load_s": r.get("load_s"),
+            "cer_offline": r.get("cer_offline"),
+            "cer_stream": r.get("cer_stream"),
+            "rms_db": r.get("rms_db"),
+            "size_gb": r.get("size_gb"),
+            "licence": r.get("licence"),
+            "verdict": verdict,
+            "limits": tr(*r["limits"]) if r.get("limits") else "",
+            "colour": colour,
+        })  # fmt: skip
+    return pd.DataFrame(rows)
+
+
+def benchmark_charts(df: pd.DataFrame) -> None:
+    order = list(df.sort_values("first_s")["voice"])
+    colours = alt.Scale(domain=["green", "orange", "red"], range=["#16A34A", "#F59E0B", "#DC2626"])
+    base = alt.Chart(df).encode(
+        y=alt.Y("voice:N", sort=order, title=None),
+        color=alt.Color("colour:N", scale=colours, legend=None),
+        tooltip=["voice", "source", "first_s", "rtf", "cer_offline", "cer_stream"],
+    )
+    a, b = st.columns(2)
+    with a:
+        st.markdown(
+            tr("**首句延遲（秒，越短越快開口）**", "**First sentence (s, lower = talks sooner)**")
+        )
+        rule = alt.Chart(pd.DataFrame({"x": [LIVE_FIRST_S]})).mark_rule(
+            color="#64748B", strokeDash=[4, 3]).encode(x="x:Q")  # fmt: skip
+        bars = base.mark_bar().encode(x=alt.X("first_s:Q", title=tr("秒", "s")))
+        st.altair_chart(bars + rule, width="stretch")
+    with b:
+        st.markdown(
+            tr(
+                "**即時倍率 RTF（合成時間 ÷ 音訊長度）**",
+                "**Real-time factor (synthesis ÷ audio)**",
+            )
+        )
+        rule = alt.Chart(pd.DataFrame({"x": [LIVE_RTF]})).mark_rule(
+            color="#64748B", strokeDash=[4, 3]).encode(x="x:Q")  # fmt: skip
+        bars = base.mark_bar().encode(x=alt.X("rtf:Q", title="RTF"))
+        st.altair_chart(bars + rule, width="stretch")
+    st.caption(
+        tr(
+            f"綠色＝可即時對話（首句 ≤ {LIVE_FIRST_S:.0f} 秒且 RTF < {LIVE_RTF}，虛線）；橘色＝勉"
+            "強；"
+            "紅色＝太慢，只適合預先合成。",
+            f"Green = fast enough to talk live (first sentence ≤ {LIVE_FIRST_S:.0f} s and RTF < "
+            f"{LIVE_RTF}, dashed lines); orange = borderline; red = pre-render only.",
+        )
+    )
+    long = df.melt(id_vars=["voice", "colour"], value_vars=["cer_offline", "cer_stream"],
+                   var_name="check", value_name="cer")  # fmt: skip
+    names = {
+        "cer_offline": tr("會議稿・整段辨識", "Meeting, whole-clip ASR"),
+        "cer_stream": tr("測試腳本・串流辨識", "Test script, streaming ASR"),
+    }
+    long["check"] = long["check"].map(names)
+    st.markdown(tr("**回聽錯字率（越低越清楚）**", "**Round-trip error rate (lower = clearer)**"))
+    chart = (
+        alt.Chart(long)
+        .mark_bar()
+        .encode(
+            y=alt.Y("voice:N", sort=list(df.sort_values("cer_offline")["voice"]), title=None),
+            x=alt.X("cer:Q", title="CER", axis=alt.Axis(format="%")),
+            yOffset="check:N",
+            color=alt.Color("check:N", title=None, legend=alt.Legend(orient="bottom")),
+            tooltip=["voice", "check", alt.Tooltip("cer:Q", format=".1%")],
+        )
+    )
+    st.altair_chart(chart, width="stretch")
+
+
+def benchmark_view() -> None:
+    data = load_benchmark()
+    if not data or not data.get("rows"):
+        st.info(tr("找不到評測結果（data/lab/tts_benchmark.json）。",
+                   "No benchmark results found (data/lab/tts_benchmark.json)."))  # fmt: skip
+        return
+    n, date = len(data["rows"]), data.get("date", "")
+    st.markdown(
+        tr(
+            f"**{n} 個聲音念同一份虛構產銷會議（9 句、約 88 秒）**，像串接式助理一樣一句一句合成"
+            f"（{date}，這台 Mac）。看三件事：多久開口、跟不跟得上、聽不聽得清楚。",
+            f"**{n} voices read the same fictional production meeting (9 lines, about 88 s)** "
+            f"one sentence at a time, as the cascade assistant speaks ({date}, this Mac): how "
+            "soon it talks, whether it keeps up, whether it is clear.",
+        )
+    )
+    df = benchmark_frame(data)
+    benchmark_charts(df)
+    st.dataframe(
+        df.drop(columns=["colour"]).rename(columns={
+            "voice": tr("聲音", "Voice"), "source": tr("來源", "Source"),
+            "first_s": tr("首句（秒）", "First (s)"), "rtf": "RTF",
+            "load_s": tr("載入（秒）", "Load (s)"),
+            "cer_offline": tr("會議稿 CER", "Meeting CER"),
+            "cer_stream": tr("測試腳本串流 CER", "Script streaming CER"),
+            "rms_db": tr("音量 dBFS", "Level dBFS"), "size_gb": tr("大小 GB", "Size GB"),
+            "licence": tr("授權", "Licence"), "verdict": tr("即時對話", "Live use"),
+            "limits": tr("限制", "Limits"),
+        }),
+        hide_index=True,
+        width="stretch",
+        column_config={
+            tr("會議稿 CER", "Meeting CER"): st.column_config.NumberColumn(format="percent"),
+            tr("測試腳本串流 CER", "Script streaming CER"): st.column_config.NumberColumn(
+                format="percent"),
+        },
+    )  # fmt: skip
+    if data.get("notes"):
+        st.markdown(tr(*data["notes"]))
+    st.caption(
+        tr(
+            "方法：每個聲音先念一句短句載入模型（「載入」），再逐句合成；「首句」是 9 句的中位數，"
+            "也就是助理每句開口前要等的時間。會議稿 CER：Qwen3-ASR-1.7B 聽合成結果；測試腳本串流 "
+            "CER："
+            "即時語音助理的 16 句中文測試台詞送進預設串流辨識（Zipformer），看能不能當測試講者。"
+            "腳本：scripts/speech_eval/run_tts_bench.py。",
+            "Method: each voice first reads a short line to load the model (Load), then the "
+            "meeting one sentence at a time; First is the median over the 9 lines, the wait "
+            "before each sentence. Meeting CER: Qwen3-ASR-1.7B transcribes the result; script "
+            "streaming CER: the voice assistant's 16 Chinese test lines through the default "
+            "streaming ASR (Zipformer), i.e. can the voice act as the test speaker. Script: "
+            "scripts/speech_eval/run_tts_bench.py.",
+        )
+    )

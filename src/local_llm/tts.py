@@ -66,7 +66,7 @@ def parse_voices(listing: str) -> list[dict]:
 
 def find(name: str, rows: list[dict] | None = None) -> dict | None:
     """The voice with this `say` name, or the first whose short name matches ("Meijia")."""
-    rows = voices(None) if rows is None else rows
+    rows = voices(None, neural="all") if rows is None else rows
     return next((v for v in rows if v["name"] == name), None) or next(
         (v for v in rows if v["short"] == name), None
     )
@@ -81,12 +81,20 @@ def voices(
     locales: tuple[str, ...] | None = DEFAULT_LOCALES,
     novelty: bool = False,
     eloquence: bool = False,
+    neural: str = "fast",
 ) -> list[dict]:
     """Installed `say` voices for these locales (None = all), novelty voices left out unless
     asked for and the Eloquence family as Flo alone unless `eloquence`; sorted by the order
-    of `locales`, then name. Empty when `say` is missing."""
+    of `locales`, then name. The Taiwanese neural voices (neural_tts.py) come first in zh_TW:
+    `neural` "fast" lists the ones quick enough to talk live, "all" also the slow ones (for
+    pre-rendered lines), "none" neither."""
+    from . import neural_tts
+
+    extra = [] if neural == "none" else neural_tts.voices(fast_only=neural != "all")
+    if locales is not None:
+        extra = [v for v in extra if v["locale"] in locales]
     if not available():
-        return []
+        return extra
     rows = parse_voices(_listing())
     if not novelty:
         rows = [v for v in rows if v["name"] not in NOVELTY]
@@ -95,7 +103,30 @@ def voices(
     if locales is not None:
         rows = [v for v in rows if v["locale"] in locales]
         rows.sort(key=lambda v: (locales.index(v["locale"]), v["name"]))
-    return rows
+    return extra + rows
+
+
+MACOS_SOURCE = ("macOS 內建合成", "macOS built-in")
+
+
+def source(voice: dict | None) -> tuple[str, str]:
+    """(Chinese, English) name of where a voice comes from: macOS, or the neural model."""
+    return (voice or {}).get("source") or MACOS_SOURCE
+
+
+MACOS_LIMITS = {
+    "zh": ("中英文、數字、中英夾雜都能念（英文帶中文口音）；聲音較機械。",
+           "Chinese, English, numbers and mixed text are fine (English with an accent); "
+           "sounds robotic."),
+    "en": ("只念英文。", "English only."),
+}  # fmt: skip
+
+
+def limits(voice: dict | None) -> tuple[str, str]:
+    """(Chinese, English) what a voice cannot do: a neural voice's own note, or macOS's."""
+    if voice and voice.get("limits"):
+        return tuple(voice["limits"])
+    return MACOS_LIMITS[language(voice)] if voice else ("", "")
 
 
 def language(voice: dict | None) -> str:
@@ -121,12 +152,19 @@ def synthesize(
     file goes to storage/speech_cache/tts/, named by a hash of text, voice and rate."""
     if not text.strip():
         raise ValueError("no text to speak")
+    from . import neural_tts
+
+    if voice in neural_tts.VOICES:  # a Taiwanese neural voice; cached like `say`
+        # "+norm2": renderings since the second loudness fix (older cached files are quieter)
+        out = (
+            Path(out) if out is not None else cache_path(text, voice + "+norm2", None, sample_rate)
+        )
+        if out.exists() and out.stat().st_size > 44:
+            return out
+        return neural_tts.render(text, voice, out, sample_rate)
     if not available():
         raise RuntimeError("macOS `say` is not available on this machine")
-    if out is None:
-        key = hashlib.sha1(f"{voice}|{rate}|{sample_rate}|{text}".encode()).hexdigest()[:16]
-        out = CACHE_DIR / f"{key}.wav"
-    out = Path(out)
+    out = Path(out) if out is not None else cache_path(text, voice, rate, sample_rate)
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = ["say", "-v", voice, "-o", str(out), f"--data-format=LEI16@{sample_rate}"]
     if rate:
@@ -134,6 +172,12 @@ def synthesize(
     # The text goes in on stdin (`-f -`): no length limit and no option parsing of the text.
     subprocess.run(cmd + ["-f", "-"], input=text, text=True, capture_output=True, check=True)
     return out
+
+
+def cache_path(text: str, voice: str, rate: int | None, sample_rate: int = SAMPLE_RATE) -> Path:
+    """Where synthesize() keeps a rendering: a hash of text, voice, rate and sample rate."""
+    key = hashlib.sha1(f"{voice}|{rate}|{sample_rate}|{text}".encode()).hexdigest()[:16]
+    return CACHE_DIR / f"{key}.wav"
 
 
 def timed_synthesize(text: str, voice: str, rate: int | None = None) -> dict:
@@ -149,6 +193,88 @@ def timed_synthesize(text: str, voice: str, rate: int | None = None) -> dict:
         "seconds": round(seconds, 3),
         "duration": round(duration, 2),
         "rtf": round(seconds / duration, 4) if duration else None,
+    }
+
+
+_SENTENCE = re.compile(r"(?<=[。！？!?])\s*")
+GAP_S = 0.25  # silence between sentences in the joined recording
+
+
+def sentences(text: str) -> list[str]:
+    """The text as the assistant speaks it: one line at a time, a long line cut after each
+    full stop, question or exclamation mark."""
+    out = []
+    for line in text.splitlines():
+        out += [p.strip() for p in _SENTENCE.split(line) if p.strip()]
+    return out
+
+
+def _samples(data: bytes) -> tuple["object", int]:
+    import io
+
+    import numpy as np
+
+    with wave.open(io.BytesIO(data), "rb") as w:
+        x = np.frombuffer(w.readframes(w.getnframes()), "<i2").astype(np.float32) / 32768
+        return x, w.getframerate()
+
+
+def _fresh(text: str, voice: str, rate: int | None, folder: Path) -> bytes:
+    """One sentence rendered anew (no cache), the way the assistant renders it."""
+    from . import neural_tts
+
+    out = folder / f"{time.time_ns()}.wav"
+    if voice in neural_tts.VOICES:
+        return neural_tts.render(text, voice, out, SAMPLE_RATE).read_bytes()
+    try:
+        return _ns_speak(text, voice, rate)[0]
+    except Exception:  # no PyObjC: `say`
+        return synthesize(text, voice, rate, out=out).read_bytes()
+
+
+def timed_sentences(text: str, voice: str, rate: int | None = None) -> dict:
+    """Render `text` one sentence at a time, as the voice assistant speaks, after getting the
+    voice ready with a short line. {"path" (all sentences in one WAV), "seconds" (all
+    sentences), "duration", "rtf", "load_s" (getting ready: loading a model), "first_s" (the
+    first sentence: how long the assistant would be silent before it starts), "max_s"
+    (slowest sentence), "sentences"}."""
+    import tempfile
+
+    import numpy as np
+
+    from . import neural_tts
+
+    parts = sentences(text)
+    if not parts:
+        raise ValueError("no text to speak")
+    with tempfile.TemporaryDirectory(prefix="tts-") as tmp:
+        folder = Path(tmp)
+        started = time.perf_counter()
+        _fresh("你好。" if language(find(voice)) == "zh" else "Hello.", voice, rate, folder)
+        load = time.perf_counter() - started
+        took, audio = [], []
+        for part in parts:
+            started = time.perf_counter()
+            audio.append(_fresh(part, voice, rate, folder))
+            took.append(time.perf_counter() - started)
+    pieces, gap, duration = [], np.zeros(int(GAP_S * SAMPLE_RATE), np.float32), 0.0
+    for data in audio:
+        x, sr = _samples(data)
+        duration += len(x) / sr
+        pieces += [neural_tts._resample(x, sr, SAMPLE_RATE).astype(np.float32), gap]
+    joined = np.concatenate(pieces[:-1])
+    key = hashlib.sha1(f"{voice}|{rate}|{text}|{time.time_ns()}".encode()).hexdigest()[:16]
+    path = neural_tts._write(CACHE_DIR / f"{key}.wav", joined, SAMPLE_RATE)
+    seconds = sum(took)
+    return {
+        "path": path,
+        "seconds": round(seconds, 3),
+        "duration": round(duration, 2),
+        "rtf": round(seconds / duration, 4) if duration else None,
+        "load_s": round(max(load, 0.0), 2),
+        "first_s": round(took[0], 3),
+        "max_s": round(max(took), 3),
+        "sentences": len(parts),
     }
 
 
@@ -262,6 +388,11 @@ def speak_wav(text: str, voice: str, rate: int | None = None) -> tuple[bytes, fl
     in-process NSSpeechSynthesizer, else `say` (cached file)."""
     if not text.strip():
         raise ValueError("no text to speak")
+    from . import neural_tts
+
+    if voice in neural_tts.VOICES:
+        path = synthesize(text, voice, rate)
+        return path.read_bytes(), wav_duration(path)
     try:
         return _ns_speak(text, voice, rate)
     except Exception:  # no PyObjC, unknown voice, ...: the reliable path

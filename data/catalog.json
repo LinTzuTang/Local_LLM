@@ -3875,11 +3875,10 @@
       }
     },
     {
-      "name": "X-ASR-zh-en",
+      "name": "X-ASR-zh-en（160 ms）",
       "repo": "GilgameshWind/X-ASR-zh-en",
       "url": "https://huggingface.co/GilgameshWind/X-ASR-zh-en",
       "category": "stream",
-      "status": "catalog",
       "params": "0.16B",
       "size_gb": 0.61,
       "langs": [
@@ -3888,14 +3887,118 @@
       ],
       "license": "apache-2.0",
       "mac": "onnx",
-      "runtime": "sherpa-onnx",
-      "install": "uv add sherpa-onnx",
+      "runtime": "sherpa-onnx 1.13.8（onnxruntime，CPU；模型閘道）",
+      "install": "平台一鍵下載（模型閘道）",
       "use": "中英串流辨識，含標點與大小寫，可選 160／480／960／1920 ms 區塊",
       "use_en": "Mandarin-English streaming ASR with punctuation and casing; 160/480/960/1920 ms chunk models",
       "note": "上海交大、復旦等，2026-05；Zipformer 串流／離線統一 transducer，宣稱約 100 萬小時訓練；每種區塊一組 fp32 ONNX（約 0.61 GB）；技術報告未出、訓練資料未公開",
       "note_en": "SJTU, Fudan et al., May 2026; Zipformer unified streaming/offline transducer, ~1M hours claimed; one fp32 ONNX set per chunk size (~0.61 GB); tech report not yet out, training data undisclosed",
       "recommended": false,
-      "released": "2026-05"
+      "released": "2026-05",
+      "name_en": "X-ASR-zh-en (160 ms)",
+      "runtime_en": "sherpa-onnx 1.13.8 (onnxruntime, CPU; model gateway)",
+      "install_en": "One click in the platform (model gateway)",
+      "gateway": {
+        "id": "x-asr-zh-en-160ms",
+        "task": "stream",
+        "backend": "sherpa-online",
+        "weights": [
+          {
+            "repo": "GilgameshWind/X-ASR-zh-en",
+            "revision": "689ff18c584d29910da37b6fe904db0c1489c9d1",
+            "files": [
+              "deployment/models/chunk-160ms-model/encoder-160ms.onnx",
+              "deployment/models/chunk-160ms-model/decoder-160ms.onnx",
+              "deployment/models/chunk-160ms-model/joiner-160ms.onnx",
+              "deployment/models/chunk-160ms-model/tokens.txt"
+            ],
+            "into": "sherpa/x-asr-zh-en-160ms"
+          }
+        ],
+        "path": "sherpa/x-asr-zh-en-160ms",
+        "size_gb": 0.61,
+        "options": {
+          "kind": "transducer",
+          "encoder": "deployment/models/chunk-160ms-model/encoder-160ms.onnx",
+          "decoder": "deployment/models/chunk-160ms-model/decoder-160ms.onnx",
+          "joiner": "deployment/models/chunk-160ms-model/joiner-160ms.onnx",
+          "tokens": "deployment/models/chunk-160ms-model/tokens.txt",
+          "endpoint": {
+            "rule1": 2.4,
+            "rule2": 0.8,
+            "rule3": 20.0
+          },
+          "languages": [
+            "zh",
+            "en"
+          ]
+        },
+        "note": "閘道從 Hugging Face 下載官方 160 ms 區塊的 fp32 ONNX（約 0.61GB，@689ff18），放在 models/sherpa/x-asr-zh-en-160ms；sherpa-onnx OnlineRecognizer 在 CPU 上邊收音邊辨識，句尾靜音 0.8 秒判定一句結束。輸出含標點與大小寫。",
+        "note_en": "The gateway downloads the official 160 ms chunk fp32 ONNX files from Hugging Face (~0.61 GB, @689ff18) into models/sherpa/x-asr-zh-en-160ms; sherpa-onnx's OnlineRecognizer decodes on the CPU as audio arrives, and 0.8 s of trailing silence ends an utterance. Output has punctuation and casing."
+      }
+    },
+    {
+      "name": "X-ASR-zh-en（480 ms）",
+      "repo": "GilgameshWind/X-ASR-zh-en",
+      "url": "https://huggingface.co/GilgameshWind/X-ASR-zh-en",
+      "category": "stream",
+      "params": "0.16B",
+      "size_gb": 0.61,
+      "langs": [
+        "zh",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "mac": "onnx",
+      "runtime": "sherpa-onnx 1.13.8（onnxruntime，CPU；模型閘道）",
+      "install": "平台一鍵下載（模型閘道）",
+      "use": "同 160 ms 版，區塊較長：延遲多約 0.3 秒，準確度可能較好",
+      "use_en": "As the 160 ms build with longer chunks: about 0.3 s more latency, possibly more accurate",
+      "note": "上海交大、復旦等，2026-05；Zipformer 串流／離線統一 transducer，宣稱約 100 萬小時訓練；每種區塊一組 fp32 ONNX（約 0.61 GB）；技術報告未出、訓練資料未公開",
+      "note_en": "SJTU, Fudan et al., May 2026; Zipformer unified streaming/offline transducer, ~1M hours claimed; one fp32 ONNX set per chunk size (~0.61 GB); tech report not yet out, training data undisclosed",
+      "recommended": false,
+      "released": "2026-05",
+      "name_en": "X-ASR-zh-en (480 ms)",
+      "runtime_en": "sherpa-onnx 1.13.8 (onnxruntime, CPU; model gateway)",
+      "install_en": "One click in the platform (model gateway)",
+      "gateway": {
+        "id": "x-asr-zh-en-480ms",
+        "task": "stream",
+        "backend": "sherpa-online",
+        "weights": [
+          {
+            "repo": "GilgameshWind/X-ASR-zh-en",
+            "revision": "689ff18c584d29910da37b6fe904db0c1489c9d1",
+            "files": [
+              "deployment/models/chunk-480ms-model/encoder-480ms.onnx",
+              "deployment/models/chunk-480ms-model/decoder-480ms.onnx",
+              "deployment/models/chunk-480ms-model/joiner-480ms.onnx",
+              "deployment/models/chunk-480ms-model/tokens.txt"
+            ],
+            "into": "sherpa/x-asr-zh-en-480ms"
+          }
+        ],
+        "path": "sherpa/x-asr-zh-en-480ms",
+        "size_gb": 0.61,
+        "options": {
+          "kind": "transducer",
+          "encoder": "deployment/models/chunk-480ms-model/encoder-480ms.onnx",
+          "decoder": "deployment/models/chunk-480ms-model/decoder-480ms.onnx",
+          "joiner": "deployment/models/chunk-480ms-model/joiner-480ms.onnx",
+          "tokens": "deployment/models/chunk-480ms-model/tokens.txt",
+          "endpoint": {
+            "rule1": 2.4,
+            "rule2": 0.8,
+            "rule3": 20.0
+          },
+          "languages": [
+            "zh",
+            "en"
+          ]
+        },
+        "note": "閘道從 Hugging Face 下載官方 480 ms 區塊的 fp32 ONNX（約 0.61GB，@689ff18），放在 models/sherpa/x-asr-zh-en-480ms；sherpa-onnx OnlineRecognizer 在 CPU 上邊收音邊辨識，句尾靜音 0.8 秒判定一句結束。輸出含標點與大小寫。",
+        "note_en": "The gateway downloads the official 480 ms chunk fp32 ONNX files from Hugging Face (~0.61 GB, @689ff18) into models/sherpa/x-asr-zh-en-480ms; sherpa-onnx's OnlineRecognizer decodes on the CPU as audio arrives, and 0.8 s of trailing silence ends an utterance. Output has punctuation and casing."
+      }
     },
     {
       "name": "Paraformer-zh-streaming",

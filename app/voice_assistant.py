@@ -29,6 +29,7 @@ from local_llm import tts, voice_agent
 STATIC = Path(__file__).parent / "static" / "voice_agent"
 DEFAULT_ASR = "zipformer-zh-en-stream"
 STREAM_MODELS = ("zipformer-zh-en-stream", "zipformer-zh-2025-stream", "paraformer-zh-en-stream",
+                 "x-asr-zh-en-160ms", "x-asr-zh-en-480ms",
                  "voxtral-mini-4b-realtime-4bit")  # fmt: skip
 ASSISTANT_VOICE = voice_agent.DEFAULT_VOICE
 # The demo's user. macOS's male zh voices (Eddy, Reed, Rocko, Grandpa) are compact
@@ -36,6 +37,14 @@ ASSISTANT_VOICE = voice_agent.DEFAULT_VOICE
 # as 「先先先如何」), so the user is Tingting, a natural Mandarin voice unlike Meijia's.
 USER_VOICE = "Tingting"
 USER_VOICE_EN = "Samantha"
+# Neural voices (local_llm/neural_tts.py), the defaults when installed, from the TTS benchmark
+# (scripts/speech_eval/run_tts_bench.py, 2026-10-22): Kokoro speaks the first sentence in about
+# 0.3 s and clearly (round-trip CER 1.3%; MediaTek VITS 15%), though with a Mainland accent; the
+# Qwen3-TTS clone of a Taiwanese speaker is the clearest test speaker (0.7% through the
+# streaming ASR; BreezyVoice, since removed, dropped words: 2.5-4.2%) but slow, so it reads
+# the test lines (rendered once and cached).
+ASSISTANT_VOICE_TW = "Kokoro 曉北"
+USER_VOICE_TW = "Qwen3-TTS 台灣腔（複製）"
 SCRIPTS_FILE = Path(__file__).resolve().parents[1] / "data" / "lab" / "voice_scripts.json"
 
 
@@ -225,7 +234,8 @@ def save(payload: dict) -> dict:
         "barge_ins": payload.get("barge_ins"),
         "messages": payload.get("messages") or [],
         **{k: summary.get(k) for k in ("llm", "voice", "allow_network", "barge_in", "turns",
-                                       "tool_calls", "speeches", "user_speech", "memory")},
+                                       "tool_calls", "speeches", "user_speech", "memory",
+                                       "engine", "kind")},
     }  # fmt: skip
     path = save_run("voice_agent", data)
     data["path"] = str(path.relative_to(path.parents[1]))
@@ -348,9 +358,12 @@ def timeline_chart(data: dict) -> alt.Chart | None:
 def history_view(data: dict) -> None:
     """A saved session: settings, the conversation, latencies, tool calls and the timeline."""
     settings = data.get("settings") or {}
+    single = settings.get("engine") not in (None, "cascade")
+    kinds = {"turn": tr("② 回合式", "② turn-based"), "duplex": tr("③ 全雙工", "③ full-duplex")}
     st.markdown(
-        ui.badges(["asr", "tools", "tts"], [
-            f":material/subtitles: {settings.get('asr', '?')}",
+        ui.badges(["asr", "voice_chat"] if single else ["asr", "tools", "tts"], [
+            *([kinds.get(data.get("kind"), settings.get("engine"))] if single else []),
+            *([f":material/subtitles: {settings['asr']}"] if settings.get("asr") else []),
             f":material/smart_toy: {data.get('llm', '?')}",
             f":material/record_voice_over: {data.get('voice', '?')}",
             tr("示範", "demo") if data.get("mode") == "demo" else tr("麥克風", "microphone"),
@@ -397,20 +410,42 @@ def history_view(data: dict) -> None:
                     st.caption(result["attribution"])
 
 
-def flow_dot(compact: bool = False) -> str:
-    """The cascade as a small Graphviz diagram (plain text labels, no emoji); `compact` is
-    the home page card's shorter version."""
-    labels = {
-        "mic": tr("麥克風\\n16 kHz PCM", "Microphone\\n16 kHz PCM"),
-        "asr": tr("串流辨識\\nVAD + ASR", "Streaming ASR\\nVAD + ASR"),
-        "llm": tr("前台 LLM\\n回答／反問／查詢", "Front LLM\\nanswer / ask / look up"),
-        "tool": tr("背景工具\\n天氣・店家", "Background tools\\nweather, places"),
-        "tts": tr("語音合成\\nmacOS", "Speech\\nmacOS voices"),
-        "out": tr("瀏覽器播放", "Browser plays"),
-        "filler": tr("先說一句", "say a line first"),
-        "result": tr("結果", "result"),
-        "barge": tr("插話：停止播放", "barge-in: stop"),
-    }
+KINDS = {
+    "cascade": ("① 串接式", "① Cascade"),
+    "turn": ("② 回合式", "② Turn-based"),
+    "duplex": ("③ 全雙工", "③ Full-duplex"),
+}
+KIND_NOTES = {
+    "cascade": (
+        "三個元件接力：串流辨識把你的話轉成文字 → 前台 LLM 決定回答、反問或查詢 → 語音合成念出來。"
+        "每一段都能換模型，也能接工具查資料；代價是每一段都要等一點時間。",
+        "Three parts in a relay: streaming ASR turns your speech into text → a front LLM "
+        "answers, asks back or looks something up → speech synthesis reads it out. Every part "
+        "can be swapped and tools can be called; each hand-off costs a little time.",
+    ),
+    "turn": (
+        "像對講機：一個語音模型直接聽你的聲音、自己開口回答，但要等你講完（停頓偵測）才回。"
+        "沒有文字中繼，語氣比較自然；本機模型沒有工具。",
+        "Like a walkie-talkie: one speech model hears your voice and answers in its own voice, "
+        "but only once you have finished (pause detection). No text in between, so it sounds "
+        "more natural; the local models have no tools.",
+    ),
+    "duplex": (
+        "像打電話：一個語音模型持續聽（連安靜也送進去），邊聽邊說，自己決定何時開口、附和或停下。"
+        "最接近真人對話，但也最難控制。",
+        "Like a phone call: one speech model listens all the time (silence included) and talks "
+        "while it listens, deciding itself when to speak, back-channel or stop. Closest to a "
+        "human conversation, and the hardest to control.",
+    ),
+}
+
+
+def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool = True,
+             tts_label: str | None = None, compact: bool = False) -> str:  # fmt: skip
+    """The way of talking as a small Graphviz diagram (plain text labels, no emoji):
+    ① the cascade, ② a turn-based or ③ a full-duplex speech model, local or in the cloud
+    (`engine`); `compact` is the home page card's shorter cascade."""
+    cloud = engine in ("gpt-realtime", "gpt-live-1")
     node_size, edge_size = (13, 11) if compact else (11, 10)
     head = f"""digraph {{
   rankdir=LR; bgcolor="transparent"; pad=0.1; nodesep=0.25; ranksep=0.3;
@@ -418,28 +453,98 @@ def flow_dot(compact: bool = False) -> str:
         fillcolor="#EEF2FF", color="#C7D2FE", fontcolor="#1E293B"];
   edge [fontname="Helvetica", fontsize={edge_size}, color="#94A3B8", fontcolor="#64748B"];
 """
-    nodes = f"""  asr [label="{labels["asr"]}"]; llm [label="{labels["llm"]}"];
-  tool [label="{labels["tool"]}", fillcolor="#FFFBEB", color="#FCD34D"];
-  tts [label="{labels["tts"]}", fillcolor="#ECFDF5", color="#A7F3D0"];
+    green = 'fillcolor="#ECFDF5", color="#A7F3D0"'
+    amber = 'fillcolor="#FFFBEB", color="#FCD34D"'
+    rose = 'fillcolor="#FFF1F2", color="#FECDD3"'
+    grey = 'fillcolor="#F8FAFC", color="#CBD5E1", fontcolor="#64748B"'
+    barge = 'style=dotted, color="#DC2626", fontcolor="#DC2626"'
+    mic = tr("麥克風\\n16 kHz PCM", "Microphone\\n16 kHz PCM")
+    out = tr("瀏覽器播放", "Browser plays")
+    tools = tr("本機工具\\n天氣・店家", "Local tools\\nweather, places")
+    own = tr("字幕\\n模型自己的轉寫", "Captions\\nthe model's transcript")
+    side = tr("串流辨識\\n只做字幕", "Streaming ASR\\ncaptions only")
+    delegate = tr("背景 gpt-5.5\\n委派查詢", "Background gpt-5.5\\ndelegated work")
+    if kind == "cascade":
+        labels = {
+            "asr": tr("串流辨識\\nVAD + ASR", "Streaming ASR\\nVAD + ASR"),
+            "llm": tr("前台 LLM\\n回答／反問／查詢", "Front LLM\\nanswer / ask / look up"),
+            "tool": tr("背景工具\\n天氣・店家", "Background tools\\nweather, places"),
+            "tts": tr("語音合成\\n", "Speech synthesis\\n")
+            + (tts_label or tr("選定的聲音", "chosen voice")),
+        }
+        nodes = f"""  asr [label="{labels["asr"]}"]; llm [label="{labels["llm"]}"];
+  tool [label="{labels["tool"]}", {amber}]; tts [label="{labels["tts"]}", {green}];
 """
-    if compact:
+        if compact:
+            return (
+                head
+                + nodes
+                + """  asr -> llm -> tts; llm -> tool [style=dashed];
+  tool -> tts [style=dashed]; {rank=same; llm; tool}
+}"""
+            )
         return (
             head
             + nodes
-            + """  asr -> llm -> tts; llm -> tool [style=dashed];
-  tool -> tts [style=dashed]; {rank=same; llm; tool}
-}"""
-        )
-    return (
-        head
-        + nodes
-        + f"""  mic [label="{labels["mic"]}"];
-  out [label="{labels["out"]}", fillcolor="#ECFDF5", color="#A7F3D0"];
-  mic -> asr -> llm; llm -> tts [label="{labels["filler"]}"]; tts -> out;
-  llm -> tool [style=dashed]; tool -> llm [label="{labels["result"]}", style=dashed];
-  asr -> out [label="{labels["barge"]}", style=dotted, color="#DC2626", fontcolor="#DC2626"];
+            + f"""  mic [label="{mic}"]; out [label="{out}", {green}];
+  mic -> asr [label="{tr("聲音", "audio")}"]; asr -> llm [label="{tr("文字", "text")}"];
+  llm -> tts [label="{tr("先說一句", "say a line first")}"]; tts -> out;
+  llm -> tool [style=dashed]; tool -> llm [label="{tr("結果", "result")}", style=dashed];
+  asr -> out [label="{tr("插話：停止播放", "barge-in: stop")}", {barge}];
 }}"""
+        )
+    if kind == "turn":
+        model = (
+            tr("gpt-realtime（雲端）\\n聽聲音 → 直接說", "gpt-realtime (cloud)\\nhears → speaks")
+            if cloud
+            else tr("單一語音模型\\n聽聲音 → 直接說", "One speech model\\nhears → speaks")
+        )
+        vad = (
+            tr("伺服器 VAD\\n判斷你講完", "Server VAD\\nend of your turn")
+            if cloud
+            else tr("停頓偵測\\n判斷你講完", "Pause detection\\nend of your turn")
+        )
+        body = f"""  mic [label="{mic}"]; vad [label="{vad}"]; model [label="{model}", {rose}];
+  out [label="{out}", {green}];
+  mic -> vad; vad -> model [label="{tr("整段聲音", "the whole turn")}"];
+  model -> out [label="{tr("語音", "speech")}"];
+  vad -> out [label="{tr("插話：停止播放", "barge-in: stop")}", {barge}];
+"""
+        if cloud:
+            body += f"""  cap [label="{own}", {grey}];
+  tool [label="{tools}", {amber}];
+  model -> cap [style=dashed]; model -> tool [label="function call", style=dashed];
+  tool -> model [label="{tr("結果", "result")}", style=dashed];
+"""
+        elif captions:
+            body += f"""  asr [label="{side}", {grey}];
+  mic -> asr [style=dashed]; {{rank=same; vad; asr}}
+"""
+        return head + body + "}"
+    model = (
+        tr("gpt-live-1（雲端）\\n邊聽邊說", "gpt-live-1 (cloud)\\nlistens while it talks")
+        if cloud
+        else tr(
+            "全雙工語音模型\\n每秒：說／附和／停",
+            "Full-duplex model\\nevery second: talk / nod / stop",
+        )
     )
+    body = f"""  mic [label="{mic}"]; model [label="{model}", {rose}]; out [label="{out}", {green}];
+  mic -> model [label="{tr("持續送入（含安靜）", "always streaming (silence too)")}"];
+  model -> out [label="{tr("語音", "speech")}"];
+  model -> model [label="{tr("自己決定何時開口", "decides when to talk")}", style=dashed];
+"""
+    if cloud:
+        body += f"""  bg [label="{delegate}", {amber}];
+  tool [label="{tools}", {amber}]; cap [label="{own}", {grey}];
+  model -> bg [style=dashed]; bg -> tool [style=dashed];
+  bg -> model [label="{tr("結果", "result")}", style=dashed]; model -> cap [style=dashed];
+"""
+    elif captions:
+        body += f"""  asr [label="{side}", {grey}];
+  mic -> asr [style=dashed];
+"""
+    return head + body + "}"
 
 
 PAGE = "views/voice_assistant.py"

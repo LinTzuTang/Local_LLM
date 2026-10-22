@@ -304,7 +304,11 @@ export default function (component) {
     if (!m) {
       const partial = s.messages.findIndex((x) => x.role === "user" && x.partial);
       m = { role: "asst", sid: ev.speech_id, turn: ev.turn, kind: ev.kind, text: "", cut: false };
-      if (partial >= 0) s.messages.splice(partial, 0, m);
+      // A reply to words still being transcribed (a cloud model answers before its transcript
+      // is final) goes after them; any other reply stays above the "hearing" bubble.
+      const pending = partial >= 0 ? s.messages[partial] : null;
+      const answersIt = pending && pending.turn != null && ev.turn != null && ev.turn >= pending.turn;
+      if (partial >= 0 && !answersIt) s.messages.splice(partial, 0, m);
       else s.messages.push(m);
     }
     return m;
@@ -348,6 +352,7 @@ export default function (component) {
         let m = s.messages.find((x) => x.role === "user" && x.partial);
         if (!m) { m = { role: "user", text: "", partial: true }; s.messages.push(m); }
         m.text = ev.text;
+        if (ev.turn != null) m.turn = ev.turn;
         break;
       }
       case "user_final": {
@@ -645,6 +650,7 @@ export default function (component) {
     const query = new URLSearchParams({
       asr: p.asr, llm: p.llm, voice: p.voice, rate: String(p.rate || 0),
       net: p.net ? "1" : "0", barge: p.barge ? "1" : "0", s2tw: "1",
+      engine: p.engine || "cascade", captions: p.captions === false ? "0" : "1",
     });
     let ws;
     try {

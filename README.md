@@ -31,7 +31,14 @@ things:
 The UI is bilingual (中文 / EN, switch in the top-right corner). The demo company and all of
 its data are fictional.
 
-## What's new (2026-10-21)
+## What's new (2026-10-22)
+
+- **Live voice assistant: three ways of talking**: the settings first ask *how it talks* (① cascade, ② turn-based, ③ full-duplex), then which model, and draw that way's architecture. Besides the cascade, ② runs Qwen3-Omni 30B-A3B or MiniCPM-o 4.5 locally (one speech model hears you and speaks itself; no tools) and ③ MiniCPM-o's full-duplex mode; with Azure OpenAI keys in `.env`, ② `gpt-realtime` and ③ `gpt-live-1` can be tried too (the audio is uploaded; the weather and place lookups still run locally). Cloud models caption you with their own transcript; local single models can do without captions.
+- **Neural voices**: next to macOS, the speech page and the assistant offer local neural TTS, each labelled with where it comes from: MediaTek VITS (sherpa-onnx) and, through mlx-audio, Kokoro-82M, Qwen3-TTS 0.6B (preset voices, and a clone of a Taiwanese speaker, `data/lab/voices/`), VoxCPM2 and Breeze-TTS-2 (non-commercial). Their weights go in `models/speech_extra/tts/<folder>` (`hf download mlx-community/Kokoro-82M-bf16 --local-dir models/speech_extra/tts/kokoro-82m`; folders and repositories in `src/local_llm/mlx_tts.py`). BreezyVoice was tried and dropped: about 12x slower than real time on the CPU.
+- **TTS benchmark**: Compare speech models → Text to speech now reads the fictional production meeting by default, one sentence at a time as the assistant speaks, and shows how long the first sentence takes and whether a voice can talk live; *Benchmark* charts eleven voices. Kokoro speaks within about 0.3 s and is the assistant's default voice; the Qwen3-TTS Taiwanese clone is the clearest test speaker (0.7% errors through the streaming ASR) and reads the test scripts. Qwen3-TTS and VoxCPM2 mispronounce Traditional characters, so they are given Simplified text (round-trip errors 22.6% → 0% on a test line).
+- **X-ASR (160 / 480 ms)** can be the assistant's streaming ASR; the zipformer models' `SIL` silence token no longer leaks into captions.
+
+## 2026-10-21
 
 - **Local GPT-Live in the Scenario gallery**: pick "Local GPT-Live (talk while it looks up)" there to run it in place. Seven **test scripts** (weather and places in Chinese and English, rain tomorrow, a café near a landmark, small talk, cutting in with a new question), your own lines or uploaded recordings stand in for the microphone.
 - **Front model is now Gemma 4 12B**: on those seven conversations across ten models it made every decision right, invented nothing and sounded the most natural, in less memory (7.7 GB) than E4B; E4B (about 0.2 s faster) can still be picked in the settings.

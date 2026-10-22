@@ -14,6 +14,7 @@ recording through a session frame by frame and turns the outputs into timed even
 """
 
 import os
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -109,6 +110,15 @@ def drive(
 # -- sherpa-onnx ------------------------------------------------------------------------------
 
 
+# A silence token some zipformer models write into the text at a long pause ("好 SIL謝謝").
+_SIL = re.compile(r"\s*(?<![A-Za-z])SIL(?![A-Za-z])\s*")
+_CJK_GAP = re.compile(r"(?<=[一-鿿])\s+(?=[一-鿿])")
+
+
+def clean(text: str) -> str:
+    return _CJK_GAP.sub("", _SIL.sub(" ", text)).strip()
+
+
 class SherpaSession:
     append_only = False
 
@@ -121,7 +131,7 @@ class SherpaSession:
         r, s = self.recognizer, self.stream
         while r.is_ready(s):
             r.decode_stream(s)
-        text = r.get_result(s).strip()
+        text = clean(r.get_result(s))
         out = []
         if r.is_endpoint(s):
             if text:
@@ -146,7 +156,7 @@ class SherpaSession:
         r, s = self.recognizer, self.stream
         while r.is_ready(s):
             r.decode_stream(s)
-        text = r.get_result(s).strip()
+        text = clean(r.get_result(s))
         return [(text, True)] if text else []
 
 
