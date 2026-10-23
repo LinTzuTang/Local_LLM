@@ -1,7 +1,8 @@
 """Compare speech models: transcription (with noise / telephone conditions), speech translation,
-meeting diarization, simulated live captions, text to speech and a voice-chat assistant. The
-modes live in speech_compare, speech_translate, speech_meeting, speech_live, speech_tts and
-speech_voice; the language-model comparison is views/compare.py."""
+meeting diarization, simulated live captions and text to speech. The modes live in
+speech_compare, speech_translate, speech_meeting, speech_live and speech_tts; the voice chat
+moved to the live voice assistant (its cascade takes streaming or whole-clip ASR), speech_voice
+still draws the saved voice-chat runs. The language-model comparison is views/compare.py."""
 
 import speech_common as sc
 import speech_compare
@@ -9,7 +10,6 @@ import speech_live
 import speech_meeting
 import speech_translate
 import speech_tts
-import speech_voice
 import streamlit as st
 import ui
 from common import gateway_url, kept
@@ -20,13 +20,12 @@ ui.page_header(
     tr("語音模型比較", "Compare speech models"),
     tr(
         "同一段錄音交給多個語音模型，並排比較逐字稿、速度與錯誤率；也能測噪音與電話音質、中翻英、"
-        "會議裡誰在什麼時候說話、即時字幕的延遲、文字轉語音的聲音，以及用說的跟本機助理對話。"
+        "會議裡誰在什麼時候說話、即時字幕的延遲，以及文字轉語音的聲音。"
         "全部在本機執行，比較在背景進行，可以切換頁面。",
         "Give the same recording to several speech models and compare transcripts, speed and "
         "error rates side by side; also test noise and telephone audio, Chinese-to-English "
-        "translation, who spoke when in a meeting, live-caption latency, text-to-speech voices "
-        "and a spoken conversation with a local assistant. Everything runs on this machine, in "
-        "the background, so you can switch pages.",
+        "translation, who spoke when in a meeting, live-caption latency and text-to-speech "
+        "voices. Everything runs on this machine, in the background, so you can switch pages.",
     ),
 )
 
@@ -36,10 +35,11 @@ MODES = {
     "meeting": (tr("會議講者", "Meeting"), "record_voice_over"),
     "live": (tr("串流（即時）", "Live"), "sensors"),
     "tts": (tr("文字轉語音", "Text to speech"), "text_to_speech"),
-    "voice_chat": (tr("語音對話", "Voice chat"), "forum"),
 }
 left, right = st.columns([3, 1], vertical_alignment="bottom")
 st.session_state.setdefault("speech_mode", "transcribe")
+if st.session_state.speech_mode not in MODES:  # "voice_chat" moved to the voice assistant
+    st.session_state.speech_mode = "transcribe"
 mode = (
     left.segmented_control(
         tr("模式", "Mode"),
@@ -95,15 +95,18 @@ blurbs = {
         "at a time, as the voice assistant does: how soon each talks, whether it keeps up, and "
         "a round trip through a speech model to score how intelligible it is.",
     ),
-    "voice_chat": tr(
-        "用說的問問題：語音辨識 → LLM 回答 → 語音合成念出來，全部在本機；或讓 Gemma 4 直接聽錄音回答。"
-        "每一步花多少時間都列出來，可以連續對話幾輪。",
-        "Ask a question out loud: speech recognition → an LLM answers → speech synthesis reads "
-        "it, all on this machine; or let Gemma 4 hear the recording and answer. Each stage's "
-        "time is shown, and the conversation can go on for a few turns.",
-    ),
 }
 st.caption(blurbs[mode])
+if mode == "tts":
+    st.page_link(
+        "views/voice_assistant.py",
+        label=tr(
+            "語音對話（辨識 → LLM → 語音）已整合到「即時語音助理」：串接式可選串流或非串流辨識，一起比較速度",
+            "Voice chat (ASR → LLM → speech) now lives in the Live voice assistant: its cascade "
+            "takes streaming or whole-clip ASR, so their speed can be compared",
+        ),
+        icon=":material/support_agent:",
+    )
 
 url = gateway_url()
 status = sc.gateway_status(url)
@@ -115,6 +118,5 @@ pages = {
     "meeting": speech_meeting.meeting_page,
     "live": speech_live.live_page,
     "tts": speech_tts.tts_page,
-    "voice_chat": speech_voice.voice_page,
 }
 pages.get(mode, speech_compare.transcribe_page)(url, status)

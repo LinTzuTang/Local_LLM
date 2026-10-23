@@ -83,9 +83,16 @@ def panel(page: str = va.PAGE) -> None:
     status = sc.gateway_status(url)
     if status is None:
         st.stop()
-    names = sc.names("stream")
+    names = sc.names("stream") | sc.names("asr")
     asr_models = [m for m in va.STREAM_MODELS if status.get(m, {}).get("installed")
                   and speech_stream.realtime(m)]  # fmt: skip
+    pause_models = [m for m in va.PAUSE_MODELS if status.get(m, {}).get("installed")]
+
+    def asr_label(m: str) -> str:
+        kind = (tr("串流", "streaming") if m in va.STREAM_MODELS
+                else tr("非串流・停頓後整句辨識", "whole-clip, after each pause"))  # fmt: skip
+        return f"{names.get(m, m)} · {kind}"
+
     if not asr_models:
         st.info(
             tr("還沒有下載串流辨識模型；到「語音模型比較 → 即時」或模型庫下載 sherpa-onnx Zipformer。",
@@ -181,9 +188,11 @@ def panel(page: str = va.PAGE) -> None:
                 **kept("va_captions"),
             )
         c1, c2, c3 = st.columns(3)
+        # the cascade can also cut at pauses and use a whole-clip model (gateway/voice.py)
+        asr_choices = asr_models + (pause_models if engine == "cascade" else [])
         st.session_state.setdefault("va_asr", va.DEFAULT_ASR if va.DEFAULT_ASR in asr_models
                                     else asr_models[0])  # fmt: skip
-        if st.session_state.va_asr not in asr_models:
+        if st.session_state.va_asr not in asr_choices:
             st.session_state.va_asr = asr_models[0]
         if engine in voice_cloud.ENGINES or not captions:  # no ASR here
             asr = ""
@@ -201,18 +210,30 @@ def panel(page: str = va.PAGE) -> None:
             c1.markdown(f"**{tr('字幕', 'Captions')}**  \n{note}")
         else:
             asr = c1.selectbox(
-                tr("串流辨識模型", "Streaming ASR"),
-                asr_models,
-                format_func=lambda m: names.get(m, m),
+                tr("語音辨識模型", "Speech recognition")
+                if not single
+                else tr("串流辨識模型", "Streaming ASR"),
+                asr_choices,
+                format_func=asr_label,
                 help=tr(
-                    "只列出跟得上即時的串流模型（4-bit Voxtral 可用，全精度版太慢）。"
+                    "**串流**：邊講邊出字，講完約 0.3 秒內定稿（sherpa-onnx、X-ASR、Voxtral 4-bit）。"
+                    "**非串流**：偵測到你停頓（約 0.8 秒）後把整句交給模型辨識，講話時看不到字，但通常更準"
+                    "（國慶演說評測：Qwen3-ASR-1.7B 2.9%、Voxtral 4-bit 3.7%）；每輪延遲表的「辨識」欄可以直接比較兩種。"
+                    if not single
+                    else "只列出跟得上即時的串流模型（4-bit Voxtral 可用，全精度版太慢）。"
                     + (
                         "這個模型不會回傳它聽到的字，所以用串流辨識顯示你的字幕；它直接聽你的聲音，"
                         "辨識結果不會送給它。"
                         if single
                         else ""
                     ),
-                    "Only streaming models that keep up with real time (4-bit Voxtral; the "
+                    "**Streaming**: words appear while you talk, final about 0.3 s after you "
+                    "stop (sherpa-onnx, X-ASR, Voxtral 4-bit). **Whole-clip**: once you pause "
+                    "(about 0.8 s) the whole utterance goes to the model; nothing shows while you "
+                    "talk, but it is usually more accurate (National Day speech: Qwen3-ASR-1.7B "
+                    "2.9%, Voxtral 4-bit 3.7%); the latency table's ASR column compares the two."
+                    if not single
+                    else "Only streaming models that keep up with real time (4-bit Voxtral; the "
                     "full-precision build is too slow)."
                     + (
                         " This model never says what it heard, so the ASR draws your captions; "
@@ -376,8 +397,8 @@ def panel(page: str = va.PAGE) -> None:
 
         st.markdown(f"**{tr('架構', 'How it works')}**")
         tts_label = voice_source(tts.find(voice, voices)) if kind == "cascade" else None
-        st.graphviz_chart(va.flow_dot(kind, engine, captions=captions, tts_label=tts_label),
-                          width="content")  # fmt: skip
+        st.graphviz_chart(va.flow_dot(kind, engine, captions=captions, tts_label=tts_label,
+                                      pause=asr in va.PAUSE_MODELS), width="content")  # fmt: skip
 
     demo, script_note = test_script(user_names, short)
 

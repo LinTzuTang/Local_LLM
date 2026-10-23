@@ -7,14 +7,16 @@ model (gateway/live.py, VAD included) and hands every event to the VoiceAgent, w
 calls tools in the background, synthesises speech and emits JSON events back (the module
 docstring of voice_agent lists them), ending with {"type": "done", "summary"}.
 
-Query: asr (a streaming model), llm (an Ollama model), voice (a macOS `say` voice), rate
-(words per minute, 0 = default), net (1 = allow the scenario's weather and place lookups),
-barge (1 = let the user interrupt), s2tw (1 = show and use ASR text in Traditional Chinese),
-engine ("cascade", the default; or a single speech model of local_llm/voice_omni.py:
-"qwen3-omni" / "minicpm-o" turn-based, "minicpm-o-duplex" full-duplex; or a cloud one of
-local_llm/voice_cloud.py, "gpt-realtime" / "gpt-live-1", which sends the audio to Azure; then
-llm, voice and rate do not apply, net only for the cloud ones; the ASR draws the captions of
-the local ones, while a cloud one gets no ASR at all: its own transcript is the caption).
+Query: asr (a streaming model, or a whole-clip one: then an energy VAD cuts each utterance at
+its pause and the model transcribes it whole once you stop, "pause" mode), llm (an Ollama
+model), voice (a macOS `say` voice), rate (words per minute, 0 = default), net (1 = allow the
+scenario's weather and place lookups), barge (1 = let the user interrupt), s2tw (1 = show
+and use ASR text in Traditional Chinese), engine ("cascade", the default; or a single speech
+model of local_llm/voice_omni.py: "qwen3-omni" / "minicpm-o" turn-based, "minicpm-o-duplex"
+full-duplex; or a cloud one of local_llm/voice_cloud.py, "gpt-realtime" / "gpt-live-1",
+which sends the audio to Azure; then llm, voice and rate do not apply, net only for the
+cloud ones; the ASR draws the captions of the local ones, while a cloud one gets no ASR at
+all: its own transcript is the caption).
 The Ollama URL comes from LOCAL_LLM_BASE_URL (default 127.0.0.1:11434), never the client.
 """
 
@@ -24,6 +26,7 @@ import os
 import queue
 import threading
 import time
+from pathlib import Path
 
 from fastapi import WebSocket
 
@@ -31,6 +34,8 @@ from .live import LiveSession
 from .manager import GatewayError, Manager
 
 STOP_GRACE_S = 0.4
+PAUSE_PAD_S = 0.3  # audio kept before and after an utterance for a whole-clip model
+PAUSE_GAP_S = 0.8  # quiet that ends an utterance for a whole-clip model
 
 
 def ollama_url() -> str:
@@ -61,9 +66,12 @@ async def voice_agent_ws(
     cloud = engine in voice_cloud.ENGINES  # hears and transcribes the audio itself
     # no ASR: a cloud model (its own transcript), or a local speech model without captions
     vad_only = cloud or (engine != "cascade" and not captions)
+    pause = False  # a whole-clip ASR model, transcribing each utterance after its pause
     try:
         if not vad_only:
-            manager.require_installed(manager.spec(asr, "stream"))
+            spec = manager.spec(asr)
+            pause = spec.task == "asr"
+            manager.require_installed(manager.spec(asr, "asr" if pause else "stream"))
     except GatewayError as exc:
         await websocket.send_json({"type": "error", "error": exc.message})
         await websocket.close()
@@ -127,6 +135,85 @@ async def voice_agent_ws(
             agent.close()
             emit(None)
 
+    def pause_asr() -> None:
+        """A whole-clip model (not streaming): an energy VAD finds each utterance and, once it
+        has ended (PAUSE_GAP_S of quiet), the model transcribes the whole of it, padded by
+        PAUSE_PAD_S; the cascade then answers the final text. Nothing is shown while you
+        talk; in the evaluation this was more accurate than true streaming (Qwen3-ASR-1.7B on
+        the National Day speech: 2.9% vs Voxtral's 3.7%)."""
+        import tempfile
+        import wave
+
+        import numpy as np
+
+        from local_llm import asr_streaming
+
+        rate = asr_streaming.RATE
+        # 0.8 s of quiet ends an utterance, as the streaming models' endpoint does: at 0.6 s a
+        # comma pause (「好，那就第一家吧，謝謝」 has 0.66 s) split one line into two turns.
+        vad = asr_streaming.OnlineVad(rate, min_gap=PAUSE_GAP_S)
+        t0, audio = None, bytearray()
+        start, base = None, 0  # utterance start (s), seconds of audio dropped from `audio`
+        jobs: queue.Queue = queue.Queue()
+
+        def transcribe(pcm: bytes) -> str:
+            with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+                with wave.open(f.name, "wb") as w:
+                    w.setnchannels(1)
+                    w.setsampwidth(2)
+                    w.setframerate(rate)
+                    w.writeframes(pcm)
+                out = manager.run(asr, "asr", keep_alive, audio=Path(f.name))
+            return (out.get("text") or "").strip()
+
+        def transcriber() -> None:  # one at a time, off the listening loop
+            while (pcm := jobs.get()) is not None:
+                try:
+                    text = transcribe(pcm)
+                except Exception as exc:
+                    emit({"type": "error", "error": f"{asr}: {exc}"})
+                    continue
+                agent.on_asr({"type": "final", "text": text}, t0)
+
+        worker = threading.Thread(target=transcriber, name=f"voice-{asr}-asr", daemon=True)
+        try:
+            started = time.perf_counter()
+            transcribe(bytes(int(0.5 * rate) * 2))  # load and warm the model
+            emit({"type": "ready", "asr": asr, "llm": agent.llm, "engine": engine,
+                  "append_only": False, "pause": True,
+                  "load_seconds": round(time.perf_counter() - started, 2)})  # fmt: skip
+            worker.start()
+            while (item := inbox.get()) is not None:
+                data, arrived = item
+                if t0 is None:
+                    t0 = arrived - len(data) / 2 / rate
+                audio += data
+                x = np.frombuffer(data, dtype="<i2").astype(np.float32) / 32768
+                for kind, seconds in vad.feed(x):
+                    agent.on_asr({"type": f"speech_{kind}", "t_audio": seconds}, t0)
+                    if kind == "start":
+                        start = seconds
+                    elif start is not None:
+                        a = max(int((start - PAUSE_PAD_S - base) * rate), 0) * 2
+                        b = int((seconds + PAUSE_PAD_S - base) * rate) * 2
+                        jobs.put(bytes(audio[a:b]))
+                        agent.on_asr({"type": "partial", "text": "…"}, t0)  # transcribing
+                        start = None
+                if start is None and len(audio) > 30 * rate * 2:  # keep the last 10 s
+                    drop = len(audio) - 10 * rate * 2
+                    del audio[:drop]
+                    base += drop / 2 / rate
+        except Exception as exc:
+            emit({"type": "error", "error": exc.message if isinstance(exc, GatewayError)
+                  else f"{type(exc).__name__}: {exc}"})  # fmt: skip
+        finally:
+            jobs.put(None)
+            if worker.is_alive():
+                worker.join(timeout=30)
+            time.sleep(STOP_GRACE_S)
+            agent.close()
+            emit(None)
+
     def work() -> None:
         # One thread for the ASR session: MLX arrays belong to the thread that made them.
         try:
@@ -154,7 +241,8 @@ async def voice_agent_ws(
 
     agent.start()
     name = f"voice-{engine if vad_only else asr}"
-    threading.Thread(target=listen if vad_only else work, name=name, daemon=True).start()
+    target = listen if vad_only else pause_asr if pause else work
+    threading.Thread(target=target, name=name, daemon=True).start()
 
     async def receive() -> None:
         try:

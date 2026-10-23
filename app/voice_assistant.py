@@ -31,6 +31,10 @@ DEFAULT_ASR = "zipformer-zh-en-stream"
 STREAM_MODELS = ("zipformer-zh-en-stream", "zipformer-zh-2025-stream", "paraformer-zh-en-stream",
                  "x-asr-zh-en-160ms", "x-asr-zh-en-480ms",
                  "voxtral-mini-4b-realtime-4bit")  # fmt: skip
+# Whole-clip models the cascade can use after each pause (gateway/voice.py, "pause" mode); the
+# Hokkien, full Whisper large and Ollama audio models are left out (off-topic or too slow).
+PAUSE_MODELS = ("qwen3-asr-1.7b", "qwen3-asr-0.6b", "breeze-asr-25", "sensevoice-small",
+                "whisper-large-v3-turbo", "fun-asr-nano")  # fmt: skip
 ASSISTANT_VOICE = voice_agent.DEFAULT_VOICE
 # The demo's user. macOS's male zh voices (Eddy, Reed, Rocko, Grandpa) are compact
 # formant voices that the streaming models mostly mishear (measured: 「今天天氣如何」 came out
@@ -441,7 +445,8 @@ KIND_NOTES = {
 
 
 def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool = True,
-             tts_label: str | None = None, compact: bool = False) -> str:  # fmt: skip
+             tts_label: str | None = None, pause: bool = False,
+             compact: bool = False) -> str:  # fmt: skip
     """The way of talking as a small Graphviz diagram (plain text labels, no emoji):
     ① the cascade, ② a turn-based or ③ a full-duplex speech model, local or in the cloud
     (`engine`); `compact` is the home page card's shorter cascade."""
@@ -466,7 +471,9 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
     delegate = tr("背景 gpt-5.5\\n委派查詢", "Background gpt-5.5\\ndelegated work")
     if kind == "cascade":
         labels = {
-            "asr": tr("串流辨識\\nVAD + ASR", "Streaming ASR\\nVAD + ASR"),
+            "asr": tr("停頓偵測 → 整句辨識\\n（非串流）", "Pause, then whole-clip ASR")
+            if pause
+            else tr("串流辨識\\nVAD + ASR", "Streaming ASR\\nVAD + ASR"),
             "llm": tr("前台 LLM\\n回答／反問／查詢", "Front LLM\\nanswer / ask / look up"),
             "tool": tr("背景工具\\n天氣・店家", "Background tools\\nweather, places"),
             "tts": tr("語音合成\\n", "Speech synthesis\\n")
