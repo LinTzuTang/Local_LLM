@@ -38,13 +38,16 @@ PROMPT_TEXT = (
     "只有擁有解密方法的對象，經由解密過程，才能將密文還原為正常可讀的內容。"
 )
 VITS = "MediaTek VITS（台灣）"
+# At its own pace VITS reads about 1.5x faster than macOS Tingting (a long line in 2.4 s
+# against 3.9 s); 0.65 brings it close, as clear as before (round trip 9.5% vs 10.0%).
+VITS_SPEED = 0.65
 VITS_LIMITS = (
     "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母"
-    "（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 10%，測試台詞約 14%），"
+    "（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 11%，測試台詞約 17%），"
     "短句常吞字，不適合當測試講者。",
     "Chinese characters only: numbers are spelled out first, English sentences go to macOS "
     "Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear and uneven "
-    "(about 10% round-trip errors, 14% on the test lines), drops syllables of short lines, "
+    "(about 11% round-trip errors, 17% on the test lines), drops syllables of short lines, "
     "not a good test speaker.",
 )
 VOICES = {
@@ -55,7 +58,7 @@ VOICES = {
         "engine": "vits",
         "sample": "我是聯發科的台灣華語語音。",
         "fast": True,
-        "revision": "+v2",  # renderings before the steadier settings are not reused
+        "revision": "+v3",  # renderings before the steadier, slower settings are not reused
         "test_speaker": False,  # drops syllables of short lines: a poor stand-in for the user
         "source": ("聯發科 VITS・sherpa-onnx", "MediaTek VITS, sherpa-onnx"),
         "limits": VITS_LIMITS,
@@ -193,7 +196,7 @@ def finish(x: np.ndarray, rate: int, fade_s: float = 0.03, pad_s: float = 0.3) -
 
 def render_vits(text: str, out: Path, sample_rate: int) -> Path:
     with _lock:  # one sherpa-onnx engine, used from several threads
-        audio = _vits().generate(speech_text(text), sid=0, speed=1.0)
+        audio = _vits().generate(speech_text(text), sid=0, speed=VITS_SPEED)
     x = finish(loudness(np.asarray(audio.samples, dtype=np.float32)), audio.sample_rate)
     return _write(out, _resample(x, audio.sample_rate, sample_rate), sample_rate)
 

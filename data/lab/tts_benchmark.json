@@ -100,16 +100,16 @@
    "size_gb": 0.12,
    "licence": "Apache-2.0",
    "limits": [
-    "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 10%，測試台詞約 14%），短句常吞字，不適合當測試講者。",
-    "Chinese characters only: numbers are spelled out first, English sentences go to macOS Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear and uneven (about 10% round-trip errors, 14% on the test lines), drops syllables of short lines, not a good test speaker."
+    "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 11%，測試台詞約 17%），短句常吞字，不適合當測試講者。",
+    "Chinese characters only: numbers are spelled out first, English sentences go to macOS Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear and uneven (about 11% round-trip errors, 17% on the test lines), drops syllables of short lines, not a good test speaker."
    ],
-   "load_s": 0.99,
-   "rtf": 0.1374,
-   "first_s": 0.437,
-   "max_s": 0.757,
-   "cer_offline": 0.0964,
-   "cer_stream": 0.1419,
-   "rms_db": -16.0
+   "load_s": 1.15,
+   "rtf": 0.1634,
+   "first_s": 0.653,
+   "max_s": 1.111,
+   "cer_offline": 0.107,
+   "cer_stream": 0.1718,
+   "rms_db": -16.1
   },
   {
    "voice": "Qwen3-TTS Vivian",
