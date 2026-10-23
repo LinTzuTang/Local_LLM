@@ -325,8 +325,10 @@ def panel(page: str = va.PAGE) -> None:
             st.session_state.setdefault("va_voice", default_voice or (voice_names or [""])[0])
             voice = c3.selectbox(tr("助理的聲音", "Assistant voice"), voice_names or [""],
                                  format_func=short, **kept("va_voice"))  # fmt: skip
-            if tr(*tts.limits(tts.find(voice, voices))):
-                c3.caption(f":material/info: {tr(*tts.limits(tts.find(voice, voices)))}")
+            voice_limits = tr(*tts.limits(tts.find(voice, voices)))
+            if voice_limits:
+                st.caption(f":material/record_voice_over: {tr('助理的聲音', 'Assistant voice')}："
+                           f"{voice_limits}")  # fmt: skip
             n1, n2 = st.columns([2.2, 1])
             st.session_state.setdefault("va_net", False)
             net = n1.toggle(
@@ -375,7 +377,7 @@ def panel(page: str = va.PAGE) -> None:
         st.markdown(f"**{tr('架構', 'How it works')}**")
         tts_label = voice_source(tts.find(voice, voices)) if kind == "cascade" else None
         st.graphviz_chart(va.flow_dot(kind, engine, captions=captions, tts_label=tts_label),
-                          width="stretch" if kind == "cascade" else "content")  # fmt: skip
+                          width="content")  # fmt: skip
 
     demo, script_note = test_script(user_names, short)
 
@@ -532,7 +534,8 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
         )
         user_limits = tr(*tts.limits(tts.find(user_voice))) if user_voice else ""
         if user_limits:
-            s2.caption(f":material/info: {user_limits}")
+            st.caption(f":material/record_voice_over: {tr('使用者的聲音', 'User voice')}："
+                       f"{user_limits}")  # fmt: skip
         if key != "custom":
             st.caption("　→　".join(("⤷ " + tr("插話：", "barge-in: ") if b else "") + t
                                    for t, b in pairs))  # fmt: skip

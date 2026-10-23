@@ -574,63 +574,68 @@ def benchmark_frame(data: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def benchmark_charts(df: pd.DataFrame) -> None:
-    order = list(df.sort_values("first_s")["voice"])
+def _bars(df: pd.DataFrame, field: str, title: str, *, sort: str, rule: float | None = None,
+          percent: bool = False) -> alt.LayerChart | alt.Chart:  # fmt: skip
+    """One horizontal bar per voice, coloured by the live-use verdict (names not cut short)."""
     colours = alt.Scale(domain=["green", "orange", "red"], range=["#16A34A", "#F59E0B", "#DC2626"])
-    base = alt.Chart(df).encode(
-        y=alt.Y("voice:N", sort=order, title=None),
-        color=alt.Color("colour:N", scale=colours, legend=None),
-        tooltip=["voice", "source", "first_s", "rtf", "cer_offline", "cer_stream"],
-    )
-    a, b = st.columns(2)
-    with a:
-        st.markdown(
-            tr("**首句延遲（秒，越短越快開口）**", "**First sentence (s, lower = talks sooner)**")
-        )
-        rule = alt.Chart(pd.DataFrame({"x": [LIVE_FIRST_S]})).mark_rule(
-            color="#64748B", strokeDash=[4, 3]).encode(x="x:Q")  # fmt: skip
-        bars = base.mark_bar().encode(x=alt.X("first_s:Q", title=tr("秒", "s")))
-        st.altair_chart(bars + rule, width="stretch")
-    with b:
-        st.markdown(
-            tr(
-                "**即時倍率 RTF（合成時間 ÷ 音訊長度）**",
-                "**Real-time factor (synthesis ÷ audio)**",
-            )
-        )
-        rule = alt.Chart(pd.DataFrame({"x": [LIVE_RTF]})).mark_rule(
-            color="#64748B", strokeDash=[4, 3]).encode(x="x:Q")  # fmt: skip
-        bars = base.mark_bar().encode(x=alt.X("rtf:Q", title="RTF"))
-        st.altair_chart(bars + rule, width="stretch")
-    st.caption(
-        tr(
-            f"綠色＝可即時對話（首句 ≤ {LIVE_FIRST_S:.0f} 秒且 RTF < {LIVE_RTF}，虛線）；橘色＝勉"
-            "強；"
-            "紅色＝太慢，只適合預先合成。",
-            f"Green = fast enough to talk live (first sentence ≤ {LIVE_FIRST_S:.0f} s and RTF < "
-            f"{LIVE_RTF}, dashed lines); orange = borderline; red = pre-render only.",
-        )
-    )
-    long = df.melt(id_vars=["voice", "colour"], value_vars=["cer_offline", "cer_stream"],
-                   var_name="check", value_name="cer")  # fmt: skip
-    names = {
-        "cer_offline": tr("會議稿・整段辨識", "Meeting, whole-clip ASR"),
-        "cer_stream": tr("測試腳本・串流辨識", "Test script, streaming ASR"),
-    }
-    long["check"] = long["check"].map(names)
-    st.markdown(tr("**回聽錯字率（越低越清楚）**", "**Round-trip error rate (lower = clearer)**"))
-    chart = (
-        alt.Chart(long)
+    axis = alt.Axis(format="%") if percent else alt.Axis()
+    bars = (
+        alt.Chart(df)
         .mark_bar()
         .encode(
-            y=alt.Y("voice:N", sort=list(df.sort_values("cer_offline")["voice"]), title=None),
-            x=alt.X("cer:Q", title="CER", axis=alt.Axis(format="%")),
-            yOffset="check:N",
-            color=alt.Color("check:N", title=None, legend=alt.Legend(orient="bottom")),
-            tooltip=["voice", "check", alt.Tooltip("cer:Q", format=".1%")],
+            y=alt.Y(
+                "voice:N",
+                sort=list(df.sort_values(sort)["voice"]),
+                title=None,
+                axis=alt.Axis(labelLimit=220),
+            ),  # fmt: skip
+            x=alt.X(f"{field}:Q", title=title, axis=axis),
+            color=alt.Color("colour:N", scale=colours, legend=None),
+            tooltip=[
+                "voice",
+                "source",
+                "first_s",
+                "rtf",
+                alt.Tooltip("cer_offline:Q", format=".1%"),
+                alt.Tooltip("cer_stream:Q", format=".1%"),
+            ],  # fmt: skip
         )
     )
-    st.altair_chart(chart, width="stretch")
+    if rule is None:
+        return bars
+    line = alt.Chart(pd.DataFrame({"x": [rule]})).mark_rule(
+        color="#64748B", strokeDash=[4, 3]).encode(x="x:Q")  # fmt: skip
+    return bars + line
+
+
+def benchmark_charts(df: pd.DataFrame) -> None:
+    a, b = st.columns(2)
+    a.markdown(tr("**首句延遲（越短越快開口）**", "**First sentence (lower = talks sooner)**"))
+    a.altair_chart(_bars(df, "first_s", tr("秒", "s"), sort="first_s", rule=LIVE_FIRST_S),
+                   width="stretch")  # fmt: skip
+    b.markdown(
+        tr("**即時倍率 RTF（合成時間 ÷ 語音長度）**", "**Real-time factor (synthesis ÷ audio)**")
+    )
+    b.altair_chart(_bars(df, "rtf", "RTF", sort="first_s", rule=LIVE_RTF), width="stretch")
+    st.caption(
+        tr(
+            f"顏色＝能不能即時對話：綠色可以（首句 ≤ {LIVE_FIRST_S:.0f} 秒且 RTF < {LIVE_RTF}，虛"
+            "線）；"
+            "橘色勉強；紅色太慢，只適合預先合成。",
+            f"Colour = live use: green yes (first sentence ≤ {LIVE_FIRST_S:.0f} s and RTF < "
+            f"{LIVE_RTF}, dashed lines); orange borderline; red pre-render only.",
+        )
+    )
+    c, d = st.columns(2)
+    c.markdown(
+        tr("**會議稿回聽錯字率（越低越清楚）**", "**Meeting round-trip errors (lower = clearer)**")
+    )
+    c.altair_chart(_bars(df, "cer_offline", "CER", sort="cer_offline", percent=True),
+                   width="stretch")  # fmt: skip
+    d.markdown(tr("**測試腳本串流辨識錯字率（能不能當測試講者）**",
+                  "**Test script through streaming ASR (a good test speaker?)**"))  # fmt: skip
+    d.altair_chart(_bars(df, "cer_stream", "CER", sort="cer_stream", percent=True),
+                   width="stretch")  # fmt: skip
 
 
 def benchmark_view() -> None:
@@ -642,9 +647,9 @@ def benchmark_view() -> None:
     n, date = len(data["rows"]), data.get("date", "")
     st.markdown(
         tr(
-            f"**{n} 個聲音念同一份虛構產銷會議（9 句、約 88 秒）**，像串接式助理一樣一句一句合成"
+            f"**{n} 個聲音念同一份虛構產銷會議（20 句、約 88 秒）**，像串接式助理一樣一句一句合成"
             f"（{date}，這台 Mac）。看三件事：多久開口、跟不跟得上、聽不聽得清楚。",
-            f"**{n} voices read the same fictional production meeting (9 lines, about 88 s)** "
+            f"**{n} voices read the same fictional production meeting (20 sentences, about 88 s)** "
             f"one sentence at a time, as the cascade assistant speaks ({date}, this Mac): how "
             "soon it talks, whether it keeps up, whether it is clear.",
         )
@@ -674,14 +679,15 @@ def benchmark_view() -> None:
         st.markdown(tr(*data["notes"]))
     st.caption(
         tr(
-            "方法：每個聲音先念一句短句載入模型（「載入」），再逐句合成；「首句」是 9 句的中位數，"
-            "也就是助理每句開口前要等的時間。會議稿 CER：Qwen3-ASR-1.7B 聽合成結果；測試腳本串流 "
+            "方法：每個聲音先念一句短句載入模型（「載入」），再逐句合成；「首句」是第一句的合成時間，"
+            "也就是助理開口前要等多久。會議稿 CER：Qwen3-ASR-1.7B 聽合成結果；測試腳本串流 "
             "CER："
             "即時語音助理的 16 句中文測試台詞送進預設串流辨識（Zipformer），看能不能當測試講者。"
             "腳本：scripts/speech_eval/run_tts_bench.py。",
             "Method: each voice first reads a short line to load the model (Load), then the "
-            "meeting one sentence at a time; First is the median over the 9 lines, the wait "
-            "before each sentence. Meeting CER: Qwen3-ASR-1.7B transcribes the result; script "
+            "meeting one sentence at a time; First is how long the first sentence took, the "
+            "wait before the assistant talks. Meeting CER: Qwen3-ASR-1.7B transcribes the result;"
+            " script "
             "streaming CER: the voice assistant's 16 Chinese test lines through the default "
             "streaming ASR (Zipformer), i.e. can the voice act as the test speaker. Script: "
             "scripts/speech_eval/run_tts_bench.py.",

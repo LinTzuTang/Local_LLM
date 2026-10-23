@@ -89,11 +89,11 @@ blurbs = {
         "results of local and cloud streaming models.",
     ),
     "tts": tr(
-        "同一段文字用不同聲音念出來（macOS 內建語音，本機免費），比較合成速度，並用語音辨識"
-        "「回聽」合成結果、和原文比對錯誤率，看機器聽不聽得懂。",
-        "Speak the same text with different voices (macOS's built-in voices, local and free), "
-        "compare synthesis speed, and transcribe the result back with a speech model "
-        "(round trip) to score how intelligible it is against the input text.",
+        "同一段文字用不同聲音念出來（macOS 內建或本機 AI 語音），像語音助理一樣一句一句合成："
+        "比較多久開口、跟不跟得上，並用語音辨識「回聽」合成結果、和原文比對錯誤率。",
+        "Speak the same text with different voices (macOS or local neural voices) one sentence "
+        "at a time, as the voice assistant does: how soon each talks, whether it keeps up, and "
+        "a round trip through a speech model to score how intelligible it is.",
     ),
     "voice_chat": tr(
         "用說的問問題：語音辨識 → LLM 回答 → 語音合成念出來，全部在本機；或讓 Gemma 4 直接聽錄音回答。"
