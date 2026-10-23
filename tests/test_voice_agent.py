@@ -412,6 +412,7 @@ def test_early_commit_at_speech_end_and_only_new_words_from_the_final():
     a.on_asr({"type": "speech_start", "t_audio": 3.0}, a.t0)
     a.on_asr({"type": "partial", "text": "我在"}, a.t0)
     a.on_asr({"type": "speech_end", "t_audio": 3.5}, a.t0)
+    s.wait(lambda: len(s.of("user_final")) == 2)  # committed once the text settled
     a.on_asr({"type": "speech_start", "t_audio": 4.0}, a.t0)
     a.on_asr({"type": "partial", "text": "我在內湖"}, a.t0)
     assert s.of("user_partial")[-1]["text"] == "內湖"
@@ -420,6 +421,31 @@ def test_early_commit_at_speech_end_and_only_new_words_from_the_final():
     assert [e["text"] for e in s.of("user_final")][1:] == ["我在", "內湖"]
     assert voice_agent.after_prefix("謝謝，這附近", "謝謝這") == "附近"
     assert voice_agent.after_prefix("你好", "謝謝") is None
+    a.close()
+
+
+def test_early_commit_waits_for_the_last_words_of_fast_speech(monkeypatch):
+    monkeypatch.setattr(voice_agent, "EARLY_SETTLE_S", 0.8)  # room for a busy test machine
+    monkeypatch.setattr(voice_agent, "EARLY_MAX_S", 1.6)
+    s = Session()
+    a = s.agent
+    a.on_asr({"type": "speech_start", "t_audio": 0.0}, a.t0)
+    a.on_asr({"type": "partial", "text": "今天電氣"}, a.t0)
+    a.on_asr({"type": "speech_end", "t_audio": 0.9}, a.t0)
+    time.sleep(0.2)  # the recogniser is still decoding
+    a.on_asr({"type": "partial", "text": "今天天氣如何"}, a.t0)
+    s.wait(lambda: s.of("user_final"))
+    assert [e["text"] for e in s.of("user_final")] == ["今天天氣如何"]
+    a.on_asr({"type": "final", "text": "今天天氣如何"}, a.t0)
+    s.wait(lambda: s.idles() >= 1)
+    assert len(a.turns) == 1
+    # a final before the text settled commits at once, without a second turn
+    a.on_asr({"type": "speech_start", "t_audio": 3.0}, a.t0)
+    a.on_asr({"type": "partial", "text": "我在內湖"}, a.t0)
+    a.on_asr({"type": "speech_end", "t_audio": 3.6}, a.t0)
+    a.on_asr({"type": "final", "text": "我在內湖"}, a.t0)
+    time.sleep(voice_agent.EARLY_MAX_S + 0.2)
+    assert [e["text"] for e in s.of("user_final")] == ["今天天氣如何", "我在內湖"]
     a.close()
 
 

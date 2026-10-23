@@ -156,9 +156,8 @@ def synthesize(
 
     if voice in neural_tts.VOICES:  # a Taiwanese neural voice; cached like `say`
         # "+norm2": renderings since the second loudness fix (older cached files are quieter)
-        out = (
-            Path(out) if out is not None else cache_path(text, voice + "+norm2", None, sample_rate)
-        )
+        key = voice + "+norm2" + neural_tts.VOICES[voice].get("revision", "")
+        out = Path(out) if out is not None else cache_path(text, key, None, sample_rate)
         if out.exists() and out.stat().st_size > 44:
             return out
         return neural_tts.render(text, voice, out, sample_rate)

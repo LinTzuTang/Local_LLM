@@ -59,6 +59,12 @@ HISTORY_MESSAGES = 10
 MAX_TOKENS = 220
 KEEP_ALIVE = "30m"
 COMMIT_DELAY_S = 0.35  # append-only ASR (Voxtral): wait this long after speech ends
+# Early commit waits until the partial text has not changed for EARLY_SETTLE_S after the VAD's
+# speech end, at most EARLY_MAX_S: a streaming model can still be decoding the last words of
+# fast speech when the VAD fires (measured: 「今天天氣如何」 at 6.7 characters a second was
+# committed as 「今天電氣」, and 「如」 0.3 s later became a turn of its own).
+EARLY_SETTLE_S = 0.3
+EARLY_MAX_S = 0.6
 WEEKDAYS = "一二三四五六日"
 
 TOOL_SPECS = [
@@ -470,6 +476,7 @@ class VoiceAgent:
         self.early_commit = early_commit
         self.awaiting: dict | None = None  # committed at speech end, final text pending
         self.commit_timer: threading.Timer | None = None
+        self.early_deadline: float | None = None  # early commit waiting for the text to settle
         self.llm_load_s: float | None = None
         self.brain = threading.Thread(target=self._loop, name="voice-agent", daemon=True)
 
@@ -521,9 +528,10 @@ class VoiceAgent:
             t = round(event["t_audio"] + offset, 3)
             with self.lock:
                 self.vad.append([t, None])
-                if self.commit_timer:  # still the same utterance (append-only ASR)
+                if self.commit_timer:  # still the same utterance (speaking again)
                     self.commit_timer.cancel()
                     self.commit_timer = None
+                self.early_deadline = None
                 if self.awaiting:
                     self.awaiting["resumed"] = True
             self.emit({"type": "vad", "state": "start", "at": t})
@@ -539,11 +547,9 @@ class VoiceAgent:
                     self.commit_timer = threading.Timer(COMMIT_DELAY_S, self._commit)
                     self.commit_timer.start()
             elif not self.append_only and self.early_commit and self.partial.strip():
-                text = self.partial.strip()
                 with self.lock:
-                    self.partial = ""
-                    self.awaiting = {"text": text, "resumed": False}
-                self._user(text, early=True)
+                    self.early_deadline = time.monotonic() + EARLY_MAX_S
+                    self._arm_early(EARLY_SETTLE_S)
         elif kind in ("partial", "final"):
             text = event.get("display") or self.display(event.get("text") or "")
             if self.append_only:
@@ -565,13 +571,46 @@ class VoiceAgent:
                             break
                 text = rest
             if kind == "partial":
-                self.partial = text
+                with self.lock:
+                    changed = text != self.partial
+                    self.partial = text
+                    if changed and self.early_deadline is not None:  # still settling
+                        left = self.early_deadline - time.monotonic()
+                        self._arm_early(min(EARLY_SETTLE_S, max(left, 0.0)))
                 if text.strip():
                     self.emit({"type": "user_partial", "text": text})
             else:
-                self.partial = ""
+                with self.lock:
+                    self.partial = ""
+                    self._disarm_early()
                 if text.strip(_PUNCT):
                     self._user(text.strip())
+
+    def _arm_early(self, delay: float) -> None:
+        """(Re)start the early-commit timer; the caller holds the lock."""
+        if self.commit_timer:
+            self.commit_timer.cancel()
+        timer = threading.Timer(delay, lambda: self._early_commit(timer))
+        timer.daemon = True
+        self.commit_timer = timer
+        timer.start()
+
+    def _disarm_early(self) -> None:
+        if self.commit_timer and self.early_deadline is not None:
+            self.commit_timer.cancel()
+            self.commit_timer = None
+        self.early_deadline = None
+
+    def _early_commit(self, timer: threading.Timer) -> None:
+        with self.lock:
+            if self.commit_timer is not timer or self.early_deadline is None:
+                return  # replaced (the text changed), or a final or new speech came first
+            text, self.partial = self.partial.strip(), ""
+            self.commit_timer, self.early_deadline = None, None
+            if text:
+                self.awaiting = {"text": text, "resumed": False}
+        if text:
+            self._user(text, early=True)
 
     def _commit(self) -> None:
         with self.lock:

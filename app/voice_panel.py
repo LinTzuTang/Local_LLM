@@ -501,10 +501,18 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
         if not english:  # the Qwen3-TTS Taiwanese clone when it is installed
             user_default = next((n for n in voice_names if n == va.USER_VOICE_TW), user_default)
         st.session_state.setdefault(voice_key, user_default or (voice_names or [""])[0])
+
+        def user_label(name: str) -> str:
+            v = tts.find(name)
+            weak = v is not None and v.get("test_speaker") is False
+            return short(name) + (
+                tr("（不建議當測試講者）", " (not a good test speaker)") if weak else ""
+            )
+
         user_voice = s2.selectbox(
             tr("使用者的聲音", "User's voice"),
             voice_names or [""],
-            format_func=short,
+            format_func=user_label,
             help=tr(
                 "台詞用這個聲音合成，再即時送進串流辨識。中文預設 Qwen3-TTS 台灣腔（複製台灣講者的聲音）：實測串流辨識"
                 "錯字率 0.7%，跟 macOS 婷婷一樣清楚。"

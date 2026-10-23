@@ -38,6 +38,14 @@ PROMPT_TEXT = (
     "只有擁有解密方法的對象，經由解密過程，才能將密文還原為正常可讀的內容。"
 )
 VITS = "MediaTek VITS（台灣）"
+VITS_LIMITS = (
+    "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母"
+    "（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 6–10%），短句常吞字，"
+    "不適合當測試講者。",
+    "Chinese characters only: numbers are spelled out first, English sentences go to macOS "
+    "Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear and uneven "
+    "(6-10% round-trip errors), drops syllables of short lines, not a good test speaker.",
+)
 VOICES = {
     VITS: {
         "name": VITS,
@@ -46,16 +54,11 @@ VOICES = {
         "engine": "vits",
         "sample": "我是聯發科的台灣華語語音。",
         "fast": True,
+        "revision": "+v2",  # renderings before the steadier settings are not reused
+        "test_speaker": False,  # drops syllables of short lines: a poor stand-in for the user
         "source": ("聯發科 VITS・sherpa-onnx", "MediaTek VITS, sherpa-onnx"),
-        "limits": (
-            "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母"
-            "（如 CNC）會被跳過；"
-            "咬字較不清楚（回聽錯字率約 15%）。",
-            "Chinese characters only: numbers are spelled out first, English sentences go to "
-            "macOS Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear "
-            "(about 15% round-trip errors).",
-        ),
-    },  # fmt: skip
+        "limits": VITS_LIMITS,
+    },
 } | mlx_tts.VOICES
 NATIVE_RATE = 22050
 # Every rendering is brought to TARGET_RMS_DB (macOS Tingting measures about -17), its peaks
@@ -100,10 +103,15 @@ def english(text: str) -> bool:
 def _vits():
     import sherpa_onnx
 
+    # Less randomness than the defaults (0.667, 0.8): with them the same line came out
+    # anywhere from 0.71 to 1.17 s and the short ones swallowed syllables (round trip on the
+    # 16 test lines: 15.5% -> 6-10%).
     model = sherpa_onnx.OfflineTtsVitsModelConfig(
         model=str(VITS_DIR / "vits-mr-20250709.onnx"),
         lexicon=str(VITS_DIR / "lexicon.txt"),
         tokens=str(VITS_DIR / "tokens.txt"),
+        noise_scale=0.5,
+        noise_scale_w=0.3,
     )
     config = sherpa_onnx.OfflineTtsConfig(
         model=sherpa_onnx.OfflineTtsModelConfig(vits=model, num_threads=4), max_num_sentences=1
@@ -172,10 +180,20 @@ def _read(path: Path) -> tuple[np.ndarray, int]:
     return np.frombuffer(samples, dtype="<i2").astype(np.float32) / 32768, rate
 
 
+def finish(x: np.ndarray, rate: int, fade_s: float = 0.03, pad_s: float = 0.3) -> np.ndarray:
+    """A short fade-out and trailing silence: VITS stops mid-sound (the last frame is only
+    about 10 dB below speech), which sounds cut off and leaves the recogniser no pause."""
+    n = min(len(x), int(fade_s * rate))
+    if n:
+        x = x.copy()
+        x[-n:] *= np.linspace(1.0, 0.0, n, dtype=np.float32)
+    return np.concatenate([x, np.zeros(int(pad_s * rate), np.float32)])
+
+
 def render_vits(text: str, out: Path, sample_rate: int) -> Path:
     with _lock:  # one sherpa-onnx engine, used from several threads
         audio = _vits().generate(speech_text(text), sid=0, speed=1.0)
-    x = loudness(np.asarray(audio.samples, dtype=np.float32))
+    x = finish(loudness(np.asarray(audio.samples, dtype=np.float32)), audio.sample_rate)
     return _write(out, _resample(x, audio.sample_rate, sample_rate), sample_rate)
 
 
