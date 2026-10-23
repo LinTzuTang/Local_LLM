@@ -40,11 +40,12 @@ PROMPT_TEXT = (
 VITS = "MediaTek VITS（台灣）"
 VITS_LIMITS = (
     "只會念中文字：數字先轉成國字再念，整句英文改用 macOS Samantha，中文句子裡的英文字母"
-    "（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 6–10%），短句常吞字，"
-    "不適合當測試講者。",
+    "（如 CNC）會被跳過；咬字較不清楚、每次念的長度不一（回聽錯字率約 10%，測試台詞約 14%），"
+    "短句常吞字，不適合當測試講者。",
     "Chinese characters only: numbers are spelled out first, English sentences go to macOS "
     "Samantha, Latin letters inside Chinese (e.g. CNC) are skipped; less clear and uneven "
-    "(6-10% round-trip errors), drops syllables of short lines, not a good test speaker.",
+    "(about 10% round-trip errors, 14% on the test lines), drops syllables of short lines, "
+    "not a good test speaker.",
 )
 VOICES = {
     VITS: {
