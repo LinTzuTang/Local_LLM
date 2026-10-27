@@ -76,7 +76,7 @@ export default function (component) {
   function render() {
     const live = s && ["connecting", "live", "finishing"].includes(s.phase);
     ui.mic.disabled = live;
-    ui.demo.disabled = live || !data.demo || !data.demo.lines.length;
+    ui.demo.disabled = live || !data.demo || (!data.demo.sim && !data.demo.lines.length);
     ui.stop.disabled = !live;
     ui.dot.className = "va-dot" + (live ? (s.ready && s.llmReady ? " on" : " busy") : "");
     ui.status.className = "va-status" + (s && s.error ? " va-error" : "");
@@ -431,6 +431,9 @@ export default function (component) {
       case "idle":
         s.idleCount += 1;
         break;
+      case "sim_line":
+        s.simLine = ev;
+        break;
       case "done":
         finish(ev);
         return;
@@ -589,7 +592,37 @@ export default function (component) {
     return false;
   }
 
+  async function runSim() {
+    // A simulated user (an LLM playing the user, local_llm/user_sim.py): after each reply the
+    // gateway writes and speaks the next line from the conversation so far and the goal.
+    const sim = data.demo.sim;
+    await until(() => s.llmReady, 120000);
+    await sleep(800);
+    for (let i = 0; i < sim.max_turns; i++) {
+      if (!s || s.phase !== "live") return;
+      s.simLine = null;
+      s.demoStep = `${L.sim_thinking} ${i + 1}/${sim.max_turns}`;
+      render();
+      send({ type: "sim_next", goal: sim.goal, voice: sim.voice, lang: sim.lang });
+      await until(() => s.simLine, 90000);
+      const line = s.simLine;
+      if (!line || !line.text || !line.pcm) break;
+      s.demoStep = `${L.demo_step} ${i + 1}: ${line.text}`;
+      render();
+      const before = s.finals;
+      await speak({ text: line.text, pcm: pcm16(line.pcm) });
+      await until(() => s.finals > before, 15000);
+      await until(() => s.idleCount > s.idleMark, 60000);
+      await sleep(700);
+      if (line.done) break;
+    }
+    s.demoStep = null;
+    await sleep(500);
+    stop();
+  }
+
   async function runDemo() {
+    if (data.demo.sim) return runSim();
     const lines = data.demo.lines.map((l) => ({ ...l, pcm: pcm16(l.pcm) }));
     await until(() => s.llmReady, 120000);
     await sleep(800);

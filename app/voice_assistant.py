@@ -66,6 +66,9 @@ def load_scripts() -> dict:
     }
     out["custom"] = {"zh": "自訂台詞（語音合成）", "en": "Your own lines (synthesised)",
                      "lines": []}  # fmt: skip
+    out["simulate"] = {"zh": "模擬使用者（LLM 扮演使用者，依目標自由對話）",
+                       "en": "Simulated user (an LLM plays the user, towards a goal)",
+                       "lines": []}  # fmt: skip
     out["upload"] = {"zh": "上傳錄音", "en": "Uploaded recordings", "lines": []}
     return out
 
@@ -240,6 +243,7 @@ def labels() -> dict:
         "m_answer": tr("答案", "Answer"),
         "demo_step": tr("測試腳本：使用者第", "Test script: user line"),
         "demo_barge": tr("測試插話", "Test barge-in"),
+        "sim_thinking": tr("模擬使用者想下一句…", "Simulated user is thinking…"),
         "denied": tr(
             "麥克風權限被拒絕。請在瀏覽器網址列左側允許麥克風，再按一次。",
             "Microphone permission was denied. Allow it in the browser's address bar and try "

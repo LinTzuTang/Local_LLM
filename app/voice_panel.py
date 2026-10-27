@@ -13,10 +13,10 @@ import speech_stream
 import streamlit as st
 import voice_assistant as va
 import voice_bench
-from common import download_control, gateway_url, installed_names, kept
+from common import download_control, gateway_url, installed_names, kept, model_options
 from i18n import tr
 
-from local_llm import tts, voice_agent, voice_cloud, voice_omni
+from local_llm import tts, user_sim, voice_agent, voice_cloud, voice_omni
 
 ENGINE_LABELS = {
     "qwen3-omni": ("Qwen3-Omni 30B-A3B（本機，約 20 GB）", "Qwen3-Omni 30B-A3B (local, about 20 GB)"),
@@ -103,7 +103,9 @@ def panel(page: str = va.PAGE) -> None:
         )  # fmt: skip
         st.stop()
     installed = set(installed_names())
-    llms = [m for m in voice_agent.CANDIDATE_LLMS if m in installed]
+    # Every installed chat model, as on the Chat page; the ones the evaluation compared first.
+    tested = [m for m in voice_agent.CANDIDATE_LLMS if m in installed]
+    llms = tested + [m for m in model_options(include_catalog=False) if m not in tested]
     voices = tts.voices(("zh_TW", "zh_CN", "en_US"))
     voice_names = [v["name"] for v in voices]
     # the test lines are rendered once and cached, so the slow voices are offered there too
@@ -328,10 +330,18 @@ def panel(page: str = va.PAGE) -> None:
             llm = c2.selectbox(
                 tr("前台 LLM", "Front LLM"),
                 llm_choices,
+                format_func=lambda m: (
+                    m if m in tested else m + tr("（未評測）", " (not evaluated)")
+                ),
                 help=tr(
+                    "列出所有已安裝的對話模型（和「對話測試」頁一樣）；標「未評測」的沒有跑過語音測試，可能不支援工具呼叫"
+                    "（就不能查天氣、店家）、或會先思考而較慢。"
                     "用 7 段測試對話比過 10 個模型（關閉思考；中英文、反問地點、追問、閒聊、插話）：Gemma 4 12B 判斷全對、"
                     "不編造、最自然，記憶體 7.7 GB，所以是預設；說完約 0.5 秒開口。E4B 最快（約 0.3 秒）但 46 輪錯 4 輪"
                     "（英文找夜市不查、說要查卻沒查）；Gemma 4 26B 也全對，但會把數字念錯；Qwen3.6 35B 全對但要 23.6 GB。",
+                    "Every installed chat model, as on the Chat page; those marked not evaluated "
+                    "have not been through the voice tests and may lack tool calling (no weather "
+                    "or place lookups) or think first and be slower. "
                     "Compared on 7 test conversations across 10 models (thinking off; Chinese and "
                     "English, asking where, follow-ups, small talk, barge-in): Gemma 4 12B got every "
                     "decision right, made nothing up and sounded the most natural in 7.7 GB, so it is "
@@ -556,6 +566,38 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
                 **kept("va_script_text"),
             )
             pairs = va.parse_lines(text)
+        elif key == "simulate":
+            goals = {g["id"]: g for g in va.raw_scripts() if g.get("goal")}
+            options = [*goals, "custom"]
+            st.session_state.setdefault("va_sim_goal", options[0])
+            g1, g2 = st.columns([3, 1])
+            goal_key = g1.selectbox(
+                tr("使用者的目標", "The user's goal"),
+                options,
+                format_func=lambda k: (
+                    tr("自訂目標", "Your own goal")
+                    if k == "custom"
+                    else tr(goals[k]["name"]["zh"], goals[k]["name"]["en"])
+                ),
+                **kept("va_sim_goal"),
+            )
+            st.session_state.setdefault("va_sim_turns", 6)
+            max_turns = g2.number_input(tr("最多幾句", "At most lines"), 2, 12,
+                                        **kept("va_sim_turns"))  # fmt: skip
+            if goal_key == "custom":
+                st.session_state.setdefault("va_sim_text", tr(
+                    "你在台北車站附近，想找一間安靜可以工作的咖啡廳，問完營業時間就道謝結束。",
+                    "You are near Taipei Main Station and want a quiet café to work in; ask "
+                    "when it closes, then say thanks."))  # fmt: skip
+                goal = st.text_area(tr("目標（用第二人稱描述使用者想做什麼）",
+                                       "Goal (what the user wants, in the second person)"),
+                                    height=80, **kept("va_sim_text"))  # fmt: skip
+            else:
+                goal = tr(goals[goal_key]["goal"]["zh"], goals[goal_key]["goal"]["en"])
+                if goals[goal_key].get("lang") == "en":
+                    goal = goals[goal_key]["goal"]["en"]
+                st.caption(f":material/flag: {goal}")
+            pairs = [(goal, False)]
         else:
             pairs = script["lines"]
         english = bool(pairs) and all(voice_agent.is_english(t) for t, _ in pairs)
@@ -598,7 +640,7 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
         if user_limits:
             st.caption(f":material/record_voice_over: {tr('使用者的聲音', 'User voice')}："
                        f"{user_limits}")  # fmt: skip
-        if key != "custom":
+        if key not in ("custom", "simulate"):
             st.caption("　→　".join(("⤷ " + tr("插話：", "barge-in: ") if b else "") + t
                                    for t, b in pairs))  # fmt: skip
     if not pairs or not user_voice:
@@ -614,4 +656,16 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
             ", plus one cutting in while it reads a lookup result (barge-in)." if has_barge else "."
         ),
     )
+    if key == "simulate":
+        english = voice_agent.is_english(pairs[0][0])
+        note = tr(
+            f"模擬使用者：由 LLM（{user_sim.MODEL}）扮演使用者，每次助理講完，依照目標和對話內容想下一句，"
+            f"用 {short(user_voice)} 念出來，最多 {max_turns} 句。",
+            f"Simulated user: an LLM ({user_sim.MODEL}) plays the user and, after each reply, "
+            f"writes its next line from the goal and the conversation, spoken by "
+            f"{short(user_voice)}, at most {max_turns} lines.",
+        )
+        sim = {"goal": pairs[0][0], "voice": user_voice, "lang": "en" if english else "zh",
+               "max_turns": int(max_turns)}  # fmt: skip
+        return va.demo_payload([]) | {"sim": sim}, note
     return va.demo_data(pairs, user_voice), note

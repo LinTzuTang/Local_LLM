@@ -220,6 +220,33 @@ async def voice_agent_ws(
             agent.close()
             emit(None)
 
+    def sim_next(data: dict) -> None:
+        """The simulated user's next line (local_llm/user_sim.py), spoken by the chosen voice:
+        {"type": "sim_line", "text", "done", "pcm" (base64 16 kHz PCM16), "seconds"}."""
+        import base64
+        import wave
+
+        from local_llm import tts, user_sim
+
+        try:
+            history = []
+            for turn in list(agent.turns):
+                said = " ".join(x for x in (turn.get("assistant"), turn.get("answer")) if x)
+                history.append((turn.get("user") or "", said.strip()))
+            english = data.get("lang") == "en"
+            line = user_sim.next_line(str(data.get("goal") or ""), history, english=english,
+                                      base_url=ollama_url())  # fmt: skip
+            pcm = ""
+            if line["text"]:
+                path = tts.synthesize(line["text"], str(data.get("voice") or "Tingting"), None,
+                                      sample_rate=16000)  # fmt: skip
+                with wave.open(str(path), "rb") as w:
+                    pcm = base64.b64encode(w.readframes(w.getnframes())).decode()
+            emit({"type": "sim_line", **line, "pcm": pcm})
+        except Exception as exc:
+            emit({"type": "sim_line", "text": "", "done": True, "pcm": "",
+                  "error": f"{type(exc).__name__}: {exc}"})  # fmt: skip
+
     def work() -> None:
         # One thread for the ASR session: MLX arrays belong to the thread that made them.
         try:
@@ -265,6 +292,10 @@ async def voice_agent_ws(
                         continue
                     if data.get("type") == "stop":
                         break
+                    if data.get("type") == "sim_next":
+                        threading.Thread(target=sim_next, args=(data,), name="voice-sim",
+                                         daemon=True).start()  # fmt: skip
+                        continue
                     agent.on_client(data)
         except Exception:  # the socket went away
             pass

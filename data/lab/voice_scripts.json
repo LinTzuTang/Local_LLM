@@ -1,5 +1,5 @@
 {
- "_about": "Test conversations for the local GPT-Live (live voice assistant). The page plays them as a virtual microphone (each line spoken by a macOS voice, after the assistant has finished; a barge line cuts in while it reads a lookup result). `expect` is what the front LLM should do with each line: decision ask | tool | answer (any of the list; a reply ending in a question mark counts as ask), and for a tool the tool name and a place the location argument should contain (any of the list, case-insensitive). scripts/speech_eval/run_front_llm.py scores front LLMs against it.",
+ "_about": "Test conversations for the local GPT-Live (live voice assistant). The page plays them as a virtual microphone (each line spoken by a macOS voice, after the assistant has finished; a barge line cuts in while it reads a lookup result). `expect` is what the front LLM should do with each line: decision ask | tool | answer (any of the list; a reply ending in a question mark counts as ask), and for a tool the tool name and a place the location argument should contain (any of the list, case-insensitive). scripts/speech_eval/run_front_llm.py scores front LLMs against it. `goal`: what the simulated user (an LLM playing the user, local_llm/user_sim.py) wants from the same conversation, in its own words.",
  "scripts": [
   {
    "id": "weather_places_zh",
@@ -51,7 +51,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "你人在台北內湖，想知道今天天氣；助理問你在哪就說內湖。接著請它推薦附近好吃的早午餐店，聽到推薦後選第一家，道謝後結束。",
+    "en": "You are in Neihu, Taipei, and want today's weather; if asked where you are, say Neihu. Then ask for good brunch places nearby, pick the first one and say thanks."
+   }
   },
   {
    "id": "weather_places_en",
@@ -111,7 +115,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "You are in Xinyi, Taipei. Ask about today's weather; if asked where, say Xinyi, Taipei. Then ask for good coffee shops nearby, pick the first one and say thanks. Speak English only.",
+    "en": "You are in Xinyi, Taipei. Ask about today's weather; if asked where, say Xinyi, Taipei. Then ask for good coffee shops nearby, pick the first one and say thanks. Speak English only."
+   }
   },
   {
    "id": "tomorrow_followup_zh",
@@ -155,7 +163,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "你想知道台中明天會不會下雨；問完再追問高雄明天呢，最後道謝結束。",
+    "en": "Ask whether it will rain in Taichung tomorrow, then follow up with Kaohsiung, then say thanks."
+   }
   },
   {
    "id": "landmark_cafe_zh",
@@ -195,7 +207,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "你等一下要去西門町，想找附近好喝的咖啡廳；拿到推薦後問第一家開到幾點，得到答案（或它說查不到）就道謝結束。",
+    "en": "You are heading to Ximending and want a good café nearby; ask how late the first one is open, then say thanks."
+   }
   },
   {
    "id": "chitchat_zh",
@@ -230,7 +246,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "你只是想閒聊：先問它能幫你做什麼，再請它推薦一個週末在家可以做的放鬆活動，最後說謝謝再見。不要問天氣或店家。",
+    "en": "Small talk only: ask what it can do, ask for a relaxing weekend activity at home, then say goodbye. No weather or shops."
+   }
   },
   {
    "id": "change_topic_barge_zh",
@@ -274,7 +294,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "你在板橋，想找附近的拉麵店；聽到推薦後改問明天要不要帶傘，得到答案就道謝結束。",
+    "en": "You are in Banqiao and want ramen nearby; after the suggestions, switch to asking whether to bring an umbrella tomorrow, then say thanks."
+   }
   },
   {
    "id": "night_market_en",
@@ -320,7 +344,11 @@
       ]
      }
     }
-   ]
+   ],
+   "goal": {
+    "zh": "Ask whether it will rain in Kaohsiung tomorrow, then ask for good night markets nearby, then say thanks. Speak English only.",
+    "en": "Ask whether it will rain in Kaohsiung tomorrow, then ask for good night markets nearby, then say thanks. Speak English only."
+   }
   }
  ]
 }
