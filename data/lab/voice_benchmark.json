@@ -1,0 +1,40 @@
+{
+ "_about": "Voice conversation evaluation (2026-10-21/22): 7 test scripts, 23 user lines spoken by macOS voices at speaking pace (scripts/speech_eval/run_front_llm.py, run_qwen3_omni.py, run_open_voice.py, run_minicpmo.py, run_gpt_realtime.py, run_gpt_live.py, run_gemini_live.py). start_s: end of the user's speech to the assistant's first sound (median); answer_s: to the spoken lookup result; decisions: ask back / look up / answer right (systems with tools only); traditional: share of Chinese replies in Traditional characters; grounded: replies without made-up facts (AI judge, Azure gpt-5.4); natural: 1-5 (AI judge). null = not measured or not applicable.",
+ "date": "2026-10-22",
+ "systems": [
+  {"name": "地端版 GPT-Live（串流辨識 → Gemma 4 12B → 語音合成）", "name_en": "Local GPT-Live (streaming ASR → Gemma 4 12B → TTS)",
+   "kind": "cascade", "where": "local", "tools": true, "start_s": 1.0, "answer_s": 4.5, "decisions": "46/46", "traditional": 1.0, "grounded": 1.0, "natural": 4.46,
+   "note": "要查資料的語音助理首選；插話 0.2 秒內停下", "note_en": "First choice when lookups are needed; stops within 0.2 s of a barge-in"},
+  {"name": "Qwen3-Omni 30B-A3B", "name_en": "Qwen3-Omni 30B-A3B",
+   "kind": "turn", "where": "local", "tools": false, "start_s": 1.3, "answer_s": null, "decisions": null, "traditional": 1.0, "grounded": 1.0, "natural": 4.30,
+   "note": "不用查資料的閒聊首選；20 GB", "note_en": "Best for small talk without lookups; 20 GB"},
+  {"name": "MiniCPM-o 4.5", "name_en": "MiniCPM-o 4.5",
+   "kind": "turn", "where": "local", "tools": false, "start_s": 0.94, "answer_s": null, "decisions": null, "traditional": 0.25, "grounded": 1.0, "natural": 3.96,
+   "note": "快、最小（8.6 GB），但多用簡體", "note_en": "Fast and smallest (8.6 GB), mostly Simplified"},
+  {"name": "MiMo-Audio 7B", "name_en": "MiMo-Audio 7B",
+   "kind": "turn", "where": "local", "tools": false, "start_s": 6.4, "answer_s": null, "decisions": null, "traditional": 0.625, "grounded": 0.957, "natural": 3.83,
+   "note": "要整段生完才能播；會編造、簡繁混用", "note_en": "Plays only once fully generated; makes things up, mixes scripts"},
+  {"name": "MiniCPM-o 4.5 全雙工", "name_en": "MiniCPM-o 4.5 full-duplex",
+   "kind": "duplex", "where": "local", "tools": false, "start_s": 1.6, "answer_s": null, "decisions": null, "traditional": null, "grounded": null, "natural": null,
+   "note": "會邊聽邊附和，但 23 句有 10 句沒回應、多為簡體", "note_en": "Back-channels while listening, but 10 of 23 lines got no reply; mostly Simplified"},
+  {"name": "Azure gpt-realtime", "name_en": "Azure gpt-realtime",
+   "kind": "turn", "where": "cloud", "tools": true, "start_s": 0.70, "answer_s": 2.85, "decisions": "18/23", "traditional": 1.0, "grounded": 0.96, "natural": 4.30,
+   "note": "雲端最快、自己呼叫工具；錄音要上傳", "note_en": "Fastest in the cloud, calls the tools itself; audio is uploaded"},
+  {"name": "Azure gpt-live-1", "name_en": "Azure gpt-live-1",
+   "kind": "duplex", "where": "cloud", "tools": true, "start_s": 1.8, "answer_s": 3.6, "decisions": null, "traditional": 0.94, "grounded": 0.96, "natural": null,
+   "note": "單句最像真人；長對話越來越慢、會斷線", "note_en": "Most human-like turn by turn; slows down and drops in long sessions"},
+  {"name": "Google gemini-live-2.5-flash-native-audio", "name_en": "Google gemini-live-2.5-flash-native-audio",
+   "kind": "turn", "where": "cloud", "tools": true, "start_s": 1.0, "answer_s": 1.3, "decisions": "19/23", "traditional": 1.0, "grounded": 1.0, "natural": 4.33,
+   "note": "只用腳本測過，平台未接", "note_en": "Tested by script only, not in the platform"},
+  {"name": "Google gemini-3.8-live", "name_en": "Google gemini-3.8-live",
+   "kind": "turn", "where": "cloud", "tools": true, "start_s": 0.74, "answer_s": 4.3, "decisions": "16/23", "traditional": 1.0, "grounded": 0.83, "natural": 3.96,
+   "note": "常聽錯地名（台中→海口）；只用腳本測過", "note_en": "Often mishears place names; tested by script only"}
+ ],
+ "front_llms": [
+  {"model": "Gemma 4 12B（預設）", "decisions": "46/46", "first_s": 0.45, "grounded": 1.0, "natural": 4.46, "memory_gb": 7.7},
+  {"model": "Gemma 4 E4B", "decisions": "42/46", "first_s": 0.23, "grounded": 0.978, "natural": 4.24, "memory_gb": 9.4},
+  {"model": "Gemma 4 26B", "decisions": "46/46", "first_s": 0.38, "grounded": 0.957, "natural": 4.37, "memory_gb": 16.1},
+  {"model": "Qwen3.6 35B-A3B", "decisions": "46/46", "first_s": 0.37, "grounded": 1.0, "natural": 4.22, "memory_gb": 23.6},
+  {"model": "qwen3:1.7b、Gemma 4 E2B、Llama-Breeze2 8B", "decisions": "約一半", "first_s": null, "grounded": null, "natural": null, "memory_gb": null}
+ ]
+}

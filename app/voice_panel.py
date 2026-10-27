@@ -12,6 +12,7 @@ import speech_common as sc
 import speech_stream
 import streamlit as st
 import voice_assistant as va
+import voice_bench
 from common import download_control, gateway_url, installed_names, kept
 from i18n import tr
 
@@ -448,6 +449,7 @@ def panel(page: str = va.PAGE) -> None:
         st.subheader(tr("上一段對話", "Last session"))
         va.history_view(last)
         sc.saved_caption(last)
+    voice_bench.section()
 
 
 def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
@@ -477,6 +479,21 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
             **kept("va_script"),
         )
         script = va.TEST_SCRIPTS[key]
+        every = va.raw_scripts()
+        with st.expander(tr(f"看所有測試腳本的內容（{len(every)} 個）",
+                            f"See every test script ({len(every)})"), icon=":material/list_alt:"):  # fmt: skip
+            st.caption(
+                tr(
+                    "每句台詞依序念給助理聽；「⤷ 插話」那句在助理念查詢結果時插進去。右欄是這句話助理該做的事，"
+                    "評測時用來判斷對錯。",
+                    "Each line is spoken in turn; the ⤷ barge-in line cuts in while the assistant "
+                    "reads a lookup result. The right column is what the assistant should do, "
+                    "which the evaluation scores.",
+                )
+            )
+            for item in every:
+                st.markdown(f"**{tr(item['name']['zh'], item['name']['en'])}**")
+                st.markdown(va.script_table(item))
         if key == "upload":
             files = st.file_uploader(
                 tr(

@@ -70,6 +70,37 @@ def load_scripts() -> dict:
     return out
 
 
+def script_table(script: dict) -> str:
+    """A test script as a markdown table: each line, whether it cuts in, and what the assistant
+    should do with it (the `expect` that run_front_llm.py scores)."""
+    tools = {"get_weather": tr("查天氣", "look up weather"),
+             "search_places": tr("找店家", "search places")}  # fmt: skip
+    decisions = {"ask": tr("反問（例如問地點）", "ask back (e.g. where)"),
+                 "answer": tr("直接回答", "answer directly"),
+                 "tool": tr("查詢", "look it up")}  # fmt: skip
+    rows = [f"| # | {tr('台詞', 'Line')} | {tr('助理應該', 'The assistant should')} |",
+            "| ---: | --- | --- |"]  # fmt: skip
+    for i, line in enumerate(script["lines"], start=1):
+        expect = line.get("expect") or {}
+        do = "／".join(decisions.get(d, d) for d in expect.get("decision") or [])
+        if expect.get("tool"):
+            do = tools.get(expect["tool"], expect["tool"])
+            if expect.get("location"):
+                do += f"（{expect['location'][0]}）"
+        text = line["text"].replace("|", "\\|")
+        if line.get("barge"):
+            text = tr("⤷ 插話：", "⤷ barge-in: ") + text
+        rows.append(f"| {i} | {text} | {do or '—'} |")
+    return "\n".join(rows)
+
+
+def raw_scripts() -> list[dict]:
+    try:
+        return json.loads(SCRIPTS_FILE.read_text(encoding="utf-8"))["scripts"]
+    except (OSError, json.JSONDecodeError, KeyError):
+        return []
+
+
 TEST_SCRIPTS = load_scripts()
 DEMO_LINES = next(iter(TEST_SCRIPTS.values()))["lines"]  # the custom script's starting text
 BARGE_PREFIX = re.compile(r"^\s*(插話|barge(-in)?)\s*[:：]\s*", re.IGNORECASE)
