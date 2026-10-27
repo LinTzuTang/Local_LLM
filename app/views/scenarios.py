@@ -50,7 +50,7 @@ st.markdown(
 UPLOAD_DIR = PROJECT_DIR / "storage" / "lab" / "uploads"
 doc = json.loads(store.SCENARIOS_FILE.read_text())
 scenarios = {s["id"]: s for s in doc["scenarios"]}
-# The local GPT-Live is a live session rather than a graph, but is picked like any scenario.
+# The local cascaded voice chat is a live session rather than a graph, but is picked like any scenario.
 scenarios.setdefault(voice_assistant.SCENARIO["id"], voice_assistant.SCENARIO)
 url = ollama_url()
 

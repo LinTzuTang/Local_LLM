@@ -608,13 +608,17 @@ PAGE = "views/voice_assistant.py"
 SCENARIO = {
     "id": "gpt_live_voice",
     "category": "speech",
-    "name": {"zh": "地端版 GPT-Live（邊聊邊查）", "en": "Local GPT-Live (talk while it looks up)"},
+    "name": {
+        "zh": "地端串接語音對話（邊聊邊查）",
+        "en": "Local cascaded voice chat (talk while it looks up)",
+    },
     "description": {
-        "zh": "GPT-Live 風格的即時語音對話：串流辨識邊聽邊轉文字，"
+        "zh": "在本機串接三個模型的即時語音對話（設計參考 OpenAI GPT-Live）：串流辨識邊聽邊轉文字，"
         "前台 LLM 決定直接回答、反問或查詢；要查時助理先說一句話撐住對話，"
         "天氣、店家查詢在背景執行，查到再念出結果，隨時可以插話打斷。"
         "可以用麥克風，或播放測試腳本（合成語音或上傳錄音當麥克風輸入）。",
-        "en": "A GPT-Live-style live voice conversation: streaming ASR transcribes as you "
+        "en": "A live voice conversation from three chained local models (designed after "
+        "OpenAI's GPT-Live): streaming ASR transcribes as you "
         "speak, a front LLM answers, asks back or looks something up; for a lookup the "
         "assistant says a line first, the weather or places search runs in the background "
         "and the result is spoken when it arrives; interrupt at any time. Use the "
@@ -643,9 +647,9 @@ SCENARIO = {
 
 def blurb() -> str:
     return tr(
-        "GPT-Live 風格的即時語音對話：串流辨識 → 前台 LLM 決定回答、反問或查詢 → 工具在背景跑、"
+        "地端串接語音對話：串流辨識 → 前台 LLM 決定回答、反問或查詢 → 工具在背景跑、"
         "助理先說一句話撐住對話 → 查到後念出結果；可以隨時插話打斷。",
-        "GPT-Live-style live voice conversation: streaming ASR → a front LLM answers, asks "
+        "Local cascaded voice chat: streaming ASR → a front LLM answers, asks "
         "back or looks something up → tools run in the background while the assistant says a "
         "line first → the result is spoken; interrupt at any time.",
     )

@@ -19,7 +19,7 @@ things:
    translation (cascade, audio LLM, Whisper, plus a live-input simulation) and meeting speaker
    diarization with DER. The home page shows which models are loaded, how much memory they use
    and which tasks are running.
-2. **Demo multi-agent scenarios.** Nine ready-made workflows run as LangGraph graphs, plus a live voice assistant (a local GPT-Live): routing
+2. **Demo multi-agent scenarios.** Nine ready-made workflows run as LangGraph graphs, plus a live voice assistant (local cascaded voice chat): routing
    with a decision model, hybrid RAG, self-checking RAG, permission-aware retrieval, meeting
    audio → minutes, contract review, support triage, a mixture of agents, and an analyst →
    writer → translator pipeline. Each run has a live flow diagram and a timeline, and every
@@ -105,7 +105,7 @@ its data are fictional.
 | Support triage + reply | [nimble triage (team, urgency, refund) ‖ SOP retrieval] → draft → lead review | nimble, bge-m3, reranker, qwen3 |
 | Mixture of agents | [Qwen3 30B ‖ TAIDE 12B ‖ Qwen3 1.7B] → aggregator | 3 local models |
 | Sales memo | DB analyst agent → writer → translator | qwen3 |
-| Local GPT-Live (talk while it looks up) | streaming ASR → front LLM answers / asks / looks up → [background tools: weather, places] → speech; barge-in | zipformer, gemma4:12b, macOS voices |
+| Local cascaded voice chat (talk while it looks up) | streaming ASR → front LLM answers / asks / looks up → [background tools: weather, places] → speech; barge-in | zipformer, gemma4:12b, macOS voices |
 
 ![A finished hybrid RAG run: per-step model choice, flow, timeline and steps](docs/screenshots/scenario.png)
 

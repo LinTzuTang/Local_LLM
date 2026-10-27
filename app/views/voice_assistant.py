@@ -1,4 +1,4 @@
-"""Live voice assistant: a GPT-Live-style conversation, run as a local cascade.
+"""Live voice assistant: a local cascaded voice chat (designed after OpenAI's GPT-Live).
 
 The header is drawn here, the rest by voice_panel (shared with the scenario gallery); the
 conversation runs in the model gateway (/v1/voice/agent/ws). A finished session is
