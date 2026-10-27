@@ -123,8 +123,12 @@ def config_label(settings: dict, names: dict) -> str:
     engine = settings.get("engine") or "cascade"
     asr = settings.get("asr") or ""
     if engine == "cascade":
-        bits = [f"{names.get(asr, asr)}（{asr_kind(asr)}）", settings.get("llm") or "?",
-                settings.get("voice") or "?"]  # fmt: skip
+        hear = settings.get("hear")
+        heard = tr("只做字幕", "captions only") if hear else asr_kind(asr)
+        llm = (settings.get("llm") or "?") + (
+            tr("（直接聽語音）", " (hears the audio)") if hear else ""
+        )
+        bits = [f"{names.get(asr, asr)}（{heard}）", llm, settings.get("voice") or "?"]
         return tr("① 串接：", "① Cascade: ") + " → ".join(bits)
     kind = tr(*KINDS.get(va_kind(engine), KINDS["turn"]))
     return f"{kind}：{engine}"

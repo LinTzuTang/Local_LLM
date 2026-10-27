@@ -55,6 +55,15 @@ CANDIDATE_LLMS = ("gemma4:12b", "gemma4:e4b", "gemma4:26b", "qwen3.6:35b-a3b-cod
 DEFAULT_VOICE = "Meijia"
 ALWAYS_THINKS = {"qwen3:30b-a3b"}
 CALL_LIMIT = 6  # lookups per tool per session when the network switch is on
+# Front models that can hear audio themselves (Ollama passes a WAV in `images`): with
+# `hears_audio` the user's turn reaches them as the recording, not as the recogniser's text.
+AUDIO_LLMS = ("gemma4:e4b", "gemma4:e2b")
+HEARD = "（使用者剛才用說的，內容在附加的語音裡：直接聽語音回應他，不要轉述或描述語音。）"
+HEARD_EN = ("(The user just spoke; what they said is in the attached audio. Answer it directly; "
+            "do not transcribe or describe the audio.)")  # fmt: skip
+SPOKEN = "（語音）"  # a heard turn in the history: the recogniser's text is not given to the LLM
+AUDIO_PAD_S = 0.3  # audio kept before and after a heard utterance
+AUDIO_KEEP_S = 60.0  # audio kept for heard turns
 HISTORY_MESSAGES = 10
 MAX_TOKENS = 220
 KEEP_ALIVE = "30m"
@@ -446,6 +455,7 @@ class VoiceAgent:
         display: Callable[[str], str] | None = None,
         append_only: bool = False,
         early_commit: bool = True,
+        hears_audio: bool = False,
         call_limit: int = CALL_LIMIT,
         clock: Callable[[], float] = time.perf_counter,
     ):
@@ -477,6 +487,10 @@ class VoiceAgent:
         self.awaiting: dict | None = None  # committed at speech end, final text pending
         self.commit_timer: threading.Timer | None = None
         self.early_deadline: float | None = None  # early commit waiting for the text to settle
+        self.hears_audio = hears_audio
+        self.audio = bytearray()  # the microphone, 16 kHz PCM16 (heard turns only)
+        self.audio_base = 0.0  # seconds of audio dropped from the front of `audio`
+        self.audio_spans: list[list] = []  # [start, end] of user speech, audio seconds
         self.llm_load_s: float | None = None
         self.brain = threading.Thread(target=self._loop, name="voice-agent", daemon=True)
 
@@ -528,6 +542,7 @@ class VoiceAgent:
             t = round(event["t_audio"] + offset, 3)
             with self.lock:
                 self.vad.append([t, None])
+                self.audio_spans.append([event["t_audio"], None])
                 if self.commit_timer:  # still the same utterance (speaking again)
                     self.commit_timer.cancel()
                     self.commit_timer = None
@@ -541,6 +556,8 @@ class VoiceAgent:
             with self.lock:
                 if self.vad and self.vad[-1][1] is None:
                     self.vad[-1][1] = t
+                if self.audio_spans and self.audio_spans[-1][1] is None:
+                    self.audio_spans[-1][1] = event["t_audio"]
             self.emit({"type": "vad", "state": "end", "at": t})
             if self.append_only and self.partial.strip():
                 with self.lock:
@@ -627,11 +644,50 @@ class VoiceAgent:
                     "early_commit": early}  # fmt: skip
             if turn["speech_end"] is None:  # final text before the VAD saw the end
                 turn["speech_end"] = turn["asr_final"]
+            if self.hears_audio:
+                turn["audio"] = self._utterance()
             self.turns.append(turn)
             self.was_idle = False
         self.emit({"type": "user_final", "turn": turn["turn"], "text": text,
                    "speech_end": turn["speech_end"]})  # fmt: skip
         self.inbox.put(("user", turn))
+
+    # -- heard turns: the front model gets the recording ----------------------------------------
+
+    def on_audio(self, data: bytes) -> None:
+        """Microphone PCM, kept for the front model to hear (only with `hears_audio`)."""
+        if not self.hears_audio:
+            return
+        with self.lock:
+            self.audio += data
+            extra = len(self.audio) - int(AUDIO_KEEP_S * 16000) * 2
+            if extra > 0:
+                del self.audio[:extra]
+                self.audio_base += extra / 2 / 16000
+
+    def _utterance(self) -> str | None:
+        """The last utterance (with AUDIO_PAD_S around it) as a base64 WAV; the caller holds
+        the lock. From its VAD start to its end, or to now if the end has not come yet."""
+        import base64
+        import io
+        import wave
+
+        if not self.audio_spans or not self.audio:
+            return None
+        start, end = self.audio_spans[-1]
+        total = self.audio_base + len(self.audio) / 2 / 16000
+        end = total if end is None else min(end + AUDIO_PAD_S, total)
+        a = max(int((start - AUDIO_PAD_S - self.audio_base) * 16000), 0) * 2
+        b = max(int((end - self.audio_base) * 16000), 0) * 2
+        if b - a < 3200:  # under 0.1 s: nothing to hear
+            return None
+        out = io.BytesIO()
+        with wave.open(out, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(16000)
+            w.writeframes(bytes(self.audio[a:b]))
+        return base64.b64encode(out.getvalue()).decode()
 
     def _maybe_barge_in(self, t: float) -> None:
         with self.lock:
@@ -723,10 +779,13 @@ class VoiceAgent:
         epoch = self.epoch
         tools = TOOL_SPECS if self.allow_network else None
         english = is_english(turn["user"])
-        said = with_lookups(turn["user"], dict(self.lookups), english)
+        heard = turn.get("audio")
+        # a heard turn: the model gets the recording and a note, not the recogniser's text
+        content = (HEARD_EN if english else HEARD) if heard else turn["user"]
+        said = with_lookups(content, dict(self.lookups), english)
+        user = {"role": "user", "content": said} | ({"images": [heard]} if heard else {})
         messages = self._messages(
-            system_prompt(self.memory, self.allow_network, english=english),
-            [{"role": "user", "content": said}],
+            system_prompt(self.memory, self.allow_network, english=english), [user]
         )
         started = self.clock()
         turn["llm_start"] = self.now()
@@ -749,7 +808,7 @@ class VoiceAgent:
         if not interrupted:
             pieces, _ = split_sentences(buffer, final=True)
             self._say(speech, pieces, epoch)
-        self._remember("user", turn["user"])
+        self._remember("user", SPOKEN if heard else turn["user"])
         calls = [c for c in calls if (c.get("function") or {}).get("name") in TOOL_NAMES]
         if not calls and not interrupted and self.allow_network and PROMISE.search(speech["text"]):
             # It said it would look something up but called nothing: ask once more for the

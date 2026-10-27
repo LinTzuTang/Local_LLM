@@ -651,6 +651,7 @@ export default function (component) {
       asr: p.asr, llm: p.llm, voice: p.voice, rate: String(p.rate || 0),
       net: p.net ? "1" : "0", barge: p.barge ? "1" : "0", s2tw: "1",
       engine: p.engine || "cascade", captions: p.captions === false ? "0" : "1",
+      hear: p.hear ? "1" : "0",
     });
     let ws;
     try {

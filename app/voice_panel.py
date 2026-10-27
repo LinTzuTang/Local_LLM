@@ -167,6 +167,7 @@ def panel(page: str = va.PAGE) -> None:
                 **kept("va_engine"),
             )
         single = engine != "cascade"
+        hear = False  # the cascade's audio LLM hears the recording (set below)
         local_single = single and engine not in voice_cloud.ENGINES
         captions = True
         if local_single:
@@ -340,6 +341,27 @@ def panel(page: str = va.PAGE) -> None:
                 ),
                 **kept("va_llm"),
             )
+            if llm in voice_agent.AUDIO_LLMS:
+                st.session_state.setdefault("va_hear", False)
+                hear = st.toggle(
+                    tr(
+                        "讓 LLM 直接聽語音（不用辨識結果）",
+                        "Let the LLM hear the audio (not the ASR text)",
+                    ),
+                    help=tr(
+                        "Gemma 4 E4B／E2B 能直接聽聲音：打開後，你講完的那段錄音直接交給 LLM，辨識模型只用來顯示字幕，"
+                        "辨識結果不會給它。查資料、先回一句、插話照常。實測（中文測試腳本、E4B）：直接聽 1.1–1.6 秒開口、"
+                        "辨識後再回答 1.5–1.6 秒，速度差不多；但直接聽理解較淺，4 句有 1 句聽不懂"
+                        "（「我在內湖」回「你在哪湖？」），還會編出天氣。",
+                        "Gemma 4 E4B / E2B hear audio themselves: when on, your recording goes to the "
+                        "LLM and the ASR only draws the captions (its text is not given to the LLM). "
+                        "Lookups, the first line and barge-in work as usual. Measured (Chinese test "
+                        "script, E4B): it starts in 1.1-1.6 s hearing the audio and 1.5-1.6 s "
+                        "through the ASR, about the same; but hearing it understands less, missing 1 "
+                        "of 4 lines and inventing weather.",
+                    ),
+                    **kept("va_hear"),
+                )
             default_voice = next((n for n in voice_names if n.startswith(va.ASSISTANT_VOICE)), None)
             default_voice = next(
                 (n for n in voice_names if n == va.ASSISTANT_VOICE_TW), default_voice
@@ -399,7 +421,8 @@ def panel(page: str = va.PAGE) -> None:
         st.markdown(f"**{tr('架構', 'How it works')}**")
         tts_label = voice_source(tts.find(voice, voices)) if kind == "cascade" else None
         st.graphviz_chart(va.flow_dot(kind, engine, captions=captions, tts_label=tts_label,
-                                      pause=asr in va.PAUSE_MODELS), width="content")  # fmt: skip
+                                      pause=asr in va.PAUSE_MODELS, hear=hear),
+                          width="content")  # fmt: skip
 
     demo, script_note = test_script(user_names, short)
 
@@ -427,6 +450,7 @@ def panel(page: str = va.PAGE) -> None:
                 "barge": barge,
                 "engine": engine,
                 "captions": captions,
+                "hear": hear,
             },  # fmt: skip
             "labels": labels,
             "demo": demo,

@@ -1,6 +1,7 @@
 """Live voice assistant: OpenStreetMap / Open-Meteo lookups (HTTP mocked) and the engine's
 turn-taking with a fake LLM, fake tools and fake speech synthesis."""
 
+import base64
 import json
 import threading
 import time
@@ -447,6 +448,29 @@ def test_early_commit_waits_for_the_last_words_of_fast_speech(monkeypatch):
     time.sleep(voice_agent.EARLY_MAX_S + 0.2)
     assert [e["text"] for e in s.of("user_final")] == ["今天天氣如何", "我在內湖"]
     a.close()
+
+
+def test_a_heard_turn_gives_the_llm_the_recording_not_the_text():
+    s = Session(hears_audio=True)
+    a = s.agent
+    second = b"\x10\x00" * 16000  # one second of 16 kHz PCM16
+    a.on_audio(second * 3)
+    a.on_asr({"type": "speech_start", "t_audio": 1.0}, a.t0)
+    a.on_asr({"type": "speech_end", "t_audio": 2.0}, a.t0)
+    a.on_asr({"type": "final", "text": "今天天氣如何"}, a.t0)  # the caption
+    s.wait(lambda: s.llm.calls)
+    user = s.llm.calls[0]["messages"][-1]
+    assert user["content"] == voice_agent.HEARD and "今天天氣" not in user["content"]
+    wav = base64.b64decode(user["images"][0])
+    assert wav[:4] == b"RIFF" and 1.5 * 32000 < len(wav) - 44 <= 1.6 * 32000 + 2  # 1 s + pads
+    s.wait(lambda: s.idles() >= 1)
+    assert {"role": "user", "content": voice_agent.SPOKEN} in a.history
+    assert s.of("user_final")[0]["text"] == "今天天氣如何"  # still captioned
+    a.close()
+    plain = Session()  # without hears_audio the audio is ignored and the text goes in
+    plain.agent.on_audio(second)
+    assert not plain.agent.audio
+    plain.agent.close()
 
 
 def test_english_turns_get_english_rules_and_spaced_pieces():

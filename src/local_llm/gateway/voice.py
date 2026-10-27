@@ -16,7 +16,9 @@ model of local_llm/voice_omni.py: "qwen3-omni" / "minicpm-o" turn-based, "minicp
 full-duplex; or a cloud one of local_llm/voice_cloud.py, "gpt-realtime" / "gpt-live-1",
 which sends the audio to Azure; then llm, voice and rate do not apply, net only for the
 cloud ones; the ASR draws the captions of the local ones, while a cloud one gets no ASR at
-all: its own transcript is the caption).
+all: its own transcript is the caption). hear (1 = the cascade's front model hears the
+user's audio instead of the ASR text, for the audio LLMs of voice_agent.AUDIO_LLMS; the ASR
+then only draws the captions).
 The Ollama URL comes from LOCAL_LLM_BASE_URL (default 127.0.0.1:11434), never the client.
 """
 
@@ -59,6 +61,7 @@ async def voice_agent_ws(
     keep_alive: float | None = None,
     engine: str = "cascade",
     captions: bool = True,
+    hear: bool = False,
 ) -> None:
     from local_llm import voice_agent, voice_cloud, voice_omni
 
@@ -105,6 +108,7 @@ async def voice_agent_ws(
         agent = await asyncio.to_thread(
             voice_agent.VoiceAgent, emit, llm=llm, voice=voice, rate=rate or None,
             allow_network=net, barge_in=barge, base_url=ollama_url(), display=display,
+            hears_audio=hear and llm in voice_agent.AUDIO_LLMS,
         )  # fmt: skip
     hears = getattr(agent, "on_audio", None)  # single speech models get the audio itself
 
@@ -188,6 +192,8 @@ async def voice_agent_ws(
                 if t0 is None:
                     t0 = arrived - len(data) / 2 / rate
                 audio += data
+                if hears:
+                    hears(data)
                 x = np.frombuffer(data, dtype="<i2").astype(np.float32) / 32768
                 for kind, seconds in vad.feed(x):
                     agent.on_asr({"type": f"speech_{kind}", "t_audio": seconds}, t0)

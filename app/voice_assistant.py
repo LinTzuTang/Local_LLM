@@ -476,7 +476,7 @@ KIND_NOTES = {
 
 
 def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool = True,
-             tts_label: str | None = None, pause: bool = False,
+             tts_label: str | None = None, pause: bool = False, hear: bool = False,
              compact: bool = False) -> str:  # fmt: skip
     """The way of talking as a small Graphviz diagram (plain text labels, no emoji):
     ① the cascade, ② a turn-based or ③ a full-duplex speech model, local or in the cloud
@@ -502,10 +502,17 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
     delegate = tr("背景 gpt-5.5\\n委派查詢", "Background gpt-5.5\\ndelegated work")
     if kind == "cascade":
         labels = {
-            "asr": tr("停頓偵測 → 整句辨識\\n（非串流）", "Pause, then whole-clip ASR")
+            "asr": tr("語音辨識\\n只做字幕", "Speech recognition\\ncaptions only")
+            if hear
+            else tr("停頓偵測 → 整句辨識\\n（非串流）", "Pause, then whole-clip ASR")
             if pause
             else tr("串流辨識\\nVAD + ASR", "Streaming ASR\\nVAD + ASR"),
-            "llm": tr("前台 LLM\\n回答／反問／查詢", "Front LLM\\nanswer / ask / look up"),
+            "llm": tr(
+                "前台 LLM（直接聽）\\n回答／反問／查詢",
+                "Front LLM (hears it)\\nanswer / ask / look up",
+            )
+            if hear
+            else tr("前台 LLM\\n回答／反問／查詢", "Front LLM\\nanswer / ask / look up"),
             "tool": tr("背景工具\\n天氣・店家", "Background tools\\nweather, places"),
             "tts": tr("語音合成\\n", "Speech synthesis\\n")
             + (tts_label or tr("選定的聲音", "chosen voice")),
@@ -521,11 +528,18 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
   tool -> tts [style=dashed]; {rank=same; llm; tool}
 }"""
             )
+        if hear:  # the audio LLM hears the recording; the ASR only captions
+            feed = (f'mic -> llm [label="{tr("整段聲音", "the recording")}"]; '
+                    f'mic -> asr [style=dashed]; asr -> cap [style=dashed]; '
+                    f'cap [label="{tr("字幕", "Captions")}", {grey}];')  # fmt: skip
+        else:
+            feed = (f'mic -> asr [label="{tr("聲音", "audio")}"]; '
+                    f'asr -> llm [label="{tr("文字", "text")}"];')  # fmt: skip
         return (
             head
             + nodes
             + f"""  mic [label="{mic}"]; out [label="{out}", {green}];
-  mic -> asr [label="{tr("聲音", "audio")}"]; asr -> llm [label="{tr("文字", "text")}"];
+  {feed}
   llm -> tts [label="{tr("先說一句", "say a line first")}"]; tts -> out;
   llm -> tool [style=dashed]; tool -> llm [label="{tr("結果", "result")}", style=dashed];
   asr -> out [label="{tr("插話：停止播放", "barge-in: stop")}", {barge}];
