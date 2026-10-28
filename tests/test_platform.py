@@ -243,8 +243,11 @@ def test_cloud_models_are_separate_and_marked():
     data = catalog.load_catalog()
     han = re.compile(r"[\u4e00-\u9fff]")
     clouds = catalog.cloud_models()
-    assert {m["name"] for m in clouds if m["deployed"]} >= {"whisper", "gpt-4o-transcribe"}
-    assert {m["name"] for m in clouds if not m["deployed"]} >= {"gpt-realtime"}
+    deployed = {m["name"] for m in clouds if m["deployed"]}
+    assert deployed >= {"whisper", "gpt-4o-transcribe", "gpt-realtime"}
+    assert {m["name"] for m in clouds if not m["deployed"]} >= {"gpt-4o-mini-tts"}
+    assert all(m.get("provider") and m.get("paid") for m in clouds)  # every one is paid
+    assert any(m.get("narration") for m in clouds if m["category"] == "tts")
     assert not {m["name"] for m in clouds} & {m["name"] for m in catalog.other_models()}
     for m in clouds:
         assert m["category"] in data["other_categories"], m["name"]
