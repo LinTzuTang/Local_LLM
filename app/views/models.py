@@ -313,8 +313,8 @@ CATALOG_TIP = tr(
     "one-click download (install it yourself)",
 )
 CLOUD_TIP = tr(
-    "雲端（Azure OpenAI）：資料會上傳，不在這台 Mac 執行",
-    "Cloud (Azure OpenAI): audio is uploaded; it does not run on this Mac",
+    "雲端付費服務：錄音或文字會上傳到服務商，不在這台 Mac 執行",
+    "Paid cloud service: the audio or text is uploaded; it does not run on this Mac",
 )
 
 
@@ -325,7 +325,8 @@ def served_tip(via: str) -> str:
 def catalog_row(m: dict, index: int) -> None:
     """One list row of a catalog-only entry: facts, a repo link and details, no download."""
     note = " ".join(x for x in (loc(m, "use"), loc(m, "note")) if x)
-    keys = [m["category"], *(["taiwan"] if m.get("taiwan") else []), *catalog.licence_keys(m)]
+    keys = [m["category"], *(["taiwan"] if m.get("taiwan") else []), *catalog.licence_keys(m),
+            *(["narration"] if m.get("narration") else [])]  # fmt: skip
     sub = sep.join(x for x in (lang_text(m), loc(m, "license")) if x)
     flags = (
         f'<span class="mc-flag">{ui.icon("star")}{tr("推薦", "Pick")}</span>'
@@ -391,12 +392,13 @@ def catalog_row(m: dict, index: int) -> None:
 
 
 def cloud_row(m: dict) -> None:
-    """One list row of an Azure OpenAI cloud speech model: no download, data leaves the Mac."""
+    """One list row of a paid cloud speech model (Azure OpenAI, Google, AWS, ElevenLabs …):
+    no download, data leaves the Mac."""
     task = ui.cap_text(m["category"])
     state = (
-        chip(tr("已部署", "Deployed"), "deployed", "check_circle")
+        chip(tr("已開通", "Available"), "deployed", "check_circle")
         if m.get("deployed")
-        else chip(tr("未部署", "Not deployed"), "idle", "radio_button_unchecked")
+        else chip(tr("未開通", "Not set up"), "idle", "radio_button_unchecked")
     )
     note = " ".join(x for x in (loc(m, "use"), loc(m, "note")) if x)
     facts, actions = st.container(key=f"mrow_cloud_{m['name']}").columns(
@@ -405,9 +407,9 @@ def cloud_row(m: dict) -> None:
     facts.markdown(
         f'<div class="ml-grid cloud"><div title="{esc(note)}">'
         f'<div class="ml-name"><b>{esc(m["name"])}</b></div>'
-        f'<div class="ml-sub" title="{esc(loc(m, "api"))}">Azure OpenAI · {esc(loc(m, "api"))}'
-        "</div></div>"
-        f"<div>{ui.badges([m['category']], small=True)}</div>"
+        f'<div class="ml-sub" title="{esc(loc(m, "api"))}">'
+        f"{esc(m.get('provider', 'Azure OpenAI'))} · {esc(loc(m, 'api'))}</div></div>"
+        f"<div>{ui.badges(cloud_keys(m), small=True, limit=3)}</div>"
         f"<span>{chip(tr('雲端', 'Cloud'), 'cloud', 'cloud_upload', CLOUD_TIP)}</span>"
         f'<div class="ml-sub" style="white-space:normal">{esc(loc(m, "use"))}</div>'
         f"<div>{state}</div></div>",
@@ -425,9 +427,15 @@ def cloud_row(m: dict) -> None:
                 st.write(note)
 
 
+def cloud_keys(m: dict) -> list[str]:
+    """Badges of a cloud row: its task, paid, and whether online videos often use it."""
+    return [m["category"], *(["paid"] if m.get("paid", True) else []),
+            *(["narration"] if m.get("narration") else [])]  # fmt: skip
+
+
 def category_label(key: str) -> str:
     if key == "cloud":
-        return f"{ui.cap_icon('cloud')} " + tr("雲端（Azure OpenAI）", "Cloud (Azure OpenAI)")
+        return f"{ui.cap_icon('cloud')} " + tr("雲端（付費）", "Cloud (paid)")
     return f"{ui.cap_icon(key)} {ui.cap_text(key)}"
 
 
@@ -580,11 +588,11 @@ def other_models_view() -> None:
     clouds = [m for m in catalog.cloud_models() if hit(m)]
     if clouds and not only_platform and picked in (None, "cloud"):
         shown += 1
-        section(tr("雲端語音模型（Azure OpenAI）", "Cloud speech models (Azure OpenAI)"), "",
+        section(tr("雲端語音模型（付費）", "Cloud speech models (paid)"), "",
                 len(clouds), "cloud")  # fmt: skip
         st.caption(loc(data, "cloud_note"))
         with st.container(border=True, gap="xsmall"):
-            list_head([tr("部署名稱與 API", "Deployment & API"), tr("任務", "Task"),
+            list_head([tr("服務商與 API", "Provider & API"), tr("任務", "Task"),
                        tr("位置", "Where"), tr("用途", "Use"), tr("狀態", "Status")],
                       "cloud")  # fmt: skip
             for m in sorted(clouds, key=lambda m: not m.get("deployed")):

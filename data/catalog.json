@@ -2830,8 +2830,8 @@
       ]
     }
   ],
-  "other_runtimes_note": "這些模型 Ollama 不支援（Ollama 只跑文字／視覺 LLM 與 embedding）。標示「模型閘道」的模型由本機的模型閘道（127.0.0.1:11500）提供，用法和 Ollama 一樣：一鍵下載、第一次使用時載入、閒置後自動卸載；權重存在 models/hf、models/docling、models/mlx。可在「語音與文件」頁試用，agent 也能透過工具使用。標示「尚未接上平台」的模型只列在模型庫供參考（附官方模型頁連結），還不能一鍵下載，需自行安裝套件與權重。「雲端」是 Azure OpenAI 的語音模型，資料會上傳。",
-  "other_runtimes_note_en": "Ollama does not support these models (Ollama only runs text/vision LLMs and embeddings). Models marked \"Gateway\" are served by the local model gateway (127.0.0.1:11500) and work just like Ollama: one-click download, loaded on first use, unloaded automatically when idle; weights are stored in models/hf, models/docling and models/mlx. Try them on the \"Speech & documents\" page; agents can also use them through tools. Models marked \"Not in platform yet\" are listed for reference only (with a link to the official model page): there is no one-click download, so install their packages and weights yourself. \"Cloud\" models are Azure OpenAI speech models, and audio is uploaded.",
+  "other_runtimes_note": "這些模型 Ollama 不支援（Ollama 只跑文字／視覺 LLM 與 embedding）。標示「模型閘道」的模型由本機的模型閘道（127.0.0.1:11500）提供，用法和 Ollama 一樣：一鍵下載、第一次使用時載入、閒置後自動卸載；權重存在 models/hf、models/docling、models/mlx。可在「語音與文件」頁試用，agent 也能透過工具使用。標示「尚未接上平台」的模型只列在模型庫供參考（附官方模型頁連結），還不能一鍵下載，需自行安裝套件與權重。「雲端（付費）」是各家付費服務（Azure、Google、AWS、ElevenLabs、MiniMax 等）的語音模型，資料會上傳；語音合成有標「影片旁白常用」的，是網路影片配音常見的聲音來源。",
+  "other_runtimes_note_en": "Ollama does not support these models (Ollama only runs text/vision LLMs and embeddings). Models marked \"Gateway\" are served by the local model gateway (127.0.0.1:11500) and work just like Ollama: one-click download, loaded on first use, unloaded automatically when idle; weights are stored in models/hf, models/docling and models/mlx. Try them on the \"Speech & documents\" page; agents can also use them through tools. Models marked \"Not in platform yet\" are listed for reference only (with a link to the official model page): there is no one-click download, so install their packages and weights yourself. \"Cloud (paid)\" models are paid services (Azure, Google, AWS, ElevenLabs, MiniMax …) and the audio or text is uploaded; TTS entries marked \"common for narration\" are voices online videos often use.",
   "other_categories": {
     "asr": "語音辨識（ASR，整段錄音→文字）",
     "stream": "串流語音辨識（即時字幕，邊講邊出字）",
@@ -4405,10 +4405,11 @@
       "install_en": "pip install -U mlx-audio-plus (model mlx-community/Fun-CosyVoice3-0.5B-2512-fp16)",
       "use": "零樣本聲音複製、中英混說、方言／情緒指令，串流低延遲",
       "use_en": "Zero-shot voice cloning, zh-en code-switching, dialect/emotion instructions, low-latency streaming",
-      "note": "阿里通義 FunAudioLLM，2025-12；9 種語言＋18 種以上方言（含閩南話，非台灣腔專門，需實測）；含 RL 版 llm.rl.pt；HF 卡片與權重皆 apache-2.0；MLX 版為社群 mlx-audio-plus；複製他人聲音需取得同意",
-      "note_en": "Alibaba FunAudioLLM, 2025-12; 9 languages plus 18+ Chinese dialects (Minnan listed, not Taiwan-specific; test first); includes RL checkpoint; card and weights apache-2.0; MLX port is community mlx-audio-plus; get consent before cloning voices",
+      "note": "阿里通義 FunAudioLLM，2025-12；9 種語言＋18 種以上方言（含閩南話，非台灣腔專門，需實測）；含 RL 版 llm.rl.pt；HF 卡片與權重皆 apache-2.0；MLX 版為社群 mlx-audio-plus；複製他人聲音需取得同意；網路中文配音最常推薦的開源模型之一。尚未實測。",
+      "note_en": "Alibaba FunAudioLLM, 2025-12; 9 languages plus 18+ Chinese dialects (Minnan listed, not Taiwan-specific; test first); includes RL checkpoint; card and weights apache-2.0; MLX port is community mlx-audio-plus; get consent before cloning voices; One of the most recommended open models for Chinese voice-over. Not tested.",
       "recommended": true,
-      "released": "2025-12"
+      "released": "2025-12",
+      "narration": true
     },
     {
       "name": "BreezyVoice",
@@ -4432,8 +4433,8 @@
       "install_en": "git clone https://github.com/mtkresearch/BreezyVoice (Python 3.10; use onnxruntime instead of onnxruntime-gpu without a GPU)",
       "use": "台灣腔華語聲音複製，可用注音修正破音字，中英夾雜",
       "use_en": "Taiwanese-accent Mandarin voice cloning with bopomofo (zhuyin) polyphone control, zh-en code-switching",
-      "note": "聯發創新基地 MediaTek Research，2025-01；HF 卡片與 GitHub 皆 apache-2.0（已確認）；官方僅說明可在 CPU 執行，MPS 未驗證；2026-02 發表的台語版 BreezyVoice 26 未見公開權重；複製聲音需取得同意",
-      "note_en": "MediaTek Research, 2025-01; HF card and GitHub both apache-2.0 (verified); officially runnable on CPU, MPS untested; the Taiwanese Hokkien BreezyVoice 26 (announced 2026-02) has no public weights; get consent before cloning voices",
+      "note": "聯發創新基地 MediaTek Research，2025-01；HF 卡片與 GitHub 皆 apache-2.0（已確認）；官方僅說明可在 CPU 執行，MPS 未驗證；2026-02 發表的台語版 BreezyVoice 26 未見公開權重；複製聲音需取得同意；已實測後移除：CPU 上約語音長度 12 倍慢、偶爾漏字。",
+      "note_en": "MediaTek Research, 2025-01; HF card and GitHub both apache-2.0 (verified); officially runnable on CPU, MPS untested; the Taiwanese Hokkien BreezyVoice 26 (announced 2026-02) has no public weights; get consent before cloning voices; Measured, then removed: about 12x slower than real time on the CPU, sometimes drops words.",
       "recommended": true,
       "taiwan": true,
       "released": "2025-01"
@@ -4465,10 +4466,11 @@
       "install_en": "pip install -U mlx-audio (e.g. mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-8bit)",
       "use": "3 秒聲音複製、預設音色、以文字描述設計聲音，串流首包約 97ms，10 種語言",
       "use_en": "3-second voice cloning, preset voices, voice design from text descriptions, ~97 ms first packet streaming, 10 languages",
-      "note": "阿里 Qwen，2026-01；同系列：Qwen3-TTS-12Hz-1.7B-CustomVoice、-1.7B-VoiceDesign、-0.6B-Base、-0.6B-CustomVoice 與 Qwen3-TTS-Tokenizer-12Hz；預設音色含北京、四川話，無台灣腔；複製聲音需取得同意",
-      "note_en": "Alibaba Qwen, 2026-01; siblings: Qwen3-TTS-12Hz-1.7B-CustomVoice, -1.7B-VoiceDesign, -0.6B-Base, -0.6B-CustomVoice and Qwen3-TTS-Tokenizer-12Hz; preset voices include Beijing and Sichuan dialects, no Taiwanese accent; get consent before cloning voices",
+      "note": "阿里 Qwen，2026-01；同系列：Qwen3-TTS-12Hz-1.7B-CustomVoice、-1.7B-VoiceDesign、-0.6B-Base、-0.6B-CustomVoice 與 Qwen3-TTS-Tokenizer-12Hz；預設音色含北京、四川話，無台灣腔；複製聲音需取得同意；已實測（0.6B）：複製台灣口音後測試台詞錯字 0.7%、每句 1.2–1.7 秒；繁體要先轉簡體。",
+      "note_en": "Alibaba Qwen, 2026-01; siblings: Qwen3-TTS-12Hz-1.7B-CustomVoice, -1.7B-VoiceDesign, -0.6B-Base, -0.6B-CustomVoice and Qwen3-TTS-Tokenizer-12Hz; preset voices include Beijing and Sichuan dialects, no Taiwanese accent; get consent before cloning voices; Measured (0.6B): with a cloned Taiwanese voice 0.7% errors on the test lines, 1.2-1.7 s a sentence; give it Simplified text.",
       "recommended": false,
-      "released": "2026-01"
+      "released": "2026-01",
+      "narration": true
     },
     {
       "name": "Kokoro-82M",
@@ -4493,8 +4495,8 @@
       "install_en": "pip install -U mlx-audio \"misaki[zh]\" (model mlx-community/Kokoro-82M-bf16)",
       "use": "極輕量預設音色 TTS，英文為主，即時速度；中文用 v1.1-zh",
       "use_en": "Very small preset-voice TTS, English-first, real-time; use v1.1-zh for Chinese",
-      "note": "hexgrad，v1.0 2025-01（8 語、54 音色，含 8 個中文音色）；中文建議 hexgrad/Kokoro-82M-v1.1-zh（2025-02，加 100 位中文說話者，apache-2.0，0.39GB，ONNX 版 sherpa-onnx kokoro-multi-lang-v1_1）；無聲音複製",
-      "note_en": "hexgrad, v1.0 2025-01 (8 languages, 54 voices incl. 8 Mandarin); for Chinese use hexgrad/Kokoro-82M-v1.1-zh (2025-02, adds 100 Chinese speakers, apache-2.0, 0.39 GB; ONNX via sherpa-onnx kokoro-multi-lang-v1_1); no voice cloning",
+      "note": "hexgrad，v1.0 2025-01（8 語、54 音色，含 8 個中文音色）；中文建議 hexgrad/Kokoro-82M-v1.1-zh（2025-02，加 100 位中文說話者，apache-2.0，0.39GB，ONNX 版 sherpa-onnx kokoro-multi-lang-v1_1）；無聲音複製；已實測：首句 0.15 秒、錯字 1.3%，平台助理的預設聲音；只能中文（大陸口音）。",
+      "note_en": "hexgrad, v1.0 2025-01 (8 languages, 54 voices incl. 8 Mandarin); for Chinese use hexgrad/Kokoro-82M-v1.1-zh (2025-02, adds 100 Chinese speakers, apache-2.0, 0.39 GB; ONNX via sherpa-onnx kokoro-multi-lang-v1_1); no voice cloning; Measured: 0.15 s first sentence, 1.3% errors, the assistant's default voice; Chinese only (Mainland accent).",
       "recommended": false,
       "released": "2025-01"
     },
@@ -4524,10 +4526,11 @@
       "install": "git clone https://github.com/index-tts/index-tts && uv sync --all-extras",
       "use": "零樣本聲音複製，情緒與音色分離控制、語速／時長控制、拼音修正；中英日西阿",
       "use_en": "Zero-shot voice cloning with emotion/timbre disentanglement, speed/duration control, pinyin correction; zh/en/ja/es/ar",
-      "note": "Bilibili IndexTeam，2026-08；前代 IndexTeam/IndexTTS-2（2025-09，中英，同一 bilibili 授權）；官方需 NVIDIA GPU 約 6GB，Mac 用社群 MLX 轉檔 mlx-community/IndexTTS-2.5-fp16；首次執行另下載 w2v-bert 等輔助模型；複製聲音需取得同意",
-      "note_en": "Bilibili IndexTeam, 2026-08; predecessor IndexTeam/IndexTTS-2 (2025-09, zh/en, same bilibili licence); official setup needs an NVIDIA GPU (~6 GB), on Mac use the community MLX conversion mlx-community/IndexTTS-2.5-fp16; auxiliary models (w2v-bert etc.) download on first run; get consent before cloning voices",
+      "note": "Bilibili IndexTeam，2026-08；前代 IndexTeam/IndexTTS-2（2025-09，中英，同一 bilibili 授權）；官方需 NVIDIA GPU 約 6GB，Mac 用社群 MLX 轉檔 mlx-community/IndexTTS-2.5-fp16；首次執行另下載 w2v-bert 等輔助模型；複製聲音需取得同意；網路中文配音常推薦（bilibili）。尚未實測。",
+      "note_en": "Bilibili IndexTeam, 2026-08; predecessor IndexTeam/IndexTTS-2 (2025-09, zh/en, same bilibili licence); official setup needs an NVIDIA GPU (~6 GB), on Mac use the community MLX conversion mlx-community/IndexTTS-2.5-fp16; auxiliary models (w2v-bert etc.) download on first run; get consent before cloning voices; Often recommended for Chinese voice-over (bilibili). Not tested.",
       "recommended": false,
-      "released": "2026-08"
+      "released": "2026-08",
+      "narration": true
     },
     {
       "name": "F5-TTS",
@@ -4589,10 +4592,11 @@
       "install_en": "pip install -U mlx-audio (model mlx-community/fish-audio-s2-pro-8bit)",
       "use": "高表現力聲音複製，行內自由文字標籤控制語氣／情緒，多說話者，80 多種語言（中英日第一級）",
       "use_en": "Expressive voice cloning with free-form inline tags for tone/emotion, multi-speaker, 80+ languages (zh/en/ja tier 1)",
-      "note": "Fish Audio，2026-03；小型版 fishaudio/s1-mini（原 openaudio-s1-mini，0.5B，13 語，CC-BY-NC-SA-4.0，需登入同意條款，3.6GB）；兩者皆不可商用；複製聲音需取得同意",
-      "note_en": "Fish Audio, 2026-03; small sibling fishaudio/s1-mini (formerly openaudio-s1-mini, 0.5B, 13 languages, CC-BY-NC-SA-4.0, gated, 3.6 GB); neither is commercial-use; get consent before cloning voices",
+      "note": "Fish Audio，2026-03；小型版 fishaudio/s1-mini（原 openaudio-s1-mini，0.5B，13 語，CC-BY-NC-SA-4.0，需登入同意條款，3.6GB）；兩者皆不可商用；複製聲音需取得同意；盲聽排行開源第一（Artificial Analysis）；研究／非商用。尚未實測。",
+      "note_en": "Fish Audio, 2026-03; small sibling fishaudio/s1-mini (formerly openaudio-s1-mini, 0.5B, 13 languages, CC-BY-NC-SA-4.0, gated, 3.6 GB); neither is commercial-use; get consent before cloning voices; Top open-weights model in the Artificial Analysis arena; research / non-commercial. Not tested.",
       "recommended": false,
-      "released": "2026-03"
+      "released": "2026-03",
+      "narration": true
     },
     {
       "name": "Dia-1.6B",
@@ -4697,8 +4701,8 @@
       "install_en": "pip install -U mlx-audio (model mlx-community/Spark-TTS-0.5B-bf16)",
       "use": "中英零樣本聲音複製，可調性別／音高／語速建立虛擬聲音",
       "use_en": "Chinese/English zero-shot cloning; create virtual voices by gender/pitch/speed",
-      "note": "SparkAudio（港科大等），2025-03；LLM 直接輸出 BiCodec，無流匹配；權重 CC-BY-NC-SA 不可商用；複製聲音需取得同意",
-      "note_en": "SparkAudio (HKUST et al.), 2025-03; LLM predicts BiCodec tokens directly, no flow matching; CC-BY-NC-SA weights, no commercial use; get consent before cloning voices",
+      "note": "SparkAudio（港科大等），2025-03；LLM 直接輸出 BiCodec，無流匹配；權重 CC-BY-NC-SA 不可商用；複製聲音需取得同意；已試：mlx-audio 複製聲音會出錯、長句 GPU 逾時，沒列入評測；非商用。",
+      "note_en": "SparkAudio (HKUST et al.), 2025-03; LLM predicts BiCodec tokens directly, no flow matching; CC-BY-NC-SA weights, no commercial use; get consent before cloning voices; Tried: cloning fails in mlx-audio and long lines time the GPU out; not benchmarked; non-commercial.",
       "recommended": false,
       "released": "2025-03"
     },
@@ -4966,6 +4970,32 @@
       "released": "2026-05"
     },
     {
+      "name": "MOSS-TTS-Nano",
+      "repo": "OpenMOSS-Team/MOSS-TTS-Nano",
+      "url": "https://huggingface.co/mlx-community/MOSS-TTS-Nano-100M",
+      "category": "tts",
+      "status": "catalog",
+      "params": "0.1B",
+      "size_gb": 0.3,
+      "langs": [
+        "zh",
+        "en",
+        "multi"
+      ],
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio（MLX）",
+      "runtime_en": "mlx-audio (MLX)",
+      "install": "平台的語音合成已內建（mlx-community/MOSS-TTS-Nano-100M）",
+      "install_en": "Built into the platform's TTS (mlx-community/MOSS-TTS-Nano-100M)",
+      "use": "極小的聲音複製模型",
+      "use_en": "A tiny voice-cloning model",
+      "note": "已實測：很快（每句 0.6 秒），但常把句子拉長、重複（測試台詞錯字 45%），不建議使用。",
+      "note_en": "Measured: fast (0.6 s a sentence) but stretches and repeats lines (45% errors on the test lines); not recommended.",
+      "recommended": false,
+      "released": "2026"
+    },
+    {
       "name": "Step-Audio-EditX",
       "repo": "stepfun-ai/Step-Audio-EditX",
       "url": "https://huggingface.co/stepfun-ai/Step-Audio-EditX",
@@ -5021,8 +5051,8 @@
       "install_en": "pip install -U mlx-audio (model mlx-community/VoxCPM2-8bit)",
       "use": "無 tokenizer 擴散自回歸 TTS，48kHz，聲音設計＋可控複製，30 語＋9 種中文方言",
       "use_en": "Tokenizer-free diffusion-AR TTS, 48 kHz, voice design and controllable cloning, 30 languages plus 9 Chinese dialects",
-      "note": "OpenBMB（清華／面壁），2026-04；方言清單含閩南話（非台灣腔專門，需實測）；官方標明可商用；前代 openbmb/VoxCPM1.5（2025-12，中英）；複製聲音需取得同意",
-      "note_en": "OpenBMB (Tsinghua/ModelBest), 2026-04; dialect list includes Minnan (not Taiwan-specific; test first); officially commercial-ready; predecessor openbmb/VoxCPM1.5 (2025-12, zh/en); get consent before cloning voices",
+      "note": "OpenBMB（清華／面壁），2026-04；方言清單含閩南話（非台灣腔專門，需實測）；官方標明可商用；前代 openbmb/VoxCPM1.5（2025-12，中英）；複製聲音需取得同意；已實測：清楚（1.9%）但每句 3.6 秒，只適合預先合成。",
+      "note_en": "OpenBMB (Tsinghua/ModelBest), 2026-04; dialect list includes Minnan (not Taiwan-specific; test first); officially commercial-ready; predecessor openbmb/VoxCPM1.5 (2025-12, zh/en); get consent before cloning voices; Measured: clear (1.9%) but 3.6 s a sentence, pre-render only.",
       "recommended": false,
       "released": "2026-04"
     },
@@ -5083,8 +5113,8 @@
       "install_en": "pip install -U mlx-audio (model mlx-community/OmniVoice-bf16)",
       "use": "600 多種語言零樣本複製與聲音設計，RTF 低至 0.025",
       "use_en": "Zero-shot cloning and voice design in 600+ languages, RTF as low as 0.025",
-      "note": "k2-fsa，2026-04；語言表含 Min Nan（nan，僅約 17.6 小時資料，需實測）；衍生：MERaLiON-OmniVoice-Hokkien-TTS（新加坡福建話，MERaLiON 授權）、formospeech/omnivoice-hakka-community-1（台灣客語，CC-BY-NC，需申請）；複製聲音需取得同意",
-      "note_en": "k2-fsa, 2026-04; language table lists Min Nan (nan, only ~17.6 h of data; test first); derivatives: MERaLiON-OmniVoice-Hokkien-TTS (Singapore Hokkien, MERaLiON licence) and formospeech/omnivoice-hakka-community-1 (Taiwanese Hakka, CC-BY-NC, gated); get consent before cloning voices",
+      "note": "k2-fsa，2026-04；語言表含 Min Nan（nan，僅約 17.6 小時資料，需實測）；衍生：MERaLiON-OmniVoice-Hokkien-TTS（新加坡福建話，MERaLiON 授權）、formospeech/omnivoice-hakka-community-1（台灣客語，CC-BY-NC，需申請）；複製聲音需取得同意；已實測：複製台灣口音後測試台詞全對、每句 1.5 秒；注意非商用。",
+      "note_en": "k2-fsa, 2026-04; language table lists Min Nan (nan, only ~17.6 h of data; test first); derivatives: MERaLiON-OmniVoice-Hokkien-TTS (Singapore Hokkien, MERaLiON licence) and formospeech/omnivoice-hakka-community-1 (Taiwanese Hakka, CC-BY-NC, gated); get consent before cloning voices; Measured: with a cloned Taiwanese voice every test line right, 1.5 s a sentence; non-commercial.",
       "recommended": false,
       "released": "2026-04"
     },
@@ -5166,8 +5196,8 @@
       "install_en": "pip install -U mlx-audio (model mlx-community/Breeze-TTS-2-mlx-8bit)",
       "use": "中英即時 TTS：聲音複製、文字描述設計聲音、帶參考音的語氣指導、[笑] 等聲音事件",
       "use_en": "Real-time zh/en TTS: voice cloning, voice design from text, directed delivery with a reference, vocal events like (laugh)",
-      "note": "BreezeBlue（RESONIA, INC.），2026-08；與聯發科 BreezyVoice 無關；自稱 Artificial Analysis 開放權重榜第一；官方需 CUDA GPU 約 7.7GB；音訊 tokenizer 取自 Qwen3-TTS；禁止未經同意複製聲音",
-      "note_en": "BreezeBlue (RESONIA, INC.), 2026-08; unrelated to MediaTek BreezyVoice; claims #1 open-weight on Artificial Analysis; official runtime needs a CUDA GPU (~7.7 GB); audio tokenizer from Qwen3-TTS; no cloning without consent",
+      "note": "BreezeBlue（RESONIA, INC.），2026-08；與聯發科 BreezyVoice 無關；自稱 Artificial Analysis 開放權重榜第一；官方需 CUDA GPU 約 7.7GB；音訊 tokenizer 取自 Qwen3-TTS；禁止未經同意複製聲音；已實測：清楚（3.2%）但比說話還慢（RTF 1.1）；盲聽排行開源前段；非商用。",
+      "note_en": "BreezeBlue (RESONIA, INC.), 2026-08; unrelated to MediaTek BreezyVoice; claims #1 open-weight on Artificial Analysis; official runtime needs a CUDA GPU (~7.7 GB); audio tokenizer from Qwen3-TTS; no cloning without consent; Measured: clear (3.2%) but slower than speech (RTF 1.1); near the top of open weights in blind tests; non-commercial.",
       "recommended": false,
       "released": "2026-08"
     },
@@ -6388,8 +6418,8 @@
       "recommended": false
     }
   ],
-  "cloud_note": "雲端（Azure OpenAI）：資料會上傳到 Azure，不在這台 Mac 執行，也不用下載。列出你可用的部署供對照；平台目前沒有接上，需自行呼叫 Azure OpenAI API。",
-  "cloud_note_en": "Cloud (Azure OpenAI): audio is uploaded to Azure; nothing runs on or is downloaded to this Mac. Listed for comparison with the deployments you have; the platform does not call them yet (use the Azure OpenAI API yourself).",
+  "cloud_note": "雲端：資料（錄音或要念的文字）會上傳到服務商，不在這台 Mac 執行，也不用下載；全部要付費（按用量計費或訂閱）。「已開通」＝這台平台已有金鑰、測得到；語音合成那幾個也是網路影片旁白常見的聲音來源。",
+  "cloud_note_en": "Cloud: the audio or text is uploaded to the provider, nothing runs or downloads here; all are paid (usage-based or subscriptions). 'Available' = the platform has keys for it. The TTS ones are also common narration voices in online videos.",
   "cloud_models": [
     {
       "name": "whisper",
@@ -6403,7 +6433,9 @@
       "note": "OpenAI 2022 年開源模型（API 上為 whisper-1）；單檔上限 25 MB；Azure 上唯一列在「語音翻譯」表的模型；OpenAI 定價約 US$0.006／分鐘；約 57 種語言達官方支援門檻。",
       "note_en": "OpenAI 2022 open model (whisper-1 on OpenAI API); 25 MB max file; the only model in Azure's speech-translation table; OpenAI list price about USD 0.006/min; about 57 officially supported languages.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure#audio-models",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-transcribe",
@@ -6417,7 +6449,9 @@
       "note": "2026 年 7 月發表；Azure 文件明言「離線轉錄、不是 Realtime API 模型」，要串流請改用 gpt-realtime-whisper 或 gpt-live-transcribe（OpenAI 端另支援 Realtime 轉錄 session）；單檔上限 25 MB；OpenAI 定價 US$0.0045／分鐘；未提供說話者分離；未列語言清單。",
       "note_en": "Released July 2026; Azure docs say it is offline and not a Realtime API model, use gpt-realtime-whisper or gpt-live-transcribe for streaming (OpenAI's own API also allows Realtime transcription sessions); 25 MB max file; OpenAI list price USD 0.0045/min; no diarization; no language list published.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure#audio-models",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-4o-transcribe",
@@ -6431,7 +6465,9 @@
       "note": "版本 2025-03-20（2025 年 3 月，Azure 標為 Preview）；單檔上限 25 MB；錯誤率比 whisper 低；OpenAI 定價約 US$0.006／分鐘；也可當 Realtime session 的輸入轉錄模型。",
       "note_en": "Version 2025-03-20 (March 2025, Preview on Azure); 25 MB max file; lower error rate than whisper; OpenAI list price about USD 0.006/min; can also serve as the input-transcription model in Realtime sessions.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure#audio-models",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-4o-mini-transcribe",
@@ -6445,7 +6481,9 @@
       "note": "版本 2025-03-20 與 2025-12-15（後者提升準確度與穩定性，Azure 標為 Preview）；單檔上限 25 MB；OpenAI 定價約 US$0.003／分鐘，約為 gpt-4o-transcribe 的一半。",
       "note_en": "Versions 2025-03-20 and 2025-12-15 (the latter improves accuracy and robustness; Preview on Azure); 25 MB max file; OpenAI list price about USD 0.003/min, about half of gpt-4o-transcribe.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure#audio-models",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-4o-transcribe-diarize",
@@ -6459,7 +6497,9 @@
       "note": "版本 2025-10-15（2025 年 10 月，Azure 標為 Preview）；單檔上限 25 MB；超過 30 秒須設 chunking_strategy；不支援 prompt、logprobs、timestamp_granularities；只能走 /audio/transcriptions，不支援 Realtime API。",
       "note_en": "Version 2025-10-15 (October 2025, Preview on Azure); 25 MB max file; chunking_strategy required for audio over 30 s; no prompt, logprobs or timestamp_granularities; /audio/transcriptions only, not the Realtime API.",
       "url": "https://developers.openai.com/api/docs/guides/speech-to-text",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-realtime-whisper",
@@ -6473,7 +6513,9 @@
       "note": "版本 2026-05-06（2026 年 5 月與 gpt-realtime-2 同批發表）；依音訊時長計費，OpenAI 定價 US$0.017／分鐘；不是 /audio API 模型；可給 ISO-639-1 語言提示；未列語言清單。",
       "note_en": "Version 2026-05-06 (May 2026, launched with gpt-realtime-2); billed by audio duration, OpenAI list price USD 0.017/min; not an /audio API model; accepts ISO-639-1 language hints; no language list published.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/realtime-audio",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-live-transcribe",
@@ -6487,7 +6529,9 @@
       "note": "版本 2026-07-29（2026 年 7 月與 gpt-transcribe 同時發表）；Azure 標示為目前即時轉錄的推薦模型，錯誤率低於 gpt-realtime-whisper；依時長計費，OpenAI 定價 US$0.017／分鐘；未列語言清單。",
       "note_en": "Version 2026-07-29 (July 2026, released alongside gpt-transcribe); Azure lists it as the current recommended realtime transcription model, lower error rate than gpt-realtime-whisper; billed by duration, OpenAI list price USD 0.017/min; no language list published.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/realtime-audio",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-live-1",
@@ -6501,7 +6545,9 @@
       "note": "OpenAI 2026 年 7 月發表（ChatGPT 語音），Azure 為公開預覽；語音 session 依時長計費（OpenAI 定價 US$0.05／分鐘，Azure 部落格寫每小時 US$3），後端模型另計；WebRTC 每 session 最少計 15 秒；支援多語，但品質不保證與 gpt-realtime 相同。",
       "note_en": "OpenAI released it in July 2026 (ChatGPT voice); public preview on Azure; voice session billed by duration (OpenAI list USD 0.05/min, Azure blog USD 3/hour) with backend model billed separately; WebRTC sessions have a 15 s billing minimum; multilingual, quality not guaranteed to match gpt-realtime.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/gpt-live",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-realtime-translate",
@@ -6515,7 +6561,9 @@
       "note": "版本 2026-05-06（2026 年 5 月）；OpenAI 宣稱支援 70 種以上輸入語言、13 種輸出語言（Azure 未列清單）；依時長計費，OpenAI 定價 US$0.034／分鐘；不支援自訂 prompt 與選擇聲音；要原文字幕需搭配轉錄模型。",
       "note_en": "Version 2026-05-06 (May 2026); OpenAI claims 70+ input and 13 output languages (Azure publishes no list); billed by duration, OpenAI list price USD 0.034/min; no custom prompt or voice selection; pair with a transcription model for source-language captions.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/gpt-realtime-translate",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-4o-mini-tts",
@@ -6529,13 +6577,15 @@
       "note": "版本 2025-03-20 與 2025-12-15；Azure 列在「文字轉語音（預覽）」表；同表另有 tts、tts-hd。",
       "note_en": "Versions 2025-03-20 and 2025-12-15; listed in Azure's text-to-speech (preview) table, alongside tts and tts-hd.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure#audio-models",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
     },
     {
       "name": "gpt-realtime",
       "model": "gpt-realtime",
       "category": "voice_chat",
-      "deployed": false,
+      "deployed": true,
       "api": "Realtime API（WebSocket／WebRTC／SIP，/openai/v1/realtime）",
       "api_en": "Realtime API (WebSocket/WebRTC/SIP, /openai/v1/realtime)",
       "use": "語音對語音助理：一個模型聽語音、推理、呼叫工具並以語音回答，採輪流發言；也可輸入圖片。",
@@ -6543,7 +6593,162 @@
       "note": "版本 2025-08-28（2025 年 8 月 GA）；依 token 計費（OpenAI 定價音訊輸入 US$32／百萬 token）；輸入上限 32,000、輸出 4,096 token；單一 session 最長 60 分鐘；後續版本有 gpt-realtime-mini、1.5、2、2.1。",
       "note_en": "Version 2025-08-28 (GA, August 2025); token-based billing (OpenAI list USD 32 per 1M audio input tokens); 32,000 input and 4,096 output tokens; 60-minute max session; later versions include gpt-realtime-mini, 1.5, 2 and 2.1.",
       "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/realtime-audio",
-      "verified": true
+      "verified": true,
+      "provider": "Azure OpenAI",
+      "paid": true
+    },
+    {
+      "name": "Gemini 3.1 Flash TTS／2.5 Flash／2.5 Pro TTS",
+      "model": "gemini-3.1-flash-tts-preview",
+      "category": "tts",
+      "provider": "Google Vertex AI",
+      "paid": true,
+      "deployed": true,
+      "api": "generateContent（responseModalities AUDIO）",
+      "api_en": "generateContent（responseModalities AUDIO）",
+      "use": "文字轉語音，可用文字指示語氣；中英文。",
+      "use_en": "Text-to-speech with style instructions; Chinese and English.",
+      "note": "已實測（2026-10-28）：會議稿回聽錯字 1.6–2.4%，整句生成每句 3.7–6.5 秒，不適合即時對話；3.1 Flash 在盲聽排行（Artificial Analysis Speech Arena）名列前茅。口音偏大陸。平台的語音合成已可選用。",
+      "note_en": "Measured 2026-10-28: 1.6-2.4% round-trip errors, 3.7-6.5 s per sentence (whole sentence), too slow live; 3.1 Flash ranks near the top of the Artificial Analysis Speech Arena. Mainland accent. Selectable in the platform's TTS.",
+      "url": "https://cloud.google.com/vertex-ai/generative-ai/docs/speech/gemini-tts",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "Azure AI Speech 神經語音（曉臻、曉雨、雲哲…）",
+      "model": "Azure AI Speech 神經語音（曉臻、曉雨、雲哲…）",
+      "category": "tts",
+      "provider": "Microsoft Azure AI Speech",
+      "paid": true,
+      "deployed": false,
+      "api": "Speech SDK／REST（SSML）",
+      "api_en": "Speech SDK／REST（SSML）",
+      "use": "影片旁白最常見的聲音來源之一：台灣華語 zh-TW-HsiaoChen、HsiaoYu、YunJhe；大陸普通話的「雲希」是短影音最常聽到的男聲。Edge 瀏覽器的「大聲朗讀」用的是同一批聲音。",
+      "use_en": "One of the most common narration sources: Taiwan Mandarin zh-TW-HsiaoChen, HsiaoYu, YunJhe; the Mainland 'Yunxi' is the male voice heard most on short videos. Edge's Read Aloud uses the same voices.",
+      "note": "需要 Azure Speech 資源（和 Azure OpenAI 不同服務），按字元計費；Edge 朗讀免費但商用要依微軟條款。尚未實測。",
+      "note_en": "Needs an Azure Speech resource (a different service from Azure OpenAI), billed per character; Edge Read Aloud is free but commercial use follows Microsoft's terms. Not tested yet.",
+      "url": "https://learn.microsoft.com/azure/ai-services/speech-service/language-support?tabs=tts",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "ElevenLabs（Eleven v3、Multilingual v2）",
+      "model": "ElevenLabs（Eleven v3、Multilingual v2）",
+      "category": "tts",
+      "provider": "ElevenLabs",
+      "paid": true,
+      "deployed": false,
+      "api": "REST／WebSocket 串流",
+      "api_en": "REST／WebSocket 串流",
+      "use": "國際最常用的旁白與 Podcast 配音、聲音複製；中文停頓與長句穩定。",
+      "use_en": "The most used narration, podcast and voice-cloning service internationally; steady Chinese pauses and long sentences.",
+      "note": "付費訂閱（免費額度不可商用）；Eleven v3 在盲聽排行前段。尚未實測。",
+      "note_en": "Paid plans (the free tier is not for commercial use); Eleven v3 ranks near the top of blind listening tests. Not tested.",
+      "url": "https://elevenlabs.io/docs/api-reference/text-to-speech",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "MiniMax Speech（2.8 HD 等）",
+      "model": "MiniMax Speech（2.8 HD 等）",
+      "category": "tts",
+      "provider": "MiniMax（海螺 AI）",
+      "paid": true,
+      "deployed": false,
+      "api": "REST／串流",
+      "api_en": "REST／串流",
+      "use": "中文情緒表現常被評為最強之一，短劇、有聲書配音常用；可複製聲音。",
+      "use_en": "Often rated among the best at Chinese emotion; used for short dramas and audiobooks; voice cloning.",
+      "note": "付費 API；盲聽排行前段。尚未實測。",
+      "note_en": "Paid API; near the top of blind listening tests. Not tested.",
+      "url": "https://www.minimax.io/platform",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "豆包語音合成（剪映／CapCut 的文字朗讀）",
+      "model": "豆包語音合成（剪映／CapCut 的文字朗讀）",
+      "category": "tts",
+      "provider": "字節跳動 火山引擎",
+      "paid": true,
+      "deployed": false,
+      "api": "REST／WebSocket",
+      "api_en": "REST／WebSocket",
+      "use": "剪映、CapCut「文字朗讀」背後的聲音，短影音最普遍；中文自然度高。",
+      "use_en": "The voices behind CapCut's text-to-speech, the most common on short videos; very natural Chinese.",
+      "note": "剪映內基礎功能免費、部分聲音需 VIP；API 走火山引擎付費。商用需看平台條款。尚未實測。",
+      "note_en": "Basic voices free inside CapCut, some need VIP; the API is paid through Volcano Engine. Check the terms for commercial use. Not tested.",
+      "url": "https://www.volcengine.com/product/voice-tech",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "Fun-Realtime-TTS／Qwen-TTS（雲端）",
+      "model": "Fun-Realtime-TTS／Qwen-TTS（雲端）",
+      "category": "tts",
+      "provider": "阿里雲 百煉（Model Studio）",
+      "paid": true,
+      "deployed": false,
+      "api": "DashScope API（串流）",
+      "api_en": "DashScope API（串流）",
+      "use": "阿里的即時語音合成，低延遲串流；2026-06 曾登上盲聽排行第一。",
+      "use_en": "Alibaba's real-time TTS with low-latency streaming; topped the blind listening leaderboard in 2026-06.",
+      "note": "付費 API；開源的 Qwen3-TTS、CosyVoice 3 是同家族，可在本機跑。尚未實測。",
+      "note_en": "Paid API; the open Qwen3-TTS and CosyVoice 3 are the same family and run locally. Not tested.",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "Inworld TTS（1.5 Max 等）",
+      "model": "Inworld TTS（1.5 Max 等）",
+      "category": "tts",
+      "provider": "Inworld AI",
+      "paid": true,
+      "deployed": false,
+      "api": "REST／串流",
+      "api_en": "REST／串流",
+      "use": "為即時語音代理設計的低延遲語音合成；盲聽排行曾排第一。",
+      "use_en": "Low-latency TTS built for real-time voice agents; has ranked first in blind listening tests.",
+      "note": "付費 API；中文支援需實測。尚未實測。",
+      "note_en": "Paid API; Chinese support to be checked. Not tested.",
+      "url": "https://inworld.ai/tts",
+      "verified": false,
+      "narration": false
+    },
+    {
+      "name": "Google Cloud Text-to-Speech（Chirp 3 HD、WaveNet）",
+      "model": "Google Cloud Text-to-Speech（Chirp 3 HD、WaveNet）",
+      "category": "tts",
+      "provider": "Google Cloud",
+      "paid": true,
+      "deployed": false,
+      "api": "REST／串流",
+      "api_en": "REST／串流",
+      "use": "有台灣華語（cmn-TW）聲音；Chirp 3 HD 支援串流。",
+      "use_en": "Has Taiwan Mandarin (cmn-TW) voices; Chirp 3 HD streams.",
+      "note": "按字元計費；這次的帳號沒有權限（API 未啟用），尚未實測。",
+      "note_en": "Billed per character; this account has no access (API disabled). Not tested.",
+      "url": "https://cloud.google.com/text-to-speech/docs/voices",
+      "verified": false,
+      "narration": true
+    },
+    {
+      "name": "Amazon Polly（Neural）",
+      "model": "Amazon Polly（Neural）",
+      "category": "tts",
+      "provider": "AWS",
+      "paid": true,
+      "deployed": false,
+      "api": "SynthesizeSpeech",
+      "api_en": "SynthesizeSpeech",
+      "use": "AWS 的語音合成；中文只有普通話（Zhiyu），沒有台灣華語。",
+      "use_en": "AWS speech synthesis; Chinese is Mainland Mandarin only (Zhiyu), no Taiwan Mandarin.",
+      "note": "按字元計費；這次的 IAM 帳號沒有 Polly 權限，尚未實測。",
+      "note_en": "Billed per character; this IAM user has no Polly permission. Not tested.",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/available-voices.html",
+      "verified": false,
+      "narration": false
     }
   ]
 }

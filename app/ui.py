@@ -46,6 +46,8 @@ CAPS = {
     "non_commercial": ("block", "非商用", "Non-commercial", "#B45309"),
     "custom_license": ("gavel", "自訂授權", "Custom licence", "#92400E"),
     "gated": ("lock", "需同意條款", "Gated", "#475569"),
+    "paid": ("payments", "付費", "Paid", "#B91C1C"),
+    "narration": ("record_voice_over", "影片旁白常用", "Common for narration", "#7C3AED"),
     "cloud": ("cloud", "雲端", "Cloud", "#EA580C"),
     "installed": ("download_done", "已下載", "Installed", "#15803D"),
 }
