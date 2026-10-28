@@ -20,6 +20,10 @@ DATA = PROJECT_DIR / "data" / "lab" / "streaming_benchmark.json"
 LATENCY_SAMPLE = "national_day_2026_zh.wav"
 NAMES = {  # models outside the gateway catalog
     "kyutai-stt-1b-en_fr": ("Kyutai STT 1B（英文、法文）", "Kyutai STT 1B (English, French)"),
+    "gemini-3.5-transcribe-live": (
+        "Gemini 3.5 Transcribe Live（Google 雲端）",
+        "Gemini 3.5 Transcribe Live (Google cloud)",
+    ),
 }
 
 
@@ -87,8 +91,14 @@ def summary_frame(data: dict, labels: dict) -> pd.DataFrame:
         row = {
             tr("模型", "Model"): model_name(model, info, labels),
             tr("位置", "Where"): (
-                tr("雲端（Azure）", "Cloud (Azure)") if cloud else tr("本機", "Local")
-            ),
+                (
+                    tr("雲端（Google）", "Cloud (Google)")
+                    if model.startswith("gemini")
+                    else tr("雲端（Azure）", "Cloud (Azure)")
+                )
+                if cloud
+                else tr("本機", "Local")
+            ),  # fmt: skip
         }
         for sample, title in samples.items():
             row[title] = rate_cell(by_key.get((model, sample)))

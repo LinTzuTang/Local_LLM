@@ -48,6 +48,8 @@ MODELS = {
     "voxcpm2-8bit": ("VoxCPM2 8-bit", "mlx-community/VoxCPM2-8bit", "Apache-2.0", 3.2),
     "breeze-tts-2": ("Breeze-TTS-2", "mlx-community/Breeze-TTS-2-mlx",
                      "research / non-commercial", 7.6),
+    "moss-tts-nano": ("MOSS-TTS-Nano 100M", "mlx-community/MOSS-TTS-Nano-100M", "Apache-2.0", 0.3),
+    "omnivoice": ("OmniVoice", "mlx-community/OmniVoice-bfloat16", "Apache-2.0", 2.0),
 }  # fmt: skip
 CLONE = "clone"  # options marker: reference audio and transcript from neural_tts
 
@@ -76,6 +78,19 @@ QWEN_LIMITS = (
     "Chinese and English (10 languages), numbers and mixed text are fine; Traditional "
     "characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each "
     "sentence, a little slow to talk live (streaming playback would fix it).",
+)
+MOSS_LIMITS = (
+    "很快（每句約 0.6 秒），但常把句子拉長、重複（88 秒的稿念成 183 秒），"
+    "測試台詞辨識錯字率約 45%，不建議使用；繁體字要先轉簡體。",
+    "Fast (about 0.6 s a sentence) but often stretches and repeats lines (an 88 s "
+    "script took 183 s), 45% errors on the test lines: not recommended; reads Simplified.",
+)
+OMNI_LIMITS = (
+    "中英文、數字都行；繁體字會走音，所以先轉簡體再念；每句約 1.5 秒才開口，即時對話稍慢；"
+    "測試台詞串流辨識全對，很適合當測試講者。",
+    "Chinese, English and numbers are fine; Traditional characters are mispronounced, so it "
+    "reads Simplified; about 1.5 s before each sentence, a little slow to talk live; every test "
+    "line was recognised right, a good test speaker.",
 )
 SLOW_LIMITS = {
     "voxcpm2-8bit": (
@@ -120,6 +135,17 @@ VOICES = {
               ("VoxCPM2 聲音複製・MLX", "VoxCPM2 clone, MLX"),
               "我是複製台灣口音的 VoxCPM2。", english=True, simplified=True,
               limits=SLOW_LIMITS["voxcpm2-8bit"], clone=CLONE),
+        voice("MOSS-TTS-Nano 台灣腔（複製）", "MOSS-TTS-Nano 台灣腔", "zh_TW", "moss-tts-nano",
+              ("MOSS-TTS-Nano 100M 聲音複製・MLX", "MOSS-TTS-Nano 100M clone, MLX"),
+              "我是複製台灣口音的 MOSS-TTS-Nano。", english=True, simplified=True,
+              limits=MOSS_LIMITS, clone=CLONE),
+        voice("OmniVoice 台灣腔（複製）", "OmniVoice 台灣腔", "zh_TW", "omnivoice",
+              ("OmniVoice 聲音複製・MLX", "OmniVoice clone, MLX"),
+              "我是複製台灣口音的 OmniVoice。", english=True, simplified=True,
+              limits=OMNI_LIMITS,
+              language="zh", clone=CLONE),
+        # Spark-TTS 0.5B was tried and left out: its clone fails in mlx-audio (BatchNorm) and
+        # long lines time the GPU out.
         voice("Breeze-TTS-2 台灣腔（複製）", "Breeze-TTS-2 台灣腔", "zh_TW", "breeze-tts-2",
               ("Breeze-TTS-2 聲音複製・MLX・非商用", "Breeze-TTS-2 clone, MLX, non-commercial"),
               "我是複製台灣口音的 Breeze-TTS-2。", english=True,

@@ -63,7 +63,29 @@ VOICES = {
         "source": ("聯發科 VITS・sherpa-onnx", "MediaTek VITS, sherpa-onnx"),
         "limits": VITS_LIMITS,
     },
-} | mlx_tts.VOICES
+}
+# Google Gemini TTS on Vertex AI (the service account of gcp_auth): text goes to Google.
+GEMINI_TTS_LIMITS = (
+    "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，"
+    "加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
+    "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the "
+    "whole sentence at once, so with the round trip each sentence takes seconds. Chinese, "
+    "English and numbers are fine; Mainland accent.",
+)
+GEMINI_TTS = {
+    "Gemini 2.5 Flash TTS（雲端）": "gemini-2.5-flash-tts",
+    "Gemini 2.5 Pro TTS（雲端）": "gemini-2.5-pro-tts",
+    "Gemini 3.1 Flash TTS（雲端）": "gemini-3.1-flash-tts-preview",
+}
+for _name, _model in GEMINI_TTS.items():
+    VOICES[_name] = {
+        "name": _name, "short": _name.removesuffix("（雲端）"), "locale": "zh_CN",
+        "engine": "gemini", "model": _model, "voice": "Kore", "fast": False, "english": True,
+        "sample": "我是 Google 的 Gemini 語音。", "cloud": True,
+        "source": ("Google Gemini TTS・雲端", "Google Gemini TTS, cloud"),
+        "limits": GEMINI_TTS_LIMITS,
+    }  # fmt: skip
+VOICES |= mlx_tts.VOICES
 NATIVE_RATE = 22050
 # Every rendering is brought to TARGET_RMS_DB (macOS Tingting measures about -17), its peaks
 # rounded off above KNEE so the gain is not capped by a few loud samples.
@@ -74,6 +96,10 @@ _lock = threading.Lock()
 
 
 def available(name: str) -> bool:
+    if name in GEMINI_TTS:
+        from . import gcp_auth
+
+        return gcp_auth.available()
     if name == VITS:
         return (VITS_DIR / "vits-mr-20250709.onnx").exists()
     if name in mlx_tts.VOICES:
@@ -206,6 +232,30 @@ def render_mlx(text: str, voice: str, out: Path, sample_rate: int) -> Path:
     return _write(out, _resample(loudness(x), rate, sample_rate), sample_rate)
 
 
+def render_gemini(text: str, voice: str, out: Path, sample_rate: int) -> Path:
+    """One line through Gemini TTS (Vertex AI generateContent, audio out, 24 kHz PCM)."""
+    import base64
+
+    import httpx
+
+    from . import gcp_auth
+
+    v = VOICES[voice]
+    token, project = gcp_auth.token()
+    url = (f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project}/locations/"
+           f"us-central1/publishers/google/models/{v['model']}:generateContent")  # fmt: skip
+    body = {"contents": [{"role": "user", "parts": [{"text": text}]}],
+            "generationConfig": {"responseModalities": ["AUDIO"], "speechConfig": {
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": v["voice"]}}}}}  # fmt: skip
+    r = httpx.post(url, json=body, headers={"Authorization": f"Bearer {token}"}, timeout=120)
+    r.raise_for_status()
+    part = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]
+    match = re.search(r"rate=(\d+)", part.get("mimeType", ""))
+    rate = int(match.group(1)) if match else 24000
+    x = np.frombuffer(base64.b64decode(part["data"]), dtype="<i2").astype(np.float32) / 32768
+    return _write(out, _resample(loudness(x), rate, sample_rate), sample_rate)
+
+
 def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
     """One line with a neural voice (English lines with macOS Samantha unless the model
     speaks English too)."""
@@ -213,6 +263,8 @@ def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
         from . import tts
 
         return tts.synthesize(text, "Samantha", None, out=out, sample_rate=sample_rate)
+    if VOICES[voice]["engine"] == "gemini":
+        return render_gemini(text, voice, out, sample_rate)
     if VOICES[voice]["engine"] == "mlx":
         return render_mlx(text, voice, out, sample_rate)
     return render_vits(text, out, sample_rate)

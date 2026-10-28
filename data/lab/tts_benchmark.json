@@ -1,5 +1,5 @@
 {
- "date": "2026-10-23",
+ "date": "2026-10-28",
  "text": "meeting_zh.txt",
  "asr": {
   "offline": "qwen3-asr-1.7b",
@@ -91,6 +91,27 @@
    "rms_db": -16.1
   },
   {
+   "voice": "MOSS-TTS-Nano 台灣腔（複製）",
+   "label": "MOSS-TTS-Nano 台灣腔",
+   "source": [
+    "MOSS-TTS-Nano 100M 聲音複製・MLX",
+    "MOSS-TTS-Nano 100M clone, MLX"
+   ],
+   "size_gb": 0.3,
+   "licence": "Apache-2.0",
+   "limits": [
+    "很快（每句約 0.6 秒），但常把句子拉長、重複（88 秒的稿念成 183 秒），測試台詞辨識錯字率約 45%，不建議使用；繁體字要先轉簡體。",
+    "Fast (about 0.6 s a sentence) but often stretches and repeats lines (an 88 s script took 183 s), 45% errors on the test lines: not recommended; reads Simplified."
+   ],
+   "load_s": 2.11,
+   "rtf": 0.0672,
+   "first_s": 0.609,
+   "max_s": 1.25,
+   "cer_offline": 0.0534,
+   "cer_stream": 0.4459,
+   "rms_db": -16.5
+  },
+  {
    "voice": "MediaTek VITS（台灣）",
    "label": "MediaTek VITS",
    "source": [
@@ -131,6 +152,27 @@
    "cer_offline": 0.0162,
    "cer_stream": 0.0443,
    "rms_db": -16.0
+  },
+  {
+   "voice": "OmniVoice 台灣腔（複製）",
+   "label": "OmniVoice 台灣腔",
+   "source": [
+    "OmniVoice 聲音複製・MLX",
+    "OmniVoice clone, MLX"
+   ],
+   "size_gb": 2.0,
+   "licence": "Apache-2.0",
+   "limits": [
+    "中英文、數字都行；繁體字會走音，所以先轉簡體再念；每句約 1.5 秒才開口，即時對話稍慢；測試台詞串流辨識全對，很適合當測試講者。",
+    "Chinese, English and numbers are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.5 s before each sentence, a little slow to talk live; every test line was recognised right, a good test speaker."
+   ],
+   "load_s": 3.77,
+   "rtf": 0.3087,
+   "first_s": 1.464,
+   "max_s": 1.748,
+   "cer_offline": 0.0214,
+   "cer_stream": 0.0,
+   "rms_db": -16.1
   },
   {
    "voice": "Qwen3-TTS Uncle Fu",
@@ -196,6 +238,27 @@
    "rms_db": -16.6
   },
   {
+   "voice": "Gemini 3.1 Flash TTS（雲端）",
+   "label": "Gemini 3.1 Flash TTS",
+   "source": [
+    "Google Gemini TTS・雲端",
+    "Google Gemini TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": "macOS",
+   "limits": [
+    "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
+    "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the whole sentence at once, so with the round trip each sentence takes seconds. Chinese, English and numbers are fine; Mainland accent."
+   ],
+   "load_s": 2.5,
+   "rtf": 0.8267,
+   "first_s": 3.671,
+   "max_s": 6.208,
+   "cer_offline": 0.0162,
+   "cer_stream": 0.03,
+   "rms_db": -16.0
+  },
+  {
    "voice": "Breeze-TTS-2 台灣腔（複製）",
    "label": "Breeze-TTS-2 台灣腔",
    "source": [
@@ -215,6 +278,48 @@
    "cer_offline": 0.0323,
    "cer_stream": 0.0368,
    "rms_db": -16.2
+  },
+  {
+   "voice": "Gemini 2.5 Flash TTS（雲端）",
+   "label": "Gemini 2.5 Flash TTS",
+   "source": [
+    "Google Gemini TTS・雲端",
+    "Google Gemini TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": "macOS",
+   "limits": [
+    "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
+    "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the whole sentence at once, so with the round trip each sentence takes seconds. Chinese, English and numbers are fine; Mainland accent."
+   ],
+   "load_s": 3.59,
+   "rtf": 1.0342,
+   "first_s": 5.556,
+   "max_s": 8.373,
+   "cer_offline": 0.0243,
+   "cer_stream": 0.0072,
+   "rms_db": -16.0
+  },
+  {
+   "voice": "Gemini 2.5 Pro TTS（雲端）",
+   "label": "Gemini 2.5 Pro TTS",
+   "source": [
+    "Google Gemini TTS・雲端",
+    "Google Gemini TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": "macOS",
+   "limits": [
+    "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
+    "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the whole sentence at once, so with the round trip each sentence takes seconds. Chinese, English and numbers are fine; Mainland accent."
+   ],
+   "load_s": 3.77,
+   "rtf": 1.3431,
+   "first_s": 6.486,
+   "max_s": 9.482,
+   "cer_offline": 0.0189,
+   "cer_stream": 0.0243,
+   "rms_db": -16.0
   }
  ]
 }

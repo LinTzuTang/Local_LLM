@@ -22,13 +22,16 @@ def test_neural_voices_are_listed_and_routed(monkeypatch, tmp_path):
     monkeypatch.setattr(tts, "available", lambda: False)  # no macOS voices needed
     fast = [v["name"] for v in tts.voices(("zh_TW",))]
     every = [v["name"] for v in tts.voices(("zh_TW",), neural="all")]
-    taiwan = [neural_tts.VITS, "Qwen3-TTS 台灣腔（複製）",
-              "VoxCPM2 台灣腔（複製）", "Breeze-TTS-2 台灣腔（複製）"]  # fmt: skip
+    taiwan = [neural_tts.VITS, "Qwen3-TTS 台灣腔（複製）", "VoxCPM2 台灣腔（複製）",
+              "MOSS-TTS-Nano 台灣腔（複製）", "OmniVoice 台灣腔（複製）",
+              "Breeze-TTS-2 台灣腔（複製）"]  # fmt: skip
     assert fast == [neural_tts.VITS] and every == taiwan
     mainland = [v["name"] for v in tts.voices(("zh_CN",))]
     assert mainland == ["Kokoro 曉北", "Kokoro 雲希"]  # the fast ones only
     assert tts.source(tts.find("Kokoro 曉北"))[0] == "Kokoro-82M・MLX"
     assert tts.source({"name": "Meijia"}) == tts.MACOS_SOURCE
+    gemini = tts.find("Gemini 2.5 Flash TTS（雲端）")
+    assert gemini and gemini["engine"] == "gemini" and not gemini["fast"]  # cloud, too slow live
     assert tts.voices(("en_US",)) == [] and tts.voices(neural="none") == []
     rendered = []
 
