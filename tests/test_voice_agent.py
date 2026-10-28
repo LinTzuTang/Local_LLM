@@ -473,6 +473,21 @@ def test_a_heard_turn_gives_the_llm_the_recording_not_the_text():
     plain.agent.close()
 
 
+def test_a_streaming_voice_sends_each_chunk_as_it_comes():
+    def chunks(text, voice, rate):
+        for _ in range(3):
+            yield b"RIFF", 0.48
+
+    s = Session(speak_stream=chunks)
+    s.say("你好", 0.0, 0.5)
+    s.wait(lambda: s.idles() >= 1)
+    audio = s.of("audio")
+    assert len(audio) == 3 and [e["seq"] for e in audio] == [0, 1, 2]
+    assert audio[0]["text"] and not audio[1]["text"] and not audio[2]["text"]
+    assert s.agent.turns[0]["first_audio_sent"] is not None
+    s.agent.close()
+
+
 def test_english_turns_get_english_rules_and_spaced_pieces():
     assert voice_agent.ENGLISH_RULE not in voice_agent.system_prompt({}, True)
     assert voice_agent.ENGLISH_RULE in voice_agent.system_prompt({}, True, english=True)

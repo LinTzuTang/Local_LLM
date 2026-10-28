@@ -26,6 +26,7 @@ import queue
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Iterator
 from concurrent.futures import Future
 from functools import cache
 from pathlib import Path
@@ -56,6 +57,7 @@ CLONE = "clone"  # options marker: reference audio and transcript from neural_tt
 
 def voice(name: str, short: str, locale: str, model: str, source: tuple[str, str],
           sample: str, english: bool = False, fast: bool = False, simplified: bool = False,
+          stream: bool = False,
           limits: tuple[str, str] = ("", ""), **options) -> dict:  # fmt: skip
     """`fast`: quick enough to talk live (measured, scripts/speech_eval/run_tts_bench.py);
     `simplified`: the model mispronounces Traditional characters, so it reads the text
@@ -63,7 +65,8 @@ def voice(name: str, short: str, locale: str, model: str, source: tuple[str, str
     `limits`: (Chinese, English) what it cannot do, shown where voices are picked."""
     return {"name": name, "short": short, "locale": locale, "engine": "mlx", "model": model,
             "options": options, "source": source, "sample": sample, "english": english,
-            "fast": fast, "simplified": simplified, "limits": limits}  # fmt: skip
+            "fast": fast, "simplified": simplified, "limits": limits,
+            "stream": stream}  # fmt: skip
 
 
 KOKORO_LIMITS = (
@@ -74,10 +77,10 @@ KOKORO_LIMITS = (
 )
 QWEN_LIMITS = (
     "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；"
-    "每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
+    "整句合成每句約 1.2–1.7 秒，助理已改成邊合成邊播，約 0.2 秒開口。",
     "Chinese and English (10 languages), numbers and mixed text are fine; Traditional "
-    "characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each "
-    "sentence, a little slow to talk live (streaming playback would fix it).",
+    "characters are mispronounced, so it reads Simplified; 1.2-1.7 s per whole sentence, "
+    "but the assistant plays it while it is made and starts in about 0.2 s.",
 )
 MOSS_LIMITS = (
     "很快（每句約 0.6 秒），但常把句子拉長、重複（88 秒的稿念成 183 秒），"
@@ -119,17 +122,20 @@ VOICES = {
               fast=True, limits=KOKORO_LIMITS, voice="zm_yunxi", lang_code="z"),
         voice("Qwen3-TTS Vivian", "Qwen3-TTS Vivian", "zh_CN", "qwen3-tts-0.6b-customvoice",
               ("Qwen3-TTS 0.6B 內建聲音・MLX", "Qwen3-TTS 0.6B preset, MLX"),
-              "我是 Qwen3-TTS 的 Vivian。", english=True, simplified=True, limits=QWEN_LIMITS,
+              "我是 Qwen3-TTS 的 Vivian。", english=True, simplified=True, stream=True,
+              limits=QWEN_LIMITS,
               voice="vivian",
               lang_code="chinese"),
         voice("Qwen3-TTS Uncle Fu", "Qwen3-TTS Uncle Fu", "zh_CN", "qwen3-tts-0.6b-customvoice",
               ("Qwen3-TTS 0.6B 內建聲音・MLX", "Qwen3-TTS 0.6B preset, MLX"),
-              "我是 Qwen3-TTS 的 Uncle Fu。", english=True, simplified=True, limits=QWEN_LIMITS,
+              "我是 Qwen3-TTS 的 Uncle Fu。", english=True, simplified=True, stream=True,
+              limits=QWEN_LIMITS,
               voice="uncle_fu",
               lang_code="chinese"),
         voice("Qwen3-TTS 台灣腔（複製）", "Qwen3-TTS 台灣腔", "zh_TW", "qwen3-tts-0.6b-base",
               ("Qwen3-TTS 0.6B 聲音複製・MLX", "Qwen3-TTS 0.6B clone, MLX"),
-              "我是複製台灣口音的 Qwen3-TTS。", english=True, simplified=True, limits=QWEN_LIMITS,
+              "我是複製台灣口音的 Qwen3-TTS。", english=True, simplified=True, stream=True,
+              limits=QWEN_LIMITS,
               lang_code="chinese", clone=CLONE),
         voice("VoxCPM2 台灣腔（複製）", "VoxCPM2 台灣腔", "zh_TW", "voxcpm2-8bit",
               ("VoxCPM2 聲音複製・MLX", "VoxCPM2 clone, MLX"),
@@ -199,7 +205,13 @@ def _to_simplified(text: str) -> str:
     return _converter().convert(text)
 
 
-def _render(models: OrderedDict, v: dict, text: str) -> tuple[np.ndarray, int]:
+STREAM_INTERVAL_S = 0.48  # seconds of audio per streamed chunk (Qwen3-TTS: 6 codec frames)
+
+
+def _render(models: OrderedDict, v: dict, text: str,
+            sink: queue.Queue | None = None) -> tuple[np.ndarray, int]:  # fmt: skip
+    """Render `text`; with a `sink`, stream: every chunk goes there as it is made
+    ((samples, rate)), for the voices whose model streams (`stream` in VOICES)."""
     from mlx_audio.tts.utils import load_model
 
     model = models.get(v["model"])
@@ -211,10 +223,15 @@ def _render(models: OrderedDict, v: dict, text: str) -> tuple[np.ndarray, int]:
     models.move_to_end(v["model"])
     if v.get("simplified"):
         text = _to_simplified(text)
-    parts, rate = [], 24000
-    for result in model.generate(text=text, **_options(v)):
-        parts.append(np.asarray(result.audio, dtype=np.float32).reshape(-1))
+    parts, rate, options = [], 24000, _options(v)
+    if sink is not None:
+        options |= {"stream": True, "streaming_interval": STREAM_INTERVAL_S}
+    for result in model.generate(text=text, **options):
+        chunk = np.asarray(result.audio, dtype=np.float32).reshape(-1)
         rate = int(result.sample_rate)
+        if sink is not None:
+            sink.put((chunk, rate))
+        parts.append(chunk)
     return (np.concatenate(parts) if parts else np.zeros(0, np.float32)), rate
 
 
@@ -230,25 +247,45 @@ def _work() -> None:
                 models.clear()
                 gc.collect()
             continue
-        v, text, future = item
+        v, text, future, sink = item
         if not future.set_running_or_notify_cancel():
             continue
         try:
-            future.set_result(_render(models, v, text))
+            future.set_result(_render(models, v, text, sink))
         except Exception as exc:  # shown where the line was asked for
             future.set_exception(exc)
+        finally:
+            if sink is not None:
+                sink.put(None)
 
 
-def generate(text: str, v: dict, timeout: float = 600) -> tuple[np.ndarray, int]:
-    """(float samples, sample rate) of `text` in voice `v`, rendered on the worker thread."""
+def _submit(v: dict, text: str, sink: queue.Queue | None = None) -> Future:
     global _thread
     with _started:
         if _thread is None or not _thread.is_alive():
             _thread = threading.Thread(target=_work, name="mlx-tts", daemon=True)
             _thread.start()
     future: Future = Future()
-    _jobs.put((v, text, future))
-    return future.result(timeout=timeout)
+    _jobs.put((v, text, future, sink))
+    return future
+
+
+def generate(text: str, v: dict, timeout: float = 600) -> tuple[np.ndarray, int]:
+    """(float samples, sample rate) of `text` in voice `v`, rendered on the worker thread."""
+    return _submit(v, text).result(timeout=timeout)
+
+
+def stream(text: str, v: dict, timeout: float = 600) -> Iterator[tuple[np.ndarray, int]]:
+    """`text` in voice `v` as (float samples, sample rate) chunks while they are made, so
+    playback can start after the first one (voices with `stream`); else one whole chunk."""
+    if not v.get("stream"):
+        yield generate(text, v, timeout)
+        return
+    sink: queue.Queue = queue.Queue()
+    future = _submit(v, text, sink)
+    while (item := sink.get(timeout=timeout)) is not None:
+        yield item
+    future.result(timeout=timeout)  # raises what the render raised
 
 
 def warm(v: dict) -> float:

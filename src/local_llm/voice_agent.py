@@ -326,6 +326,16 @@ def run_tool(name: str, args: dict) -> tuple[dict, str]:
         return {"error": str(exc)}, f"失敗：{exc}"
 
 
+def synthesize_stream(
+    text: str, voice: str, rate: int | None = None
+) -> Iterator[tuple[bytes, float]]:
+    """synthesize in pieces: a streaming voice (Qwen3-TTS, Breeze-TTS-2) starts playing after
+    its first chunk (about 0.2 s), the others still come as one sentence (tts.speak_stream)."""
+    from . import tts
+
+    yield from tts.speak_stream(text, voice, rate)
+
+
 def synthesize(text: str, voice: str, rate: int | None = None) -> tuple[bytes, float]:
     """(WAV bytes, seconds of audio): macOS speech in-process (about 0.05 s a sentence),
     `say` as the fallback (tts.speak_wav)."""
@@ -451,6 +461,7 @@ class VoiceAgent:
         chat: Callable[..., Iterator[dict]] = ollama_chat,
         tools: Callable[[str, dict], tuple[dict, str]] = run_tool,
         speak: Callable[[str, str, int | None], tuple[bytes, float]] = synthesize,
+        speak_stream: Callable[..., Iterator[tuple[bytes, float]]] | None = None,
         think: bool | None | str = "auto",
         display: Callable[[str], str] | None = None,
         append_only: bool = False,
@@ -462,6 +473,8 @@ class VoiceAgent:
         self.emit_raw, self.llm, self.voice, self.rate = emit, llm, voice, rate
         self.allow_network, self.barge_in, self.base_url = allow_network, barge_in, base_url
         self.chat, self.tools, self.speak = chat, tools, speak
+        # the real voices stream by default; a test's own `speak` is used as it is
+        self.speak_stream = speak_stream or (synthesize_stream if speak is synthesize else None)
         self.think = think_value(llm, base_url) if think == "auto" else think
         self.display = display or (lambda text: text)
         self.append_only, self.call_limit, self.clock = append_only, call_limit, clock
@@ -968,29 +981,45 @@ class VoiceAgent:
             if not text:
                 continue
             started = self.clock()
-            try:
-                wav, duration = self.speak(text, self.voice, self.rate)
-            except Exception as exc:
-                self.emit({"type": "error", "error": f"speech synthesis failed: {exc}"})
-                continue
-            speech["tts_s"] = round(speech["tts_s"] + self.clock() - started, 3)
-            if epoch != self.epoch:
-                return False
-            with self.lock:
-                seq = speech["seq"]
-                speech["seq"] += 1
-                speech["text"] = join_pieces(speech["text"], text)
-                self.unplayed.add((speech["speech_id"], seq))
-                turn = self.turns[speech["turn"]] if speech["turn"] is not None else None
-                if turn is not None and turn.get("first_audio_sent") is None:
-                    turn["first_audio_sent"] = self.now()
-            self.emit({"type": "assistant", "speech_id": speech["speech_id"],
-                       "turn": speech["turn"], "kind": speech["kind"],
-                       "text": speech["text"], "final": False})  # fmt: skip
-            self.emit({"type": "audio", "speech_id": speech["speech_id"], "seq": seq,
-                       "turn": speech["turn"], "kind": speech["kind"], "text": text,
-                       "duration": round(duration, 3),
-                       "wav": base64.b64encode(wav).decode()})  # fmt: skip
+            if self.speak_stream is not None:
+                chunks = self.speak_stream(text, self.voice, self.rate)
+            else:
+                chunks = iter([self.speak(text, self.voice, self.rate)])
+            first = True
+            while True:
+                try:
+                    wav, duration = next(chunks)
+                except StopIteration:
+                    break
+                except Exception as exc:
+                    self.emit({"type": "error", "error": f"speech synthesis failed: {exc}"})
+                    break
+                if first:
+                    speech["tts_s"] = round(speech["tts_s"] + self.clock() - started, 3)
+                if epoch != self.epoch:
+                    close = getattr(chunks, "close", None)
+                    if close:
+                        close()
+                    return False
+                with self.lock:
+                    seq = speech["seq"]
+                    speech["seq"] += 1
+                    if first:
+                        speech["text"] = join_pieces(speech["text"], text)
+                    self.unplayed.add((speech["speech_id"], seq))
+                    turn = self.turns[speech["turn"]] if speech["turn"] is not None else None
+                    if turn is not None and turn.get("first_audio_sent") is None:
+                        turn["first_audio_sent"] = self.now()
+                if first:
+                    self.emit({"type": "assistant", "speech_id": speech["speech_id"],
+                               "turn": speech["turn"], "kind": speech["kind"],
+                               "text": speech["text"], "final": False})  # fmt: skip
+                # a sentence's text rides on its first chunk (what a barge-in cut off)
+                self.emit({"type": "audio", "speech_id": speech["speech_id"], "seq": seq,
+                           "turn": speech["turn"], "kind": speech["kind"],
+                           "text": text if first else "", "duration": round(duration, 3),
+                           "wav": base64.b64encode(wav).decode()})  # fmt: skip
+                first = False
         return epoch == self.epoch
 
     # -- bookkeeping ----------------------------------------------------------------------------

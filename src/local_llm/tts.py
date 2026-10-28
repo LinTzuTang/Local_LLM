@@ -14,6 +14,7 @@ appear here under the same name. Rendering writes 16-bit PCM WAV directly
 """
 
 import hashlib
+import os
 import re
 import shutil
 import struct
@@ -380,6 +381,18 @@ def _ns_speak(text: str, voice: str, rate: int | None) -> tuple[bytes, float]:
                 loop.runUntilDate_(Foundation.NSDate.dateWithTimeIntervalSinceNow_(0.005))
             samples, sr = read_aiff(path.read_bytes())
     return wav_bytes(samples, sr), len(samples) / sr
+
+
+def speak_stream(text: str, voice: str, rate: int | None = None):
+    """speak_wav as (WAV bytes, seconds) pieces: a voice whose model streams (Qwen3-TTS,
+    Breeze-TTS-2) gives its first piece after about 0.2 s, the others one whole sentence."""
+    from . import neural_tts
+
+    streaming = os.environ.get("LOCAL_LLM_TTS_STREAM", "1") != "0"  # 0: whole sentences
+    if streaming and voice in neural_tts.VOICES and neural_tts.can_stream(voice, text):
+        yield from neural_tts.render_stream(text, voice, SAMPLE_RATE)
+        return
+    yield speak_wav(text, voice, rate)
 
 
 def speak_wav(text: str, voice: str, rate: int | None = None) -> tuple[bytes, float]:

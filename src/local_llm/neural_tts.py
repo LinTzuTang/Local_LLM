@@ -108,7 +108,10 @@ def available(name: str) -> bool:
 
 
 def voices(fast_only: bool = True) -> list[dict]:
-    return [dict(v) for n, v in VOICES.items() if available(n) and (v["fast"] or not fast_only)]
+    """`fast_only`: voices quick enough to talk live: fast ones, and the streaming ones
+    (Qwen3-TTS: about 0.2 s to the first chunk, synthesis faster than speech)."""
+    live = lambda v: v["fast"] or v.get("stream")  # noqa: E731
+    return [dict(v) for n, v in VOICES.items() if available(n) and (live(v) or not fast_only)]
 
 
 _RANGE = re.compile(r"(\d+(?:\.\d+)?)\s*[–—~～-]\s*(\d+(?:\.\d+)?)")
@@ -254,6 +257,40 @@ def render_gemini(text: str, voice: str, out: Path, sample_rate: int) -> Path:
     rate = int(match.group(1)) if match else 24000
     x = np.frombuffer(base64.b64decode(part["data"]), dtype="<i2").astype(np.float32) / 32768
     return _write(out, _resample(loudness(x), rate, sample_rate), sample_rate)
+
+
+def can_stream(voice: str, text: str) -> bool:
+    v = VOICES.get(voice) or {}
+    return bool(v.get("stream")) and not (english(text) and not v.get("english"))
+
+
+def render_stream(text: str, voice: str, sample_rate: int):
+    """`text` as 16-bit WAV chunks while the model makes them (voices with `stream`): the
+    first one comes in about 0.2 s instead of after the whole sentence. One gain for the whole
+    line, set from the first chunk, so the level does not jump between chunks."""
+    import io
+    import wave
+
+    gain = None
+    for x, rate in mlx_tts.stream(speech_text(text), VOICES[voice]):
+        if not len(x):
+            continue
+        if gain is None:
+            n = len(x) // 320
+            rms = (
+                np.sqrt((x[: n * 320].reshape(n, 320) ** 2).mean(axis=1)) if n else np.array([0.0])
+            )
+            voiced = rms[rms > rms.max() * 0.1] if rms.max() > 0 else rms
+            level = float(np.sqrt((voiced**2).mean())) if len(voiced) else 0.0
+            gain = min(10 ** (TARGET_RMS_DB / 20) / level, 30.0) if level > 0 else 1.0
+        y = _resample(limit(x * gain), rate, sample_rate)
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(sample_rate)
+            w.writeframes((np.clip(y, -1, 1) * 32767).astype("<i2").tobytes())
+        yield buf.getvalue(), len(y) / sample_rate
 
 
 def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:

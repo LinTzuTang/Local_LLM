@@ -25,9 +25,10 @@ def test_neural_voices_are_listed_and_routed(monkeypatch, tmp_path):
     taiwan = [neural_tts.VITS, "Qwen3-TTS 台灣腔（複製）", "VoxCPM2 台灣腔（複製）",
               "MOSS-TTS-Nano 台灣腔（複製）", "OmniVoice 台灣腔（複製）",
               "Breeze-TTS-2 台灣腔（複製）"]  # fmt: skip
-    assert fast == [neural_tts.VITS] and every == taiwan
+    # live: the fast VITS and the streaming Qwen3-TTS clone (first chunk in about 0.2 s)
+    assert fast == [neural_tts.VITS, "Qwen3-TTS 台灣腔（複製）"] and every == taiwan
     mainland = [v["name"] for v in tts.voices(("zh_CN",))]
-    assert mainland == ["Kokoro 曉北", "Kokoro 雲希"]  # the fast ones only
+    assert mainland == ["Kokoro 曉北", "Kokoro 雲希", "Qwen3-TTS Vivian", "Qwen3-TTS Uncle Fu"]
     assert tts.source(tts.find("Kokoro 曉北"))[0] == "Kokoro-82M・MLX"
     assert tts.source({"name": "Meijia"}) == tts.MACOS_SOURCE
     gemini = tts.find("Gemini 2.5 Flash TTS（雲端）")
