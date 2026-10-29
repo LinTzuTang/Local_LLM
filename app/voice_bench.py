@@ -242,11 +242,11 @@ def section() -> None:
             st.caption(
                 tr(
                     f"串接式的前台 LLM：同樣 7 段對話、{len(data['front_llms'])} 個模型（關閉思考）。判斷正確＝該反問、該查、該直接回答有沒有做對"
-                    "（23 句，跑 1 或 2 輪）；開始回應＝使用者說完到 LLM 吐出第一個字；不亂編、自然度由 AI 評審評。",
+                    "（23 句 × 2 輪＝46 個）；開始回應＝使用者說完到 LLM 吐出第一個字；不亂編、自然度由 AI 評審評。",
                     f"The cascade's front LLM: the same 7 conversations, {len(data['front_llms'])} models "
                     "(thinking off). "
-                    "Decisions = asked back, looked up or answered when it should (23 lines, one or "
-                    "two rounds); "
+                    "Decisions = asked back, looked up or answered when it should (23 lines × 2 "
+                    "rounds = 46); "
                     "first token = end of the user's speech to the LLM's first token.",
                 )
             )

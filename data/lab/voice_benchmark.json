@@ -224,24 +224,13 @@
   {
    "model": "Gemma 4 31B",
    "tag": "gemma4:31b",
-   "decisions": "23/23",
+   "decisions": "46/46",
    "decision_acc": 1.0,
-   "first_s": 0.897,
+   "first_s": 0.931,
    "grounded": 0.957,
-   "natural": 4.39,
-   "traditional": 0.938,
+   "natural": 4.46,
+   "traditional": 0.969,
    "memory_gb": 19.4
-  },
-  {
-   "model": "Qwen3.8 27B",
-   "tag": "qwen3.8:27b",
-   "decisions": "23/23",
-   "decision_acc": 1.0,
-   "first_s": 0.749,
-   "grounded": 0.957,
-   "natural": 4.22,
-   "traditional": 0.938,
-   "memory_gb": 18.2
   },
   {
    "model": "Gemma 4 26B",
@@ -253,6 +242,17 @@
    "natural": 4.37,
    "traditional": 1.0,
    "memory_gb": 16.1
+  },
+  {
+   "model": "Qwen3.8 27B",
+   "tag": "qwen3.8:27b",
+   "decisions": "45/46",
+   "decision_acc": 0.978,
+   "first_s": 0.969,
+   "grounded": 0.935,
+   "natural": 4.37,
+   "traditional": 0.969,
+   "memory_gb": 18.2
   },
   {
    "model": "Qwen3.5 9B",
@@ -312,10 +312,10 @@
   {
    "model": "Qwen3 30B-A3B",
    "tag": "qwen3:30b-a3b",
-   "decisions": "16/23",
+   "decisions": "32/46",
    "decision_acc": 0.696,
-   "first_s": 1.925,
-   "grounded": 0.9,
+   "first_s": 1.799,
+   "grounded": 0.952,
    "natural": 4,
    "traditional": 1.0,
    "memory_gb": 18.6
@@ -323,23 +323,23 @@
   {
    "model": "Qwen3 1.7B",
    "tag": "qwen3:1.7b",
-   "decisions": "15/23",
-   "decision_acc": 0.652,
-   "first_s": 0.046,
-   "grounded": 0.913,
-   "natural": 3.39,
-   "traditional": 0.875,
+   "decisions": "29/46",
+   "decision_acc": 0.63,
+   "first_s": 0.059,
+   "grounded": 0.891,
+   "natural": 3.26,
+   "traditional": 0.938,
    "memory_gb": 1.4
   },
   {
    "model": "Llama-Breeze2 8B",
    "tag": "hf.co/mradermacher/Llama-Breeze2-8B-Instruct-text-only-GGUF:Q4_K_M",
-   "decisions": "12/23",
-   "decision_acc": 0.522,
-   "first_s": 0.461,
+   "decisions": "26/46",
+   "decision_acc": 0.565,
+   "first_s": 0.526,
    "grounded": 0.913,
-   "natural": 2.91,
-   "traditional": 0.938,
+   "natural": 3.02,
+   "traditional": 0.969,
    "memory_gb": 4.9
   },
   {
@@ -356,12 +356,12 @@
   {
    "model": "Gemma 4 E2B",
    "tag": "gemma4:e2b",
-   "decisions": "12/23",
+   "decisions": "24/46",
    "decision_acc": 0.522,
-   "first_s": 0.057,
-   "grounded": 0.739,
-   "natural": 3.22,
-   "traditional": 0.938,
+   "first_s": 0.067,
+   "grounded": 0.87,
+   "natural": 3.13,
+   "traditional": 0.969,
    "memory_gb": 7.5
   }
  ],
