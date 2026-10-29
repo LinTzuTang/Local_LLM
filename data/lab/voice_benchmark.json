@@ -1,5 +1,5 @@
 {
- "_about": "Voice conversation evaluation (2026-10-21/22): 7 test scripts, 23 user lines spoken by macOS voices at speaking pace (scripts/speech_eval/run_front_llm.py, run_qwen3_omni.py, run_open_voice.py, run_minicpmo.py, run_gpt_realtime.py, run_gpt_live.py, run_gemini_live.py). start_s: end of the user's speech to the assistant's first sound (median); answer_s: to the spoken lookup result; decisions: ask back / look up / answer right (systems with tools only); traditional: share of Chinese replies in Traditional characters; grounded: replies without made-up facts (AI judge, Azure gpt-5.4); natural: 1-5 (AI judge). null = not measured or not applicable.",
+ "_about": "Voice conversation evaluation (2026-10-21/22): 7 test scripts, 23 user lines spoken by macOS voices at speaking pace (scripts/speech_eval/run_front_llm.py, run_qwen3_omni.py, run_open_voice.py, run_minicpmo.py, run_step_audio2.py / run_kimi_audio.py / run_glm4_voice.py on an NVIDIA RTX PRO 6000, run_gpt_realtime.py, run_gpt_live.py, run_gemini_live.py). start_s: end of the user's speech to the assistant's first sound (median); answer_s: to the spoken lookup result; decisions: ask back / look up / answer right (systems with tools only); traditional: share of Chinese replies in Traditional characters; grounded: replies without made-up facts (AI judge, Azure gpt-5.4); natural: 1-5 (AI judge). null = not measured or not applicable.",
  "date": "2026-10-22",
  "systems": [
   {
@@ -76,6 +76,51 @@
    "natural": null,
    "note": "會邊聽邊附和，但 23 句有 10 句沒回應、多為簡體",
    "note_en": "Back-channels while listening, but 10 of 23 lines got no reply; mostly Simplified"
+  },
+  {
+   "name": "Step-Audio 2 mini（NVIDIA GPU）",
+   "name_en": "Step-Audio 2 mini (NVIDIA GPU)",
+   "kind": "turn",
+   "where": "local",
+   "tools": false,
+   "start_s": 1.4,
+   "answer_s": null,
+   "decisions": null,
+   "traditional": 0.0,
+   "grounded": 0.783,
+   "natural": 3.78,
+   "note": "整句要 8.7 秒、繁體 0%；沒給工具也把 function weather_forecast 念進回覆、說板橋是台北市的區",
+   "note_en": "8.7 s for a whole reply, no Traditional; speaks a 'function weather_forecast' call without tools, says Banqiao is in Taipei City"
+  },
+  {
+   "name": "Kimi-Audio 7B（NVIDIA GPU）",
+   "name_en": "Kimi-Audio 7B (NVIDIA GPU)",
+   "kind": "turn",
+   "where": "local",
+   "tools": false,
+   "start_s": 0.91,
+   "answer_s": null,
+   "decisions": null,
+   "traditional": 0.562,
+   "grounded": 1.0,
+   "natural": 4.04,
+   "note": "開口快（0.91 秒）、不編造 100%，但繁體只有 56%；要 NVIDIA 顯示卡",
+   "note_en": "Quick (0.91 s) and grounded, but only 56% Traditional; needs an NVIDIA GPU"
+  },
+  {
+   "name": "GLM-4-Voice 9B（NVIDIA GPU）",
+   "name_en": "GLM-4-Voice 9B (NVIDIA GPU)",
+   "kind": "turn",
+   "where": "local",
+   "tools": false,
+   "start_s": 1.06,
+   "answer_s": null,
+   "decisions": null,
+   "traditional": 0.312,
+   "grounded": 0.783,
+   "natural": 3.83,
+   "note": "繁體 31%、不編造 78.3%、語言正確率 91%；要 NVIDIA 顯示卡",
+   "note_en": "31% Traditional, 78.3% grounded, right language 91%; needs an NVIDIA GPU"
   },
   {
    "name": "Azure gpt-realtime",
@@ -156,43 +201,168 @@
  "front_llms": [
   {
    "model": "Gemma 4 12B（預設）",
+   "tag": "gemma4:12b",
    "decisions": "46/46",
-   "first_s": 0.45,
+   "decision_acc": 1.0,
+   "first_s": 0.454,
    "grounded": 1.0,
    "natural": 4.46,
+   "traditional": 1.0,
    "memory_gb": 7.7
   },
   {
-   "model": "Gemma 4 E4B",
-   "decisions": "42/46",
-   "first_s": 0.23,
-   "grounded": 0.978,
-   "natural": 4.24,
-   "memory_gb": 9.4
-  },
-  {
-   "model": "Gemma 4 26B",
-   "decisions": "46/46",
-   "first_s": 0.38,
-   "grounded": 0.957,
-   "natural": 4.37,
-   "memory_gb": 16.1
-  },
-  {
    "model": "Qwen3.6 35B-A3B",
+   "tag": "qwen3.6:35b-a3b-coding",
    "decisions": "46/46",
+   "decision_acc": 1.0,
    "first_s": 0.37,
-   "grounded": 1.0,
+   "grounded": 0.978,
    "natural": 4.22,
+   "traditional": 1.0,
    "memory_gb": 23.6
   },
   {
-   "model": "qwen3:1.7b、Gemma 4 E2B、Llama-Breeze2 8B",
-   "decisions": "約一半",
-   "first_s": null,
-   "grounded": null,
-   "natural": null,
-   "memory_gb": null
+   "model": "Gemma 4 31B",
+   "tag": "gemma4:31b",
+   "decisions": "23/23",
+   "decision_acc": 1.0,
+   "first_s": 0.897,
+   "grounded": 0.957,
+   "natural": 4.39,
+   "traditional": 0.938,
+   "memory_gb": 19.4
+  },
+  {
+   "model": "Qwen3.8 27B",
+   "tag": "qwen3.8:27b",
+   "decisions": "23/23",
+   "decision_acc": 1.0,
+   "first_s": 0.749,
+   "grounded": 0.957,
+   "natural": 4.22,
+   "traditional": 0.938,
+   "memory_gb": 18.2
+  },
+  {
+   "model": "Gemma 4 26B",
+   "tag": "gemma4:26b",
+   "decisions": "46/46",
+   "decision_acc": 1.0,
+   "first_s": 0.382,
+   "grounded": 0.913,
+   "natural": 4.37,
+   "traditional": 1.0,
+   "memory_gb": 16.1
+  },
+  {
+   "model": "Qwen3.5 9B",
+   "tag": "qwen3.5:9b",
+   "decisions": "44/46",
+   "decision_acc": 0.957,
+   "first_s": 0.524,
+   "grounded": 0.913,
+   "natural": 4.37,
+   "traditional": 1.0,
+   "memory_gb": 7.6
+  },
+  {
+   "model": "Gemma 4 E4B",
+   "tag": "gemma4:e4b",
+   "decisions": "42/46",
+   "decision_acc": 0.913,
+   "first_s": 0.233,
+   "grounded": 0.978,
+   "natural": 4.24,
+   "traditional": 1.0,
+   "memory_gb": 9.5
+  },
+  {
+   "model": "gpt-oss 20B",
+   "tag": "gpt-oss:20b",
+   "decisions": "42/46",
+   "decision_acc": 0.913,
+   "first_s": 3.039,
+   "grounded": 0.917,
+   "natural": 3.94,
+   "traditional": 0.96,
+   "memory_gb": 13.8
+  },
+  {
+   "model": "Mistral Small 3.2 24B",
+   "tag": "mistral-small3.2:24b",
+   "decisions": "42/46",
+   "decision_acc": 0.913,
+   "first_s": 1.919,
+   "grounded": 0.913,
+   "natural": 3.91,
+   "traditional": 1.0,
+   "memory_gb": 15.2
+  },
+  {
+   "model": "Qwen3.5 4B",
+   "tag": "qwen3.5:4b",
+   "decisions": "38/46",
+   "decision_acc": 0.826,
+   "first_s": 0.839,
+   "grounded": 0.826,
+   "natural": 4,
+   "traditional": 1.0,
+   "memory_gb": 4.0
+  },
+  {
+   "model": "Qwen3 30B-A3B",
+   "tag": "qwen3:30b-a3b",
+   "decisions": "16/23",
+   "decision_acc": 0.696,
+   "first_s": 1.925,
+   "grounded": 0.9,
+   "natural": 4,
+   "traditional": 1.0,
+   "memory_gb": 18.6
+  },
+  {
+   "model": "Qwen3 1.7B",
+   "tag": "qwen3:1.7b",
+   "decisions": "15/23",
+   "decision_acc": 0.652,
+   "first_s": 0.046,
+   "grounded": 0.913,
+   "natural": 3.39,
+   "traditional": 0.875,
+   "memory_gb": 1.4
+  },
+  {
+   "model": "Llama-Breeze2 8B",
+   "tag": "hf.co/mradermacher/Llama-Breeze2-8B-Instruct-text-only-GGUF:Q4_K_M",
+   "decisions": "12/23",
+   "decision_acc": 0.522,
+   "first_s": 0.461,
+   "grounded": 0.913,
+   "natural": 2.91,
+   "traditional": 0.938,
+   "memory_gb": 4.9
+  },
+  {
+   "model": "Phi-4-mini 3.8B",
+   "tag": "phi4-mini:3.8b",
+   "decisions": "24/46",
+   "decision_acc": 0.522,
+   "first_s": 0.091,
+   "grounded": 0.891,
+   "natural": 3.04,
+   "traditional": 0.969,
+   "memory_gb": 2.5
+  },
+  {
+   "model": "Gemma 4 E2B",
+   "tag": "gemma4:e2b",
+   "decisions": "12/23",
+   "decision_acc": 0.522,
+   "first_s": 0.057,
+   "grounded": 0.739,
+   "natural": 3.22,
+   "traditional": 0.938,
+   "memory_gb": 7.5
   }
  ],
  "not_run": [
@@ -235,14 +405,6 @@
    "turn-based",
    "有權限，但實測只轉寫、從不回答（一直停在 PARTIAL_TURN），改用 Nova 2 Sonic",
    "Accessible, but it only transcribed and never answered (stuck at PARTIAL_TURN); Nova 2 Sonic used instead"
-  ],
-  [
-   "Step-Audio 2 mini、Kimi-Audio、GLM-4-Voice（開源）",
-   "Step-Audio 2 mini, Kimi-Audio, GLM-4-Voice (open)",
-   "② 回合式",
-   "turn-based",
-   "只能在 NVIDIA 顯示卡上跑，等 GPU 主機",
-   "NVIDIA GPUs only; waiting for the GPU machine"
   ]
  ]
 }

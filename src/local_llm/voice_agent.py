@@ -51,7 +51,7 @@ OLLAMA_URL = "http://127.0.0.1:11434"
 # Qwen3.6 35B is right but needs 23.6 GB. qwen3:1.7b, Gemma 4 E2B and Breeze2 8B got half wrong.
 DEFAULT_LLM = "gemma4:12b"
 CANDIDATE_LLMS = ("gemma4:12b", "gemma4:e4b", "gemma4:26b", "qwen3.6:35b-a3b-coding",
-                  "qwen3.8:27b", "gemma4:31b", "qwen3:1.7b")  # fmt: skip
+                  "qwen3.8:27b", "gemma4:31b", "qwen3.5:9b", "qwen3:1.7b")  # fmt: skip
 DEFAULT_VOICE = "Meijia"
 ALWAYS_THINKS = {"qwen3:30b-a3b"}
 CALL_LIMIT = 6  # lookups per tool per session when the network switch is on

@@ -49,6 +49,26 @@
    "first_audio_s": null
   },
   {
+   "system": "Hy-SimulMT-30B-A3B-FP8",
+   "label": [
+    "Hy-SimulMT 30B-A3B FP8（騰訊開源，NVIDIA GPU）",
+    "Hy-SimulMT 30B-A3B FP8 (Tencent, open, NVIDIA GPU)"
+   ],
+   "where": "local",
+   "note": [
+    "同步口譯專用模型，平均只落後 0.54 秒；要 NVIDIA 顯示卡（測試用 RTX PRO 6000 96GB，vLLM＋SimulInfer）；「富國群山」譯成 mountains of our motherland",
+    "A dedicated interpreting model, only 0.54 s behind on average; needs an NVIDIA GPU (tested on an RTX PRO 6000 96GB, vLLM + SimulInfer); mistranslated the opening place phrase"
+   ],
+   "speech_out": false,
+   "first_s": 2.5,
+   "lag_avg_s": 0.54,
+   "lag_p90_s": 3.22,
+   "tail_s": 1.06,
+   "chrf": 51.2,
+   "bleu": 11.6,
+   "first_audio_s": null
+  },
+  {
    "system": "qwen3-asr-1.7b + translategemma:4b (5 s chunks)",
    "label": [
     "地端：每 5 秒切一段 → Qwen3-ASR-1.7B → TranslateGemma 4B（舊）",
@@ -110,12 +130,6 @@
   }
  ],
  "not_run": [
-  [
-   "Hy-SimulMT 30B-A3B（騰訊，開源 Apache-2.0）",
-   "Hy-SimulMT 30B-A3B (Tencent, Apache-2.0)",
-   "要 NVIDIA GPU（FP8 版約 30 GB、完整版 57 GB），等 GPU 主機",
-   "Needs an NVIDIA GPU (about 30 GB FP8, 57 GB full); waiting for the GPU machine"
-  ],
   [
    "SimulS2ST-Omni（港中大深圳，開源 Apache-2.0）",
    "SimulS2ST-Omni (CUHK-Shenzhen, Apache-2.0)",
