@@ -1,0 +1,156 @@
+{
+ "date": "2026-10-29",
+ "clip": "national_day_90s",
+ "clip_s": 92.2,
+ "settings": {
+  "gap_s": 0.4,
+  "min_span_s": 4.0,
+  "asr": "qwen3-asr-1.7b"
+ },
+ "rows": [
+  {
+   "system": "qwen3-asr-1.7b + translategemma:12b",
+   "label": [
+    "地端：停頓切段 → Qwen3-ASR-1.7B → TranslateGemma 12B",
+    "Local: cut at pauses → Qwen3-ASR-1.7B → TranslateGemma 12B"
+   ],
+   "where": "local",
+   "note": [
+    "累積 4 秒以上、遇到停頓就送出翻譯；只出英文字幕",
+    "Sent at a pause once 4 s have built up; English captions only"
+   ],
+   "speech_out": false,
+   "first_s": 8.3,
+   "lag_avg_s": 5.71,
+   "lag_p90_s": 9.22,
+   "tail_s": 1.51,
+   "chrf": 55.2,
+   "bleu": 8.5,
+   "first_audio_s": null
+  },
+  {
+   "system": "qwen3-asr-1.7b + translategemma:4b",
+   "label": [
+    "地端：停頓切段 → Qwen3-ASR-1.7B → TranslateGemma 4B",
+    "Local: cut at pauses → Qwen3-ASR-1.7B → TranslateGemma 4B"
+   ],
+   "where": "local",
+   "note": [
+    "同上，翻譯模型較小較快",
+    "As above, a smaller, faster translator"
+   ],
+   "speech_out": false,
+   "first_s": 7.87,
+   "lag_avg_s": 4.35,
+   "lag_p90_s": 7.73,
+   "tail_s": 1.04,
+   "chrf": 53.1,
+   "bleu": 8.0,
+   "first_audio_s": null
+  },
+  {
+   "system": "qwen3-asr-1.7b + translategemma:4b (5 s chunks)",
+   "label": [
+    "地端：每 5 秒切一段 → Qwen3-ASR-1.7B → TranslateGemma 4B（舊）",
+    "Local: every 5 s → Qwen3-ASR-1.7B → TranslateGemma 4B (earlier)"
+   ],
+   "where": "local",
+   "note": [
+    "之前「翻成英文」的即時模擬；固定切段會切在句子中間",
+    "The earlier live simulation of Translate; fixed cuts fall mid-sentence"
+   ],
+   "speech_out": false,
+   "first_s": 4.16,
+   "lag_avg_s": 2.19,
+   "lag_p90_s": 4.16,
+   "tail_s": 1.18,
+   "chrf": 51.1,
+   "bleu": 4.4,
+   "first_audio_s": null
+  },
+  {
+   "system": "gemini-3.5-live-translate-preview",
+   "label": [
+    "Gemini 3.5 Live Translate",
+    "Gemini 3.5 Live Translate"
+   ],
+   "where": "cloud",
+   "note": [
+    "一個模型從聽到說：邊聽邊出英文語音和字幕；開頭把「山巔之城」聽成「三天之程」而翻錯",
+    "One model from hearing to speaking: English speech and captions while listening; misheard the opening phrase and mistranslated it"
+   ],
+   "speech_out": true,
+   "first_s": 2.57,
+   "lag_avg_s": 1.94,
+   "lag_p90_s": 3.21,
+   "tail_s": 2.18,
+   "chrf": 49.1,
+   "bleu": 6.0,
+   "first_audio_s": 3.296
+  },
+  {
+   "system": "gemma4:e4b direct (5 s chunks)",
+   "label": [
+    "地端：每 5 秒切一段 → Gemma 4 E4B 直接翻（舊）",
+    "Local: every 5 s → Gemma 4 E4B direct (earlier)"
+   ],
+   "where": "local",
+   "note": [
+    "音訊 LLM 直接聽中文寫英文；常漏譯",
+    "Audio LLM hears Chinese, writes English; often leaves things out"
+   ],
+   "speech_out": false,
+   "first_s": 3.93,
+   "lag_avg_s": 1.61,
+   "lag_p90_s": 4.89,
+   "tail_s": 1.01,
+   "chrf": 35.6,
+   "bleu": 2.1,
+   "first_audio_s": null
+  }
+ ],
+ "not_run": [
+  [
+   "Hy-SimulMT 30B-A3B（騰訊，開源 Apache-2.0）",
+   "Hy-SimulMT 30B-A3B (Tencent, Apache-2.0)",
+   "要 NVIDIA GPU（FP8 版約 30 GB、完整版 57 GB），等 GPU 主機",
+   "Needs an NVIDIA GPU (about 30 GB FP8, 57 GB full); waiting for the GPU machine"
+  ],
+  [
+   "SimulS2ST-Omni（港中大深圳，開源 Apache-2.0）",
+   "SimulS2ST-Omni (CUHK-Shenzhen, Apache-2.0)",
+   "輸出語音；官方只給模型檔、沒有串流推論程式，等 GPU 主機",
+   "Speaks the translation; weights only, no streaming inference code; waiting for the GPU machine"
+  ],
+  [
+   "Confucius4 R2T2 + T3PO（網易有道，開源）",
+   "Confucius4 R2T2 + T3PO (NetEase Youdao, open)",
+   "串流辨識 2B + 文字同步翻譯 14B，官方只支援 NVIDIA（vLLM），等 GPU 主機",
+   "Streaming ASR 2B + text simultaneous MT 14B, NVIDIA only (vLLM); waiting for the GPU"
+  ],
+  [
+   "GPT-Realtime-Translate（OpenAI／Azure）",
+   "GPT-Realtime-Translate (OpenAI / Azure)",
+   "要另外付費部署，先不測",
+   "Needs a separate paid deployment; not run"
+  ],
+  [
+   "Qwen3.8-LiveTranslate（阿里雲）",
+   "Qwen3.8-LiveTranslate (Alibaba Cloud)",
+   "要申請阿里雲 Model Studio API key，先不測",
+   "Needs an Alibaba Cloud Model Studio key; not run"
+  ],
+  [
+   "Seed-LiveInterpret 2.0（字節）、訊飛同傳",
+   "Seed-LiveInterpret 2.0 (ByteDance), iFlytek",
+   "要中國大陸雲端帳號，先不測",
+   "Need mainland-China cloud accounts; not run"
+  ],
+  [
+   "SeamlessStreaming（Meta，2023）",
+   "SeamlessStreaming (Meta, 2023)",
+   "較舊、授權不能商用（CC BY-NC），略過",
+   "Older and non-commercial (CC BY-NC); skipped"
+  ]
+ ]
+}

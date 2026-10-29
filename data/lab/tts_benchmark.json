@@ -1,5 +1,5 @@
 {
- "date": "2026-10-28",
+ "date": "2026-10-29",
  "text": "meeting_zh.txt",
  "asr": {
   "offline": "qwen3-asr-1.7b",
@@ -25,7 +25,8 @@
    "max_s": 0.088,
    "cer_offline": 0.0081,
    "cer_stream": 0.0071,
-   "rms_db": -17.4
+   "rms_db": -17.4,
+   "stream_first_s": null
   },
   {
    "voice": "Meijia",
@@ -46,7 +47,8 @@
    "max_s": 0.081,
    "cer_offline": 0.0215,
    "cer_stream": 0.0216,
-   "rms_db": -14.3
+   "rms_db": -14.3,
+   "stream_first_s": null
   },
   {
    "voice": "Kokoro 雲希",
@@ -67,7 +69,8 @@
    "max_s": 0.226,
    "cer_offline": 0.0242,
    "cer_stream": 0.0372,
-   "rms_db": -16.3
+   "rms_db": -16.3,
+   "stream_first_s": null
   },
   {
    "voice": "Kokoro 曉北",
@@ -88,7 +91,58 @@
    "max_s": 0.259,
    "cer_offline": 0.0134,
    "cer_stream": 0.031,
-   "rms_db": -16.1
+   "rms_db": -16.1,
+   "stream_first_s": null
+  },
+  {
+   "voice": "Azure 雲哲（雲端）",
+   "label": "Azure 雲哲",
+   "source": [
+    "Azure AI Speech・雲端",
+    "Azure AI Speech, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Azure AI Speech，美東區）：要能連網，要念的文字會上傳；邊合成邊回傳，連線建立後第一段聲音約 0.3 秒（每次開始的第一句約 1–2 秒）。台灣口音，中英文、數字都行；依字數付費（有免費額度）。",
+    "Cloud (Azure AI Speech, East US 2): needs the network and the text is uploaded; audio streams back while it is made, the first piece in about 0.3 s once connected (1-2 s for the very first line). Taiwanese accent; Chinese, English and numbers are fine; billed per character (free tier exists)."
+   ],
+   "load_s": 0.38,
+   "rtf": 0.0841,
+   "first_s": 0.372,
+   "max_s": 0.479,
+   "cer_offline": 0.0188,
+   "cer_stream": 0.0681,
+   "rms_db": -16.0,
+   "stream_first_s": 0.312
+  },
+  {
+   "voice": "Azure 曉雨（雲端）",
+   "label": "Azure 曉雨",
+   "source": [
+    "Azure AI Speech・雲端",
+    "Azure AI Speech, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Azure AI Speech，美東區）：要能連網，要念的文字會上傳；邊合成邊回傳，連線建立後第一段聲音約 0.3 秒（每次開始的第一句約 1–2 秒）。台灣口音，中英文、數字都行；依字數付費（有免費額度）。",
+    "Cloud (Azure AI Speech, East US 2): needs the network and the text is uploaded; audio streams back while it is made, the first piece in about 0.3 s once connected (1-2 s for the very first line). Taiwanese accent; Chinese, English and numbers are fine; billed per character (free tier exists)."
+   ],
+   "load_s": 0.34,
+   "rtf": 0.0744,
+   "first_s": 0.381,
+   "max_s": 0.713,
+   "cer_offline": 0.0054,
+   "cer_stream": 0.0143,
+   "rms_db": -16.0,
+   "stream_first_s": 0.243
   },
   {
    "voice": "MOSS-TTS-Nano 台灣腔（複製）",
@@ -109,7 +163,33 @@
    "max_s": 1.25,
    "cer_offline": 0.0534,
    "cer_stream": 0.4459,
-   "rms_db": -16.5
+   "rms_db": -16.5,
+   "stream_first_s": null
+  },
+  {
+   "voice": "Azure 曉臻（雲端）",
+   "label": "Azure 曉臻",
+   "source": [
+    "Azure AI Speech・雲端",
+    "Azure AI Speech, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Azure AI Speech，美東區）：要能連網，要念的文字會上傳；邊合成邊回傳，連線建立後第一段聲音約 0.3 秒（每次開始的第一句約 1–2 秒）。台灣口音，中英文、數字都行；依字數付費（有免費額度）。",
+    "Cloud (Azure AI Speech, East US 2): needs the network and the text is uploaded; audio streams back while it is made, the first piece in about 0.3 s once connected (1-2 s for the very first line). Taiwanese accent; Chinese, English and numbers are fine; billed per character (free tier exists)."
+   ],
+   "load_s": 2.08,
+   "rtf": 0.0907,
+   "first_s": 0.648,
+   "max_s": 0.976,
+   "cer_offline": 0.0214,
+   "cer_stream": 0.0299,
+   "rms_db": -16.0,
+   "stream_first_s": 0.314
   },
   {
    "voice": "MediaTek VITS（台灣）",
@@ -130,7 +210,30 @@
    "max_s": 1.111,
    "cer_offline": 0.107,
    "cer_stream": 0.1718,
-   "rms_db": -16.1
+   "rms_db": -16.1,
+   "stream_first_s": null
+  },
+  {
+   "voice": "Qwen3-TTS Uncle Fu",
+   "label": "Qwen3-TTS Uncle Fu",
+   "source": [
+    "Qwen3-TTS 0.6B 內建聲音・MLX",
+    "Qwen3-TTS 0.6B preset, MLX"
+   ],
+   "size_gb": 2.5,
+   "licence": "Apache-2.0",
+   "limits": [
+    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；整句合成每句約 1.2–1.7 秒，助理已改成邊合成邊播，約 0.2 秒開口。",
+    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; 1.2-1.7 s per whole sentence, but the assistant plays it while it is made and starts in about 0.2 s."
+   ],
+   "load_s": 1.05,
+   "rtf": 0.2794,
+   "first_s": 1.108,
+   "max_s": 2.886,
+   "cer_offline": 0.0107,
+   "cer_stream": 0.0752,
+   "rms_db": -16.0,
+   "stream_first_s": 0.143
   },
   {
    "voice": "Qwen3-TTS Vivian",
@@ -142,16 +245,17 @@
    "size_gb": 2.5,
    "licence": "Apache-2.0",
    "limits": [
-    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
-    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each sentence, a little slow to talk live (streaming playback would fix it)."
+    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；整句合成每句約 1.2–1.7 秒，助理已改成邊合成邊播，約 0.2 秒開口。",
+    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; 1.2-1.7 s per whole sentence, but the assistant plays it while it is made and starts in about 0.2 s."
    ],
-   "load_s": 3.64,
-   "rtf": 0.2735,
-   "first_s": 1.198,
-   "max_s": 2.569,
+   "load_s": 0.53,
+   "rtf": 0.2773,
+   "first_s": 1.394,
+   "max_s": 2.751,
    "cer_offline": 0.0162,
    "cer_stream": 0.0443,
-   "rms_db": -16.0
+   "rms_db": -16.0,
+   "stream_first_s": 0.142
   },
   {
    "voice": "OmniVoice 台灣腔（複製）",
@@ -172,28 +276,8 @@
    "max_s": 1.748,
    "cer_offline": 0.0214,
    "cer_stream": 0.0,
-   "rms_db": -16.1
-  },
-  {
-   "voice": "Qwen3-TTS Uncle Fu",
-   "label": "Qwen3-TTS Uncle Fu",
-   "source": [
-    "Qwen3-TTS 0.6B 內建聲音・MLX",
-    "Qwen3-TTS 0.6B preset, MLX"
-   ],
-   "size_gb": 2.5,
-   "licence": "Apache-2.0",
-   "limits": [
-    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
-    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each sentence, a little slow to talk live (streaming playback would fix it)."
-   ],
-   "load_s": 1.07,
-   "rtf": 0.274,
-   "first_s": 1.552,
-   "max_s": 2.653,
-   "cer_offline": 0.0107,
-   "cer_stream": 0.0752,
-   "rms_db": -16.0
+   "rms_db": -16.1,
+   "stream_first_s": null
   },
   {
    "voice": "Qwen3-TTS 台灣腔（複製）",
@@ -205,16 +289,17 @@
    "size_gb": 2.5,
    "licence": "Apache-2.0",
    "limits": [
-    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；每句約 1.2–1.7 秒才開口，即時對話稍慢（改成邊合成邊播可解決）。",
-    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; about 1.2-1.7 s before each sentence, a little slow to talk live (streaming playback would fix it)."
+    "中英文都能念（官方支援 10 種語言），數字、中英夾雜 OK；繁體字會走音，所以先轉簡體再念；整句合成每句約 1.2–1.7 秒，助理已改成邊合成邊播，約 0.2 秒開口。",
+    "Chinese and English (10 languages), numbers and mixed text are fine; Traditional characters are mispronounced, so it reads Simplified; 1.2-1.7 s per whole sentence, but the assistant plays it while it is made and starts in about 0.2 s."
    ],
-   "load_s": 0.98,
-   "rtf": 0.37,
-   "first_s": 1.681,
-   "max_s": 2.719,
+   "load_s": 3.17,
+   "rtf": 0.3733,
+   "first_s": 1.494,
+   "max_s": 2.893,
    "cer_offline": 0.0162,
    "cer_stream": 0.0071,
-   "rms_db": -16.2
+   "rms_db": -16.2,
+   "stream_first_s": 0.164
   },
   {
    "voice": "VoxCPM2 台灣腔（複製）",
@@ -235,7 +320,8 @@
    "max_s": 6.997,
    "cer_offline": 0.0189,
    "cer_stream": 0.0294,
-   "rms_db": -16.6
+   "rms_db": -16.6,
+   "stream_first_s": null
   },
   {
    "voice": "Gemini 3.1 Flash TTS（雲端）",
@@ -245,7 +331,10 @@
     "Google Gemini TTS, cloud"
    ],
    "size_gb": null,
-   "licence": "macOS",
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
    "limits": [
     "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
     "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the whole sentence at once, so with the round trip each sentence takes seconds. Chinese, English and numbers are fine; Mainland accent."
@@ -256,7 +345,8 @@
    "max_s": 6.208,
    "cer_offline": 0.0162,
    "cer_stream": 0.03,
-   "rms_db": -16.0
+   "rms_db": -16.0,
+   "stream_first_s": null
   },
   {
    "voice": "Breeze-TTS-2 台灣腔（複製）",
@@ -277,7 +367,8 @@
    "max_s": 9.814,
    "cer_offline": 0.0323,
    "cer_stream": 0.0368,
-   "rms_db": -16.2
+   "rms_db": -16.2,
+   "stream_first_s": null
   },
   {
    "voice": "Gemini 2.5 Flash TTS（雲端）",
@@ -287,7 +378,10 @@
     "Google Gemini TTS, cloud"
    ],
    "size_gb": null,
-   "licence": "macOS",
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
    "limits": [
     "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
     "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the whole sentence at once, so with the round trip each sentence takes seconds. Chinese, English and numbers are fine; Mainland accent."
@@ -298,7 +392,8 @@
    "max_s": 8.373,
    "cer_offline": 0.0243,
    "cer_stream": 0.0072,
-   "rms_db": -16.0
+   "rms_db": -16.0,
+   "stream_first_s": null
   },
   {
    "voice": "Gemini 2.5 Pro TTS（雲端）",
@@ -308,7 +403,10 @@
     "Google Gemini TTS, cloud"
    ],
    "size_gb": null,
-   "licence": "macOS",
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
    "limits": [
     "雲端（Google Vertex AI）：要能連網，要念的文字會上傳；整句生成完才回傳，加上網路往返，每句要等數秒。中英文、數字都行；口音偏大陸。",
     "Cloud (Google Vertex AI): needs the network and the text is uploaded; it returns the whole sentence at once, so with the round trip each sentence takes seconds. Chinese, English and numbers are fine; Mainland accent."
@@ -319,7 +417,8 @@
    "max_s": 9.482,
    "cer_offline": 0.0189,
    "cer_stream": 0.0243,
-   "rms_db": -16.0
+   "rms_db": -16.0,
+   "stream_first_s": null
   }
  ]
 }

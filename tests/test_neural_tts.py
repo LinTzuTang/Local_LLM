@@ -22,11 +22,14 @@ def test_neural_voices_are_listed_and_routed(monkeypatch, tmp_path):
     monkeypatch.setattr(tts, "available", lambda: False)  # no macOS voices needed
     fast = [v["name"] for v in tts.voices(("zh_TW",))]
     every = [v["name"] for v in tts.voices(("zh_TW",), neural="all")]
-    taiwan = [neural_tts.VITS, "Qwen3-TTS 台灣腔（複製）", "VoxCPM2 台灣腔（複製）",
+    azure = list(neural_tts.AZURE_TTS)  # cloud, but they stream: live
+    taiwan = [neural_tts.VITS, *azure, "Qwen3-TTS 台灣腔（複製）", "VoxCPM2 台灣腔（複製）",
               "MOSS-TTS-Nano 台灣腔（複製）", "OmniVoice 台灣腔（複製）",
               "Breeze-TTS-2 台灣腔（複製）"]  # fmt: skip
-    # live: the fast VITS and the streaming Qwen3-TTS clone (first chunk in about 0.2 s)
-    assert fast == [neural_tts.VITS, "Qwen3-TTS 台灣腔（複製）"] and every == taiwan
+    # live: the fast VITS, the streaming Azure voices (first piece in about 0.3 s) and the
+    # streaming Qwen3-TTS clone (first chunk in about 0.2 s)
+    assert fast == [neural_tts.VITS, *azure, "Qwen3-TTS 台灣腔（複製）"] and every == taiwan
+    assert tts.find("Azure 曉臻（雲端）")["engine"] == "azure"
     mainland = [v["name"] for v in tts.voices(("zh_CN",))]
     assert mainland == ["Kokoro 曉北", "Kokoro 雲希", "Qwen3-TTS Vivian", "Qwen3-TTS Uncle Fu"]
     assert tts.source(tts.find("Kokoro 曉北"))[0] == "Kokoro-82M・MLX"

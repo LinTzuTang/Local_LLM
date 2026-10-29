@@ -8,6 +8,7 @@ import speech_common as sc
 import speech_compare
 import speech_live
 import speech_meeting
+import speech_simul
 import speech_translate
 import speech_tts
 import streamlit as st
@@ -20,11 +21,11 @@ ui.page_header(
     tr("語音模型比較", "Compare speech models"),
     tr(
         "同一段錄音交給多個語音模型，並排比較逐字稿、速度與錯誤率；也能測噪音與電話音質、中翻英、"
-        "會議裡誰在什麼時候說話、即時字幕的延遲，以及文字轉語音的聲音。"
+        "同步口譯、會議裡誰在什麼時候說話、即時字幕的延遲，以及文字轉語音的聲音。"
         "全部在本機執行，比較在背景進行，可以切換頁面。",
         "Give the same recording to several speech models and compare transcripts, speed and "
         "error rates side by side; also test noise and telephone audio, Chinese-to-English "
-        "translation, who spoke when in a meeting, live-caption latency and text-to-speech "
+        "translation, simultaneous interpreting, who spoke when in a meeting, live-caption latency and text-to-speech "
         "voices. Everything runs on this machine, in the background, so you can switch pages.",
     ),
 )
@@ -32,6 +33,7 @@ ui.page_header(
 MODES = {
     "transcribe": (tr("逐字稿", "Transcribe"), "subtitles"),
     "translate": (tr("翻成英文", "Translate"), "translate"),
+    "simul": (tr("同步口譯", "Simultaneous"), "interpreter_mode"),
     "meeting": (tr("會議講者", "Meeting"), "record_voice_over"),
     "live": (tr("串流（即時）", "Live"), "sensors"),
     "tts": (tr("文字轉語音", "Text to speech"), "text_to_speech"),
@@ -70,6 +72,14 @@ blurbs = {
         "(cascade), an audio LLM that hears the audio and writes English (direct), and "
         "Whisper's built-in translation. Compare the English, how soon text appears and, with "
         "a reference, chrF / BLEU; or simulate live interpreting, chunk by chunk.",
+    ),
+    "simul": tr(
+        "邊聽邊翻：講者還在說，英文就跟著出來（像同步口譯員）。跟「翻成英文」不同，這裡照講者的速度送音訊，"
+        "除了翻得準不準，也看英文落後講者幾秒；比較地端串接（停頓切段 → 辨識 → 翻譯）與雲端同步口譯模型。",
+        "Interpreting while the speaker talks: English follows a few seconds behind, as a "
+        "simultaneous interpreter does. Unlike Translate, the audio arrives at the speaker's "
+        "pace and systems are scored on how far they trail as well as on accuracy; a local "
+        "cascade (cut at pauses → ASR → MT) against cloud simultaneous-interpretation models.",
     ),
     "meeting": tr(
         "說話者分段模型找出誰在什麼時候說話，再和語音辨識合併成「講者 1：…」的逐字稿；"
@@ -115,6 +125,7 @@ if status is None:
 pages = {
     "transcribe": speech_compare.transcribe_page,
     "translate": speech_translate.translate_page,
+    "simul": speech_simul.simul_page,
     "meeting": speech_meeting.meeting_page,
     "live": speech_live.live_page,
     "tts": speech_tts.tts_page,

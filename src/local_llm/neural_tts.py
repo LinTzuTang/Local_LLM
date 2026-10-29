@@ -85,6 +85,31 @@ for _name, _model in GEMINI_TTS.items():
         "source": ("Google Gemini TTS・雲端", "Google Gemini TTS, cloud"),
         "limits": GEMINI_TTS_LIMITS,
     }  # fmt: skip
+# Azure AI Speech neural voices (Taiwan): the key of AZURE_SPEECH_KEY, or AZURE_OPENAI_API_KEY
+# when that resource is multi-service, in AZURE_SPEECH_REGION (default eastus2). The REST API
+# sends the audio in pieces while it is made, so these voices stream (render_stream).
+AZURE_TTS_LIMITS = (
+    "雲端（Azure AI Speech，美東區）：要能連網，要念的文字會上傳；邊合成邊回傳，連線建立後"
+    "第一段聲音約 0.3 秒（每次開始的第一句約 1–2 秒）。台灣口音，中英文、數字都行；"
+    "依字數付費（有免費額度）。",
+    "Cloud (Azure AI Speech, East US 2): needs the network and the text is uploaded; audio "
+    "streams back while it is made, the first piece in about 0.3 s once connected (1-2 s for "
+    "the very first line). Taiwanese accent; Chinese, English and numbers are fine; billed per "
+    "character (free tier exists).",
+)
+AZURE_TTS = {
+    "Azure 曉臻（雲端）": "zh-TW-HsiaoChenNeural",
+    "Azure 雲哲（雲端）": "zh-TW-YunJheNeural",
+    "Azure 曉雨（雲端）": "zh-TW-HsiaoYuNeural",
+}
+for _name, _voice in AZURE_TTS.items():
+    VOICES[_name] = {
+        "name": _name, "short": _name.removesuffix("（雲端）"), "locale": "zh_TW",
+        "engine": "azure", "voice": _voice, "fast": False, "stream": True, "english": True,
+        "sample": "我是 Azure 的台灣語音。", "cloud": True,
+        "source": ("Azure AI Speech・雲端", "Azure AI Speech, cloud"),
+        "limits": AZURE_TTS_LIMITS,
+    }  # fmt: skip
 VOICES |= mlx_tts.VOICES
 NATIVE_RATE = 22050
 # Every rendering is brought to TARGET_RMS_DB (macOS Tingting measures about -17), its peaks
@@ -95,7 +120,24 @@ KNEE = 0.6
 _lock = threading.Lock()
 
 
+def azure_speech() -> tuple[str, str] | None:
+    """(region, key) for Azure AI Speech from the environment or the project's .env."""
+    import os
+
+    env = dict(os.environ)
+    dotenv = PROJECT / ".env"
+    if dotenv.exists():
+        for line in dotenv.read_text(encoding="utf-8").splitlines():
+            if "=" in line and not line.lstrip().startswith("#"):
+                k, v = line.split("=", 1)
+                env.setdefault(k.strip(), v.strip().strip("'\""))
+    key = env.get("AZURE_SPEECH_KEY") or env.get("AZURE_OPENAI_API_KEY")
+    return (env.get("AZURE_SPEECH_REGION") or "eastus2", key) if key else None
+
+
 def available(name: str) -> bool:
+    if name in AZURE_TTS:
+        return azure_speech() is not None
     if name in GEMINI_TTS:
         from . import gcp_auth
 
@@ -259,6 +301,49 @@ def render_gemini(text: str, voice: str, out: Path, sample_rate: int) -> Path:
     return _write(out, _resample(loudness(x), rate, sample_rate), sample_rate)
 
 
+AZURE_RATE = 24000
+
+
+@cache
+def _azure_client():
+    """One connection kept open between lines: a new TLS handshake to the region costs a few
+    hundred milliseconds per sentence."""
+    import httpx
+
+    return httpx.Client(timeout=60)
+
+
+def azure_chunks(text: str, voice: str):
+    """Float audio pieces (24 kHz) of one line from Azure AI Speech, as they arrive."""
+    from xml.sax.saxutils import escape
+
+    region, key = azure_speech()
+    v = VOICES[voice]
+    ssml = (f'<speak version="1.0" xml:lang="zh-TW"><voice name="{v["voice"]}">'
+            f"{escape(text)}</voice></speak>")  # fmt: skip
+    head = {
+        "Ocp-Apim-Subscription-Key": key,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "raw-24khz-16bit-mono-pcm",
+        "User-Agent": "local-llm",
+    }
+    url = f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1"
+    rest = b""
+    with _azure_client().stream("POST", url, content=ssml.encode(), headers=head) as r:
+        r.raise_for_status()
+        for data in r.iter_bytes(4800):
+            data, rest = rest + data, b""
+            if len(data) % 2:
+                data, rest = data[:-1], data[-1:]
+            if data:
+                yield np.frombuffer(data, dtype="<i2").astype(np.float32) / 32768
+
+
+def render_azure(text: str, voice: str, out: Path, sample_rate: int) -> Path:
+    x = np.concatenate(list(azure_chunks(text, voice)) or [np.zeros(1, np.float32)])
+    return _write(out, _resample(loudness(x), AZURE_RATE, sample_rate), sample_rate)
+
+
 def can_stream(voice: str, text: str) -> bool:
     v = VOICES.get(voice) or {}
     return bool(v.get("stream")) and not (english(text) and not v.get("english"))
@@ -271,8 +356,12 @@ def render_stream(text: str, voice: str, sample_rate: int):
     import io
     import wave
 
+    if VOICES[voice]["engine"] == "azure":
+        pieces = ((x, AZURE_RATE) for x in azure_chunks(text, voice))
+    else:
+        pieces = mlx_tts.stream(speech_text(text), VOICES[voice])
     gain = None
-    for x, rate in mlx_tts.stream(speech_text(text), VOICES[voice]):
+    for x, rate in pieces:
         if not len(x):
             continue
         if gain is None:
@@ -302,6 +391,8 @@ def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
         return tts.synthesize(text, "Samantha", None, out=out, sample_rate=sample_rate)
     if VOICES[voice]["engine"] == "gemini":
         return render_gemini(text, voice, out, sample_rate)
+    if VOICES[voice]["engine"] == "azure":
+        return render_azure(text, voice, out, sample_rate)
     if VOICES[voice]["engine"] == "mlx":
         return render_mlx(text, voice, out, sample_rate)
     return render_vits(text, out, sample_rate)

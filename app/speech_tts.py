@@ -555,18 +555,20 @@ def load_benchmark() -> dict | None:
 def benchmark_frame(data: dict) -> pd.DataFrame:
     rows = []
     for r in data["rows"]:
-        colour, verdict = live_verdict(r.get("first_s"), r.get("rtf"))
+        # a voice that streams starts after its first piece, not the whole sentence
+        colour, verdict = live_verdict(r.get("stream_first_s") or r.get("first_s"), r.get("rtf"))
         rows.append({
             "voice": r["label"],
             "source": tr(*r["source"]),
             "first_s": r.get("first_s"),
+            "stream_first_s": r.get("stream_first_s"),
             "rtf": r.get("rtf"),
             "load_s": r.get("load_s"),
             "cer_offline": r.get("cer_offline"),
             "cer_stream": r.get("cer_stream"),
             "rms_db": r.get("rms_db"),
             "size_gb": r.get("size_gb"),
-            "licence": r.get("licence"),
+            "licence": tr(*r["licence"]) if isinstance(r["licence"], list) else r["licence"],
             "verdict": verdict,
             "limits": tr(*r["limits"]) if r.get("limits") else "",
             "colour": colour,
@@ -659,7 +661,9 @@ def benchmark_view() -> None:
     st.dataframe(
         df.drop(columns=["colour"]).rename(columns={
             "voice": tr("聲音", "Voice"), "source": tr("來源", "Source"),
-            "first_s": tr("首句（秒）", "First (s)"), "rtf": "RTF",
+            "first_s": tr("首句（秒）", "First (s)"),
+            "stream_first_s": tr("邊合成邊播首段（秒）", "Streamed first piece (s)"),
+            "rtf": "RTF",
             "load_s": tr("載入（秒）", "Load (s)"),
             "cer_offline": tr("會議稿 CER", "Meeting CER"),
             "cer_stream": tr("測試腳本串流 CER", "Script streaming CER"),
@@ -680,14 +684,16 @@ def benchmark_view() -> None:
     st.caption(
         tr(
             "方法：每個聲音先念一句短句載入模型（「載入」），再逐句合成；「首句」是第一句的合成時間，"
-            "也就是助理開口前要等多久。會議稿 CER：Qwen3-ASR-1.7B 聽合成結果；測試腳本串流 "
+            "也就是助理開口前要等多久；能串流的聲音（Qwen3-TTS、Azure）邊合成邊播，"
+            "實際只要等「邊合成邊播首段」。會議稿 CER：Qwen3-ASR-1.7B 聽合成結果；測試腳本串流 "
             "CER："
             "即時語音助理的 16 句中文測試台詞送進預設串流辨識（Zipformer），看能不能當測試講者。"
             "腳本：scripts/speech_eval/run_tts_bench.py。",
             "Method: each voice first reads a short line to load the model (Load), then the "
             "meeting one sentence at a time; First is how long the first sentence took, the "
-            "wait before the assistant talks. Meeting CER: Qwen3-ASR-1.7B transcribes the result;"
-            " script "
+            "wait before the assistant talks; voices that stream (Qwen3-TTS, Azure) play while "
+            "they are made, so the wait is the streamed first piece. Meeting CER: "
+            "Qwen3-ASR-1.7B transcribes the result; script "
             "streaming CER: the voice assistant's 16 Chinese test lines through the default "
             "streaming ASR (Zipformer), i.e. can the voice act as the test speaker. Script: "
             "scripts/speech_eval/run_tts_bench.py.",
