@@ -18,6 +18,7 @@ import html
 from pathlib import Path
 
 import altair as alt
+import asr_bench
 import jobs
 import pandas as pd
 import speech_common as sc
@@ -577,6 +578,16 @@ def conditions_form() -> tuple[list[str], str, int]:
 
 
 def transcribe_page(url: str, status: dict) -> None:
+    st.session_state.setdefault("asr_view", "try")
+    view = st.segmented_control(
+        tr("檢視", "View"), ["try", "bench"], required=True,
+        format_func=lambda v: {"try": f":material/play_arrow: {tr('自己試', 'Try it')}",
+                               "bench": f":material/leaderboard: {tr('評測總表', 'Benchmark')}"}[v],
+        **kept("asr_view"),
+    ) or "try"  # fmt: skip
+    if view == "bench":
+        asr_bench.benchmark_view()
+        return
     labels = sc.names()
     selected = model_select(
         status, labels, "asr_models",

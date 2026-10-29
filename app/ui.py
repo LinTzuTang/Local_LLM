@@ -71,12 +71,16 @@ def where_scale():
     return alt.Scale(domain=[local, cloud], range=[LOCAL_COLOR, CLOUD_COLOR])
 
 
+def is_cloud(where) -> bool:
+    return str(where).strip().lower().startswith(("雲端", "cloud"))
+
+
 def where_rows(df, column: str):
-    """A dataframe Styler tinting each row by its `column` (local blue, cloud orange)."""
-    _, cloud = where_names()
+    """A dataframe Styler tinting each row by its `column` (local blue, cloud orange; values
+    such as 「雲端（Azure）」 count as cloud)."""
 
     def tint(row):
-        colour = CLOUD_TINT if row[column] == cloud else LOCAL_TINT
+        colour = CLOUD_TINT if is_cloud(row[column]) else LOCAL_TINT
         return [f"background-color: {colour}"] * len(row)
 
     return df.style.apply(tint, axis=1)

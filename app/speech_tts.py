@@ -20,6 +20,7 @@ import jobs
 import pandas as pd
 import speech_common as sc
 import streamlit as st
+import ui
 from common import PROJECT_DIR, cloud_hint, kept, local_or_allowed, save_run
 from i18n import tr
 
@@ -665,8 +666,10 @@ def benchmark_frame(data: dict) -> pd.DataFrame:
     for r in data["rows"]:
         # a voice that streams starts after its first piece, not the whole sentence
         colour, verdict = live_verdict(r.get("stream_first_s") or r.get("first_s"), r.get("rtf"))
+        cloud = "雲端" in r["source"][0]
         rows.append({
-            "voice": r["label"],
+            "voice": r["label"] + (" ☁" if cloud else ""),
+            "where": ui.where_names()[cloud],
             "source": tr(*r["source"]),
             "first_s": r.get("first_s"),
             "stream_first_s": r.get("stream_first_s"),
@@ -767,8 +770,9 @@ def benchmark_view() -> None:
     df = benchmark_frame(data)
     benchmark_charts(df)
     st.dataframe(
-        df.drop(columns=["colour"]).rename(columns={
-            "voice": tr("聲音", "Voice"), "source": tr("來源", "Source"),
+        ui.where_rows(df.drop(columns=["colour"]).rename(columns={
+            "voice": tr("聲音", "Voice"), "where": tr("位置", "Where"),
+            "source": tr("來源", "Source"),
             "first_s": tr("首句（秒）", "First (s)"),
             "stream_first_s": tr("邊合成邊播首段（秒）", "Streamed first piece (s)"),
             "rtf": "RTF",
@@ -778,7 +782,7 @@ def benchmark_view() -> None:
             "rms_db": tr("音量 dBFS", "Level dBFS"), "size_gb": tr("大小 GB", "Size GB"),
             "licence": tr("授權", "Licence"), "verdict": tr("即時對話", "Live use"),
             "limits": tr("限制", "Limits"),
-        }),
+        }), tr("位置", "Where")),
         hide_index=True,
         width="stretch",
         column_config={

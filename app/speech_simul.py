@@ -86,18 +86,15 @@ def bench_view() -> None:
     )
     df = frame(data)
     st.altair_chart(chart(df), width="stretch")
-    st.dataframe(
-        df.rename(columns={
+    shown = df.rename(columns={
             "system": tr("做法", "System"), "where": tr("位置", "Where"),
             "out": tr("輸出", "Output"), "first_s": tr("第一句英文（秒）", "First English (s)"),
             "lag_avg_s": tr("平均落後（秒）", "Avg lag (s)"),
             "lag_p90_s": tr("落後 P90（秒）", "Lag P90 (s)"),
             "tail_s": tr("講完再等（秒）", "After the end (s)"), "chrf": "chrF", "bleu": "BLEU",
             "note": tr("說明", "Notes"),
-        }),
-        hide_index=True,
-        width="stretch",
-    )  # fmt: skip
+        })  # fmt: skip
+    st.dataframe(ui.where_rows(shown, tr("位置", "Where")), hide_index=True, width="stretch")
     st.caption(
         tr(
             "落後怎麼算：假設講者說到全文的幾成，對應譯文也該出到幾成（依實際說話時間、不算停頓）；"
@@ -221,7 +218,7 @@ def result_view(job: jobs.Job) -> None:
     } for r in rows])  # fmt: skip
     st.markdown(tr(f"**結果**（錄音 {state.get('audio_s', 0):.0f} 秒）",
                    f"**Results** ({state.get('audio_s', 0):.0f} s of audio)"))  # fmt: skip
-    st.dataframe(table, hide_index=True, width="stretch")
+    st.dataframe(ui.where_rows(table, tr("位置", "Where")), hide_index=True, width="stretch")
     for r in rows:
         with st.container(border=True):
             st.markdown(f"**{r['label']}**")

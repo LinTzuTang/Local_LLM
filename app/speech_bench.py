@@ -13,6 +13,7 @@ import statistics
 import pandas as pd
 import speech_common as sc
 import streamlit as st
+import ui
 from common import PROJECT_DIR
 from i18n import tr
 
@@ -238,7 +239,7 @@ def benchmark_page() -> None:
     )
     titles = list(sample_names().values())
     st.dataframe(
-        frame,
+        ui.where_rows(frame, tr("位置", "Where")),
         hide_index=True,
         use_container_width=True,
         column_config={

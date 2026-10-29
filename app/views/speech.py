@@ -8,6 +8,7 @@ import speech_common as sc
 import speech_compare
 import speech_live
 import speech_meeting
+import speech_pick
 import speech_simul
 import speech_translate
 import speech_tts
@@ -31,6 +32,7 @@ ui.page_header(
 )
 
 MODES = {
+    "pick": (tr("依情境選模型", "Pick a model"), "recommend"),
     "transcribe": (tr("逐字稿", "Transcribe"), "subtitles"),
     "translate": (tr("翻成英文", "Translate"), "translate"),
     "simul": (tr("同步口譯", "Simultaneous"), "interpreter_mode"),
@@ -39,7 +41,7 @@ MODES = {
     "tts": (tr("文字轉語音", "Text to speech"), "text_to_speech"),
 }
 left, right = st.columns([3, 1], vertical_alignment="bottom")
-st.session_state.setdefault("speech_mode", "transcribe")
+st.session_state.setdefault("speech_mode", "pick")
 if st.session_state.speech_mode not in MODES:  # "voice_chat" moved to the voice assistant
     st.session_state.speech_mode = "transcribe"
 mode = (
@@ -56,6 +58,11 @@ with right:
     sc.s2tw_toggle()
 
 blurbs = {
+    "pick": tr(
+        "各種語音任務該用哪個模型：本機與雲端並排，依實測結果整理。",
+        "Which model for each speech task, local and cloud side by side, from the measured "
+        "results.",
+    ),
     "transcribe": tr(
         "同一段錄音依序交給每個語音辨識模型（一次一個，時間才公平）；填入原稿時計算字錯率（CER）。"
         "打開「噪音與電話音質」可以看模型在吵雜或電話線上的表現。",
@@ -121,6 +128,9 @@ if mode == "tts":
 url = gateway_url()
 status = sc.gateway_status(url)
 if status is None:
+    st.stop()
+if mode == "pick":  # nothing runs: no gateway needed
+    speech_pick.pick_page()
     st.stop()
 pages = {
     "transcribe": speech_compare.transcribe_page,

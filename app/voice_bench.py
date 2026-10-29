@@ -16,6 +16,7 @@ import altair as alt
 import pandas as pd
 import speech_common as sc
 import streamlit as st
+import ui
 import voice_assistant as va
 from common import PROJECT_DIR
 from i18n import tr
@@ -25,8 +26,6 @@ RUNS = PROJECT_DIR / "runs"
 KINDS = {"cascade": ("① 串接式（Cascade）", "① Cascade"),
          "turn": ("② 回合式（Turn-based + Barge-in）", "② Turn-based + Barge-in"),
          "duplex": ("③ 全雙工（Full-Duplex）", "③ Full-Duplex")}  # fmt: skip
-KIND_COLOURS = alt.Scale(domain=[tr(*v) for v in KINDS.values()],
-                         range=["#4F46E5", "#0EA5E9", "#F97316"])  # fmt: skip
 
 
 def load() -> dict | None:
@@ -50,8 +49,7 @@ def systems_frame(data: dict) -> pd.DataFrame:
             {
                 tr("系統", "System"): tr(s["name"], s["name_en"]),
                 tr("對話方式", "Way"): tr(*KINDS[s["kind"]]),
-                tr("跑在哪", "Where"): tr("本機", "local") if s["where"] == "local"
-                else tr("雲端", "cloud"),
+                tr("跑在哪", "Where"): ui.where_names()[s["where"] != "local"],
                 tr("能查資料", "Lookups"): "✅" if s["tools"] else "—",
                 tr("說完到開口", "Starts talking"): _sec(s["start_s"]),
                 tr("說出查到的答案", "Says the answer"): _sec(s["answer_s"]),
@@ -67,7 +65,10 @@ def systems_frame(data: dict) -> pd.DataFrame:
 
 
 def systems_chart(data: dict) -> alt.Chart:
-    rows = [{"system": tr(s["name"], s["name_en"]), "kind": tr(*KINDS[s["kind"]]),
+    """Bars coloured by where the system runs (local blue, cloud orange); the way of talking
+    leads the label (①②③)."""
+    rows = [{"system": f"{tr(*KINDS[s['kind']])[:1]} {tr(s['name'], s['name_en'])}",
+             "kind": tr(*KINDS[s["kind"]]), "where": ui.where_names()[s["where"] != "local"],
              "start": s["start_s"]} for s in data["systems"] if s["start_s"] is not None]  # fmt: skip
     df = pd.DataFrame(rows)
     return (
@@ -80,9 +81,9 @@ def systems_chart(data: dict) -> alt.Chart:
                 title=tr("說完到開口（秒，越短越好）", "Starts talking (s, lower is better)"),
             ),
             color=alt.Color(
-                "kind:N", scale=KIND_COLOURS, title=None, legend=alt.Legend(orient="bottom")
+                "where:N", scale=ui.where_scale(), title=None, legend=alt.Legend(orient="bottom")
             ),  # fmt: skip
-            tooltip=["system", "kind", "start"],
+            tooltip=["system", "kind", "where", "start"],
         )
     )
 
@@ -207,7 +208,9 @@ def section() -> None:
                 )
             )
             st.altair_chart(systems_chart(data), width="stretch")
-            st.dataframe(systems_frame(data), hide_index=True, width="stretch")
+            frame = systems_frame(data)
+            st.dataframe(ui.where_rows(frame, tr("跑在哪", "Where")), hide_index=True,
+                         width="stretch")  # fmt: skip
             st.caption(
                 tr(
                     "② 回合式（Turn-based + Barge-in）與 ③ 全雙工（Full-Duplex）的分法："
