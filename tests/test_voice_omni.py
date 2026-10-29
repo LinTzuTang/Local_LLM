@@ -201,6 +201,24 @@ def test_duplex_reply_waits_for_its_late_speech():
     s.agent.close()
 
 
+def test_duplex_reply_is_captioned_from_its_speech():
+    """The server's text can lack the start of a reply; the caption is what the speech says."""
+    heard = []
+
+    def transcribe(data):
+        heard.append(data)
+        return "抱歉，我查不到你好。"
+
+    s = Session(agent_cls=voice_omni.DuplexAgent, model=LateSpeechModel(),
+                engine="minicpm-o-duplex", transcribe=transcribe)  # fmt: skip
+    s.audio(7.0, 0)
+    s.wait(lambda: any(e["type"] == "assistant" and e["final"] for e in s.events))
+    finals = [e for e in s.of("assistant") if e["final"]]
+    assert [e["text"] for e in finals] == ["抱歉，我查不到你好。"]
+    assert len(heard) == 1 and heard[0][:4] == b"RIFF"  # both speech files, as one WAV
+    s.agent.close()
+
+
 def test_without_captions_the_turn_starts_at_the_end_of_speech():
     s = Session()
     s.agent.captions = False  # no ASR runs: only the VAD's events come

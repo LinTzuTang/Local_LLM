@@ -559,14 +559,31 @@ class OmniAgent(VoiceAgent):
         }
 
 
+def join_wavs(parts: list[bytes]) -> bytes:
+    """Speech files of one reply as one WAV (they share the model's sample rate)."""
+    pcm, rate = bytearray(), RATE
+    for data in parts:
+        with wave.open(io.BytesIO(data)) as w:
+            rate = w.getframerate()
+            pcm += w.readframes(w.getnframes())
+    return wav_bytes(bytes(pcm), rate)
+
+
 class DuplexAgent(OmniAgent):
-    """③ full-duplex: the model hears every second and decides itself when to talk."""
+    """③ full-duplex: the model hears every second and decides itself when to talk.
+
+    The server's text of a reply often lacks its beginning (its duplex decode returns only the
+    last piece it wrote each second, while the speech is complete: "即時天氣。" for a reply
+    that says "抱歉，我查不到即時天氣。"). With `transcribe` (a whole-clip ASR model, given by
+    the gateway) the shown text of each finished reply is what its speech says."""
 
     TAIL_TICKS = 2
 
-    def __init__(self, emit: Callable[[dict], None], model, **kwargs):
+    def __init__(self, emit: Callable[[dict], None], model, *,
+                 transcribe: Callable[[bytes], str] | None = None, **kwargs):  # fmt: skip
         kwargs["barge_in"] = False  # the model decides; see _tick
         super().__init__(emit, model, **kwargs)
+        self.transcribe = transcribe
         self.quiet = 0  # listening seconds since its last speech
         self.dropping = 0  # seconds of a cut-off reply's late speech still to drop
         self.speech: dict | None = None
@@ -593,6 +610,11 @@ class DuplexAgent(OmniAgent):
                 "early_commit": early,
             }
             self.turns.append(turn)
+            speech = self.speech  # it began answering before the caption came: this turn's
+            if speech is not None and speech["turn"] is None:
+                speech["turn"] = turn["turn"]
+                turn["speech_ids"].append(speech["speech_id"])
+                turn["llm_start"] = self.now()
         self.emit(
             {
                 "type": "user_final",
@@ -657,6 +679,7 @@ class DuplexAgent(OmniAgent):
                            "text": speakable(speech["text"]), "final": False})  # fmt: skip
             for data in wavs:
                 self.send_wav(speech, data)
+                speech.setdefault("wavs", []).append(data)
         if self.speech is None or not out["listen"] or text:
             return
         speech = self.speech
@@ -673,6 +696,13 @@ class DuplexAgent(OmniAgent):
             if self.quiet < self.TAIL_TICKS:
                 return
         self.speech, self.quiet = None, 0
+        if self.transcribe is not None and speech.get("wavs"):
+            try:  # the caption from what it said, not from its (partial) text
+                heard = self.transcribe(join_wavs(speech["wavs"])).strip()
+            except Exception:
+                heard = ""
+            if heard:
+                speech["model_text"], speech["text"] = speech["text"], self.display(heard)
         if not speech["text"].strip() and speech["seq"]:  # it spoke without writing anything
             speech["text"] = AUDIO_ONLY
         if speech["turn"] is not None:
@@ -692,13 +722,17 @@ class DuplexAgent(OmniAgent):
 
 
 def make_agent(engine: str, emit: Callable[[dict], None], *, barge_in: bool = True,
-               display: Callable[[str], str] | None = None,
-               captions: bool = True) -> OmniAgent:  # fmt: skip
+               display: Callable[[str], str] | None = None, captions: bool = True,
+               transcribe: Callable[[bytes], str] | None = None) -> OmniAgent:  # fmt: skip
+    """`transcribe` (WAV bytes -> text): the duplex agent captions its replies with it."""
     if not available(engine):
         raise RuntimeError(f"{engine} is not installed on this machine")
     model = make_model(engine)
-    cls = DuplexAgent if ENGINES[engine]["kind"] == "duplex" else OmniAgent
-    agent = cls(emit, model, engine=engine, barge_in=barge_in, display=display)
+    if ENGINES[engine]["kind"] == "duplex":
+        agent = DuplexAgent(emit, model, engine=engine, barge_in=barge_in, display=display,
+                            transcribe=transcribe)  # fmt: skip
+    else:
+        agent = OmniAgent(emit, model, engine=engine, barge_in=barge_in, display=display)
     agent.captions = captions
     return agent
 

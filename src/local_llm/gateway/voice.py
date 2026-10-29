@@ -36,8 +36,30 @@ from .live import LiveSession
 from .manager import GatewayError, Manager
 
 STOP_GRACE_S = 0.4
+# Whole-clip ASR that captions a full-duplex model's replies from their speech (its own text
+# often lacks the start of a reply; voice_omni.DuplexAgent): the first one installed.
+REPLY_ASR = ("qwen3-asr-0.6b", "qwen3-asr-1.7b")
 PAUSE_PAD_S = 0.3  # audio kept before and after an utterance for a whole-clip model
 PAUSE_GAP_S = 0.8  # quiet that ends an utterance for a whole-clip model
+
+
+def reply_asr(manager: Manager, keep_alive: float | None):
+    """WAV bytes -> text with the first installed REPLY_ASR model, or None if there is none."""
+    model = next((m for m in REPLY_ASR if m in manager.specs
+                  and manager.store.installed(manager.specs[m])), None)  # fmt: skip
+    if model is None:
+        return None
+
+    def transcribe(data: bytes) -> str:
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+            f.write(data)
+            f.flush()
+            out = manager.run(model, "asr", keep_alive, audio=Path(f.name))
+        return (out.get("text") or "").strip()
+
+    return transcribe
 
 
 def ollama_url() -> str:
@@ -98,7 +120,9 @@ async def voice_agent_ws(
                                                display=display)  # fmt: skip
             else:
                 agent = voice_omni.make_agent(engine, emit, barge_in=barge, display=display,
-                                              captions=captions)  # fmt: skip
+                                              captions=captions,
+                                              transcribe=reply_asr(manager,
+                                                                   keep_alive))  # fmt: skip
         except (RuntimeError, ValueError) as exc:
             await websocket.send_json({"type": "error", "error": str(exc)})
             await websocket.close()

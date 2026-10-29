@@ -582,6 +582,13 @@ export default function (component) {
     });
   }
 
+  // The assistant is done with a line: an "idle" came after the line was spoken (a model that
+  // never captions the user, or a caption that never came, still counts) and nothing of its
+  // speech is left to play.
+  function settled(idleBefore) {
+    return s.idleCount > idleBefore && !s.current && !s.queue.length;
+  }
+
   async function until(test, ms) {
     const end = performance.now() + ms;
     while (performance.now() < end) {
@@ -610,9 +617,10 @@ export default function (component) {
       s.demoStep = `${L.demo_step} ${i + 1}: ${line.text}`;
       render();
       const before = s.finals;
+      const idleBefore = s.idleCount;
       await speak({ text: line.text, pcm: pcm16(line.pcm) });
       await until(() => s.finals > before, 15000);
-      await until(() => s.idleCount > s.idleMark, 60000);
+      await until(() => settled(idleBefore), 60000);
       await sleep(700);
       if (line.done) break;
     }
@@ -633,6 +641,7 @@ export default function (component) {
       s.demoStep = `${L.demo_step} ${i + 1}/${normal.length}: ${normal[i].text}`;
       render();
       const before = s.finals;
+      const idleBefore = s.idleCount;
       await speak(normal[i]);
       const last = i === normal.length - 1;
       if (last && barge) {
@@ -646,12 +655,14 @@ export default function (component) {
         s.demoStep = `${L.demo_barge}: ${barge.text}`;
         render();
         const bargeBefore = s.finals;
+        const bargeIdle = s.idleCount;
         await speak(barge);
         await until(() => s.finals > bargeBefore, 15000);
+        await until(() => settled(bargeIdle), 60000);
       } else {
         await until(() => s.finals > before, 15000);
+        await until(() => settled(idleBefore), 60000);
       }
-      await until(() => s.idleCount > s.idleMark, 60000);
       await sleep(700);
     }
     s.demoStep = null;
