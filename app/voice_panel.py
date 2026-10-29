@@ -163,8 +163,9 @@ def panel(page: str = va.PAGE) -> None:
                 format_func=lambda k: tr(*va.KINDS[k]),
                 required=True,
                 help=tr(
-                    "① 串接式＝三個模型接力，可接工具查資料；② 回合式＝一個語音模型，等你講完才回（像對講機）；"
-                    "③ 全雙工＝一個語音模型邊聽邊說（像打電話）。測試結果：串接式最可靠；單一模型裡 Qwen3-Omni "
+                    "① 串接式（Cascade）＝三個模型接力，可接工具查資料；② 回合式（Turn-based + Barge-in）"
+                    "＝一個語音模型，等你講完才回（像對講機），說話中可以被打斷；"
+                    "③ 全雙工（Full-Duplex）＝一個語音模型邊聽邊說（像打電話）。測試結果：串接式最可靠；單一模型裡 Qwen3-Omni "
                     "全程繁體、不編造，約 1.3 秒開口；MiniCPM-o 回合式約 0.9 秒開口但多用簡體，全雙工常沒回應。",
                     "① Cascade = three models in a relay, with tools; ② turn-based = one speech "
                     "model that answers once you finish (like a walkie-talkie); ③ full-duplex = "

@@ -398,7 +398,10 @@ def history_view(data: dict) -> None:
     """A saved session: settings, the conversation, latencies, tool calls and the timeline."""
     settings = data.get("settings") or {}
     single = settings.get("engine") not in (None, "cascade")
-    kinds = {"turn": tr("② 回合式", "② turn-based"), "duplex": tr("③ 全雙工", "③ full-duplex")}
+    kinds = {
+        "turn": tr("② 回合式（Turn-based + Barge-in）", "② Turn-based + Barge-in"),
+        "duplex": tr("③ 全雙工（Full-Duplex）", "③ Full-Duplex"),
+    }
     st.markdown(
         ui.badges(["asr", "voice_chat"] if single else ["asr", "tools", "tts"], [
             *([kinds.get(data.get("kind"), settings.get("engine"))] if single else []),
@@ -450,9 +453,9 @@ def history_view(data: dict) -> None:
 
 
 KINDS = {
-    "cascade": ("① 串接式", "① Cascade"),
-    "turn": ("② 回合式", "② Turn-based"),
-    "duplex": ("③ 全雙工", "③ Full-duplex"),
+    "cascade": ("① 串接式（Cascade）", "① Cascade"),
+    "turn": ("② 回合式（Turn-based + Barge-in）", "② Turn-based + Barge-in"),
+    "duplex": ("③ 全雙工（Full-Duplex）", "③ Full-Duplex"),
 }
 KIND_NOTES = {
     "cascade": (

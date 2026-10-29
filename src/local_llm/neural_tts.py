@@ -110,6 +110,33 @@ for _name, _voice in AZURE_TTS.items():
         "source": ("Azure AI Speech・雲端", "Azure AI Speech, cloud"),
         "limits": AZURE_TTS_LIMITS,
     }  # fmt: skip
+# Google Cloud Text-to-Speech (REST text:synthesize, whole line at once): Taiwan Mandarin has
+# Standard and WaveNet voices only; the newer Chirp 3 HD voices are Mainland Mandarin. The key
+# is gcp_auth.tts_key_path() (GOOGLE_TTS_CREDENTIALS, else the default service account).
+GOOGLE_TTS_LIMITS = (
+    "雲端（Google Cloud Text-to-Speech）：要能連網，要念的文字會上傳；整句合成完才回傳。"
+    "台灣華語只有 WaveNet／Standard 聲音（較舊），最新的 Chirp 3 HD 只有大陸口音。"
+    "中英文、數字都行；"
+    "依字數付費。",
+    "Cloud (Google Cloud Text-to-Speech): needs the network and the text is uploaded; returns "
+    "the whole line at once. Taiwan Mandarin has only the older WaveNet / Standard voices; the "
+    "newest Chirp 3 HD voices are Mainland Mandarin. Chinese, English and numbers are fine; "
+    "billed per character.",
+)
+GOOGLE_TTS = {
+    "Google 台灣 WaveNet A（雲端）": ("cmn-TW-Wavenet-A", "zh_TW"),
+    "Google 台灣 WaveNet B（雲端）": ("cmn-TW-Wavenet-B", "zh_TW"),
+    "Google 台灣 WaveNet C（雲端）": ("cmn-TW-Wavenet-C", "zh_TW"),
+    "Google Chirp 3 HD Aoede（雲端）": ("cmn-CN-Chirp3-HD-Aoede", "zh_CN"),
+}
+for _name, (_voice, _locale) in GOOGLE_TTS.items():
+    VOICES[_name] = {
+        "name": _name, "short": _name.removesuffix("（雲端）"), "locale": _locale,
+        "engine": "google", "voice": _voice, "fast": True, "english": True,  # 0.5-0.8 s
+        "sample": "我是 Google 的雲端語音。", "cloud": True,
+        "source": ("Google Cloud TTS・雲端", "Google Cloud TTS, cloud"),
+        "limits": GOOGLE_TTS_LIMITS,
+    }  # fmt: skip
 VOICES |= mlx_tts.VOICES
 NATIVE_RATE = 22050
 # Every rendering is brought to TARGET_RMS_DB (macOS Tingting measures about -17), its peaks
@@ -136,6 +163,10 @@ def azure_speech() -> tuple[str, str] | None:
 
 
 def available(name: str) -> bool:
+    if name in GOOGLE_TTS:
+        from . import gcp_auth
+
+        return gcp_auth.available(gcp_auth.tts_key_path())
     if name in AZURE_TTS:
         return azure_speech() is not None
     if name in GEMINI_TTS:
@@ -344,6 +375,35 @@ def render_azure(text: str, voice: str, out: Path, sample_rate: int) -> Path:
     return _write(out, _resample(loudness(x), AZURE_RATE, sample_rate), sample_rate)
 
 
+def render_google(text: str, voice: str, out: Path, sample_rate: int) -> Path:
+    """One line through Google Cloud Text-to-Speech (24 kHz LINEAR16, a WAV file)."""
+    import base64
+    import io
+
+    from . import gcp_auth
+
+    v = VOICES[voice]
+    token, project = gcp_auth.token(gcp_auth.tts_key_path())
+    body = {"input": {"text": text},
+            "voice": {"languageCode": "-".join(v["voice"].split("-")[:2]), "name": v["voice"]},
+            "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": 24000}}  # fmt: skip
+    head = {"Authorization": f"Bearer {token}", "x-goog-user-project": project}
+    r = _google_client().post("https://texttospeech.googleapis.com/v1/text:synthesize",
+                              json=body, headers=head)  # fmt: skip
+    r.raise_for_status()
+    with wave.open(io.BytesIO(base64.b64decode(r.json()["audioContent"]))) as w:
+        rate = w.getframerate()
+        x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float32) / 32768
+    return _write(out, _resample(loudness(x), rate, sample_rate), sample_rate)
+
+
+@cache
+def _google_client():
+    import httpx
+
+    return httpx.Client(timeout=60)  # one connection kept open, as for Azure
+
+
 def can_stream(voice: str, text: str) -> bool:
     v = VOICES.get(voice) or {}
     return bool(v.get("stream")) and not (english(text) and not v.get("english"))
@@ -393,6 +453,8 @@ def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
         return render_gemini(text, voice, out, sample_rate)
     if VOICES[voice]["engine"] == "azure":
         return render_azure(text, voice, out, sample_rate)
+    if VOICES[voice]["engine"] == "google":
+        return render_google(text, voice, out, sample_rate)
     if VOICES[voice]["engine"] == "mlx":
         return render_mlx(text, voice, out, sample_rate)
     return render_vits(text, out, sample_rate)

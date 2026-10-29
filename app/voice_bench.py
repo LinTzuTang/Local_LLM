@@ -22,8 +22,9 @@ from i18n import tr
 
 DATA = PROJECT_DIR / "data" / "lab" / "voice_benchmark.json"
 RUNS = PROJECT_DIR / "runs"
-KINDS = {"cascade": ("① 串接式", "① Cascade"), "turn": ("② 回合式", "② Turn-based"),
-         "duplex": ("③ 全雙工", "③ Full-duplex")}  # fmt: skip
+KINDS = {"cascade": ("① 串接式（Cascade）", "① Cascade"),
+         "turn": ("② 回合式（Turn-based + Barge-in）", "② Turn-based + Barge-in"),
+         "duplex": ("③ 全雙工（Full-Duplex）", "③ Full-Duplex")}  # fmt: skip
 KIND_COLOURS = alt.Scale(domain=[tr(*v) for v in KINDS.values()],
                          range=["#4F46E5", "#0EA5E9", "#F97316"])  # fmt: skip
 
@@ -209,11 +210,12 @@ def section() -> None:
             st.dataframe(systems_frame(data), hide_index=True, width="stretch")
             st.caption(
                 tr(
-                    "② 回合式與 ③ 全雙工的分法：Gemini Live、Nova Sonic、gpt-realtime 的連線是雙向的"
-                    "（可插話），但仍等你講完才回，所以算回合式；全雙工是模型每一刻自己決定要不要說話，"
+                    "② 回合式（Turn-based + Barge-in）與 ③ 全雙工（Full-Duplex）的分法："
+                    "Gemini Live、Nova Sonic、gpt-realtime 的連線是雙向同步串流（Bidirectional "
+                    "Streaming，可插話），但仍等你講完才回，所以算回合式；全雙工是模型每一刻自己決定要不要說話，"
                     "能邊聽邊附和（gpt-live-1、MiniCPM-o 全雙工）。",
-                    "Turn-based vs full-duplex: Gemini Live, Nova Sonic and gpt-realtime stream both "
-                    "ways (you can cut in) but still wait until you finish, so they count as "
+                    "Turn-based + barge-in vs full-duplex: Gemini Live, Nova Sonic and gpt-realtime "
+                    "use bidirectional streaming (you can cut in) but still wait until you finish, so they count as "
                     "turn-based; a full-duplex model decides every moment whether to speak and "
                     "can back-channel while listening (gpt-live-1, MiniCPM-o full-duplex).",
                 )

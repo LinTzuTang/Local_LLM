@@ -24,18 +24,25 @@ _lock = threading.Lock()
 _cached: dict = {}
 
 
-def key_path() -> Path | None:
-    path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+def key_path(var: str = "GOOGLE_APPLICATION_CREDENTIALS") -> Path | None:
+    path = os.environ.get(var)
     dotenv = PROJECT / ".env"
     if not path and dotenv.exists():
         for line in dotenv.read_text(encoding="utf-8").splitlines():
-            if line.startswith("GOOGLE_APPLICATION_CREDENTIALS="):
+            if line.startswith(f"{var}="):
                 path = line.split("=", 1)[1].strip().strip("'\"")
     return Path(os.path.expanduser(path)) if path else None
 
 
-def available() -> bool:
-    path = key_path()
+def tts_key_path() -> Path | None:
+    """Cloud Text-to-Speech may use its own key (GOOGLE_TTS_CREDENTIALS, e.g. a test account
+    with that API enabled); otherwise the default one."""
+    path = key_path("GOOGLE_TTS_CREDENTIALS")
+    return path if path is not None and path.exists() else key_path()
+
+
+def available(path: Path | None = None) -> bool:
+    path = path or key_path()
     return path is not None and path.exists()
 
 
@@ -56,12 +63,13 @@ def _assertion(key: dict, now: int) -> str:
     return f"{signing}.{_b64(signature)}"
 
 
-def token() -> tuple[str, str]:
-    """(access token, project id)."""
+def token(path: Path | None = None) -> tuple[str, str]:
+    """(access token, project id) for the key at `path` (default GOOGLE_APPLICATION_CREDENTIALS)."""
     with _lock:
-        if _cached.get("expires", 0) > time.time() + 60:
-            return _cached["token"], _cached["project"]
-        path = key_path()
+        path = path or key_path()
+        cached = _cached.get(str(path), {})
+        if cached.get("expires", 0) > time.time() + 60:
+            return cached["token"], cached["project"]
         if path is None or not path.exists():
             raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS is not set to a key file")
         key = json.loads(path.read_text(encoding="utf-8"))
@@ -71,6 +79,7 @@ def token() -> tuple[str, str]:
             "assertion": _assertion(key, now)})  # fmt: skip
         r.raise_for_status()
         body = r.json()
-        _cached.update(token=body["access_token"], project=key["project_id"],
-                       expires=now + int(body.get("expires_in", 3600)))  # fmt: skip
-        return _cached["token"], _cached["project"]
+        cached = {"token": body["access_token"], "project": key["project_id"],
+                  "expires": now + int(body.get("expires_in", 3600))}  # fmt: skip
+        _cached[str(path)] = cached
+        return cached["token"], cached["project"]

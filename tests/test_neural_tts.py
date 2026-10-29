@@ -23,15 +23,20 @@ def test_neural_voices_are_listed_and_routed(monkeypatch, tmp_path):
     fast = [v["name"] for v in tts.voices(("zh_TW",))]
     every = [v["name"] for v in tts.voices(("zh_TW",), neural="all")]
     azure = list(neural_tts.AZURE_TTS)  # cloud, but they stream: live
-    taiwan = [neural_tts.VITS, *azure, "Qwen3-TTS 台灣腔（複製）", "VoxCPM2 台灣腔（複製）",
+    google = [n for n, (_, loc) in neural_tts.GOOGLE_TTS.items() if loc == "zh_TW"]
+    taiwan = [neural_tts.VITS, *azure, *google, "Qwen3-TTS 台灣腔（複製）",
+              "VoxCPM2 台灣腔（複製）",
               "MOSS-TTS-Nano 台灣腔（複製）", "OmniVoice 台灣腔（複製）",
               "Breeze-TTS-2 台灣腔（複製）"]  # fmt: skip
     # live: the fast VITS, the streaming Azure voices (first piece in about 0.3 s) and the
     # streaming Qwen3-TTS clone (first chunk in about 0.2 s)
-    assert fast == [neural_tts.VITS, *azure, "Qwen3-TTS 台灣腔（複製）"] and every == taiwan
+    assert fast == [neural_tts.VITS, *azure, *google, "Qwen3-TTS 台灣腔（複製）"]
+    assert every == taiwan
     assert tts.find("Azure 曉臻（雲端）")["engine"] == "azure"
     mainland = [v["name"] for v in tts.voices(("zh_CN",))]
-    assert mainland == ["Kokoro 曉北", "Kokoro 雲希", "Qwen3-TTS Vivian", "Qwen3-TTS Uncle Fu"]
+    assert mainland == ["Google Chirp 3 HD Aoede（雲端）", "Kokoro 曉北", "Kokoro 雲希",
+                        "Qwen3-TTS Vivian", "Qwen3-TTS Uncle Fu"]  # fmt: skip
+    assert tts.find("Google 台灣 WaveNet A（雲端）")["engine"] == "google"
     assert tts.source(tts.find("Kokoro 曉北"))[0] == "Kokoro-82M・MLX"
     assert tts.source({"name": "Meijia"}) == tts.MACOS_SOURCE
     gemini = tts.find("Gemini 2.5 Flash TTS（雲端）")

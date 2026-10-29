@@ -145,6 +145,56 @@
    "stream_first_s": 0.243
   },
   {
+   "voice": "Google 台灣 WaveNet C（雲端）",
+   "label": "Google 台灣 WaveNet C",
+   "source": [
+    "Google Cloud TTS・雲端",
+    "Google Cloud TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Google Cloud Text-to-Speech）：要能連網，要念的文字會上傳；整句合成完才回傳。台灣華語只有 WaveNet／Standard 聲音（較舊），最新的 Chirp 3 HD 只有大陸口音。中英文、數字都行；依字數付費。",
+    "Cloud (Google Cloud Text-to-Speech): needs the network and the text is uploaded; returns the whole line at once. Taiwan Mandarin has only the older WaveNet / Standard voices; the newest Chirp 3 HD voices are Mainland Mandarin. Chinese, English and numbers are fine; billed per character."
+   ],
+   "load_s": 1.02,
+   "rtf": 0.1109,
+   "first_s": 0.506,
+   "max_s": 1.045,
+   "cer_offline": 0.0321,
+   "cer_stream": 0.0071,
+   "rms_db": -16.0,
+   "stream_first_s": null
+  },
+  {
+   "voice": "Google 台灣 WaveNet B（雲端）",
+   "label": "Google 台灣 WaveNet B",
+   "source": [
+    "Google Cloud TTS・雲端",
+    "Google Cloud TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Google Cloud Text-to-Speech）：要能連網，要念的文字會上傳；整句合成完才回傳。台灣華語只有 WaveNet／Standard 聲音（較舊），最新的 Chirp 3 HD 只有大陸口音。中英文、數字都行；依字數付費。",
+    "Cloud (Google Cloud Text-to-Speech): needs the network and the text is uploaded; returns the whole line at once. Taiwan Mandarin has only the older WaveNet / Standard voices; the newest Chirp 3 HD voices are Mainland Mandarin. Chinese, English and numbers are fine; billed per character."
+   ],
+   "load_s": 0.42,
+   "rtf": 0.1078,
+   "first_s": 0.592,
+   "max_s": 0.898,
+   "cer_offline": 0.0267,
+   "cer_stream": 0.0605,
+   "rms_db": -16.0,
+   "stream_first_s": null
+  },
+  {
    "voice": "MOSS-TTS-Nano 台灣腔（複製）",
    "label": "MOSS-TTS-Nano 台灣腔",
    "source": [
@@ -211,6 +261,56 @@
    "cer_offline": 0.107,
    "cer_stream": 0.1718,
    "rms_db": -16.1,
+   "stream_first_s": null
+  },
+  {
+   "voice": "Google 台灣 WaveNet A（雲端）",
+   "label": "Google 台灣 WaveNet A",
+   "source": [
+    "Google Cloud TTS・雲端",
+    "Google Cloud TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Google Cloud Text-to-Speech）：要能連網，要念的文字會上傳；整句合成完才回傳。台灣華語只有 WaveNet／Standard 聲音（較舊），最新的 Chirp 3 HD 只有大陸口音。中英文、數字都行；依字數付費。",
+    "Cloud (Google Cloud Text-to-Speech): needs the network and the text is uploaded; returns the whole line at once. Taiwan Mandarin has only the older WaveNet / Standard voices; the newest Chirp 3 HD voices are Mainland Mandarin. Chinese, English and numbers are fine; billed per character."
+   ],
+   "load_s": 1.39,
+   "rtf": 0.1096,
+   "first_s": 0.772,
+   "max_s": 0.932,
+   "cer_offline": 0.0162,
+   "cer_stream": 0.0073,
+   "rms_db": -16.0,
+   "stream_first_s": null
+  },
+  {
+   "voice": "Google Chirp 3 HD Aoede（雲端）",
+   "label": "Google Chirp 3 HD Aoede",
+   "source": [
+    "Google Cloud TTS・雲端",
+    "Google Cloud TTS, cloud"
+   ],
+   "size_gb": null,
+   "licence": [
+    "雲端付費",
+    "paid cloud"
+   ],
+   "limits": [
+    "雲端（Google Cloud Text-to-Speech）：要能連網，要念的文字會上傳；整句合成完才回傳。台灣華語只有 WaveNet／Standard 聲音（較舊），最新的 Chirp 3 HD 只有大陸口音。中英文、數字都行；依字數付費。",
+    "Cloud (Google Cloud Text-to-Speech): needs the network and the text is uploaded; returns the whole line at once. Taiwan Mandarin has only the older WaveNet / Standard voices; the newest Chirp 3 HD voices are Mainland Mandarin. Chinese, English and numbers are fine; billed per character."
+   ],
+   "load_s": 0.55,
+   "rtf": 0.1814,
+   "first_s": 0.843,
+   "max_s": 1.455,
+   "cer_offline": 0.0135,
+   "cer_stream": 0.0243,
+   "rms_db": -16.0,
    "stream_first_s": null
   },
   {
