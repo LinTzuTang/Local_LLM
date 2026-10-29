@@ -24,7 +24,7 @@ import ui
 from common import save_run
 from i18n import tr
 
-from local_llm import tts, voice_agent
+from local_llm import tts, voice_agent, voice_cloud
 
 STATIC = Path(__file__).parent / "static" / "voice_agent"
 DEFAULT_ASR = "zipformer-zh-en-stream"
@@ -485,7 +485,8 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
     """The way of talking as a small Graphviz diagram (plain text labels, no emoji):
     ① the cascade, ② a turn-based or ③ a full-duplex speech model, local or in the cloud
     (`engine`); `compact` is the home page card's shorter cascade."""
-    cloud = engine in ("gpt-realtime", "gpt-live-1")
+    cloud = engine in voice_cloud.ENGINES
+    short = voice_cloud.ENGINES[engine]["name"].split(" ", 1)[-1] if cloud else ""
     node_size, edge_size = (13, 11) if compact else (11, 10)
     head = f"""digraph {{
   rankdir=LR; bgcolor="transparent"; pad=0.1; nodesep=0.25; ranksep=0.3;
@@ -551,7 +552,7 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
         )
     if kind == "turn":
         model = (
-            tr("gpt-realtime（雲端）\\n聽聲音 → 直接說", "gpt-realtime (cloud)\\nhears → speaks")
+            tr(f"{short}（雲端）\\n聽聲音 → 直接說", f"{short} (cloud)\\nhears → speaks")
             if cloud
             else tr("單一語音模型\\n聽聲音 → 直接說", "One speech model\\nhears → speaks")
         )
@@ -578,7 +579,7 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
 """
         return head + body + "}"
     model = (
-        tr("gpt-live-1（雲端）\\n邊聽邊說", "gpt-live-1 (cloud)\\nlistens while it talks")
+        tr(f"{short}（雲端）\\n邊聽邊說", f"{short} (cloud)\\nlistens while it talks")
         if cloud
         else tr(
             "全雙工語音模型\\n每秒：說／附和／停",

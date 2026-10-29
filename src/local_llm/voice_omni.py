@@ -555,7 +555,7 @@ class OmniAgent(VoiceAgent):
         return {
             **super().summary(),
             "engine": self.engine,
-            "kind": ENGINES.get(self.engine, {}).get("kind"),
+            "kind": ENGINES.get(self.engine, {}).get("kind") or getattr(self, "engine_kind", None),
         }
 
 

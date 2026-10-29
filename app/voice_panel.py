@@ -24,6 +24,34 @@ ENGINE_LABELS = {
     "minicpm-o-duplex": ("MiniCPM-o 4.5（本機，8.6 GB）", "MiniCPM-o 4.5 (local, 8.6 GB)"),
     "gpt-realtime": ("Azure gpt-realtime（雲端，錄音會上傳）", "Azure gpt-realtime (cloud, audio is uploaded)"),
     "gpt-live-1": ("Azure gpt-live-1（雲端，錄音會上傳）", "Azure gpt-live-1 (cloud, audio is uploaded)"),
+    "gemini-live-2.5": ("Google gemini-live-2.5-flash-native-audio（雲端，錄音會上傳）",
+                        "Google gemini-live-2.5-flash-native-audio (cloud, audio is uploaded)"),
+    "gemini-3.8-live": ("Google gemini-3.8-live（雲端，錄音會上傳）",
+                        "Google gemini-3.8-live (cloud, audio is uploaded)"),
+    "nova-2-sonic": ("AWS Nova 2 Sonic（雲端，錄音會上傳）", "AWS Nova 2 Sonic (cloud, audio is uploaded)"),
+}  # fmt: skip
+# Where each cloud engine's audio goes, and what to know about it (Chinese, English).
+CLOUD_NOTES = {
+    "gpt-realtime": ("Azure OpenAI（East US 2）", "Azure OpenAI (East US 2)",
+                     "gpt-realtime 由伺服器判斷你講完（靜音 0.5 秒）。",
+                     "gpt-realtime's server decides when you have finished (0.5 s of silence)."),
+    "gpt-live-1": ("Azure OpenAI（East US 2）", "Azure OpenAI (East US 2)",
+                   "gpt-live-1 由背景的 gpt-5.5 呼叫工具；這個部署長對話會變慢、偶爾斷線。",
+                   "gpt-live-1 delegates the tools to gpt-5.5 in the background; this deployment "
+                   "slows down in long sessions and sometimes disconnects."),
+    "gemini-live-2.5": ("Google Vertex AI（us-central1）", "Google Vertex AI (us-central1)",
+                        "Gemini 自己判斷你講完、被插話時停下；評測 23 句判斷對 22 句、繁體 100%。",
+                        "Gemini decides when you have finished and stops when cut off; 22 of 23 "
+                        "right in the evaluation, all Traditional."),
+    "gemini-3.8-live": ("Google Vertex AI（us-central1）", "Google Vertex AI (us-central1)",
+                        "開口最快（0.74 秒），但評測常聽錯地名（台中 → 海口）、23 句只對 16 句。",
+                        "Fastest to talk (0.74 s), but often misheard place names in the "
+                        "evaluation; 16 of 23 right."),
+    "nova-2-sonic": ("AWS Bedrock（us-east-1）", "AWS Bedrock (us-east-1)",
+                     "官方沒列中文：聽得懂，但多用簡體回答、英文問題常用中文回；一定可以插話，但被打斷後常要好幾秒才停。",
+                     "Chinese is not official: it understands, but answers mostly in Simplified "
+                     "and often in Chinese to English; barge-in is always on, but it can take "
+                     "seconds to stop."),
 }  # fmt: skip
 
 
@@ -261,27 +289,19 @@ def panel(page: str = va.PAGE) -> None:
             st.session_state.setdefault("va_barge", True)
             if info["kind"] == "duplex":
                 barge = False
+            elif info.get("always_barge"):
+                barge = True
+                n2.caption(tr("一定可以插話", "Barge-in always on"))
             else:
                 barge = n2.toggle(tr("允許插話（barge-in）", "Allow barge-in"), **kept("va_barge"))
+            where_zh, where_en, note_zh, note_en = CLOUD_NOTES[engine]
             st.warning(
                 tr(
-                    "**錄音會上傳到雲端**：麥克風或測試腳本的聲音會即時送到 Azure OpenAI（East US 2），"
-                    "只供比較測試用。查詢工具在本機執行，只把結果回傳給模型。"
-                    + (
-                        "gpt-live-1 由背景的 gpt-5.5 呼叫工具；這個部署長對話會變慢、偶爾斷線。"
-                        if info["kind"] == "duplex"
-                        else "gpt-realtime 由伺服器判斷你講完（靜音 0.5 秒）。"
-                    ),
+                    f"**錄音會上傳到雲端**：麥克風或測試腳本的聲音會即時送到 {where_zh}，"
+                    "只供比較測試用。查詢工具在本機執行，只把結果回傳給模型。" + note_zh,
                     "**The audio goes to the cloud**: the microphone or test script is streamed to "
-                    "Azure OpenAI (East US 2), for comparison only. The lookups run here; only their "
-                    "results go to the model. "
-                    + (
-                        "gpt-live-1 delegates the tools to gpt-5.5 in the background; this deployment "
-                        "slows down in long sessions and sometimes disconnects."
-                        if info["kind"] == "duplex"
-                        else "gpt-realtime's server decides when you have "
-                        "finished (0.5 s of silence)."
-                    ),
+                    f"{where_en}, for comparison only. The lookups run here; only their results go "
+                    "to the model. " + note_en,
                 ),
                 icon=":material/cloud_upload:",
             )

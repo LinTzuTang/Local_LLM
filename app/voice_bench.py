@@ -207,6 +207,30 @@ def section() -> None:
             )
             st.altair_chart(systems_chart(data), width="stretch")
             st.dataframe(systems_frame(data), hide_index=True, width="stretch")
+            st.caption(
+                tr(
+                    "② 回合式與 ③ 全雙工的分法：Gemini Live、Nova Sonic、gpt-realtime 的連線是雙向的"
+                    "（可插話），但仍等你講完才回，所以算回合式；全雙工是模型每一刻自己決定要不要說話，"
+                    "能邊聽邊附和（gpt-live-1、MiniCPM-o 全雙工）。",
+                    "Turn-based vs full-duplex: Gemini Live, Nova Sonic and gpt-realtime stream both "
+                    "ways (you can cut in) but still wait until you finish, so they count as "
+                    "turn-based; a full-duplex model decides every moment whether to speak and "
+                    "can back-channel while listening (gpt-live-1, MiniCPM-o full-duplex).",
+                )
+            )
+            if data.get("not_run"):
+                with st.expander(
+                    tr("還沒測、不能測的即時語音模型", "Real-time voice models not run")
+                ):
+                    st.dataframe(
+                        pd.DataFrame([
+                            {tr("模型", "Model"): tr(zh, en), tr("類型", "Kind"): tr(kz, ke),
+                             tr("原因", "Why"): tr(wz, we)}
+                            for zh, en, kz, ke, wz, we in data["not_run"]
+                        ]),
+                        hide_index=True,
+                        width="stretch",
+                    )  # fmt: skip
     with b:
         if data:
             st.caption(

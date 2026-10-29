@@ -1,8 +1,9 @@
 """Cloud speech models as the live voice assistant, for comparison: Azure OpenAI gpt-realtime
 (② turn-based, calls the tools itself) and gpt-live-1 (③ full-duplex, delegates lookups to a
-background text model). The microphone audio leaves this machine: the settings say so.
+background text model), Google Gemini Live (② turn-based, Vertex AI) and AWS Nova 2 Sonic
+(② turn-based, Bedrock). The microphone audio leaves this machine: the settings say so.
 
-Both stream the microphone (16 kHz PCM16 from the browser, resampled to 24 kHz) to the
+The Azure ones stream the microphone (16 kHz PCM16 from the browser, resampled to 24 kHz) to the
 service and play its speech as it arrives, in pieces of about CHUNK_S seconds. No ASR runs
 here: the user's captions are the service's own transcript (gpt-live-1 sends it anyway;
 gpt-realtime transcribes with TRANSCRIBE_DEPLOYMENT), and a plain energy VAD in the gateway
@@ -19,9 +20,21 @@ they cannot look anything up.
        delegation (the background model and the tools). The model decides itself when to talk;
        a reply ends after GAP_S of silence from it. On this deployment long sessions fall
        behind real time and function tools can drop the connection (see the evaluation).
+    Gemini Live (gemini-3.8-live, gemini-live-2.5-flash-native-audio): Vertex AI WebSocket
+       BidiGenerateContent (us-central1, the service account of gcp_auth); 16 kHz PCM in, 24 kHz
+       out. Gemini's activity detection takes the turns and stops the reply when the user
+       speaks (unless barge-in is off: activityHandling NO_INTERRUPTION); tool calls come as
+       toolCall and their results go back as toolResponse, then it goes on by itself.
+    Nova 2 Sonic: Bedrock InvokeModelWithBidirectionalStream (aws-sdk-bedrock-runtime, SigV4
+       with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY; Bedrock API keys are refused), 16 kHz in,
+       24 kHz out. It always lets the user cut in. It sends each reply's text twice, a
+       SPECULATIVE copy before the audio (shown) and a FINAL one after; toolUse is answered with
+       a TOOL content block. Chinese is not an official language: it answers, mostly in
+       Simplified characters.
 
-Credentials: AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY from the environment or the
-project's .env (never sent to the page).
+Credentials: AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY, GOOGLE_APPLICATION_CREDENTIALS,
+AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY (AWS_REGION, default us-east-1) from the environment
+or the project's .env (never sent to the page).
 """
 
 import asyncio
@@ -29,7 +42,9 @@ import base64
 import json
 import os
 import queue
+import re
 import threading
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 
@@ -48,6 +63,10 @@ TRANSCRIBE_DEPLOYMENT = os.getenv("LOCAL_LLM_REALTIME_TRANSCRIBE", "gpt-4o-mini-
 RESULT_WAIT_S = 5.0  # gpt-live-1 speaks a delegated result about 2 s after it is ready
 VOICED_RMS = 0.01  # gpt-live-1's output audio below this is its silence
 REALTIME_DEPLOYMENT = os.getenv("LOCAL_LLM_REALTIME_DEPLOYMENT", "gpt-realtime")
+IN_RATE = 16000  # what the page sends; Gemini and Nova take it as it is
+CJK_GAP = re.compile(r"(?<=[\u3400-\u9fff，。？！、]) +(?=[\u3400-\u9fff，。？！、?])")
+GEMINI_LOCATION = "us-central1"
+NOVA_MODEL = os.getenv("LOCAL_LLM_NOVA_MODEL", "amazon.nova-2-sonic-v1:0")
 LIVE_BACKEND = os.getenv("LOCAL_LLM_LIVE_BACKEND", "gpt-5.5")
 INSTRUCTIONS = (
     "你是即時語音助理。用台灣慣用的繁體中文口語回答，一到兩句、簡短自然；使用者說英文就用英文回答。"
@@ -70,17 +89,44 @@ ENGINES = {
         "name": f"Azure {REALTIME_DEPLOYMENT}",
         "voice": "marin",
         "cloud": True,
+        "provider": "azure",
     },  # fmt: skip
     "gpt-live-1": {
         "kind": "duplex",
         "name": "Azure gpt-live-1",
         "voice": "gpt-live-1",
         "cloud": True,
+        "provider": "azure",
+    },  # fmt: skip
+    "gemini-3.8-live": {
+        "kind": "turn",
+        "name": "Google gemini-3.8-live",
+        "model": "gemini-3.8-live",
+        "voice": "Gemini",
+        "cloud": True,
+        "provider": "google",
+    },  # fmt: skip
+    "gemini-live-2.5": {
+        "kind": "turn",
+        "name": "Google gemini-live-2.5-flash-native-audio",
+        "model": "gemini-live-2.5-flash-native-audio",
+        "voice": "Gemini",
+        "cloud": True,
+        "provider": "google",
+    },  # fmt: skip
+    "nova-2-sonic": {
+        "kind": "turn",
+        "name": "AWS Nova 2 Sonic",
+        "model": NOVA_MODEL,
+        "voice": "tiffany",
+        "cloud": True,
+        "provider": "aws",
+        "always_barge": True,  # the user can always cut in
     },  # fmt: skip
 }
 
 
-def credentials() -> tuple[str, str] | None:
+def _env() -> dict:
     env = dict(os.environ)
     dotenv = PROJECT / ".env"
     if dotenv.exists():
@@ -88,14 +134,41 @@ def credentials() -> tuple[str, str] | None:
             if "=" in line and not line.lstrip().startswith("#"):
                 k, v = line.split("=", 1)
                 env.setdefault(k.strip(), v.strip().strip("'\""))
+    return env
+
+
+def credentials() -> tuple[str, str] | None:
+    env = _env()
     endpoint, key = env.get("AZURE_OPENAI_ENDPOINT"), env.get("AZURE_OPENAI_API_KEY")
     if not endpoint or not key:
         return None
     return endpoint.split("/openai")[0].rstrip("/").replace("https://", "wss://", 1), key
 
 
+def aws_credentials() -> tuple[str, str, str] | None:
+    env = _env()
+    key, secret = env.get("AWS_ACCESS_KEY_ID"), env.get("AWS_SECRET_ACCESS_KEY")
+    if not key or not secret:
+        return None
+    return key, secret, env.get("AWS_REGION") or "us-east-1"
+
+
 def available(engine: str) -> bool:
-    return engine in ENGINES and credentials() is not None
+    provider = (ENGINES.get(engine) or {}).get("provider")
+    if provider == "azure":
+        return credentials() is not None
+    if provider == "google":
+        from . import gcp_auth
+
+        return gcp_auth.available()
+    if provider == "aws":
+        import importlib.util
+
+        return (
+            aws_credentials() is not None
+            and importlib.util.find_spec("aws_sdk_bedrock_runtime") is not None
+        )
+    return False
 
 
 def tool_specs() -> list[dict]:
@@ -125,6 +198,7 @@ class CloudAgent(OmniAgent):
         super().__init__(emit, None, engine=engine, barge_in=barge_in, display=display)
         info = ENGINES[engine]
         self.llm, self.voice, self.allow_network = info["name"], info["voice"], allow_network
+        self.engine_kind = info["kind"]  # the summary's "kind" (voice_omni.ENGINES has local ones)
         self.mic: queue.Queue = queue.Queue()
         self.connect = connect  # for tests: an async factory returning a websocket-like object
         self.loop: asyncio.AbstractEventLoop | None = None
@@ -606,12 +680,337 @@ class LiveAgent(CloudAgent):
         await self._send({"type": "response.create"})
 
 
+class TurnAgent(CloudAgent):
+    """The shared part of Gemini Live and Nova Sonic: one reply spoken at a time, a lookup in
+    the middle of a reply makes what came before it the filler and what follows the answer."""
+
+    def __init__(self, emit, engine: str, **kwargs):
+        super().__init__(emit, engine=engine, **kwargs)
+        self.speech: dict | None = None
+        self.after_tool = False  # a lookup went back; the next speech is the answer
+
+    def _current(self) -> dict:
+        if self.speech is None:
+            turn = self._turn()
+            if self.caption is not None and self.caption["user"]:
+                self._caption(self.caption["user"], final=True)  # it answers: the user is done
+            self.speech = self._new_speech(turn, "answer" if self.after_tool else "reply")
+            if self.after_tool:
+                self.after_tool = False
+                with self.lock:
+                    self.running_tools -= 1  # the answer to the lookups has started
+            if turn is not None and turn.get("llm_start") is None:
+                turn["llm_start"] = self.now()
+        return self.speech
+
+    def _done(self, called: bool = False) -> None:
+        speech, self.speech = self.speech, None
+        if speech is None:
+            return
+        turn = self.turns[speech["turn"]] if speech["turn"] is not None else None
+        if called:
+            speech["kind"] = "filler"
+        elif turn is not None and turn.get("decision") is None:
+            text = speakable(speech["text"])
+            turn["decision"] = "ask" if text.endswith(("？", "?")) else "answer"
+        self._end_speech(speech)
+
+    def _interrupted(self) -> None:
+        if self.speech is not None:
+            self._barge([self.speech])
+            self._done()
+
+    def _called(self) -> None:
+        """A lookup was asked for: busy until the answer starts (see _current)."""
+        self._done(called=True)
+        if not self.after_tool:
+            self.after_tool = True
+            with self.lock:
+                self.running_tools += 1
+
+    async def _microphone16k(self, send) -> None:
+        while not self.closed:
+            chunks = []
+            while not self.mic.empty():
+                chunks.append(self.mic.get_nowait())
+            if chunks:
+                await send(base64.b64encode(b"".join(chunks)).decode())
+            await asyncio.sleep(0.05)
+
+
+class GeminiLiveAgent(TurnAgent):
+    """② Gemini Live on Vertex AI: its activity detection takes the turns; it calls the tools."""
+
+    async def _session(self) -> None:
+        from . import gcp_auth
+
+        started = self.clock()
+        info = ENGINES[self.engine]
+        if self.connect is not None:
+            self.ws = await self.connect("gemini")
+            project = "test"
+        else:
+            import websockets
+
+            token, project = gcp_auth.token()
+            url = (
+                f"wss://{GEMINI_LOCATION}-aiplatform.googleapis.com/ws/"
+                "google.cloud.aiplatform.v1beta1.LlmBidiService/BidiGenerateContent"
+            )
+            head = {"Authorization": f"Bearer {token}"}
+            self.ws = await websockets.connect(url, max_size=None, additional_headers=head)
+        said = INSTRUCTIONS if self.allow_network else OFFLINE
+        setup = {
+            "model": f"projects/{project}/locations/{GEMINI_LOCATION}/publishers/google/models/"
+                     f"{info['model']}",
+            "generationConfig": {"responseModalities": ["AUDIO"]},
+            "systemInstruction": {"parts": [{"text": said}]},
+            "inputAudioTranscription": {}, "outputAudioTranscription": {},
+        }  # fmt: skip
+        if not self.barge_in:
+            setup["realtimeInputConfig"] = {"activityHandling": "NO_INTERRUPTION"}
+        if self.allow_network:
+            setup["tools"] = [{"functionDeclarations": [
+                {k: t["function"][k] for k in ("name", "description", "parameters")}
+                for t in voice_agent.TOOL_SPECS]}]  # fmt: skip
+        await self._send({"setup": setup})
+        first = json.loads(await self.ws.recv())
+        if "setupComplete" not in first:
+            raise RuntimeError(f"setup: {json.dumps(first, ensure_ascii=False)[:300]}")
+        self.llm_load_s = round(self.clock() - started, 2)
+        self.ready.set()
+        self.emit({"type": "llm_ready", "llm": self.llm, "seconds": self.llm_load_s})
+
+        async def send(audio: str) -> None:
+            await self._send({"realtimeInput": {"audio": {
+                "data": audio, "mimeType": f"audio/pcm;rate={IN_RATE}"}}})  # fmt: skip
+
+        mic = asyncio.create_task(self._microphone16k(send))
+        try:
+            async for message in self.ws:
+                await self._event(json.loads(message))
+                if self.closed:
+                    break
+        finally:
+            mic.cancel()
+            self._done()
+
+    async def _event(self, e: dict) -> None:
+        content = e.get("serverContent") or {}
+        if text := (content.get("inputTranscription") or {}).get("text"):
+            if self.speech is None or self.caption is not None:
+                heard = ((self.caption or {}).get("user") or "") + text
+                self._caption(CJK_GAP.sub("", heard))  # 2.5 spaces out Chinese characters
+        for part in (content.get("modelTurn") or {}).get("parts", []):
+            data = (part.get("inlineData") or {}).get("data")
+            if data:
+                speech = self._current()
+                if not speech["interrupted"]:
+                    self._speech_audio(speech, base64.b64decode(data))
+        if text := (content.get("outputTranscription") or {}).get("text"):
+            self._speech_text(self._current(), text)
+        if content.get("interrupted") and self.barge_in:
+            self._interrupted()
+        if content.get("turnComplete"):
+            self._done()
+        calls = (e.get("toolCall") or {}).get("functionCalls") or []
+        if calls:
+            self._called()
+            asyncio.create_task(self._answer_calls(calls))
+        if e.get("error") or e.get("goAway"):
+            detail = json.dumps(e.get("error") or e.get("goAway"), ensure_ascii=False)[:200]
+            self.emit({"type": "error", "error": f"{self.llm}: {detail}"})
+
+    async def _answer_calls(self, calls: list[dict]) -> None:
+        turn = self._turn()
+        replies = []
+        for call in calls:
+            digest = await self._tool(call.get("name"), call.get("args") or {}, turn)
+            replies.append({"id": call.get("id"), "name": call.get("name"),
+                            "response": {"result": digest}})  # fmt: skip
+        await self._send({"toolResponse": {"functionResponses": replies}})
+
+
+class NovaSonicAgent(TurnAgent):
+    """② Nova 2 Sonic on Bedrock: one bidirectional stream of JSON events."""
+
+    def __init__(self, emit, **kwargs):
+        kwargs["barge_in"] = True  # it always lets the user cut in
+        super().__init__(emit, "nova-2-sonic", **kwargs)
+        self.stream = None
+        self.prompt, self.audio_name = str(uuid.uuid4()), str(uuid.uuid4())
+        self.stage: dict[str, tuple[str, str, str]] = {}  # content id -> (type, role, stage)
+
+    async def _post(self, event: dict) -> None:
+        from aws_sdk_bedrock_runtime.models import (
+            BidirectionalInputPayloadPart,
+            InvokeModelWithBidirectionalStreamInputChunk,
+        )
+
+        part = BidirectionalInputPayloadPart(bytes_=json.dumps({"event": event}).encode())
+        chunk = InvokeModelWithBidirectionalStreamInputChunk(value=part)
+        await self.stream.input_stream.send(chunk)
+
+    async def _open_stream(self):
+        if self.connect is not None:
+            return await self.connect("nova")
+        from aws_sdk_bedrock_runtime.client import AsyncBedrockRuntimeClient
+        from aws_sdk_bedrock_runtime.config import AsyncBedrockRuntimeConfig
+        from aws_sdk_bedrock_runtime.models import InvokeModelWithBidirectionalStreamOperationInput
+        from smithy_http.aio.crt import AWSCRTHTTPClient
+
+        key, secret, region = aws_credentials()
+        config = await AsyncBedrockRuntimeConfig.resolve(
+            transport=AWSCRTHTTPClient(), region=region, aws_access_key_id=key,
+            aws_secret_access_key=secret)  # fmt: skip
+        client = AsyncBedrockRuntimeClient(config=config)
+        return await client.invoke_model_with_bidirectional_stream(
+            InvokeModelWithBidirectionalStreamOperationInput(model_id=ENGINES[self.engine]["model"])
+        )
+
+    async def _session(self) -> None:
+        started = self.clock()
+        self.stream = await self._open_stream()
+        system = str(uuid.uuid4())
+        prompt = {
+            "promptName": self.prompt, "textOutputConfiguration": {"mediaType": "text/plain"},
+            "audioOutputConfiguration": {"mediaType": "audio/lpcm", "sampleRateHertz": OUT_RATE,
+                                         "sampleSizeBits": 16, "channelCount": 1,
+                                         "voiceId": self.voice, "encoding": "base64",
+                                         "audioType": "SPEECH"},
+        }  # fmt: skip
+        if self.allow_network:
+            specs = [{"toolSpec": {"name": f["name"], "description": f["description"],
+                                   "inputSchema": {"json": json.dumps(f["parameters"])}}}
+                     for f in (t["function"] for t in voice_agent.TOOL_SPECS)]  # fmt: skip
+            prompt |= {"toolUseOutputConfiguration": {"mediaType": "application/json"},
+                       "toolConfiguration": {"tools": specs}}  # fmt: skip
+        await self._post({"sessionStart": {"inferenceConfiguration": {
+            "maxTokens": 1024, "topP": 0.9, "temperature": 0.7}}})  # fmt: skip
+        await self._post({"promptStart": prompt})
+        await self._post({"contentStart": {
+            "promptName": self.prompt, "contentName": system, "type": "TEXT", "interactive": False,
+            "role": "SYSTEM", "textInputConfiguration": {"mediaType": "text/plain"}}})  # fmt: skip
+        said = INSTRUCTIONS if self.allow_network else OFFLINE
+        await self._post({"textInput": {"promptName": self.prompt, "contentName": system,
+                                        "content": said}})  # fmt: skip
+        await self._post({"contentEnd": {"promptName": self.prompt, "contentName": system}})
+        await self._post({"contentStart": {
+            "promptName": self.prompt, "contentName": self.audio_name, "type": "AUDIO",
+            "interactive": True, "role": "USER",
+            "audioInputConfiguration": {"mediaType": "audio/lpcm", "sampleRateHertz": IN_RATE,
+                                        "sampleSizeBits": 16, "channelCount": 1,
+                                        "audioType": "SPEECH", "encoding": "base64"}}})  # fmt: skip
+        self.llm_load_s = round(self.clock() - started, 2)
+        self.ready.set()
+        self.emit({"type": "llm_ready", "llm": self.llm, "seconds": self.llm_load_s})
+
+        async def send(audio: str) -> None:
+            await self._post({"audioInput": {"promptName": self.prompt,
+                                             "contentName": self.audio_name,
+                                             "content": audio}})  # fmt: skip
+
+        mic = asyncio.create_task(self._microphone16k(send))
+        try:
+            _, output = await self.stream.await_output()
+            while not self.closed:
+                event = await output.receive()
+                data = getattr(getattr(event, "value", None), "bytes_", None)
+                if not data:
+                    break
+                await self._event(json.loads(data.decode()).get("event", {}))
+        finally:
+            mic.cancel()
+            self._done()
+
+    async def _event(self, e: dict) -> None:
+        kind = next(iter(e), "")
+        body = e.get(kind) or {}
+        cid = body.get("contentId", "")
+        if kind == "contentStart":
+            fields = json.loads(body.get("additionalModelFields") or "{}")
+            self.stage[cid] = (body.get("type", ""), body.get("role", ""),
+                               fields.get("generationStage", ""))  # fmt: skip
+        elif kind == "textOutput":
+            _, role, stage = self.stage.get(cid, ("", body.get("role", ""), ""))
+            text = body.get("content") or ""
+            if '"interrupted"' in text:
+                self._interrupted()
+            elif role == "USER" and text.strip():
+                self._caption(text, final=True)
+            elif role == "ASSISTANT" and stage == "SPECULATIVE" and text.strip():
+                speech = self._current()  # what it is about to say: shown as it starts
+                self._speech_text(speech, text)
+        elif kind == "audioOutput":
+            speech = self._current()
+            if not speech["interrupted"]:
+                self._speech_audio(speech, base64.b64decode(body.get("content", "")))
+        elif kind == "contentEnd":
+            ctype, role, _ = self.stage.pop(cid, ("", "", ""))
+            if ctype == "AUDIO" and role == "ASSISTANT":
+                stop = body.get("stopReason")
+                if stop == "INTERRUPTED":
+                    self._interrupted()
+                elif stop != "PARTIAL_TURN":  # a long reply comes in several audio blocks
+                    self._done()
+        elif kind == "toolUse":
+            self._called()
+            asyncio.create_task(self._answer_call(body))
+
+    async def _answer_call(self, body: dict) -> None:
+        try:
+            args = json.loads(body.get("content") or "{}")
+        except json.JSONDecodeError:
+            args = {}
+        digest = await self._tool(body.get("toolName"), args, self._turn())
+        name = str(uuid.uuid4())
+        await self._post({"contentStart": {
+            "promptName": self.prompt, "contentName": name, "interactive": False, "type": "TOOL",
+            "role": "TOOL", "toolResultInputConfiguration": {
+                "toolUseId": body.get("toolUseId"), "type": "TEXT",
+                "textInputConfiguration": {"mediaType": "text/plain"}}}})  # fmt: skip
+        result = json.dumps({"result": digest}, ensure_ascii=False)
+        await self._post({"toolResult": {"promptName": self.prompt, "contentName": name,
+                                         "content": result}})  # fmt: skip
+        await self._post({"contentEnd": {"promptName": self.prompt, "contentName": name}})
+
+    def close(self) -> dict:
+        if self.loop is not None and self.stream is not None:
+
+            async def end() -> None:
+                await self._post({"contentEnd": {"promptName": self.prompt,
+                                                 "contentName": self.audio_name}})  # fmt: skip
+                await self._post({"promptEnd": {"promptName": self.prompt}})
+                await self._post({"sessionEnd": {}})
+                await self.stream.input_stream.close()
+
+            try:
+                asyncio.run_coroutine_threadsafe(end(), self.loop).result(5)
+            except Exception:
+                pass
+        return super().close()
+
+
 def make_agent(engine: str, emit: Callable[[dict], None], *, barge_in: bool = True,
                allow_network: bool = False, display=None) -> CloudAgent:  # fmt: skip
     if not available(engine):
-        raise RuntimeError(f"{engine}: Azure OpenAI credentials are not set")
+        raise RuntimeError(f"{engine}: cloud credentials are not set")
+    kwargs = {"barge_in": barge_in, "allow_network": allow_network, "display": display}
+    provider = ENGINES[engine]["provider"]
+    if provider == "google":
+        return GeminiLiveAgent(emit, engine, **kwargs)
+    if provider == "aws":
+        return NovaSonicAgent(emit, **kwargs)
     cls = RealtimeAgent if engine == "gpt-realtime" else LiveAgent
-    return cls(emit, barge_in=barge_in, allow_network=allow_network, display=display)
+    return cls(emit, **kwargs)
 
 
-__all__ = ["ENGINES", "LiveAgent", "RealtimeAgent", "available", "make_agent"]
+__all__ = [
+    "ENGINES",
+    "GeminiLiveAgent",
+    "LiveAgent",
+    "NovaSonicAgent",
+    "RealtimeAgent",
+    "available",
+    "make_agent",
+]

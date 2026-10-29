@@ -36,6 +36,8 @@ dependencies = [
     "sacrebleu>=2.6.0",
     "misaki[zh]>=0.9.4",
     "soxr>=1.1.0",
+    "aws-sdk-bedrock-runtime>=0.12.0",
+    "awscrt>=0.38.0",
 ]
 
 [project.scripts]

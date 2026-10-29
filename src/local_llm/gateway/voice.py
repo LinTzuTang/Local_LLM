@@ -93,7 +93,7 @@ async def voice_agent_ws(
         display = opencc.OpenCC("s2tw").convert
     if engine != "cascade":
         try:
-            if engine in voice_cloud.ENGINES:  # audio goes to Azure OpenAI (the page says so)
+            if engine in voice_cloud.ENGINES:  # audio goes to the cloud (the page says so)
                 agent = voice_cloud.make_agent(engine, emit, barge_in=barge, allow_network=net,
                                                display=display)  # fmt: skip
             else:

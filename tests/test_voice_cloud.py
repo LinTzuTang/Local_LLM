@@ -175,3 +175,140 @@ def test_live_captions_are_its_own_transcript():
     assert final["text"] == "台中明天會下雨嗎" and final["turn"] == 0
     assert any(e["type"] == "user_partial" for e in events)
     agent.close()
+
+
+class GeminiSocket(FakeSocket):
+    """Gemini Live's messages have no "type": `react` is keyed by their one top-level key."""
+
+    async def send(self, text):
+        event = json.loads(text)
+        self.sent.append(event)
+        for reply in self.react.pop(next(iter(event)), []):
+            await self.queue.put(reply)
+
+
+def gemini_turn(text="", audio=False, **flags):
+    content = dict(flags)
+    if audio:
+        content["modelTurn"] = {"parts": [{"inlineData": {"data": LOUD}}]}
+    if text:
+        content["outputTranscription"] = {"text": text}
+    return {"serverContent": content}
+
+
+def test_gemini_live_calls_the_tool_here_and_speaks_the_answer():
+    call = {"id": "f1", "name": "get_weather", "args": {"location": "台北"}}
+    socket = GeminiSocket(
+        [{"setupComplete": {}}, {"sleep": 0.3},
+         {"serverContent": {"inputTranscription": {"text": "台 北 天 氣"}}},
+         gemini_turn("我查一下。", audio=True), {"toolCall": {"functionCalls": [call]}}],
+        react={"toolResponse": [gemini_turn("台北 24 度。", audio=True),
+                                gemini_turn(turnComplete=True)]},
+    )  # fmt: skip
+    agent, events = session(voice_cloud.GeminiLiveAgent, socket, engine="gemini-3.8-live",
+                            allow_network=True)  # fmt: skip
+    agent.on_asr({"type": "speech_start", "t_audio": 0.0}, agent.t0)
+    agent.on_asr({"type": "speech_end", "t_audio": 0.2}, agent.t0)
+    wait(lambda: any(e["type"] == "assistant" and e.get("final") and e["kind"] == "answer"
+                     for e in events))  # fmt: skip
+    setup = socket.sent[0]["setup"]
+    assert setup["model"].endswith("/gemini-3.8-live")
+    declared = setup["tools"][0]["functionDeclarations"]
+    assert {d["name"] for d in declared} == {"get_weather", "search_places"}
+    reply = next(e for e in socket.sent if "toolResponse" in e)["toolResponse"]
+    assert reply["functionResponses"][0]["id"] == "f1"
+    assert "24" in reply["functionResponses"][0]["response"]["result"]
+    kinds = [e["kind"] for e in events if e["type"] == "assistant" and e.get("final")]
+    assert kinds == ["filler", "answer"]
+    finals = [e["text"] for e in events if e["type"] == "user_final"]
+    assert finals == ["台北天氣"]  # its transcript, spaces between characters dropped
+    summary = agent.close()
+    assert summary["kind"] == "turn" and summary["turns"][0]["decision"] == "tool"
+
+
+def test_gemini_live_without_barge_in_asks_not_to_be_interrupted():
+    socket = GeminiSocket([{"setupComplete": {}}])
+    agent, _ = session(voice_cloud.GeminiLiveAgent, socket, engine="gemini-live-2.5",
+                       barge_in=False)  # fmt: skip
+    wait(lambda: socket.sent)
+    setup = socket.sent[0]["setup"]
+    assert setup["realtimeInputConfig"] == {"activityHandling": "NO_INTERRUPTION"}
+    assert "tools" not in setup  # no network: nothing to look up
+    agent.close()
+
+
+class FakeNova:
+    """A Bedrock bidirectional stream: input events recorded, output events scripted."""
+
+    def __init__(self, events):
+        self.out: asyncio.Queue = asyncio.Queue()
+        for e in events:
+            self.out.put_nowait(e)
+        self.sent, stream = [], self
+
+        class Input:
+            async def send(self, chunk):
+                stream.sent.append(json.loads(chunk.value.bytes_)["event"])
+
+            async def close(self):
+                await stream.out.put(None)
+
+        self.input_stream = Input()
+
+    async def await_output(self):
+        stream = self
+
+        class Output:
+            async def receive(self):
+                event = await stream.out.get()
+                if event is None:
+                    return None
+
+                class Value:
+                    bytes_ = json.dumps({"event": event}).encode()
+
+                class Event:
+                    value = Value()
+
+                return Event()
+
+        return None, Output()
+
+
+def nova(kind, **body):
+    return {kind: body}
+
+
+def test_nova_joins_audio_blocks_of_one_reply_and_shows_the_speculative_text():
+    stage = lambda s: json.dumps({"generationStage": s})  # noqa: E731
+    stream = FakeNova([
+        nova("contentStart", contentId="u", type="TEXT", role="USER"),
+        nova("textOutput", contentId="u", role="USER", content="你好"),
+        nova("contentEnd", contentId="u", stopReason="END_TURN"),
+        nova("contentStart", contentId="t", type="TEXT", role="ASSISTANT",
+             additionalModelFields=stage("SPECULATIVE")),
+        nova("textOutput", contentId="t", role="ASSISTANT", content="你好！"),
+        nova("contentEnd", contentId="t", stopReason="PARTIAL_TURN"),
+        nova("contentStart", contentId="a1", type="AUDIO", role="ASSISTANT"),
+        nova("audioOutput", contentId="a1", content=LOUD),
+        nova("contentEnd", contentId="a1", stopReason="PARTIAL_TURN"),
+        nova("contentStart", contentId="a2", type="AUDIO", role="ASSISTANT"),
+        nova("audioOutput", contentId="a2", content=LOUD),
+        nova("contentEnd", contentId="a2", stopReason="END_TURN"),
+    ])  # fmt: skip
+
+    async def connect(_):
+        return stream
+
+    events = []
+    agent = voice_cloud.NovaSonicAgent(events.append, connect=connect)
+    agent.start()
+    wait(lambda: any(e["type"] == "assistant" and e.get("final") for e in events))
+    finals = [e for e in events if e["type"] == "assistant" and e.get("final")]
+    assert [(e["kind"], e["text"]) for e in finals] == [("reply", "你好！")]
+    assert [e["text"] for e in events if e["type"] == "user_final"] == ["你好"]
+    start = next(e for e in stream.sent if "promptStart" in e)["promptStart"]
+    assert start["audioOutputConfiguration"]["voiceId"] == "tiffany"
+    assert "toolConfiguration" not in start  # no network: no tools
+    agent.close()
+    assert {"sessionEnd": {}} in stream.sent
