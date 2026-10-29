@@ -367,14 +367,117 @@ def _use_example(lang: str) -> None:
     st.session_state.tts_voices = []  # picked again for the example's language
 
 
+# -- quick listen -----------------------------------------------------------------------------
+
+LISTEN = {
+    "zh": "您好，台北明天晴時多雲，氣溫 21 到 27 度，降雨機率 10%。CNC 產線的報告我下午寄給你。",
+    "en": "Good afternoon. Tomorrow in Taipei will be partly cloudy, 21 to 27 degrees, with a "
+    "10 percent chance of rain.",
+}
+LISTEN_EN = ("Samantha",)  # macOS English voice next to the neural voices that speak English
+
+
+def listen_voices(language: str) -> list[dict]:
+    """The voices of the benchmark (fastest first), or those of them that speak English."""
+    every = tts.voices(neural="all")
+    rows = (load_benchmark() or {}).get("rows", [])
+    found = [tts.find(r["voice"], every) for r in rows]
+    voices = [v for v in found if v]
+    if language == "en":
+        macos = [tts.find(n, every) for n in LISTEN_EN]
+        voices = [v for v in macos if v] + [
+            v for v in voices if v.get("english") or v.get("engine") is None
+        ]  # fmt: skip
+    return list({v["name"]: v for v in voices}.values())
+
+
+def listen_work(job: jobs.Job) -> None:
+    todo = job.state["todo"]
+    for n, name in enumerate(todo, start=1):
+        if job.cancel.is_set():
+            break
+        job.detail, job.progress = f"{n}/{len(todo)} {name}", (n - 1) / len(todo)
+        try:
+            tts.synthesize(job.state["text"], name)
+        except Exception as exc:
+            job.state.setdefault("errors", {})[name] = str(exc)[:200]
+    job.progress = 1.0
+
+
+@st.fragment(run_every=2)
+def _listen_progress(job_id: str) -> None:
+    job = jobs.get(job_id)
+    if job is None:
+        return
+    if job.running:
+        st.progress(job.progress or 0.0, text=job.detail)
+    else:
+        st.rerun()
+
+
+def listen_view() -> None:
+    st.caption(
+        tr(
+            "每個評測過的聲音念同一句話，直接按播放比較。已合成過的會留在快取（storage/speech_cache），"
+            "下次打開不用再等；改了句子就要重新產生。句子刻意放了數字和英文縮寫（CNC），"
+            "可以聽出哪些聲音會跳過或念錯。",
+            "Every evaluated voice reads the same line; press play to compare. Renderings stay in "
+            "the cache (storage/speech_cache), so they open at once next time; a new line needs "
+            "new renderings. The line has numbers and an abbreviation (CNC) on purpose, to hear "
+            "which voices skip or misread them.",
+        )
+    )
+    language = st.segmented_control(
+        tr("語言", "Language"), ["zh", "en"], required=True,
+        format_func=lambda x: {"zh": tr("中文", "Chinese"), "en": tr("英文", "English")}[x],
+        **kept("tts_listen_lang"),
+    ) or "zh"  # fmt: skip
+    st.session_state.setdefault(f"tts_listen_{language}", LISTEN[language])
+    text = st.text_input(tr("句子", "Line"), **kept(f"tts_listen_{language}")).strip()
+    voices = listen_voices(language)
+    if not text or not voices:
+        return
+    ready = {v["name"]: tts.cached(text, v["name"]) for v in voices}
+    missing = [n for n, p in ready.items() if p is None]
+    job = jobs.get(st.session_state.get("tts_listen_job"))
+    if job and job.running:
+        _listen_progress(job.id)
+    elif missing:
+        slow = tr("雲端與較慢的模型要等一下", "cloud and slower models take a while")
+        if st.button(
+            tr(f"產生試聽（{len(missing)} 個聲音還沒合成，{slow}）",
+               f"Make the samples ({len(missing)} voices not rendered yet; {slow})"),
+            icon=":material/graphic_eq:", type="primary",
+        ):  # fmt: skip
+            job = jobs.Job("speech_tts", tr("快速試聽", "Quick listen"), sc.PAGE,
+                           state={"text": text, "todo": missing})  # fmt: skip
+            jobs.start(job, listen_work)
+            st.session_state.tts_listen_job = job.id
+            st.rerun()
+    errors = (job.state.get("errors") if job else None) or {}
+    cols = st.columns(2)
+    for i, v in enumerate(voices):
+        with cols[i % 2].container(border=True):
+            st.markdown(f"**{v['short']}**　·　{source_name(v)}")
+            if ready[v["name"]]:
+                st.audio(str(ready[v["name"]]))
+            elif v["name"] in errors:
+                st.caption(tr("合成失敗：", "Failed: ") + errors[v["name"]])
+            else:
+                st.caption(tr("尚未產生", "Not rendered yet"))
+            if limits := tts.limits(v):
+                st.caption(tr(*limits))
+
+
 def tts_page(url: str, status: dict) -> None:
     st.session_state.setdefault("tts_view", "try")
     view = (
         st.segmented_control(
             tr("檢視", "View"),
-            ["try", "bench"],
+            ["try", "listen", "bench"],
             format_func=lambda v: {
                 "try": f":material/play_arrow: {tr('自己試', 'Try it')}",
+                "listen": f":material/headphones: {tr('快速試聽', 'Quick listen')}",
                 "bench": f":material/leaderboard: {tr('評測總表', 'Benchmark')}",
             }[v],
             required=True,
@@ -384,6 +487,9 @@ def tts_page(url: str, status: dict) -> None:
     )
     if view == "bench":
         benchmark_view()
+        return
+    if view == "listen":
+        listen_view()
         return
     if not tts.available():
         st.warning(

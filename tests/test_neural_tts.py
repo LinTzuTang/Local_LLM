@@ -52,7 +52,9 @@ def test_neural_voices_are_listed_and_routed(monkeypatch, tmp_path):
     monkeypatch.setattr(neural_tts, "render", render)
     monkeypatch.setattr(tts, "CACHE_DIR", tmp_path)
     clone = "Qwen3-TTS 台灣腔（複製）"
+    assert tts.cached("你好", clone, sample_rate=16000) is None  # quick listen: not made yet
     path = tts.synthesize("你好", clone, sample_rate=16000)
+    assert tts.cached("你好", clone, sample_rate=16000) == path
     again = tts.synthesize("你好", clone, sample_rate=16000)  # from the cache
     assert path == again and rendered == [("你好", clone, 16000)]
     data, seconds = tts.speak_wav("你好", neural_tts.VITS)

@@ -156,15 +156,13 @@ def synthesize(
     from . import neural_tts
 
     if voice in neural_tts.VOICES:  # a Taiwanese neural voice; cached like `say`
-        # "+norm2": renderings since the second loudness fix (older cached files are quieter)
-        key = voice + "+norm2" + neural_tts.VOICES[voice].get("revision", "")
-        out = Path(out) if out is not None else cache_path(text, key, None, sample_rate)
+        out = Path(out) if out is not None else _cache_file(text, voice, rate, sample_rate)
         if out.exists() and out.stat().st_size > 44:
             return out
         return neural_tts.render(text, voice, out, sample_rate)
     if not available():
         raise RuntimeError("macOS `say` is not available on this machine")
-    out = Path(out) if out is not None else cache_path(text, voice, rate, sample_rate)
+    out = Path(out) if out is not None else _cache_file(text, voice, rate, sample_rate)
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = ["say", "-v", voice, "-o", str(out), f"--data-format=LEI16@{sample_rate}"]
     if rate:
@@ -172,6 +170,23 @@ def synthesize(
     # The text goes in on stdin (`-f -`): no length limit and no option parsing of the text.
     subprocess.run(cmd + ["-f", "-"], input=text, text=True, capture_output=True, check=True)
     return out
+
+
+def _cache_file(text: str, voice: str, rate: int | None, sample_rate: int) -> Path:
+    from . import neural_tts
+
+    if voice in neural_tts.VOICES:
+        # "+norm2": renderings since the second loudness fix (older cached files are quieter)
+        key = voice + "+norm2" + neural_tts.VOICES[voice].get("revision", "")
+        return cache_path(text, key, None, sample_rate)
+    return cache_path(text, voice, rate, sample_rate)
+
+
+def cached(text: str, voice: str, rate: int | None = None,
+           sample_rate: int = SAMPLE_RATE) -> Path | None:  # fmt: skip
+    """The rendering synthesize() would return, if it is already on disk (nothing is made)."""
+    path = _cache_file(text, voice, rate, sample_rate)
+    return path if path.exists() and path.stat().st_size > 44 else None
 
 
 def cache_path(text: str, voice: str, rate: int | None, sample_rate: int = SAMPLE_RATE) -> Path:
