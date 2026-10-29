@@ -77,6 +77,7 @@ testpaths = ["tests"]
 "app/views/*" = ["E501"]
 "app/voice_panel.py" = ["E501"]  # the live voice assistant's page body, shared with the gallery
 "app/voice_bench.py" = ["E501"]  # the live voice assistant's evaluation tables
+"app/speech_simul.py" = ["E501"]  # the simultaneous-interpreting page's copy
 # Schema DDL and Chinese sample-data templates.
 "src/local_llm/company_db.py" = ["E501"]
 # Bilingual descriptions of the MCP servers and tools.

@@ -51,6 +51,37 @@ CAPS = {
     "cloud": ("cloud", "雲端", "Cloud", "#EA580C"),
     "installed": ("download_done", "已下載", "Installed", "#15803D"),
 }
+# Local vs cloud, the same on every chart and table of the speech pages: blue runs on this
+# machine, orange in the cloud (audio or text leaves it).
+LOCAL_COLOR, CLOUD_COLOR = "#2563EB", "#EA580C"
+LOCAL_TINT, CLOUD_TINT = "#EFF6FF", "#FFF7ED"
+
+
+def where_names() -> tuple[str, str]:
+    from i18n import tr
+
+    return tr("本機", "Local"), tr("雲端", "Cloud")
+
+
+def where_scale():
+    """Altair colour scale for a "where" field holding where_names()."""
+    import altair as alt
+
+    local, cloud = where_names()
+    return alt.Scale(domain=[local, cloud], range=[LOCAL_COLOR, CLOUD_COLOR])
+
+
+def where_rows(df, column: str):
+    """A dataframe Styler tinting each row by its `column` (local blue, cloud orange)."""
+    _, cloud = where_names()
+
+    def tint(row):
+        colour = CLOUD_TINT if row[column] == cloud else LOCAL_TINT
+        return [f"background-color: {colour}"] * len(row)
+
+    return df.style.apply(tint, axis=1)
+
+
 _NAME = re.compile(r"[a-z0-9_]+")
 _SHORTCODE = re.compile(r":material/([a-z0-9_]+):")
 
