@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import common
 import i18n
 import jobs
 import streamlit as st
@@ -56,7 +57,9 @@ pages = {
 current = st.navigation(pages, position="top")
 
 # Top-right corner of every page: background tasks and the language switch.
-_, tasks_col, lang_col = st.columns([8, 1.7, 1.3], vertical_alignment="center")
+_, cloud_col, tasks_col, lang_col = st.columns([6.6, 1.4, 1.7, 1.3], vertical_alignment="center")
+with cloud_col:
+    common.cloud_switch()
 with tasks_col:
     jobs.header_popover()
 with lang_col:

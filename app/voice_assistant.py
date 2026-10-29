@@ -27,7 +27,11 @@ from i18n import tr
 from local_llm import tts, voice_agent, voice_cloud
 
 STATIC = Path(__file__).parent / "static" / "voice_agent"
-DEFAULT_ASR = "zipformer-zh-en-stream"
+# The best local streaming ASR of the evaluation (docs: Live captions): 4-bit Voxtral, 3.7% on the
+# National Day speech and final text in about 0.7 s (Zipformer 10.8%; X-ASR 480 ms is more
+# accurate on the meeting but finalises 4-8 s late). FALLBACK_ASR when it is not installed.
+DEFAULT_ASR = "voxtral-mini-4b-realtime-4bit"
+FALLBACK_ASR = "zipformer-zh-en-stream"
 STREAM_MODELS = ("zipformer-zh-en-stream", "zipformer-zh-2025-stream", "paraformer-zh-en-stream",
                  "x-asr-zh-en-160ms", "x-asr-zh-en-480ms",
                  "voxtral-mini-4b-realtime-4bit")  # fmt: skip
@@ -42,12 +46,12 @@ ASSISTANT_VOICE = voice_agent.DEFAULT_VOICE
 USER_VOICE = "Tingting"
 USER_VOICE_EN = "Samantha"
 # Neural voices (local_llm/neural_tts.py), the defaults when installed, from the TTS benchmark
-# (scripts/speech_eval/run_tts_bench.py, 2026-10-22): Kokoro speaks the first sentence in about
-# 0.3 s and clearly (round-trip CER 1.3%; MediaTek VITS 15%), though with a Mainland accent; the
-# Qwen3-TTS clone of a Taiwanese speaker is the clearest test speaker (0.7% through the
-# streaming ASR; BreezyVoice, since removed, dropped words: 2.5-4.2%) but slow, so it reads
-# the test lines (rendered once and cached).
-ASSISTANT_VOICE_TW = "Kokoro 曉北"
+# (scripts/speech_eval/run_tts_bench.py): the Qwen3-TTS clone of a Taiwanese speaker plays
+# while it is made (first audio in about 0.16 s), is clear (round-trip CER 1.6%, 0.7% on the
+# test lines) and reads English and numbers too; Kokoro (0.15 s, 1.3%) is the fallback, Chinese
+# only with a Mainland accent. The same clone reads the test lines (rendered once and cached).
+ASSISTANT_VOICE_TW = "Qwen3-TTS 台灣腔（複製）"
+ASSISTANT_VOICE_FALLBACK = "Kokoro 曉北"
 USER_VOICE_TW = "Qwen3-TTS 台灣腔（複製）"
 SCRIPTS_FILE = Path(__file__).resolve().parents[1] / "data" / "lab" / "voice_scripts.json"
 

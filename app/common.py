@@ -78,6 +78,57 @@ def model_options(task: str | None = None, include_catalog: bool = True) -> list
     return ordered
 
 
+def cloud_enabled() -> bool:
+    """The top bar's cloud switch (main.py): off unless turned on, kept in the URL (?cloud=1)."""
+    if "cloud_on" not in st.session_state:
+        st.session_state.cloud_on = st.query_params.get("cloud") == "1"
+    return bool(st.session_state.cloud_on)
+
+
+def cloud_switch() -> None:
+    """Cloud models (Azure, Google, AWS) can be picked only while this is on; everything else
+    on the platform runs on this machine."""
+    cloud_enabled()
+
+    def changed() -> None:
+        st.session_state.cloud_on = st.session_state._cloud_switch
+        if st.session_state.cloud_on:
+            st.query_params["cloud"] = "1"
+        else:
+            st.query_params.pop("cloud", None)
+
+    st.session_state._cloud_switch = st.session_state.cloud_on
+    st.toggle(
+        ":material/cloud: " + tr("雲端模型", "Cloud"),
+        key="_cloud_switch",
+        on_change=changed,
+        help=tr(
+            "打開後才能選雲端模型（Azure、Google、AWS 的語音對話、語音合成、同步口譯）。"
+            "選了雲端模型，錄音或文字會上傳到該服務；關閉時平台全部在本機執行。",
+            "Turn on to pick cloud models (Azure, Google, AWS voice chat, speech synthesis, "
+            "interpreting). With a cloud model the audio or text goes to that service; off, "
+            "everything runs on this machine.",
+        ),
+    )
+
+
+def local_or_allowed(v: dict) -> bool:
+    """A voice or model dict may be offered: it runs here, or the cloud switch is on."""
+    return cloud_enabled() or not v.get("cloud")
+
+
+def cloud_hint(what: str, what_en: str) -> None:
+    """A caption where cloud options are hidden by the switch."""
+    if not cloud_enabled():
+        st.caption(
+            tr(
+                f":material/cloud_off: 雲端{what}已隱藏；要比較請打開右上角的「雲端模型」。",
+                f":material/cloud_off: Cloud {what_en} are hidden; turn on Cloud (top right) "
+                "to compare them.",
+            )  # fmt: skip
+        )
+
+
 def kept(key: str) -> dict:
     """Widget kwargs whose value survives page switches.
 

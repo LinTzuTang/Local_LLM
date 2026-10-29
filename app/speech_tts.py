@@ -20,7 +20,7 @@ import jobs
 import pandas as pd
 import speech_common as sc
 import streamlit as st
-from common import PROJECT_DIR, kept, save_run
+from common import PROJECT_DIR, cloud_hint, kept, local_or_allowed, save_run
 from i18n import tr
 
 from local_llm import asr_metrics, gateway_client, tts
@@ -388,7 +388,7 @@ def listen_voices(language: str) -> list[dict]:
         voices = [v for v in macos if v] + [
             v for v in voices if v.get("english") or v.get("engine") is None
         ]  # fmt: skip
-    return list({v["name"]: v for v in voices}.values())
+    return list({v["name"]: v for v in voices if local_or_allowed(v)}.values())
 
 
 def listen_work(job: jobs.Job) -> None:
@@ -435,6 +435,7 @@ def listen_view() -> None:
     st.session_state.setdefault(f"tts_listen_{language}", LISTEN[language])
     text = st.text_input(tr("句子", "Line"), **kept(f"tts_listen_{language}")).strip()
     voices = listen_voices(language)
+    cloud_hint("聲音（Azure、Google、Gemini）", "voices (Azure, Google, Gemini)")
     if not text or not voices:
         return
     ready = {v["name"]: tts.cached(text, v["name"]) for v in voices}
@@ -521,7 +522,7 @@ def tts_page(url: str, status: dict) -> None:
     )
     language = text_language(text)
 
-    voices = tts.voices(neural="all")
+    voices = [v for v in tts.voices(neural="all") if local_or_allowed(v)]
     by_name = {v["name"]: v for v in voices}
     if not st.session_state.get("tts_voices"):
         wanted = DEFAULT_VOICES[language]
@@ -545,6 +546,7 @@ def tts_page(url: str, status: dict) -> None:
         ),
         **kept("tts_voices"),
     )
+    cloud_hint("聲音（Azure、Google、Gemini）", "voices (Azure, Google, Gemini)")
     c, d = st.columns(2)
     st.session_state.setdefault("tts_rate", 0)
     rate = c.select_slider(

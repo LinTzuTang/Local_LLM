@@ -13,7 +13,16 @@ import speech_stream
 import streamlit as st
 import voice_assistant as va
 import voice_bench
-from common import download_control, gateway_url, installed_names, kept, model_options
+from common import (
+    cloud_enabled,
+    cloud_hint,
+    download_control,
+    gateway_url,
+    installed_names,
+    kept,
+    local_or_allowed,
+    model_options,
+)
 from i18n import tr
 
 from local_llm import tts, user_sim, voice_agent, voice_cloud, voice_omni
@@ -134,10 +143,11 @@ def panel(page: str = va.PAGE) -> None:
     # Every installed chat model, as on the Chat page; the ones the evaluation compared first.
     tested = [m for m in voice_agent.CANDIDATE_LLMS if m in installed]
     llms = tested + [m for m in model_options(include_catalog=False) if m not in tested]
-    voices = tts.voices(("zh_TW", "zh_CN", "en_US"))
+    voices = [v for v in tts.voices(("zh_TW", "zh_CN", "en_US")) if local_or_allowed(v)]
     voice_names = [v["name"] for v in voices]
     # the test lines are rendered once and cached, so the slow voices are offered there too
-    user_voices = tts.voices(("zh_TW", "zh_CN", "en_US"), neural="all")
+    user_voices = [v for v in tts.voices(("zh_TW", "zh_CN", "en_US"), neural="all")
+                   if local_or_allowed(v)]  # fmt: skip
     user_names = [v["name"] for v in user_voices]
 
     def short(name: str) -> str:
@@ -145,7 +155,8 @@ def panel(page: str = va.PAGE) -> None:
         return f"{v['short']} ({v['locale']}) · {voice_source(v)}" if v else name
 
     engines = ["cascade"] + [e for e in voice_omni.ENGINES if voice_omni.available(e)]
-    engines += [e for e in voice_cloud.ENGINES if voice_cloud.available(e)]
+    if cloud_enabled():  # the top bar's switch
+        engines += [e for e in voice_cloud.ENGINES if voice_cloud.available(e)]
     with st.container(border=True):
         st.markdown(f":material/tune: **{tr('設定', 'Settings')}**")
         st.session_state.setdefault("va_engine", "cascade")
@@ -197,6 +208,8 @@ def panel(page: str = va.PAGE) -> None:
                 ),
                 **kept("va_engine"),
             )
+            cloud_hint("語音模型（gpt-realtime、Gemini Live、Nova 等）",
+                       "speech models (gpt-realtime, Gemini Live, Nova …)")  # fmt: skip
         single = engine != "cascade"
         hear = False  # the cascade's audio LLM hears the recording (set below)
         local_single = single and engine not in voice_cloud.ENGINES
@@ -223,8 +236,9 @@ def panel(page: str = va.PAGE) -> None:
         c1, c2, c3 = st.columns(3)
         # the cascade can also cut at pauses and use a whole-clip model (gateway/voice.py)
         asr_choices = asr_models + (pause_models if engine == "cascade" else [])
-        st.session_state.setdefault("va_asr", va.DEFAULT_ASR if va.DEFAULT_ASR in asr_models
-                                    else asr_models[0])  # fmt: skip
+        best = next((m for m in (va.DEFAULT_ASR, va.FALLBACK_ASR) if m in asr_models),
+                    asr_models[0])  # fmt: skip
+        st.session_state.setdefault("va_asr", best)
         if st.session_state.va_asr not in asr_choices:
             st.session_state.va_asr = asr_models[0]
         if engine in voice_cloud.ENGINES or not captions:  # no ASR here
@@ -395,8 +409,9 @@ def panel(page: str = va.PAGE) -> None:
                 )
             default_voice = next((n for n in voice_names if n.startswith(va.ASSISTANT_VOICE)), None)
             default_voice = next(
-                (n for n in voice_names if n == va.ASSISTANT_VOICE_TW), default_voice
-            )
+                (n for want in (va.ASSISTANT_VOICE_TW, va.ASSISTANT_VOICE_FALLBACK)
+                 for n in voice_names if n == want), default_voice
+            )  # fmt: skip
             st.session_state.setdefault("va_voice", default_voice or (voice_names or [""])[0])
             voice = c3.selectbox(tr("助理的聲音", "Assistant voice"), voice_names or [""],
                                  format_func=short, **kept("va_voice"))  # fmt: skip
