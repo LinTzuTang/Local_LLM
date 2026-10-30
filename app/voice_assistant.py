@@ -21,10 +21,10 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 import ui
-from common import save_run
+from common import gateway_url, save_run
 from i18n import tr
 
-from local_llm import tts, voice_agent, voice_cloud
+from local_llm import gateway_client, voice_agent, voice_cloud
 
 STATIC = Path(__file__).parent / "static" / "voice_agent"
 # The best local streaming ASR of the evaluation (docs: Live captions): 4-bit Voxtral, 3.7% on the
@@ -135,7 +135,7 @@ def ws_url(url: str) -> str:
 @st.cache_data(show_spinner=False)
 def demo_pcm(text: str, voice: str) -> str:
     """A demo line spoken by a macOS voice, as base64 16 kHz mono PCM16."""
-    path = tts.synthesize(text, voice, None, sample_rate=16000)
+    path = gateway_client.speech_file(text, voice, None, 16000, base_url=gateway_url())
     with wave.open(str(path), "rb") as w:
         frames = w.readframes(w.getnframes())
     return base64.b64encode(frames).decode()

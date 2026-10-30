@@ -10,7 +10,7 @@ import streamlit as st
 from common import PROJECT_DIR, gateway_url, installed_names, kept, ollama_url
 from i18n import tr
 
-from local_llm import ocr
+from local_llm import gateway_client, ocr
 
 DATA = PROJECT_DIR / "data" / "lab" / "ocr_benchmark.json"
 TEST_PAGES = PROJECT_DIR / "storage" / "ocr_eval" / "pages.json"
@@ -160,11 +160,9 @@ def ocr_work(job: jobs.Job, image: bytes, engines: list[str], score: bool, truth
         try:
             for row in job.state["results"]:
                 if row.get("text"):
-                    row["jev"] = round(ocr.jev_score(image, row["text"]), 3)
+                    row["jev"] = round(gateway_client.ocr_score(image, row["text"], base_url=gateway), 3)
         except Exception as exc:
             job.state["jev_error"] = str(exc)[:300]
-        finally:
-            ocr.JEV_SERVER.stop()  # 2.7 GB; started again when needed
     job.status = "cancelled" if job.cancel.is_set() else "done"
 
 
@@ -259,7 +257,7 @@ def try_view() -> None:
             and e["ollama"] not in installed
             and f"{e['ollama']}:latest" not in installed
         ):
-            ok, reason = False, f"ollama pull {e['ollama']}"
+            ok, reason = False, e.get("setup") or f"ollama pull {e['ollama']}"
         usable[engine] = ok
         why[engine] = reason
     default = [e for e in ("minicpm-ocr", "glm-ocr", "ocrmac") if usable[e]]
@@ -269,7 +267,7 @@ def try_view() -> None:
     if missing:
         st.caption(tr("還不能用：", "Not available yet: ") + "；".join(missing))
     score = st.toggle(tr("用 MiniCPM-OCR Jev 打正確性分數", "Score with MiniCPM-OCR Jev"),
-                      disabled=not ocr.JEV_SERVER.model.exists(), **kept("ocr_jev"))  # fmt: skip
+                      disabled=not ocr.jev_available()[0], **kept("ocr_jev"))  # fmt: skip
 
     job = jobs.get(st.session_state.get("ocr_job"))
     busy = bool(job and job.running)

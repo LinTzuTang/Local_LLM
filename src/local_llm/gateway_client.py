@@ -1,4 +1,4 @@
-"""Client for the local model gateway (speech-to-text, document parsing, rerank).
+"""Client for the local model gateway (speech-to-text, text-to-speech, documents, OCR, rerank).
 
 The gateway (`uv run python -m local_llm.gateway`, see docs/GATEWAY.md) serves the models
 Ollama cannot run with an Ollama-like API. Typical use:
@@ -9,6 +9,8 @@ Ollama cannot run with an Ollama-like API. Typical use:
     gw.rerank("逾期罰款", ["passage 1", "passage 2"])  # [{"index", "relevance_score", ...}]
     gw.translate(Path("talk.wav"), "whisper-large-v3", "zh")["text"]  # speech -> English
     gw.diarize(Path("meeting.wav"), num_speakers=2)["segments"]  # [{"start", "end", "speaker"}]
+    gw.speech_file("各位早安。", "Kokoro 曉北")  # WAV path in the shared TTS cache
+    gw.ocr(Path("page.png"))  # macOS Vision; gw.ocr_score(Path("block.png"), text) -> 0-1 (Jev)
     for event in gw.stream(Path("talk.wav"), "zipformer-zh-en-stream"):  # true streaming
         print(event)  # {"t_audio", "t_wall", "text", "final", "seg"}, then {"done": True, ...}
 
@@ -164,6 +166,75 @@ def parse_document(
             data=_form(model=model, keep_alive=keep_alive),
         )
         return _check(response).json()
+
+
+def speech(
+    text: str,
+    voice: str,
+    rate: int | None = None,
+    sample_rate: int = 24000,
+    *,
+    base_url: str = DEFAULT_URL,
+) -> bytes:
+    """Text to speech with a platform voice (macOS, neural, cloud): 16-bit mono WAV bytes."""
+    body = {"input": text, "voice": voice, "rate": rate, "sample_rate": sample_rate}
+    with _client(base_url, INFERENCE_TIMEOUT_S) as client:
+        return _check(client.post("/v1/audio/speech", json=body)).content
+
+
+def speech_file(
+    text: str,
+    voice: str,
+    rate: int | None = None,
+    sample_rate: int = 24000,
+    *,
+    base_url: str = DEFAULT_URL,
+) -> Path:
+    """speech() as a file: the gateway keeps its renderings in the TTS cache on this machine
+    (local_llm.tts), so the path is that cache file; written here if it is not there."""
+    from . import tts
+
+    data = speech(text, voice, rate, sample_rate, base_url=base_url)
+    path = tts.cached(text, voice, rate, sample_rate)
+    if path is None:
+        path = tts.cache_path(text, voice + "+gateway", rate, sample_rate)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    return path
+
+
+def timed_speech(
+    text: str, voice: str, rate: int | None = None, *, base_url: str = DEFAULT_URL
+) -> dict:
+    """The text sentence by sentence as the voice assistant speaks it, never from the cache:
+    {"path" (WAV of all sentences, a temporary file), "seconds", "duration", "rtf", "load_s",
+    "first_s", "max_s", "sentences"}."""
+    import base64
+    import tempfile
+
+    body = {"input": text, "voice": voice, "rate": rate}
+    with _client(base_url, INFERENCE_TIMEOUT_S) as client:
+        out = _check(client.post("/v1/audio/speech/timed", json=body)).json()
+    with tempfile.NamedTemporaryFile(prefix="tts-", suffix=".wav", delete=False) as f:
+        f.write(base64.b64decode(out.pop("wav")))
+    return {**out, "path": Path(f.name)}
+
+
+def ocr(image: Path | bytes, model: str = "ocrmac", *, base_url: str = DEFAULT_URL) -> str:
+    """The text of an image read on the gateway (macOS Vision)."""
+    with _client(base_url, INFERENCE_TIMEOUT_S) as client:
+        response = client.post("/v1/ocr", files={"file": _upload(image, None, "image.png")},
+                               data=_form(model=model))  # fmt: skip
+        return _check(response).json()["text"]
+
+
+def ocr_score(image: Path | bytes, text: str, *, base_url: str = DEFAULT_URL) -> float:
+    """MiniCPM-OCR Jev on the gateway: probability (0-1) that `text` is what the image (one
+    region) shows."""
+    with _client(base_url, INFERENCE_TIMEOUT_S) as client:
+        response = client.post("/v1/ocr/score", files={"file": _upload(image, None, "image.png")},
+                               data={"text": text})  # fmt: skip
+        return float(_check(response).json()["score"])
 
 
 def translate(

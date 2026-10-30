@@ -4,7 +4,9 @@ Ollama-style management: GET /api/version, /api/tags, /api/ps; POST /api/pull (N
 DELETE /api/delete, POST /api/unload. Inference, OpenAI-style where a convention exists:
 POST /v1/audio/transcriptions, /v1/audio/translations (speech -> English text),
 /v1/audio/diarize (who spoke when), /v1/audio/stream (true streaming models fed a recording
-frame by frame; NDJSON events), /v1/rerank, /v1/documents/parse. Errors are {"error": "..."}.
+frame by frame; NDJSON events), /v1/audio/speech (text to speech, WAV) and /v1/audio/speech/timed
+(sentence by sentence, timed), /v1/rerank, /v1/documents/parse, /v1/ocr (macOS Vision) and
+/v1/ocr/score (MiniCPM-OCR Jev, its llama-server started on demand). Errors are {"error": "..."}.
 WebSocket /v1/audio/stream/ws: live microphone audio (PCM16 frames) in, caption events out
 (gateway/live.py); only pages served from this machine may connect. WebSocket
 /v1/voice/agent/ws: the live voice assistant (gateway/voice.py, local_llm/voice_agent.py).
@@ -42,6 +44,13 @@ from .voice import voice_agent_ws
 REAP_INTERVAL_S = 2.0
 DOCUMENT_TYPES = {".pdf", ".docx", ".pptx", ".html", ".htm", ".md", ".png", ".jpg", ".jpeg",
                   ".tif", ".tiff", ".bmp", ".webp"}  # fmt: skip
+
+
+class SpeechRequest(BaseModel):
+    input: str
+    voice: str
+    rate: int | None = None  # words per minute (macOS voices)
+    sample_rate: int = 24000
 
 
 class ModelRequest(BaseModel):
@@ -449,6 +458,74 @@ def create_app(
             keep = None
         await voice_agent_ws(websocket, manager, asr, llm, voice, rate, net, barge, s2tw, keep,
                              engine=engine, captions=captions, hear=hear)  # fmt: skip
+
+    @app.post("/v1/audio/speech")
+    def speech(body: SpeechRequest):
+        """Text to speech with a platform voice (macOS, neural, cloud): 16-bit mono WAV, cached
+        by text, voice, rate and sample rate (local_llm/tts.py)."""
+        from fastapi.responses import Response
+
+        from local_llm import tts
+
+        start = time.perf_counter()
+        try:
+            path = tts.synthesize(body.input, body.voice, body.rate, sample_rate=body.sample_rate)
+        except ValueError as exc:
+            raise GatewayError(400, str(exc)) from exc
+        except RuntimeError as exc:
+            raise GatewayError(503, str(exc)) from exc
+        return Response(path.read_bytes(), media_type="audio/wav",
+                        headers={"X-Seconds": f"{time.perf_counter() - start:.3f}"})  # fmt: skip
+
+    @app.post("/v1/audio/speech/timed")
+    def speech_timed(body: SpeechRequest):
+        """The text sentence by sentence, as the voice assistant speaks, never from the cache:
+        timings (tts.timed_sentences) and the joined audio as base64 WAV."""
+        import base64
+
+        from local_llm import tts
+
+        try:
+            out = tts.timed_sentences(body.input, body.voice, body.rate)
+        except ValueError as exc:
+            raise GatewayError(400, str(exc)) from exc
+        path = Path(out.pop("path"))
+        out["wav"] = base64.b64encode(path.read_bytes()).decode()
+        path.unlink(missing_ok=True)
+        return out
+
+    @app.post("/v1/ocr")
+    def ocr_read(
+        file: Annotated[UploadFile, File()],
+        model: Annotated[str, Form()] = "ocrmac",
+    ):
+        """The text of an image, read on this Mac (macOS Vision). The OCR models in Ollama
+        (MiniCPM-OCR, GLM-OCR, DeepSeek-OCR) are called on Ollama itself."""
+        from local_llm import ocr
+
+        if model not in ocr.GATEWAY_ENGINES:
+            known = sorted(ocr.GATEWAY_ENGINES)
+            raise GatewayError(400, f"unknown OCR model {model}; served here: {known}")
+        start = time.perf_counter()
+        text = ocr.read_local(model, file.file.read())
+        return {"model": model, "text": text, "seconds": round(time.perf_counter() - start, 3)}
+
+    @app.post("/v1/ocr/score")
+    def ocr_score(
+        file: Annotated[UploadFile, File()],
+        text: Annotated[str, Form()],
+    ):
+        """MiniCPM-OCR Jev: the probability (0-1) that `text` is exactly what the image (one
+        region: a paragraph, a title) shows."""
+        from local_llm import ocr
+
+        ok, why = ocr.jev_available()
+        if not ok:
+            raise GatewayError(503, why)
+        start = time.perf_counter()
+        score = ocr.jev_score(file.file.read(), text)
+        return {"model": "minicpm-ocr-jev", "score": round(score, 4),
+                "seconds": round(time.perf_counter() - start, 3)}  # fmt: skip
 
     @app.post("/v1/rerank")
     def rerank(body: RerankRequest):

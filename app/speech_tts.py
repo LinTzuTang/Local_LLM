@@ -21,7 +21,7 @@ import pandas as pd
 import speech_common as sc
 import streamlit as st
 import ui
-from common import PROJECT_DIR, cloud_hint, kept, local_or_allowed, save_run
+from common import PROJECT_DIR, cloud_hint, gateway_url, kept, local_or_allowed, save_run
 from i18n import tr
 
 from local_llm import asr_metrics, gateway_client, tts
@@ -128,7 +128,7 @@ def tts_work(job: jobs.Job, url: str) -> None:
         r["status"] = "running"
         job.detail, job.progress = f"{n}/{len(rows)} {r['short']}", (n - 1) / len(rows)
         try:
-            out = tts.timed_sentences(text, r["voice"], state["rate"] or None)
+            out = gateway_client.timed_speech(text, r["voice"], state["rate"] or None, base_url=url)
             keys = ("seconds", "duration", "rtf", "load_s", "first_s", "max_s", "sentences")
             r.update({k: out[k] for k in keys}, file=str(out["path"]))
             if state["asr"]:
@@ -392,14 +392,14 @@ def listen_voices(language: str) -> list[dict]:
     return list({v["name"]: v for v in voices if local_or_allowed(v)}.values())
 
 
-def listen_work(job: jobs.Job) -> None:
+def listen_work(job: jobs.Job, url: str) -> None:
     todo = job.state["todo"]
     for n, name in enumerate(todo, start=1):
         if job.cancel.is_set():
             break
         job.detail, job.progress = f"{n}/{len(todo)} {name}", (n - 1) / len(todo)
         try:
-            tts.synthesize(job.state["text"], name)
+            gateway_client.speech_file(job.state["text"], name, base_url=url)
         except Exception as exc:
             job.state.setdefault("errors", {})[name] = str(exc)[:200]
     job.progress = 1.0
@@ -453,7 +453,8 @@ def listen_view() -> None:
         ):  # fmt: skip
             job = jobs.Job("speech_tts", tr("快速試聽", "Quick listen"), sc.PAGE,
                            state={"text": text, "todo": missing})  # fmt: skip
-            jobs.start(job, listen_work)
+            url = gateway_url()
+            jobs.start(job, lambda j: listen_work(j, url))
             st.session_state.tts_listen_job = job.id
             st.rerun()
     errors = (job.state.get("errors") if job else None) or {}

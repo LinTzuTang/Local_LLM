@@ -1,22 +1,28 @@
 """OCR engines on this Mac, and MiniCPM-OCR Jev, which scores an OCR result against the image.
 
     from local_llm import ocr
-    text = ocr.read("minicpm-ocr", Path("page.png"))
-    score = ocr.jev_score(Path("block.png"), text)  # 0-1, higher = more likely correct
+    text = ocr.read("minicpm-ocr", Path("page.png"))                 # Ollama
+    text = ocr.read("ocrmac", Path("page.png"), gateway=GATEWAY)     # through the model gateway
+    score = gateway_client.ocr_score(Path("block.png"), text)        # Jev, 0-1
 
-Engines (ENGINES), each reading a whole image in one request:
-- minicpm-ocr: MiniCPM-OCR 1.0 (OpenBMB, 1.3B) Q8_0 GGUF in llama-server (llama.cpp, Metal),
-  prompt "Text Recognition:", temperature 0. llama-server is started on first use and kept
-  running (LlamaServer); one already serving the same GGUF on the port is reused.
+Every engine sits behind one of the platform's two front doors (docs: HackMD 〈地端 AI 模型推論
+架構〉): the OCR models are in Ollama, the rest in the model gateway.
+- minicpm-ocr: MiniCPM-OCR 1.0 (OpenBMB, 1.3B) in Ollama, Q8_0 GGUF with its vision projector and
+  the DSpark draft head for speculative decoding (models/ocr/MiniCPM-OCR-1.0-gguf/Modelfile,
+  `ollama create minicpm-ocr`, Ollama 0.40.12 or later); prompt "Text Recognition:".
 - glm-ocr, deepseek-ocr: GLM-OCR and DeepSeek-OCR 3B in Ollama.
-- ocrmac: macOS Vision through ocrmac (accurate, zh-Hant / zh-Hans / en-US).
+- ocrmac: macOS Vision (ocrmac, accurate, zh-Hant / zh-Hans / en-US), gateway /v1/ocr.
 - docling: the gateway's document parser (layout, TableFormer, macOS Vision OCR).
+read() is the client side (Ollama or the gateway); read_local() runs the gateway's engines in
+this process and is what /v1/ocr calls.
 
-Jev (MiniCPM-OCR Jev, 2B) is a decision model: llama.cpp serves it at /v1/systemone and
-answers with the probability that the text matches the image; it is given the image, the text
-and the text drawn as an image (render: Pillow and a system CJK font here, where the official
-service renders with Chromium on Linux). It judges one region (a paragraph, a title), not a
-whole page.
+Jev (MiniCPM-OCR Jev, 2B) is a decision model: llama.cpp's llama-server serves it at
+/v1/systemone and answers with the probability that the text matches the image; it is given the
+image, the text and the text drawn as an image (render: Pillow and a system CJK font here, where
+the official service renders with Chromium on Linux). It judges one region (a paragraph, a
+title), not a whole page. jev_score() starts that llama-server on first use as a gateway sidecar
+(voice_omni.Sidecar: stopped after 15 idle minutes); the platform reaches it through
+/v1/ocr/score.
 
 plain() and distance() are the scoring of scripts/ocr_eval: markup, case, NFKC and whitespace
 ignored, normalised edit distance.
@@ -28,8 +34,6 @@ import base64
 import io
 import re
 import shutil
-import subprocess
-import time
 import unicodedata
 from pathlib import Path
 
@@ -39,6 +43,8 @@ PROJECT = Path(__file__).resolve().parents[2]
 MODELS = PROJECT / "models" / "ocr"
 OCR_GGUF = MODELS / "MiniCPM-OCR-1.0-gguf"
 JEV_GGUF = MODELS / "MiniCPM-OCR-Jev-gguf"
+JEV_MODEL = JEV_GGUF / "MiniCPM-OCR-Jev-Q8_0.gguf"
+JEV_PORT = 18498
 OLLAMA = "http://127.0.0.1:11434"
 FONT = "/System/Library/Fonts/STHeiti Medium.ttc"
 
@@ -46,9 +52,11 @@ FONT = "/System/Library/Fonts/STHeiti Medium.ttc"
 ENGINES = {
     "minicpm-ocr": {
         "label": "MiniCPM-OCR 1.0",
-        "runtime": "llama.cpp",
-        "size_gb": 1.7,
+        "runtime": "Ollama",
+        "size_gb": 2.0,
         "licence": "Apache-2.0",
+        "ollama": "minicpm-ocr",
+        "setup": "scripts/setup_ocr_models.sh",
     },
     "glm-ocr": {
         "label": "GLM-OCR",
@@ -64,7 +72,7 @@ ENGINES = {
         "licence": "MIT",
         "ollama": "deepseek-ocr:3b",
     },
-    "ocrmac": {"label": "macOS Vision", "runtime": "macOS", "size_gb": None, "licence": "macOS"},
+    "ocrmac": {"label": "macOS Vision", "runtime": "gateway", "size_gb": None, "licence": "macOS"},
     "docling": {
         "label": "Docling + macOS Vision",
         "runtime": "gateway",
@@ -77,86 +85,24 @@ PROMPTS = {
     "glm-ocr": "Text Recognition:",
     "deepseek-ocr": "<|grounding|>Convert the document to markdown.",
 }
-
-
-class LlamaServer:
-    """One llama-server process for one GGUF on one port, started on first use."""
-
-    def __init__(self, model: Path, mmproj: Path, port: int, ctx: int):
-        self.model, self.mmproj, self.port, self.ctx = model, mmproj, port, ctx
-        self.url = f"http://127.0.0.1:{port}"
-        self.process: subprocess.Popen | None = None
-
-    def serving(self) -> bool:
-        try:
-            r = httpx.get(f"{self.url}/v1/models", timeout=2)
-            return r.status_code == 200 and any(
-                self.model.name in m.get("id", "") for m in r.json().get("data", [])
-            )
-        except (httpx.HTTPError, ValueError):
-            return False
-
-    def ensure(self, timeout: float = 120) -> str:
-        if self.serving():
-            return self.url
-        if not shutil.which("llama-server"):
-            raise RuntimeError("llama-server not found: brew install llama.cpp")
-        if not self.model.exists():
-            raise RuntimeError(f"model not downloaded: {self.model}")
-        self.process = subprocess.Popen(
-            [
-                "llama-server",
-                "-m",
-                str(self.model),
-                "--mmproj",
-                str(self.mmproj),
-                "-ngl",
-                "99",
-                "-c",
-                str(self.ctx),
-                "--port",
-                str(self.port),
-                "--jinja",
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        deadline = time.monotonic() + timeout
-        while time.monotonic() < deadline:
-            if self.process.poll() is not None:
-                raise RuntimeError(
-                    f"llama-server exited ({self.process.returncode}); is port {self.port} in use?"
-                )
-            if self.serving():
-                return self.url
-            time.sleep(0.5)
-        raise RuntimeError("llama-server did not start in time")
-
-    def stop(self) -> None:
-        if self.process and self.process.poll() is None:
-            self.process.terminate()
-        self.process = None
-
-
-OCR_SERVER = LlamaServer(
-    OCR_GGUF / "MiniCPM-OCR-1_0-Q8_0.gguf", OCR_GGUF / "mmproj-model-f16-4x.gguf", 18499, 16384
-)
-JEV_SERVER = LlamaServer(
-    JEV_GGUF / "MiniCPM-OCR-Jev-Q8_0.gguf", JEV_GGUF / "mmproj-model-f16.gguf", 18498, 32768
-)
+GATEWAY_ENGINES = {"ocrmac"}  # read_local() runs these; /v1/ocr serves them
 
 
 def available(engine: str) -> tuple[bool, str]:
-    """(usable, reason when not)."""
-    if engine == "minicpm-ocr":
-        if not shutil.which("llama-server"):
-            return False, "brew install llama.cpp"
-        return OCR_SERVER.model.exists(), "hf download openbmb/MiniCPM-OCR-1.0-gguf"
+    """(usable on this machine, reason when not), for the engines outside Ollama."""
     if engine == "ocrmac":
         try:
             import ocrmac  # noqa: F401
         except ImportError:
             return False, "uv add ocrmac"
+    return True, ""
+
+
+def jev_available() -> tuple[bool, str]:
+    if not shutil.which("llama-server"):
+        return False, "llama-server not found: brew install llama.cpp"
+    if not JEV_MODEL.exists():
+        return False, "Jev not downloaded: scripts/setup_ocr_models.sh"
     return True, ""
 
 
@@ -169,60 +115,48 @@ def _bytes(image: Path | bytes) -> bytes:
 
 
 def read(engine: str, image: Path | bytes, gateway: str | None = None, ollama: str = OLLAMA) -> str:
-    """The text (or Markdown) of the image, read by one engine."""
+    """The text (or Markdown) of the image, read by one engine: Ollama or the gateway."""
     data = _bytes(image)
-    if engine == "minicpm-ocr":
-        url = OCR_SERVER.ensure()
-        body = {
-            "temperature": 0,
-            "max_tokens": 8192,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{b64(data)}"},
-                        },
-                        {"type": "text", "text": PROMPTS[engine]},
-                    ],
-                }
-            ],
-        }
-        r = httpx.post(f"{url}/v1/chat/completions", json=body, timeout=900)
-        r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"]
-    if engine in ("glm-ocr", "deepseek-ocr"):
+    if engine in PROMPTS:
         body = {
             "model": ENGINES[engine]["ollama"],
             "stream": False,
+            "think": False,
             "keep_alive": "10m",
             "messages": [{"role": "user", "content": PROMPTS[engine], "images": [b64(data)]}],
             "options": {"temperature": 0, "num_ctx": 16384, "num_predict": 8192},
         }
         r = httpx.post(f"{ollama}/api/chat", json=body, timeout=900)
+        if r.status_code == 400 and "think" in r.text:  # models without a thinking switch
+            body.pop("think")
+            r = httpx.post(f"{ollama}/api/chat", json=body, timeout=900)
         r.raise_for_status()
-        text = r.json()["message"]["content"]
-        return re.sub(
-            r"<\|det\|>.*?<\|/det\|>|<\|/?ref\|>", "", text, flags=re.S
-        )  # DeepSeek's boxes
-    if engine == "ocrmac":
-        from ocrmac import ocrmac
-        from PIL import Image
+        text = r.json()["message"]["content"]  # DeepSeek's boxes dropped
+        return re.sub(r"<\|det\|>.*?<\|/det\|>|<\|/?ref\|>", "", text, flags=re.S)
+    from . import gateway_client
 
-        with Image.open(io.BytesIO(data)) as img:
-            lines = ocrmac.OCR(
-                img.convert("RGB"),
-                recognition_level="accurate",
-                language_preference=["zh-Hant", "zh-Hans", "en-US"],
-            ).recognize()
-        return "\n".join(text for text, _, _ in lines)
+    kwargs = {"base_url": gateway} if gateway else {}
+    if engine in GATEWAY_ENGINES:
+        return gateway_client.ocr(data, engine, **kwargs)
     if engine == "docling":
-        from . import gateway_client
-
-        kwargs = {"base_url": gateway} if gateway else {}
         return gateway_client.parse_document(data, filename="page.png", **kwargs)["markdown"]
     raise ValueError(f"unknown OCR engine {engine}")
+
+
+def read_local(engine: str, image: Path | bytes) -> str:
+    """Run a gateway engine in this process (the gateway's /v1/ocr)."""
+    if engine != "ocrmac":
+        raise ValueError(f"not a local OCR engine: {engine}")
+    from ocrmac import ocrmac
+    from PIL import Image
+
+    with Image.open(io.BytesIO(_bytes(image))) as img:
+        lines = ocrmac.OCR(
+            img.convert("RGB"),
+            recognition_level="accurate",
+            language_preference=["zh-Hant", "zh-Hans", "en-US"],
+        ).recognize()
+    return "\n".join(text for text, _, _ in lines)
 
 
 def render(text: str, width: int, size: int = 28) -> bytes:
@@ -278,12 +212,31 @@ def jev_body(image: bytes, text: str) -> dict:
     }
 
 
+def jev_sidecar():
+    """Jev's llama-server as a sidecar of this process (started on first use, stopped after
+    15 idle minutes or when another sidecar needs the room)."""
+    from .voice_omni import Sidecar
+
+    car = Sidecar.running.get("minicpm-ocr-jev")
+    if car is None:
+        cmd = [shutil.which("llama-server") or "llama-server", "-m", str(JEV_MODEL),
+               "--mmproj", str(JEV_GGUF / "mmproj-model-f16.gguf"), "-ngl", "99", "-c", "32768",
+               "--host", "127.0.0.1", "--port", str(JEV_PORT)]  # fmt: skip
+        car = Sidecar("minicpm-ocr-jev", JEV_PORT, cmd, PROJECT, ready_s=180)
+    return car
+
+
 def jev_score(image: Path | bytes, text: str) -> float:
-    """Probability (0-1) that `text` is exactly what the image shows."""
-    url = JEV_SERVER.ensure()
-    r = httpx.post(f"{url}/v1/systemone", json=jev_body(_bytes(image), text), timeout=120)
-    r.raise_for_status()
-    return float(r.json()["answers"]["consistency"]["probabilities"]["1"])
+    """Probability (0-1) that `text` is exactly what the image shows (runs Jev here)."""
+    car = jev_sidecar()
+    car.acquire()
+    try:
+        car.ensure()
+        r = httpx.post(f"{car.url}/v1/systemone", json=jev_body(_bytes(image), text), timeout=120)
+        r.raise_for_status()
+        return float(r.json()["answers"]["consistency"]["probabilities"]["1"])
+    finally:
+        car.release()
 
 
 # OmniDocBench categories that count as page content (headers, footers, page numbers, figures

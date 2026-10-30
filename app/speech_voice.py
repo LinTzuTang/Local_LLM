@@ -22,7 +22,7 @@ from pathlib import Path
 import jobs
 import speech_common as sc
 import streamlit as st
-from common import PROJECT_DIR, kept, ollama_url, save_run
+from common import PROJECT_DIR, gateway_url, kept, ollama_url, save_run
 from i18n import tr
 
 from local_llm import asr_metrics, audio_aug, catalog, gateway_client, tts
@@ -401,7 +401,7 @@ def question_audio() -> tuple[Path, str] | None:
         )  # fmt: skip
         text, voice = QUESTIONS[key]
         try:
-            path = tts.synthesize(text, voice, out=None)
+            path = gateway_client.speech_file(text, voice, base_url=gateway_url())
         except Exception as exc:
             st.error(str(exc))
             return None

@@ -596,3 +596,34 @@ def test_live_session_adds_display_text():
     events = live.feed(speech_pcm([(0.2, True)]))
     text = [e for e in events if e["type"] == "partial"]
     assert text and text[-1]["text"] == "字" * len(text) and text[-1]["display"].endswith("!")
+
+
+def test_speech_and_ocr_endpoints(gateway, monkeypatch):
+    client, _, _ = gateway
+    from local_llm import ocr, tts
+
+    r = client.post("/v1/audio/speech", json={"input": "  ", "voice": "Tingting"})
+    assert r.status_code == 400  # nothing to speak
+    wav = tmp_wav = None
+
+    def fake_synthesize(text, voice, rate=None, out=None, sample_rate=24000):
+        nonlocal tmp_wav
+        tmp_wav = tts.CACHE_DIR / "test-gateway.wav"
+        tmp_wav.parent.mkdir(parents=True, exist_ok=True)
+        tmp_wav.write_bytes(b"RIFF" + b"\0" * 60)
+        return tmp_wav
+
+    monkeypatch.setattr(tts, "synthesize", fake_synthesize)
+    r = client.post("/v1/audio/speech", json={"input": "各位早安。", "voice": "Tingting"})
+    wav = r.content
+    tmp_wav.unlink()
+    assert r.status_code == 200 and r.headers["content-type"] == "audio/wav" and wav[:4] == b"RIFF"
+    r = client.post("/v1/ocr", files={"file": ("p.png", b"x")}, data={"model": "minicpm-ocr"})
+    assert r.status_code == 400  # Ollama's models are not served here
+    monkeypatch.setattr(ocr, "read_local", lambda engine, image: "一行文字")
+    r = client.post("/v1/ocr", files={"file": ("p.png", b"x")})
+    assert r.status_code == 200 and r.json()["text"] == "一行文字"
+    monkeypatch.setattr(ocr, "jev_available", lambda: (True, ""))
+    monkeypatch.setattr(ocr, "jev_score", lambda image, text: 0.91)
+    r = client.post("/v1/ocr/score", files={"file": ("p.png", b"x")}, data={"text": "一行文字"})
+    assert r.status_code == 200 and r.json()["score"] == 0.91
