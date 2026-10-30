@@ -85,10 +85,11 @@ def results_view() -> None:
         return
     st.markdown(
         tr(
-            f"**{data['machine']}，Ollama，每個模型單獨載入**（{data['date']}）。A、B 組是同家族、同量化的 MoE 與 dense；"
-            f"C 組不同家族，只當參考。正確率是 TMMLU+ {data['questions']} 題（台灣各類考試的選擇題）。",
-            f"**{data['machine']}, Ollama, each model loaded alone** ({data['date']}). Pairs A and B "
-            "are same-family, same-quantisation MoE and dense models; C mixes families and is for "
+            f"**{data['machine']}，Ollama，每個模型單獨載入**（{data['date']}）。**A、D、E 組最公平**：同家族、同一代、同量化的 MoE 與 dense；"
+            f"B 組 MoE 是 coding 版、dense 差一代；C 組不同家族，只當參考。正確率是 TMMLU+ {data['questions']} 題（台灣各類考試的選擇題）。",
+            f"**{data['machine']}, Ollama, each model loaded alone** ({data['date']}). **Pairs A, D and E "
+            "are the fair ones**: same family, generation and quantisation; in B the MoE is a coding "
+            "model and the dense one a generation newer; C mixes families and is for "
             f"reference only. Accuracy: {data['questions']} TMMLU+ questions (Taiwan exam multiple choice).",
         )
     )
@@ -144,22 +145,24 @@ def results_view() -> None:
                  column_config={"TMMLU+": st.column_config.NumberColumn(format="percent")})  # fmt: skip
     st.markdown(
         tr(
-            "**結論**：參數量相近時，MoE 的答題正確率與 dense 差不到 3 個百分點（200 題的誤差範圍內），"
-            "但生成快 2.7～7 倍、讀長文快 4～6 倍；記憶體則照總參數算，不會比較省。",
-            "**Takeaway**: at similar size, MoE answers within 3 points of dense (inside the "
-            "error margin of 200 questions), but generates 2.7-7x and reads long prompts 4-6x "
-            "faster; memory follows the total parameters, so it is not smaller.",
+            "**結論**：MoE 生成快 2.7～7 倍、讀長文快 4～7 倍，五組都一樣；記憶體照總參數算，不會比較省。"
+            "**正確率要看家族**：Qwen（A、E）與 C 組差 3 個百分點內（200 題的誤差範圍內），"
+            "但 Gemma 4 的 MoE（26B）比 dense（31B）少 8 個百分點，它的總參數也比較少。",
+            "**Takeaway**: MoE generates 2.7-7x and reads long prompts 4-7x faster in all five "
+            "pairs; memory follows the total parameters, so it is not smaller. **Accuracy depends "
+            "on the family**: Qwen (A, E) and C stay within 3 points (inside the error margin of 200 "
+            "questions), but Gemma 4's MoE (26B) is 8 points below its dense 31B, which is also larger.",
         )
     )
     st.caption(
         tr(
             "記憶體是 Ollama 回報的載入量，含 20K context 的 KV 快取。生成：中文短問題、256 個字、3 次取中位數；"
-            "讀長文：約 4K 與 16K token 的中文文件。思考一律關閉（gpt-oss 關不掉，用最低強度）。"
+            "讀長文：約 4K 與 16K token 的中文文件。思考一律關閉（gpt-oss 關不掉，用最低強度）。A～C 組在 Ollama 0.40.3、D～E 組在 0.40.13 上量。"
             "腳本：scripts/llm_eval/run_moe_dense.py；方法：src/local_llm/moe_bench.py。",
             "Memory is what Ollama reports when loaded, including the KV cache for a 20K context. "
             "Generation: a short Chinese question, 256 tokens, median of 3; prefill: Chinese "
             "documents of about 4K and 16K tokens. Thinking off (gpt-oss cannot, so it reasons "
-            "at low). Script: scripts/llm_eval/run_moe_dense.py; method: src/local_llm/moe_bench.py.",
+            "at low). Pairs A-C measured on Ollama 0.40.3, D-E on 0.40.13. Script: scripts/llm_eval/run_moe_dense.py; method: src/local_llm/moe_bench.py.",
         )
     )
 
