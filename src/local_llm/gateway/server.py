@@ -513,7 +513,7 @@ def create_app(
     @app.post("/v1/ocr/score")
     def ocr_score(
         file: Annotated[UploadFile, File()],
-        text: Annotated[str, Form()],
+        text: Annotated[str, Form()] = "",  # an empty OCR result is scored too
     ):
         """MiniCPM-OCR Jev: the probability (0-1) that `text` is exactly what the image (one
         region: a paragraph, a title) shows."""

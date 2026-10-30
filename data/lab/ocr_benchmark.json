@@ -30,19 +30,53 @@
   {
    "engine": "minicpm-ocr",
    "label": "MiniCPM-OCR 1.0",
-   "runtime": "llama.cpp",
-   "size_gb": 1.7,
+   "runtime": "Ollama",
+   "size_gb": 2.0,
    "licence": "Apache-2.0",
-   "clean": 0.237,
+   "clean": 0.222,
    "by_language": {
-    "traditional_chinese": 0.151,
-    "simplified_chinese": 0.24,
-    "english": 0.361,
-    "en_ch_mixed": 0.207
+    "traditional_chinese": 0.144,
+    "simplified_chinese": 0.248,
+    "english": 0.281,
+    "en_ch_mixed": 0.245
    },
-   "real5": 0.317,
-   "real5_clean": 0.279,
-   "s_page": 3.7
+   "real5": 0.272,
+   "real5_clean": 0.26,
+   "s_page": 3.0
+  },
+  {
+   "engine": "docling",
+   "label": "Docling + macOS Vision",
+   "runtime": "gateway",
+   "size_gb": 0.4,
+   "licence": "MIT",
+   "clean": 0.287,
+   "by_language": {
+    "traditional_chinese": 0.365,
+    "simplified_chinese": 0.274,
+    "english": 0.23,
+    "en_ch_mixed": 0.227
+   },
+   "real5": 0.393,
+   "real5_clean": 0.249,
+   "s_page": 2.1
+  },
+  {
+   "engine": "ocrmac",
+   "label": "macOS Vision",
+   "runtime": "gateway",
+   "size_gb": null,
+   "licence": "macOS",
+   "clean": 0.365,
+   "by_language": {
+    "traditional_chinese": 0.602,
+    "simplified_chinese": 0.281,
+    "english": 0.239,
+    "en_ch_mixed": 0.206
+   },
+   "real5": 0.31,
+   "real5_clean": 0.251,
+   "s_page": 0.4
   },
   {
    "engine": "deepseek-ocr",
@@ -62,8 +96,44 @@
    "s_page": 7.2
   }
  ],
+ "jev": {
+  "regions": 150,
+  "candidates": 300,
+  "correct": 142,
+  "auroc": 0.816,
+  "jev_s": 0.195,
+  "minicpm-ocr": {
+   "exact": 0.587,
+   "ned": 0.0274,
+   "s": 0.27
+  },
+  "ocrmac": {
+   "exact": 0.36,
+   "ned": 0.1526,
+   "s": 0.05
+  },
+  "jev_pick": {
+   "exact": 0.593,
+   "ned": 0.0293
+  },
+  "oracle": {
+   "exact": 0.593
+  },
+  "accept_0.5": {
+   "pass_rate": 0.533,
+   "precision": 0.738
+  },
+  "accept_0.8": {
+   "pass_rate": 0.433,
+   "precision": 0.738
+  },
+  "accept_0.9": {
+   "pass_rate": 0.367,
+   "precision": 0.755
+  }
+ },
  "notes": [
-  "**測試進行中**：macOS Vision、Docling 與 MiniCPM-OCR Jev 還沒跑完。目前 **GLM-OCR 最準**（繁中也最好），**MiniCPM-OCR 快 3 倍**、準確度居次；DeepSeek-OCR 明顯落後，翻拍頁面掉最多。",
-  "**In progress**: macOS Vision, Docling and MiniCPM-OCR Jev have not been run yet. So far **GLM-OCR is the most accurate** (Traditional Chinese too), **MiniCPM-OCR is 3x faster** and second; DeepSeek-OCR is clearly behind and loses most on photographed pages."
+  "**GLM-OCR 最準**（繁中也最好），但每頁約 12 秒；**MiniCPM-OCR 快 4 倍**（Ollama＋DSpark，每頁 3 秒），準確度居次。**直排古籍**只有 GLM-OCR、MiniCPM-OCR 讀得出來，macOS Vision、Docling、DeepSeek-OCR 幾乎全錯；有公式的考卷 Docling 最好；macOS Vision 最快（每頁 0.4 秒），但表格多的頁面閱讀順序會亂。",
+  "**GLM-OCR is the most accurate** (Traditional Chinese too) at about 12 s a page; **MiniCPM-OCR is 4x faster** (Ollama + DSpark, 3 s a page) and second. Only GLM-OCR and MiniCPM-OCR can read **vertical classical pages**; macOS Vision, Docling and DeepSeek-OCR get them almost all wrong. Docling is best on exam papers with formulas; macOS Vision is fastest (0.4 s a page) but scrambles the reading order of table-heavy pages."
  ]
 }
