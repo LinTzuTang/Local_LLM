@@ -27,6 +27,7 @@ pages = {
         page("views/chat.py", "對話測試", "Chat", ":material/chat:"),
         page("views/compare.py", "模型比較", "Compare models", ":material/balance:"),
         page("views/speech.py", "語音模型比較", "Compare speech models", ":material/graphic_eq:"),
+        page("views/moe.py", "MoE vs Dense", "MoE vs dense", ":material/account_tree:"),
         page("views/media.py", "語音與文件", "Speech & documents", ":material/mic:"),
     ],
     "Agents": [

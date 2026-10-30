@@ -79,6 +79,7 @@ testpaths = ["tests"]
 "app/voice_bench.py" = ["E501"]  # the live voice assistant's evaluation tables
 "app/speech_simul.py" = ["E501"]  # the simultaneous-interpreting page's copy
 "app/asr_bench.py" = ["E501"]  # the whole-clip ASR benchmark's copy
+"app/ocr_compare.py" = ["E501"]  # the OCR tab's copy
 # Schema DDL and Chinese sample-data templates.
 "src/local_llm/company_db.py" = ["E501"]
 # Bilingual descriptions of the MCP servers and tools.

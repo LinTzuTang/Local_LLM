@@ -1,5 +1,5 @@
 {
- "date": "2026-10-29",
+ "date": "2026-10-30",
  "text": "meeting_zh.txt",
  "asr": {
   "offline": "qwen3-asr-1.7b",
@@ -400,6 +400,28 @@
    "cer_stream": 0.0071,
    "rms_db": -16.2,
    "stream_first_s": 0.164
+  },
+  {
+   "voice": "GLM-TTS 台灣腔（複製）",
+   "label": "GLM-TTS 台灣腔（複製）",
+   "source": [
+    "GLM-TTS（智譜，NVIDIA GPU）",
+    "GLM-TTS (Zhipu, NVIDIA GPU)"
+   ],
+   "size_gb": 8.3,
+   "licence": "MIT",
+   "limits": [
+    "要 NVIDIA 顯示卡（約 10 GB），平台不能試聽；不是串流，整句合成完才播",
+    "Needs an NVIDIA GPU (about 10 GB), not playable on the platform; not streaming, a sentence plays once rendered"
+   ],
+   "stream_first_s": null,
+   "load_s": 34.96,
+   "rtf": 0.306,
+   "first_s": 3.43,
+   "max_s": 5.8,
+   "cer_offline": 0.008,
+   "cer_stream": 0.0071,
+   "rms_db": -20.5
   },
   {
    "voice": "VoxCPM2 台灣腔（複製）",

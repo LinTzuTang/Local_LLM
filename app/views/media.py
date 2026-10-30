@@ -1,4 +1,5 @@
-"""Speech & documents: try the model gateway's speech-to-text, document parsing and reranker.
+"""Speech & documents: try the model gateway's speech-to-text, document parsing and reranker, and
+compare OCR models (ocr_compare.py).
 
 Every result shows the HTTP call that produced it (the platform's theme: make API calls
 visible). Long calls run as background jobs, so switching pages does not stop them.
@@ -7,6 +8,7 @@ visible). Long calls run as background jobs, so switching pages does not stop th
 import json
 
 import jobs
+import ocr_compare
 import pandas as pd
 import streamlit as st
 import ui
@@ -181,10 +183,11 @@ def clock(seconds: float) -> str:
 # -- page -----------------------------------------------------------------------------------
 
 status_panel()
-tab_asr, tab_doc, tab_rerank, tab_inbox = st.tabs(
+tab_asr, tab_doc, tab_ocr, tab_rerank, tab_inbox = st.tabs(
     [
         ":material/mic: " + tr("語音轉文字", "Speech to text"),
         ":material/description: " + tr("文件解析", "Document parsing"),
+        ":material/document_scanner: " + tr("OCR 比較", "Compare OCR"),
         ":material/sort: " + tr("重新排序（Rerank）", "Rerank"),
         ":material/inbox: " + tr("收件匣（給 agent）", "Inbox (for agents)"),
     ]
@@ -324,6 +327,9 @@ DEFAULT_PASSAGES = """乙方未依確認之交期交貨者，依逾期天數按�
 品保課已經查出原因，是三號車床的刀具磨耗。
 員工餐廳本週三中午供應牛肉麵。
 Late deliveries are charged 0.3% of the late amount per day from day 8 to day 14."""
+
+with tab_ocr:
+    ocr_compare.view()
 
 with tab_rerank:
     st.caption(

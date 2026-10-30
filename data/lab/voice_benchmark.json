@@ -1,6 +1,6 @@
 {
- "_about": "Voice conversation evaluation (2026-10-21/22): 7 test scripts, 23 user lines spoken by macOS voices at speaking pace (scripts/speech_eval/run_front_llm.py, run_qwen3_omni.py, run_open_voice.py, run_minicpmo.py, run_step_audio2.py / run_kimi_audio.py / run_glm4_voice.py on an NVIDIA RTX PRO 6000, run_gpt_realtime.py, run_gpt_live.py, run_gemini_live.py). start_s: end of the user's speech to the assistant's first sound (median); answer_s: to the spoken lookup result; decisions: ask back / look up / answer right (systems with tools only); traditional: share of Chinese replies in Traditional characters; grounded: replies without made-up facts (AI judge, Azure gpt-5.4); natural: 1-5 (AI judge). null = not measured or not applicable.",
- "date": "2026-10-22",
+ "_about": "Voice conversation evaluation (2026-10-21/22): 7 test scripts, 23 user lines spoken by macOS voices at speaking pace (scripts/speech_eval/run_front_llm.py, run_qwen3_omni.py, run_open_voice.py, run_minicpmo.py, run_step_audio2.py / run_kimi_audio.py / run_glm4_voice.py / run_fun_audio_chat.py / run_llama_omni2.py on an NVIDIA RTX PRO 6000, run_gpt_realtime.py, run_gpt_live.py, run_gemini_live.py). start_s: end of the user's speech to the assistant's first sound (median); answer_s: to the spoken lookup result; decisions: ask back / look up / answer right (systems with tools only); traditional: share of Chinese replies in Traditional characters; grounded: replies without made-up facts (AI judge, Azure gpt-5.4); natural: 1-5 (AI judge). null = not measured or not applicable.",
+ "date": "2026-10-30",
  "systems": [
   {
    "name": "地端串接語音對話（串流辨識 → Gemma 4 12B → 語音合成）",
@@ -121,6 +121,36 @@
    "natural": 3.83,
    "note": "繁體 31%、不編造 78.3%、語言正確率 91%；要 NVIDIA 顯示卡",
    "note_en": "31% Traditional, 78.3% grounded, right language 91%; needs an NVIDIA GPU"
+  },
+  {
+   "name": "Fun-Audio-Chat 8B（NVIDIA GPU）",
+   "name_en": "Fun-Audio-Chat 8B (NVIDIA GPU)",
+   "kind": "turn",
+   "where": "local",
+   "tools": false,
+   "start_s": 0.77,
+   "answer_s": null,
+   "decisions": null,
+   "traditional": 0.75,
+   "grounded": 0.957,
+   "natural": 4.3,
+   "note": "地端開口最快（0.77 秒，邊生成邊播）、不編造 95.7%、自然度 4.30，繁體 75%；要 NVIDIA 顯示卡（約 23 GB）",
+   "note_en": "Fastest local start (0.77 s, played while generated), 95.7% grounded, naturalness 4.30, 75% Traditional; needs an NVIDIA GPU (about 23 GB)"
+  },
+  {
+   "name": "LLaMA-Omni2 7B（NVIDIA GPU）",
+   "name_en": "LLaMA-Omni2 7B (NVIDIA GPU)",
+   "kind": "turn",
+   "where": "local",
+   "tools": false,
+   "start_s": 2.08,
+   "answer_s": null,
+   "decisions": null,
+   "traditional": 0.312,
+   "grounded": 0.783,
+   "natural": 3.91,
+   "note": "整句生完才播（2.1 秒）、繁體 31%、不編造 78.3%，念出來的和文字差 26%；只限學術研究使用",
+   "note_en": "Plays once the whole reply is made (2.1 s), 31% Traditional, 78.3% grounded, speech differs from its text by 26%; academic research use only"
   },
   {
    "name": "Azure gpt-realtime",

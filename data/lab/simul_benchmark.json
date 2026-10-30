@@ -1,5 +1,5 @@
 {
- "date": "2026-10-29",
+ "date": "2026-10-30",
  "clip": "national_day_90s",
  "clip_s": 92.2,
  "settings": {
@@ -46,6 +46,26 @@
    "tail_s": 1.04,
    "chrf": 53.1,
    "bleu": 8.0,
+   "first_audio_s": null
+  },
+  {
+   "system": "Confucius4 R2T2 + T3PO",
+   "label": [
+    "Confucius4 R2T2 + T3PO 14B（網易有道開源，NVIDIA GPU）",
+    "Confucius4 R2T2 + T3PO 14B (NetEase Youdao, open, NVIDIA GPU)"
+   ],
+   "where": "local",
+   "note": [
+    "串流辨識 2B＋同步翻譯 14B，用官方示範服務；「山巔之城」正確譯成 City on the Hill，但平均落後 5.4 秒，和地端串接差不多；要 NVIDIA 顯示卡（測試用 RTX PRO 6000，vLLM）",
+    "Streaming ASR 2B + simultaneous MT 14B through the official demo server; got the opening phrase right, but 5.4 s behind on average, like the local cascade; needs an NVIDIA GPU (tested on an RTX PRO 6000, vLLM)"
+   ],
+   "speech_out": false,
+   "first_s": 2.64,
+   "lag_avg_s": 5.4,
+   "lag_p90_s": 8.96,
+   "tail_s": 9.0,
+   "chrf": 52.0,
+   "bleu": 7.6,
    "first_audio_s": null
   },
   {
@@ -135,12 +155,6 @@
    "SimulS2ST-Omni (CUHK-Shenzhen, Apache-2.0)",
    "輸出語音；官方只給模型檔、沒有串流推論程式，等 GPU 主機",
    "Speaks the translation; weights only, no streaming inference code; waiting for the GPU machine"
-  ],
-  [
-   "Confucius4 R2T2 + T3PO（網易有道，開源）",
-   "Confucius4 R2T2 + T3PO (NetEase Youdao, open)",
-   "串流辨識 2B + 文字同步翻譯 14B，官方只支援 NVIDIA（vLLM），等 GPU 主機",
-   "Streaming ASR 2B + text simultaneous MT 14B, NVIDIA only (vLLM); waiting for the GPU"
   ],
   [
    "GPT-Realtime-Translate（OpenAI／Azure）",

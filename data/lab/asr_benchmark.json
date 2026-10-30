@@ -1,6 +1,6 @@
 {
- "_about": "Non-streaming ASR, error rates (CER for Chinese, WER for English) from docs/SPEECH_EVALUATION.md section 2.4 (the report's whole-clip table); seconds = the 4.5-minute National Day speech (cloud: upload included; Google STT v1: pieces under a minute, summed).",
- "date": "2026-10-29",
+ "_about": "Non-streaming ASR, error rates (CER for Chinese, WER for English) from docs/SPEECH_EVALUATION.md section 2.4 (the report's whole-clip table); seconds = the 4.5-minute National Day speech (cloud: upload included; Google STT v1: pieces under a minute, summed). Kimi-Audio 7B ran on an NVIDIA RTX PRO 6000 (scripts/speech_eval/run_kimi_asr.py: recordings cut into pieces of 30 s or less, the official prompts; seconds on that GPU).",
+ "date": "2026-10-30",
  "rows": [
   {
    "model": "Qwen3-ASR-1.7B",
@@ -143,6 +143,19 @@
    "taigi": 0.656,
    "seconds": 11.8,
    "memory": "7.6 GB",
+   "invalid_real_meeting": false
+  },
+  {
+   "model": "Kimi-Audio 7B（NVIDIA GPU）",
+   "where": "local",
+   "national_day": 0.02,
+   "meeting": 0.027,
+   "real_meeting": 0.35,
+   "accent_en": 0.007,
+   "librispeech": 0.014,
+   "taigi": null,
+   "seconds": 10.5,
+   "memory": "24.4 GB（VRAM）",
    "invalid_real_meeting": false
   },
   {
