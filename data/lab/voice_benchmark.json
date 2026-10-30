@@ -436,5 +436,264 @@
    "有權限，但實測只轉寫、從不回答（一直停在 PARTIAL_TURN），改用 Nova 2 Sonic",
    "Accessible, but it only transcribed and never answered (stuck at PARTIAL_TURN); Nova 2 Sonic used instead"
   ]
- ]
+ ],
+ "noise": {
+  "about": [
+   "同一套 7 段對話（23 句）的使用者台詞加上人聲噪音（10 dB）、辦公室噪音（5 dB）或電話音質，和語音辨識的噪音測試同一種做法。地端串接：串流辨識聽寫加噪音的台詞，再把聽到的文字交給前台 LLM（23 句 × 2 輪）；Qwen3-Omni 與雲端直接聽加噪音的錄音（各 1 輪）。不亂編、自然度由 AI 評審（Azure gpt-5.4）評。腳本：scripts/speech_eval/run_voice_noise.py。",
+   "The same 7 conversations (23 lines) with the user's lines under babble noise (10 dB), office noise (5 dB) or telephone audio, as in the speech-recognition noise test. Local cascade: the streaming recogniser transcribes the degraded lines and the front LLM gets what it heard (23 lines x 2 rounds); Qwen3-Omni and the cloud systems hear the degraded audio themselves (1 round each). Grounded and natural from an AI judge (Azure gpt-5.4). Script: scripts/speech_eval/run_voice_noise.py."
+  ],
+  "asr_model": "voxtral-mini-4b-realtime-4bit",
+  "asr": {
+   "clean": {
+    "err_zh": 0.0159,
+    "err_en": 0.0357,
+    "exact": 0.87
+   },
+   "babble10": {
+    "err_zh": 0.0159,
+    "err_en": 0.1429,
+    "exact": 0.783
+   },
+   "office5": {
+    "err_zh": 0.063,
+    "err_en": 0.0714,
+    "exact": 0.739
+   },
+   "telephone": {
+    "err_zh": 0.0694,
+    "err_en": 0.0357,
+    "exact": 0.87
+   }
+  },
+  "rows": [
+   {
+    "system": [
+     "地端串接（Voxtral 4-bit → Gemma 4 12B）",
+     "Local cascade (Voxtral 4-bit → Gemma 4 12B)"
+    ],
+    "where": "local",
+    "condition": "clean",
+    "decisions": "46/46",
+    "replied": null,
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4.28
+   },
+   {
+    "system": [
+     "地端串接（Voxtral 4-bit → Gemma 4 12B）",
+     "Local cascade (Voxtral 4-bit → Gemma 4 12B)"
+    ],
+    "where": "local",
+    "condition": "babble10",
+    "decisions": "46/46",
+    "replied": null,
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4.33
+   },
+   {
+    "system": [
+     "地端串接（Voxtral 4-bit → Gemma 4 12B）",
+     "Local cascade (Voxtral 4-bit → Gemma 4 12B)"
+    ],
+    "where": "local",
+    "condition": "office5",
+    "decisions": "46/46",
+    "replied": null,
+    "lang_acc": 1.0,
+    "traditional": 0.969,
+    "grounded": 0.978,
+    "natural": 4.15
+   },
+   {
+    "system": [
+     "地端串接（Voxtral 4-bit → Gemma 4 12B）",
+     "Local cascade (Voxtral 4-bit → Gemma 4 12B)"
+    ],
+    "where": "local",
+    "condition": "telephone",
+    "decisions": "44/44",
+    "replied": null,
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4.27
+   },
+   {
+    "system": [
+     "Qwen3-Omni 30B-A3B（單一模型）",
+     "Qwen3-Omni 30B-A3B (single model)"
+    ],
+    "where": "local",
+    "condition": "clean",
+    "decisions": null,
+    "replied": "23/23",
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4.3
+   },
+   {
+    "system": [
+     "Qwen3-Omni 30B-A3B（單一模型）",
+     "Qwen3-Omni 30B-A3B (single model)"
+    ],
+    "where": "local",
+    "condition": "babble10",
+    "decisions": null,
+    "replied": "23/23",
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 0.913,
+    "natural": 4.04
+   },
+   {
+    "system": [
+     "Qwen3-Omni 30B-A3B（單一模型）",
+     "Qwen3-Omni 30B-A3B (single model)"
+    ],
+    "where": "local",
+    "condition": "office5",
+    "decisions": null,
+    "replied": "23/23",
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 0.957,
+    "natural": 4.04
+   },
+   {
+    "system": [
+     "Qwen3-Omni 30B-A3B（單一模型）",
+     "Qwen3-Omni 30B-A3B (single model)"
+    ],
+    "where": "local",
+    "condition": "telephone",
+    "decisions": null,
+    "replied": "23/23",
+    "lang_acc": 1.0,
+    "traditional": 1.0,
+    "grounded": 0.957,
+    "natural": 4.3
+   },
+   {
+    "system": [
+     "雲端 gpt-realtime",
+     "Cloud gpt-realtime"
+    ],
+    "where": "cloud",
+    "condition": "clean",
+    "decisions": "20/23",
+    "replied": "23/23",
+    "lang_acc": 0.957,
+    "traditional": 1.0,
+    "grounded": 0.957,
+    "natural": 4.3
+   },
+   {
+    "system": [
+     "雲端 gpt-realtime",
+     "Cloud gpt-realtime"
+    ],
+    "where": "cloud",
+    "condition": "babble10",
+    "decisions": "19/23",
+    "replied": "23/23",
+    "lang_acc": 0.913,
+    "traditional": 1.0,
+    "grounded": 0.957,
+    "natural": 4.09
+   },
+   {
+    "system": [
+     "雲端 gpt-realtime",
+     "Cloud gpt-realtime"
+    ],
+    "where": "cloud",
+    "condition": "office5",
+    "decisions": "19/23",
+    "replied": "23/23",
+    "lang_acc": 0.913,
+    "traditional": 0.938,
+    "grounded": 0.87,
+    "natural": 3.78
+   },
+   {
+    "system": [
+     "雲端 gpt-realtime",
+     "Cloud gpt-realtime"
+    ],
+    "where": "cloud",
+    "condition": "telephone",
+    "decisions": "20/23",
+    "replied": "23/23",
+    "lang_acc": 0.913,
+    "traditional": 1.0,
+    "grounded": 0.913,
+    "natural": 4.26
+   },
+   {
+    "system": [
+     "雲端 Gemini 2.5 原生語音",
+     "Cloud Gemini 2.5 native audio"
+    ],
+    "where": "cloud",
+    "condition": "clean",
+    "decisions": "22/23",
+    "replied": "22/23",
+    "lang_acc": 0.913,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4.33
+   },
+   {
+    "system": [
+     "雲端 Gemini 2.5 原生語音",
+     "Cloud Gemini 2.5 native audio"
+    ],
+    "where": "cloud",
+    "condition": "babble10",
+    "decisions": "17/23",
+    "replied": "20/23",
+    "lang_acc": 0.739,
+    "traditional": 1.0,
+    "grounded": 0.95,
+    "natural": 4.1
+   },
+   {
+    "system": [
+     "雲端 Gemini 2.5 原生語音",
+     "Cloud Gemini 2.5 native audio"
+    ],
+    "where": "cloud",
+    "condition": "office5",
+    "decisions": "20/23",
+    "replied": "21/23",
+    "lang_acc": 0.783,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4
+   },
+   {
+    "system": [
+     "雲端 Gemini 2.5 原生語音",
+     "Cloud Gemini 2.5 native audio"
+    ],
+    "where": "cloud",
+    "condition": "telephone",
+    "decisions": "21/23",
+    "replied": "23/23",
+    "lang_acc": 0.87,
+    "traditional": 1.0,
+    "grounded": 1.0,
+    "natural": 4.43
+   }
+  ],
+  "notes": [
+   "**地端串接最耐噪音**：辨識錯字變多（辦公室噪音中文 6.3%，「第一家開到幾點？」聽成「比尼迦开到极点」），前台 LLM 靠前後文仍判斷全對（46/46）；電話音質下「你好，你可以幫我做什麼？」整句沒聽到。**Qwen3-Omni** 每句都有回應、全程繁體，不亂編略降（91–96%）。**雲端受影響較大**：Gemini 2.5 在人聲噪音下 3 句沒回應、判斷 17/23、語言正確只剩 74%；gpt-realtime 在辦公室噪音下不亂編降到 87%、自然度 3.78。",
+   "**The local cascade copes best**: more recognition errors (6.3% Chinese CER in office noise; one question heard as nonsense), yet the front LLM still decides every turn right (46/46) from the context; under telephone audio one greeting was not heard at all. **Qwen3-Omni** answers every line, always in Traditional Chinese, slightly less grounded (91-96%). **The cloud systems suffer more**: Gemini 2.5 leaves 3 lines unanswered in babble noise, 17/23 decisions, 74% right language; gpt-realtime drops to 87% grounded and 3.78 natural in office noise."
+  ]
+ }
 }

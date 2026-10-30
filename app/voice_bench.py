@@ -187,11 +187,50 @@ def runs_frame(lang: str) -> pd.DataFrame:
 # -- section ------------------------------------------------------------------------------------
 
 
+CONDITIONS = {
+    "clean": ("原音", "Clean"),
+    "babble10": ("人聲噪音 10 dB", "Babble 10 dB"),
+    "office5": ("辦公室噪音 5 dB", "Office 5 dB"),
+    "telephone": ("電話音質", "Telephone"),
+}
+
+
+def noise_view(data: dict | None) -> None:
+    """The same conversations with the user's lines under noise or telephone audio
+    (data["noise"], scripts/speech_eval/run_voice_noise.py)."""
+    noise = (data or {}).get("noise")
+    if not noise:
+        st.info(tr("還沒有噪音測試的結果。", "No noise results yet."))
+        return
+    st.caption(tr(*noise["about"]))
+    asr = pd.DataFrame([
+        {tr("條件", "Condition"): tr(*CONDITIONS[c]), tr("中文錯字率", "Chinese CER"): _pct(v["err_zh"]),
+         tr("英文詞錯率", "English WER"): _pct(v["err_en"]), tr("整句全對", "Exact lines"): _pct(v["exact"])}
+        for c, v in noise["asr"].items()
+    ])  # fmt: skip
+    st.markdown(tr(f"**地端串流辨識（{noise['asr_model']}）聽到多少**", f"**What the local streaming recogniser ({noise['asr_model']}) heard**"))
+    st.dataframe(asr, hide_index=True, width="stretch")
+    rows = pd.DataFrame([
+        {tr("系統", "System"): tr(*r["system"]), tr("跑在哪", "Where"): ui.where_names()[r["where"] == "cloud"],
+         tr("條件", "Condition"): tr(*CONDITIONS[r["condition"]]), tr("判斷正確", "Decisions"): r.get("decisions") or "—",
+         tr("有回應", "Replied"): r.get("replied") or "—", tr("語言正確", "Language"): _pct(r.get("lang_acc")),
+         tr("不亂編", "Grounded"): _pct(r.get("grounded")),
+         tr("自然度", "Natural"): f"{r['natural']:.2f}" if r.get("natural") else "—"}
+        for r in noise["rows"]
+    ])  # fmt: skip
+    st.dataframe(ui.where_rows(rows, tr("跑在哪", "Where")), hide_index=True, width="stretch")
+    if noise.get("notes"):
+        st.markdown(tr(*noise["notes"]))
+
+
 def section() -> None:
     st.subheader(tr("評測總表", "Evaluation"))
     data = load()
-    a, b, c = st.tabs([tr("各種做法", "Ways of talking"), tr("前台 LLM", "Front LLMs"),
-                       tr("你在平台上跑過的配置", "Your runs")])  # fmt: skip
+    a, b, n, c = st.tabs([tr("各種做法", "Ways of talking"), tr("前台 LLM", "Front LLMs"),
+                          tr("噪音與電話音質", "Noise & phone"),
+                          tr("你在平台上跑過的配置", "Your runs")])  # fmt: skip
+    with n:
+        noise_view(data)
     with a:
         if not data:
             st.info(tr("找不到評測結果（data/lab/voice_benchmark.json）。",
