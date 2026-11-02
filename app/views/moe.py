@@ -165,6 +165,52 @@ def results_view() -> None:
             "at low). Pairs A-C measured on Ollama 0.40.3, D-E on 0.40.13. Script: scripts/llm_eval/run_moe_dense.py; method: src/local_llm/moe_bench.py.",
         )
     )
+    offload_view(data)
+
+
+def offload_view(data: dict) -> None:
+    """MoE experts on the CPU vs dense layers on the CPU (data["offload"], llama.cpp on the
+    NVIDIA GPU machine): how much GPU memory each setting needs and how fast it still is."""
+    off = data.get("offload")
+    if not off:
+        return
+    st.subheader(tr("小顯示卡跑 MoE：把專家放到 CPU", "MoE on a small GPU: experts on the CPU"))
+    st.markdown(
+        tr(
+            "llama.cpp 可以把 MoE 的專家放到一般記憶體、由 CPU 算，注意力層留在顯示卡；Dense 模型沒有專家，只能整層搬到 CPU。"
+            f"在遠端 NVIDIA 主機（{off['machine']}）上用 Qwen3-30B-A3B（MoE）與 Qwen3-32B（dense）、同為 Q4_K_M 比較（{off['date']}）。",
+            "llama.cpp can keep a MoE's experts in system memory and compute them on the CPU while "
+            "attention stays on the GPU; a dense model has no experts, only whole layers can move to "
+            f"the CPU. Qwen3-30B-A3B (MoE) vs Qwen3-32B (dense), both Q4_K_M, on the NVIDIA machine "
+            f"({off['machine']}, {off['date']}).",
+        )
+    )
+    df = pd.DataFrame(off["rows"])
+    df["setting"] = df["label"].apply(lambda x: tr(*x))
+    chart = alt.Chart(df).mark_line(point=alt.OverlayMarkDef(size=90)).encode(
+        x=alt.X("vram_gb:Q", title=tr("顯示卡記憶體（GB）", "GPU memory (GB)")),
+        y=alt.Y("gen_tok_s:Q", title=tr("生成速度（tokens/秒）", "Generation (tokens/s)")),
+        color=alt.Color("kind:N", title=None, scale=KIND_COLORS),
+        tooltip=["kind", "setting", "vram_gb", "gen_tok_s", "prefill_4k_tok_s"],
+    ).properties(height=300)  # fmt: skip
+    st.altair_chart(chart, width="stretch")
+    shown = df[["kind", "setting", "vram_gb", "gen_tok_s", "prefill_4k_tok_s"]].rename(columns={
+        "kind": tr("類型", "Type"), "setting": tr("設定", "Setting"), "vram_gb": tr("顯示卡 GB", "GPU GB"),
+        "gen_tok_s": tr("生成 tok/s", "Gen tok/s"), "prefill_4k_tok_s": tr("讀 4K 長文 tok/s", "Prefill 4K tok/s"),
+    })  # fmt: skip
+    st.dataframe(shown, hide_index=True, width="stretch")
+    st.markdown(
+        tr(
+            "**專家全放 CPU，MoE 只要 2.2 GB 顯示卡、每秒仍生成 77 個字**，比 dense 全放 GPU（66）還快、"
+            "是同樣顯示卡用量下 dense（8 層放 GPU，3.9 GB）的約 10 倍。代價是讀長文從每秒 1.1 萬字掉到約 1 千字，"
+            "且主記憶體要放得下專家（約 18 GB）。有中階顯示卡加大記憶體，就能跑比顯示卡大很多的 MoE。",
+            "**With every expert on the CPU the MoE needs 2.2 GB of GPU memory and still writes 77 "
+            "tokens/s**, faster than the dense model fully on the GPU (66) and about 10x the dense model "
+            "at the same GPU memory (8 layers, 3.9 GB). The price: prompt reading drops from about 11,000 "
+            "to about 1,000 tokens/s, and system memory must hold the experts (about 18 GB).",
+        )
+    )
+    st.caption(tr(f"工具：{off['tool']}。", f"Tool: {off['tool']}."))
 
 
 def moe_work(job: jobs.Job, models: list[str], n_questions: int, base_url: str) -> None:

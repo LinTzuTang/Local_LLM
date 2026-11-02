@@ -213,5 +213,100 @@
    "tmmlu_questions": 200,
    "tmmlu_accuracy": 0.75
   }
- ]
+ ],
+ "offload": {
+  "date": "2026-11-02",
+  "machine": "NVIDIA RTX PRO 6000 (96 GB), AMD EPYC 9B45 48 threads, 176 GB RAM",
+  "models": {
+   "MoE": "Qwen3-30B-A3B Q4_K_M (48 layers, 128 experts, 8 used)",
+   "dense": "Qwen3-32B Q4_K_M (64 layers)"
+  },
+  "tool": "llama.cpp llama-bench (CUDA), 3 runs each: prompts of 512 and 4096 tokens, 128 tokens generated; --n-cpu-moe for MoE, -ngl for dense",
+  "rows": [
+   {
+    "config": "moe_gpu",
+    "kind": "MoE",
+    "label": [
+     "全部放 GPU",
+     "all on the GPU"
+    ],
+    "vram_gb": 18.9,
+    "gen_tok_s": 314.6,
+    "prefill_512_tok_s": 11478.7,
+    "prefill_4k_tok_s": 11208.9
+   },
+   {
+    "config": "moe_cpu24",
+    "kind": "MoE",
+    "label": [
+     "一半層的專家放 CPU",
+     "experts of half the layers on the CPU"
+    ],
+    "vram_gb": 10.6,
+    "gen_tok_s": 127.8,
+    "prefill_512_tok_s": 1660.6,
+    "prefill_4k_tok_s": 1721.1
+   },
+   {
+    "config": "moe_cpu48",
+    "kind": "MoE",
+    "label": [
+     "全部專家放 CPU",
+     "all experts on the CPU"
+    ],
+    "vram_gb": 2.2,
+    "gen_tok_s": 77.4,
+    "prefill_512_tok_s": 983.6,
+    "prefill_4k_tok_s": 1050.0
+   },
+   {
+    "config": "dense_gpu",
+    "kind": "dense",
+    "label": [
+     "全部放 GPU",
+     "all on the GPU"
+    ],
+    "vram_gb": 20.4,
+    "gen_tok_s": 66.4,
+    "prefill_512_tok_s": 3854.9,
+    "prefill_4k_tok_s": 3677.7
+   },
+   {
+    "config": "dense_ngl32",
+    "kind": "dense",
+    "label": [
+     "32 層放 GPU（一半）",
+     "32 layers on the GPU (half)"
+    ],
+    "vram_gb": 10.8,
+    "gen_tok_s": 12.7,
+    "prefill_512_tok_s": 985.3,
+    "prefill_4k_tok_s": 967.1
+   },
+   {
+    "config": "dense_ngl16",
+    "kind": "dense",
+    "label": [
+     "16 層放 GPU",
+     "16 layers on the GPU"
+    ],
+    "vram_gb": 6.3,
+    "gen_tok_s": 9.2,
+    "prefill_512_tok_s": 727.7,
+    "prefill_4k_tok_s": 713.5
+   },
+   {
+    "config": "dense_ngl8",
+    "kind": "dense",
+    "label": [
+     "8 層放 GPU",
+     "8 layers on the GPU"
+    ],
+    "vram_gb": 3.9,
+    "gen_tok_s": 8.0,
+    "prefill_512_tok_s": 638.8,
+    "prefill_4k_tok_s": 630.1
+   }
+  ]
+ }
 }
