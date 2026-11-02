@@ -2041,5 +2041,119 @@
    "final_p90_s": null,
    "rtf": 0.0181
   }
- ]
+ ],
+ "noise": {
+  "about": [
+   "國慶演說前 92 秒加上旁人講話（10、0 dB）、辦公室噪音（5 dB）或電話音質，和整段辨識的噪音測試同一批錄音；本機照 160 ms 一段送入閘道，雲端照真實速度每 100 ms 送一段。數字是字錯率。腳本：scripts/speech_eval/run_streaming_noise.py。",
+   "The first 92 s of the National Day address with other talkers (10, 0 dB), office noise (5 dB) or telephone audio, the same clips as the whole-clip noise test; local models fed through the gateway in 160 ms frames, the cloud one at real time in 100 ms chunks. Numbers are CER. Script: scripts/speech_eval/run_streaming_noise.py."
+  ],
+  "conditions": [
+   "clean",
+   "babble10",
+   "babble0",
+   "office5",
+   "telephone"
+  ],
+  "rows": [
+   {
+    "model": "voxtral-mini-4b-realtime-4bit",
+    "label": "Voxtral Mini 4B Realtime 4-bit",
+    "where": "local",
+    "error_rate": {
+     "clean": 0.0389,
+     "babble10": 0.8054,
+     "babble0": 1.0,
+     "office5": 0.821,
+     "telephone": 0.0506
+    },
+    "final_median_s": {
+     "clean": 0.652,
+     "babble10": 7.582,
+     "babble0": null,
+     "office5": 7.583,
+     "telephone": 0.663
+    }
+   },
+   {
+    "model": "zipformer-zh-2025-stream",
+    "label": "Zipformer 中文 2025",
+    "where": "local",
+    "error_rate": {
+     "clean": 0.0233,
+     "babble10": 0.07,
+     "babble0": 0.537,
+     "office5": 0.1323,
+     "telephone": 0.07
+    },
+    "final_median_s": {
+     "clean": 1.361,
+     "babble10": 1.241,
+     "babble0": 1.331,
+     "office5": 1.39,
+     "telephone": 1.31
+    }
+   },
+   {
+    "model": "zipformer-zh-en-stream",
+    "label": "Zipformer 中英",
+    "where": "local",
+    "error_rate": {
+     "clean": 0.0817,
+     "babble10": 0.179,
+     "babble0": 0.4514,
+     "office5": 0.1479,
+     "telephone": 0.1089
+    },
+    "final_median_s": {
+     "clean": 1.127,
+     "babble10": 1.127,
+     "babble0": 1.207,
+     "office5": 1.307,
+     "telephone": 1.127
+    }
+   },
+   {
+    "model": "paraformer-zh-en-stream",
+    "label": "Paraformer 中英",
+    "where": "local",
+    "error_rate": {
+     "clean": 0.1012,
+     "babble10": 0.2996,
+     "babble0": 0.7043,
+     "office5": 0.2374,
+     "telephone": 0.1829
+    },
+    "final_median_s": {
+     "clean": 1.011,
+     "babble10": 6.681,
+     "babble0": 5.431,
+     "office5": 4.152,
+     "telephone": 1.021
+    }
+   },
+   {
+    "model": "gpt-live-transcribe",
+    "label": "gpt-live-transcribe（Azure）",
+    "where": "cloud",
+    "error_rate": {
+     "clean": 0.0233,
+     "babble10": 0.0311,
+     "babble0": 0.2296,
+     "office5": 0.0233,
+     "telephone": 0.0506
+    },
+    "final_median_s": {
+     "clean": 0.266,
+     "babble10": 0.31,
+     "babble0": 0.352,
+     "office5": 0.307,
+     "telephone": 0.301
+    }
+   }
+  ],
+  "notes": [
+   "**平台預設的 Voxtral 4-bit 怕人聲與辦公室噪音**：講到一半就不再出字（人聲 10 dB 錯 80.5%、0 dB 完全沒字、辦公室 82.1%），重跑結果相同；電話音質沒問題（5.1%）。這次是 92 秒連續說話，語音助理一句一句的短台詞沒有出現這個問題。**本機最耐噪音的是 Zipformer 中文 2025**（人聲 10 dB 7.0%、辦公室 13.2%、電話 7.0%），吵雜環境的即時字幕建議改用它；雲端 gpt-live-transcribe 最穩（多數條件 2–5%），但人聲 0 dB 也錯 23%。",
+   "**The platform's default Voxtral 4-bit fails in babble and office noise**: it stops writing part-way (80.5% at babble 10 dB, nothing at 0 dB, 82.1% in office noise), the same on a rerun; telephone audio is fine (5.1%). This is 92 s of continuous speech; the voice assistant's short lines did not show it. **The most robust local model is Zipformer Chinese 2025** (7.0% babble 10 dB, 13.2% office, 7.0% telephone): use it for live captions in noisy rooms. The cloud gpt-live-transcribe is steadiest (2-5% in most conditions) but also reaches 23% at babble 0 dB."
+  ]
+ }
 }

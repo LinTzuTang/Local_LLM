@@ -317,6 +317,24 @@ def benchmark_page() -> None:
             },
         )
         st.markdown(chunk_notes())
+    if data.get("noise"):
+        noise = data["noise"]
+        st.markdown(f"**{tr('噪音與電話音質', 'Noise and telephone audio')}**")
+        st.caption(tr(*noise["about"]))
+        names = {"clean": ("原音", "Clean"), "babble10": ("人聲噪音 10 dB", "Babble 10 dB"),
+                 "babble0": ("人聲噪音 0 dB", "Babble 0 dB"), "office5": ("辦公室噪音 5 dB", "Office 5 dB"),
+                 "telephone": ("電話音質", "Telephone")}  # fmt: skip
+        rows = []
+        for r in noise["rows"]:
+            row = {tr("模型", "Model"): r["label"], tr("位置", "Where"): ui.where_names()[r["where"] == "cloud"]}
+            for c in noise["conditions"]:
+                v = r["error_rate"].get(c)
+                row[tr(*names[c])] = "—" if v is None else f"{v:.1%}"
+            rows.append(row)
+        st.dataframe(ui.where_rows(pd.DataFrame(rows), tr("位置", "Where")), hide_index=True,
+                     use_container_width=True)  # fmt: skip
+        if noise.get("notes"):
+            st.markdown(tr(*noise["notes"]))
     with st.expander(tr("每段錄音的明細", "Every run"), icon=":material/table_rows:"):
         st.dataframe(detail_frame(data, labels), hide_index=True, use_container_width=True)
         local_at, cloud_at = str(data.get("local_at", ""))[:10], str(data.get("cloud_at", ""))[:10]
