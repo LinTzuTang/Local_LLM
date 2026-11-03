@@ -78,8 +78,8 @@
     "Chinese"
    ],
    "local": [
-    "Voxtral 4-bit（4.9%、0.7 秒定稿；人聲噪音 3.5%）；只要一句一句出字：Qwen3-ASR-1.7B＋停頓偵測（2.9%、一句說完 0.8 秒）",
-    "Voxtral 4-bit (4.9%, final in 0.7 s; 3.5% in babble noise); sentence by sentence: Qwen3-ASR-1.7B + pause detection (2.9%, 0.8 s after a sentence)"
+    "Voxtral 4-bit（3.0%、0.7 秒定稿；人聲噪音 3.5%）；只要一句一句出字：Qwen3-ASR-1.7B＋停頓偵測（2.9%、一句說完 0.8 秒）",
+    "Voxtral 4-bit (3.0%, final in 0.7 s; 3.5% in babble noise); sentence by sentence: Qwen3-ASR-1.7B + pause detection (2.9%, 0.8 s after a sentence)"
    ],
    "cloud": [
     "gpt-live-transcribe（1.2%、0.3 秒定稿）",

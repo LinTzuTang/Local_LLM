@@ -678,6 +678,58 @@ def test_speech_and_ocr_endpoints(gateway, monkeypatch):
     assert r.status_code == 200 and r.json()["score"] == 0.91
 
 
+def test_voxtral_restart_hears_earlier_speech_only_after_text():
+    np = pytest.importorskip("numpy")
+    from local_llm.gateway.stream_backends import VoxtralSession
+
+    vocab = {32: b"", 13: "安".encode(), 14: "好".encode(), 2: b""}
+    made = []
+
+    class Tokenizer:
+        def token_bytes(self, token_id):
+            return vocab[token_id]
+
+    class Inner:
+        """One token per 80 ms (1280 samples): the value of its first sample."""
+
+        def __init__(self):
+            self.generated, self._pos, self.done, self.fed = [], 0, False, []
+            made.append(self)
+
+        def feed(self, samples):
+            self.fed.append(len(samples))
+            for k in range(0, len(samples), 1280):
+                self.generated.append(int(samples[k]))
+
+        def close(self):
+            self.generated.append(2)
+            self.done = True
+
+        def step(self, max_decode_tokens=32):
+            pass
+
+    class Model:
+        _tokenizer = Tokenizer()
+        config = type("C", (), {"streaming_pad_token_id": 32, "eos_token_id": 2})()
+
+        def create_streaming_session(self, transcription_delay_ms=None):
+            return Inner()
+
+    frame = lambda v: np.full(1280, v, dtype=np.float32)  # noqa: E731
+    session = VoxtralSession(Model(), 480, restart_quiet_s=0.24, restart_context_s=0.24)
+    # It writes 安 for three tokens, then padding for three: a restart with context.
+    outs = [session.feed(frame(v)) for v in (13, 13, 13, 32, 32, 32)]
+    assert outs[0] == [("安", True)] and session.restarts == 1
+    assert made[1].fed == [6 * 1280]  # three tokens of context and three of the quiet window
+    assert session.used == 3  # the context's tokens are not turned into text again
+    assert session.feed(frame(14)) == [("好", True)]
+
+    made.clear()
+    fresh = VoxtralSession(Model(), 480, restart_quiet_s=0.24, restart_context_s=0.24)
+    [fresh.feed(frame(32)) for _ in range(3)]  # locked up from the start: no context
+    assert fresh.restarts == 1 and made[1].fed == [3 * 1280] and fresh.used == 0
+
+
 def test_mlx_diarization_backend_numbers_speakers_in_order(monkeypatch, tmp_path):
     np = pytest.importorskip("numpy")
     pytest.importorskip("mlx.core")
@@ -690,6 +742,8 @@ def test_mlx_diarization_backend_numbers_speakers_in_order(monkeypatch, tmp_path
     seen = {}
 
     class Model:
+        config = SimpleNamespace()  # no modules_config.use_aosc: one generate() pass
+
         def generate(self, samples, sample_rate, threshold):
             seen["threshold"] = threshold
             seg = SimpleNamespace
@@ -702,3 +756,16 @@ def test_mlx_diarization_backend_numbers_speakers_in_order(monkeypatch, tmp_path
     assert seen["threshold"] == 0.5  # the count is ignored, the catalog threshold used
     assert [s["speaker"] for s in out["segments"]] == [0, 1, 0]  # slot 3 spoke first
     assert out["speakers"] == 2 and out["duration"] == 3.0
+
+    class Streaming:  # Streaming Sortformer: chunks, a turn split at the 5 s boundary
+        config = SimpleNamespace(modules_config=SimpleNamespace(use_aosc=True))
+
+        def generate_stream(self, samples, sample_rate, threshold):
+            seg = SimpleNamespace
+            yield SimpleNamespace(segments=[seg(start=4.0, end=5.0, speaker=1)])
+            yield SimpleNamespace(segments=[seg(start=5.0, end=6.5, speaker=1),
+                                            seg(start=6.0, end=7.0, speaker=0)])  # fmt: skip
+
+    out = backend.run({"model": Streaming(), "threshold": 0.5}, tmp_path / "a.wav")
+    assert out["segments"] == [{"start": 4.0, "end": 6.5, "speaker": 0},
+                               {"start": 6.0, "end": 7.0, "speaker": 1}]  # fmt: skip

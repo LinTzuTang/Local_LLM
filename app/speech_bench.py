@@ -37,8 +37,8 @@ def chunk_notes() -> str:
         "仍有 7–26%（真實會議更高）；5 秒接近停頓偵測的準確度，但定稿要多等 2.5 秒。\n"
         "- **Whisper 架構最怕短切段**：Breeze-ASR-25、Whisper turbo 切 1 秒時會亂補字，"
         "錯字率超過 100%。\n"
-        "- **和真串流比**：Qwen3-ASR-1.7B＋停頓偵測在國慶演說（2.9% 對 4.9%）、"
-        "真實會議（25.3% 對 49.5%）都比 Voxtral 4-bit 準，定稿時間相近（0.8 對 0.7 秒）；"
+        "- **和真串流比**：Qwen3-ASR-1.7B＋停頓偵測和 Voxtral 4-bit 在國慶演說相近（2.9% 對 3.0%），"
+        "真實會議準很多（25.3% 對 47.7%），定稿時間相近（0.8 對 0.7 秒）；"
         "真串流的好處是邊說邊出字。",
         "- **Cutting at pauses is the best deal**: nearly as accurate as the whole file "
         "(Qwen3-ASR-1.7B: 2.9% on the National Day speech, 1.1% WER in English) and final about "
@@ -49,8 +49,8 @@ def chunk_notes() -> str:
         "close to cutting at pauses but finalises 2.5 s later.\n"
         "- **Whisper models suffer most from short chunks**: Breeze-ASR-25 and Whisper turbo "
         "invent words on 1 s chunks (over 100% errors).\n"
-        "- **Against true streaming**: Qwen3-ASR-1.7B cut at pauses beats Voxtral 4-bit on the "
-        "speech (2.9% vs 4.9%) and the real meeting (25.3% vs 49.5%) at a similar final latency "
+        "- **Against true streaming**: Qwen3-ASR-1.7B cut at pauses is close to Voxtral 4-bit on the "
+        "speech (2.9% vs 3.0%) and far better on the real meeting (25.3% vs 47.7%) at a similar final latency "
         "(0.8 vs 0.7 s); true streaming shows words while you talk.",
     )
 
@@ -270,7 +270,7 @@ def benchmark_page() -> None:
         tr(
             "- **雲端 `gpt-live-transcribe` 最準也最快**：國慶演說 1.2%、一句說完約 0.3 秒定稿；"
             "代價是錄音要上傳到 Azure。\n"
-            "- **本機首選 Voxtral 4B Realtime（4-bit）**：4.9%、0.7 秒定稿，不連網，噪音下也穩（閘道會自動重開卡住的串流）；"
+            "- **本機首選 Voxtral 4B Realtime（4-bit）**：3.0%、0.7 秒定稿，不連網，噪音下也穩（閘道會自動重開卡住的串流）；"
             "sherpa-onnx 最輕（CPU、記憶體 0.3 GB）。\n"
             "- **真實會議（遠距、多人）**：雲端串流模型漏掉大半內容（展開下方明細看「漏掉」），"
             "放大音量也一樣；本機 Paraformer 在這段最好。\n"
@@ -279,7 +279,7 @@ def benchmark_page() -> None:
             "- **Cloud `gpt-live-transcribe` is the most accurate and the fastest**: 1.2% on the "
             "National Day speech, final text about 0.3 s after each utterance; the audio is "
             "uploaded to Azure.\n"
-            "- **Best local: Voxtral 4B Realtime (4-bit)**: 4.9%, final in 0.7 s, offline, steady in noise (the gateway restarts a stream that locks up); "
+            "- **Best local: Voxtral 4B Realtime (4-bit)**: 3.0%, final in 0.7 s, offline, steady in noise (the gateway restarts a stream that locks up); "
             "sherpa-onnx is the lightest (CPU, 0.3 GB).\n"
             "- **Real meeting (far-field, several speakers)**: the cloud streaming models drop "
             "most of the speech (see Deleted in the details), louder audio does not help; "

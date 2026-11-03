@@ -219,16 +219,23 @@ class VoxtralSession:
     the 92 s noise clips the 4-bit model wrote nothing after 27 s (babble 10 dB CER 80.5%,
     office 5 dB 82.1%) or nothing at all (babble 0 dB). Whether it locks up flips with tiny
     numeric changes (8-bit locks up too, 6-bit does not; other delays differ), so tuning does
-    not fix it. With 3 s and the replay the three clips came to 3.5%, 4.3% and 16.0%; on the
-    benchmark samples synthetic meeting 14.2 -> 11.8%, AliMeeting 50.2 -> 49.5%, English
-    unchanged, the National Day speech 3.7 -> 4.9% (two restarts in pauses). Restarting
-    without the replay lost the words in the quiet window (National Day 5.0%, AliMeeting
-    59.0%)."""
+    not fix it. With 3 s and the replay the three clips came to 3.5%, 4.3% and 16.0%.
+    Restarting without the replay lost the words in the quiet window (National Day 5.0%,
+    AliMeeting 59.0%).
+
+    `restart_context_s`: a fresh session does not know what was said before; restarted in a
+    pause, its first words could come out wrong or in another language ("面對缺工" as
+    "Mentre ciego"; National Day 3.7 -> 4.9%). So when the old session had been writing text
+    in the seconds before it went quiet, the fresh one first hears that much earlier speech,
+    and the text it writes for it is dropped. Not when it had written nothing: then the
+    earlier audio is what it locked up on, and hearing it again locks the new one too
+    (babble 10 dB 3.5 -> 15.6% when always added). With 10 s: National Day 3.0%, AliMeeting
+    50.2 -> 47.7%, synthetic meeting 14.2 -> 14.5%, English and the noise clips as above."""
 
     append_only = True
 
     def __init__(self, model, delay_ms: int | None, cache_limit_gb: float | None = None,
-                 restart_quiet_s: float | None = None):  # fmt: skip
+                 restart_quiet_s: float | None = None, restart_context_s: float = 0.0):  # fmt: skip
         import codecs
 
         # Decoding frame by frame churns through MLX buffers; with MLX's default (unlimited)
@@ -248,7 +255,11 @@ class VoxtralSession:
         self.pad = getattr(getattr(model, "config", None), "streaming_pad_token_id", None)
         # the model writes one token per 80 ms of audio
         self.quiet_tokens = int(restart_quiet_s / 0.08) if restart_quiet_s else 0
-        self.keep = int(restart_quiet_s * SAMPLE_RATE) if restart_quiet_s else 0
+        self.context_tokens = int(restart_context_s / 0.08) if restart_quiet_s else 0
+        self.quiet_samples = int((restart_quiet_s or 0) * SAMPLE_RATE)
+        self.context_samples = int(restart_context_s * SAMPLE_RATE) if restart_quiet_s else 0
+        self.keep = self.quiet_samples + self.context_samples
+        self.eos = getattr(getattr(model, "config", None), "eos_token_id", None)
         self.recent: list = []  # the last `keep` samples, replayed into a fresh session
         self.skip = 0  # tokens of the replayed audio, not counted as new silence
         self.restarts = 0
@@ -275,17 +286,27 @@ class VoxtralSession:
         if self.quiet_tokens and self.pad is not None:
             import numpy as np
 
-            self.recent = (self.recent + [np.asarray(samples, dtype=np.float32)])[-200:]
+            self.recent.append(np.asarray(samples, dtype=np.float32))
             while sum(len(r) for r in self.recent[1:]) >= self.keep:
                 self.recent.pop(0)
-            tail = self.inner.generated[self.skip :][-self.quiet_tokens :]
+            old = self.inner.generated
+            tail = old[self.skip :][-self.quiet_tokens :]
             if len(tail) == self.quiet_tokens and all(int(t) == self.pad for t in tail):
+                q, k = self.quiet_tokens, self.context_tokens
+                before = old[-(q + k) : -q]  # what it wrote just before going quiet
+                heard = any(int(t) not in (self.pad, self.eos) for t in before)
+                audio = np.concatenate(self.recent)
+                quiet = audio[-self.quiet_samples :]
+                context = audio[: len(audio) - len(quiet)][-self.context_samples :]
+                if not (heard and self.context_samples):
+                    context = audio[:0]
                 with mlx_turn():
                     self.inner = self.model.create_streaming_session(
                         transcription_delay_ms=self.delay_ms
                     )
-                self.inner.feed(np.concatenate(self.recent)[-self.keep :])
-                self.used, self.skip = 0, self.quiet_tokens
+                self.inner.feed(np.concatenate([context, quiet]))
+                drop = int(len(context) / SAMPLE_RATE / 0.08)  # the context's tokens: text dropped
+                self.used, self.skip = drop, drop + q
                 self.restarts += 1
         return out
 
@@ -306,7 +327,8 @@ class MlxRealtimeBackend(StreamBackend):
     """Voxtral Mini 4B Realtime via mlx-audio on the GPU. Options: `transcription_delay_ms`
     (80-2400, multiples of 80; 480 recommended) trades latency for accuracy; `cache_limit_gb`
     caps MLX's buffer cache during a session; `restart_quiet_s` starts a fresh session after
-    that many seconds of padding only (see VoxtralSession)."""
+    that many seconds of padding only, given `restart_context_s` of earlier speech first (see
+    VoxtralSession)."""
 
     append_only = True
 
@@ -319,11 +341,13 @@ class MlxRealtimeBackend(StreamBackend):
         options = spec.options
         return {"model": model, "delay": options.get("transcription_delay_ms"),
                 "cache_limit_gb": options.get("cache_limit_gb"),
-                "restart_quiet_s": options.get("restart_quiet_s")}, "mlx"  # fmt: skip
+                "restart_quiet_s": options.get("restart_quiet_s"),
+                "restart_context_s": options.get("restart_context_s", 0.0)}, "mlx"  # fmt: skip
 
     def session(self, handle):
         return VoxtralSession(handle["model"], handle["delay"], handle.get("cache_limit_gb"),
-                              handle.get("restart_quiet_s"))  # fmt: skip
+                              handle.get("restart_quiet_s"),
+                              handle.get("restart_context_s", 0.0))  # fmt: skip
 
 
 STREAM_BACKENDS = {

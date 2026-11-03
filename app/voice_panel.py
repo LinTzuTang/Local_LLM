@@ -265,7 +265,7 @@ def panel(page: str = va.PAGE) -> None:
                 help=tr(
                     "**串流**：邊講邊出字，講完約 0.3 秒內定稿（sherpa-onnx、X-ASR、Voxtral 4-bit）。"
                     "**非串流**：偵測到你停頓（約 0.8 秒）後把整句交給模型辨識，講話時看不到字，但通常更準"
-                    "（國慶演說評測：Qwen3-ASR-1.7B 2.9%、Voxtral 4-bit 4.9%）；每輪延遲表的「辨識」欄可以直接比較兩種。"
+                    "（國慶演說評測：Qwen3-ASR-1.7B 2.9%、Voxtral 4-bit 3.0%）；每輪延遲表的「辨識」欄可以直接比較兩種。"
                     if not single
                     else "只列出跟得上即時的串流模型（4-bit Voxtral 可用，全精度版太慢）。"
                     + (
@@ -278,7 +278,7 @@ def panel(page: str = va.PAGE) -> None:
                     "stop (sherpa-onnx, X-ASR, Voxtral 4-bit). **Whole-clip**: once you pause "
                     "(about 0.8 s) the whole utterance goes to the model; nothing shows while you "
                     "talk, but it is usually more accurate (National Day speech: Qwen3-ASR-1.7B "
-                    "2.9%, Voxtral 4-bit 4.9%); the latency table's ASR column compares the two."
+                    "2.9%, Voxtral 4-bit 3.0%); the latency table's ASR column compares the two."
                     if not single
                     else "Only streaming models that keep up with real time (4-bit Voxtral; the "
                     "full-precision build is too slow)."

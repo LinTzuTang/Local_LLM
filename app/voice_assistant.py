@@ -27,7 +27,7 @@ from i18n import tr
 from local_llm import gateway_client, voice_agent, voice_cloud
 
 STATIC = Path(__file__).parent / "static" / "voice_agent"
-# The best local streaming ASR of the evaluation (docs: Live captions): 4-bit Voxtral, 4.9% on the
+# The best local streaming ASR of the evaluation (docs: Live captions): 4-bit Voxtral, 3.0% on the
 # National Day speech and final text in about 0.7 s (Zipformer 10.8%; X-ASR 480 ms is more
 # accurate on the meeting but finalises 4-8 s late). FALLBACK_ASR when it is not installed.
 DEFAULT_ASR = "voxtral-mini-4b-realtime-4bit"

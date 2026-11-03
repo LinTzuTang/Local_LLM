@@ -4255,6 +4255,7 @@
           ],
           "cache_limit_gb": 4,
           "restart_quiet_s": 3,
+          "restart_context_s": 10,
           "realtime": false
         },
         "note": "閘道下載 mlx-community 的 fp16 轉檔（8.9GB，@9977a0f；官方 Mistral 權重的格式轉換，未量化），用 mlx-audio 的 VoxtralStreamingSession 邊收音邊解碼（因果編碼器，延遲 480 ms）。不需指定語言；只會往後加字、不會改前面的字。",
@@ -4321,7 +4322,8 @@
             "en"
           ],
           "cache_limit_gb": 4,
-          "restart_quiet_s": 3
+          "restart_quiet_s": 3,
+          "restart_context_s": 10
         },
         "note": "閘道下載 mlx-community 的 4-bit 量化版（3.1GB，@fdebf7b），用 mlx-audio 的 VoxtralStreamingSession 邊收音邊解碼（延遲 480 ms），只往後加字。",
         "note_en": "The gateway downloads mlx-community's 4-bit quantisation (3.1 GB, @fdebf7b) and decodes with mlx-audio's VoxtralStreamingSession as audio arrives (480 ms delay); it only appends text."
