@@ -507,7 +507,13 @@ class MlxDiarizationBackend(Backend):
     """Who spoke when with an end-to-end model in MLX (mlx-audio's vad models): NVIDIA
     Nemotron 3 Diarization (up to 8 speakers) or Streaming Sortformer (4). They estimate the
     speaker count themselves and take none; `threshold` is the speaker-activity threshold
-    (catalog option, 0.5 by default)."""
+    (catalog option, 0.5 by default).
+
+    Streaming Sortformer must run in its streaming mode (5 s chunks with its speaker cache,
+    generate_stream): mlx-audio's Sortformer.generate feeds the whole recording in one pass,
+    which the streaming model was not trained for (11-03, AliMeeting R8001 5 min: one pass
+    DER 53.2% with 2 of 4 speakers, streaming 18.9% with 4). Nemotron's generate already
+    streams with a bounded context."""
 
     task = "diarize"
 
@@ -529,15 +535,25 @@ class MlxDiarizationBackend(Backend):
         import numpy as np
 
         samples = np.ascontiguousarray(decode_audio(audio), dtype=np.float32)
-        with mlx_turn():
-            out = handle["model"].generate(samples, sample_rate=SAMPLE_RATE,
-                                           threshold=threshold or handle["threshold"])  # fmt: skip
+        model, threshold = handle["model"], threshold or handle["threshold"]
+        streaming = getattr(getattr(model.config, "modules_config", None), "use_aosc", False)
+        run = model.generate_stream if streaming else model.generate
+        with mlx_turn():  # Sortformer: chunk by chunk, then join turns split at chunk ends
+            outs = run(samples, sample_rate=SAMPLE_RATE, threshold=threshold)
+            outs = list(outs) if streaming else [outs]
+            pieces = [(float(s.start), float(s.end), int(s.speaker))
+                      for o in outs for s in o.segments]  # fmt: skip
             mx.clear_cache()
+        joined: list[list] = []
+        for start, end, slot in sorted(pieces, key=lambda p: (p[2], p[0])):
+            if joined and joined[-1][2] == slot and start - joined[-1][1] < 0.05:
+                joined[-1][1] = max(joined[-1][1], end)
+            else:
+                joined.append([start, end, slot])
         order: dict[int, int] = {}  # model speaker slot -> 0, 1, ... in order of first appearance
         segments = [
-            {"start": round(float(s.start), 2), "end": round(float(s.end), 2),
-             "speaker": order.setdefault(int(s.speaker), len(order))}
-            for s in sorted(out.segments, key=lambda s: s.start)
+            {"start": round(a, 2), "end": round(b, 2), "speaker": order.setdefault(k, len(order))}
+            for a, b, k in sorted(joined)
         ]  # fmt: skip
         return {
             "segments": segments,
