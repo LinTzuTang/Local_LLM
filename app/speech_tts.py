@@ -800,15 +800,20 @@ def benchmark_view() -> None:
             "也就是助理開口前要等多久；能串流的聲音（Qwen3-TTS、Azure）邊合成邊播，"
             "實際只要等「邊合成邊播首段」。會議稿 CER：Qwen3-ASR-1.7B 聽合成結果；測試腳本串流 "
             "CER："
-            "即時語音助理的 16 句中文測試台詞送進預設串流辨識（Zipformer），看能不能當測試講者。"
+            "即時語音助理的 16 句中文測試台詞送進串流辨識 Zipformer 中英"
+            "（zipformer-zh-en-stream，測試當時的預設），看能不能當測試講者。"
+            "錯字率同時包含 TTS 念錯與辨識模型聽錯，兩者分不開；1–2% 的差距在辨識模型本身的誤差內。"
             "腳本：scripts/speech_eval/run_tts_bench.py。",
             "Method: each voice first reads a short line to load the model (Load), then the "
             "meeting one sentence at a time; First is how long the first sentence took, the "
             "wait before the assistant talks; voices that stream (Qwen3-TTS, Azure) play while "
             "they are made, so the wait is the streamed first piece. Meeting CER: "
             "Qwen3-ASR-1.7B transcribes the result; script "
-            "streaming CER: the voice assistant's 16 Chinese test lines through the default "
-            "streaming ASR (Zipformer), i.e. can the voice act as the test speaker. Script: "
+            "streaming CER: the voice assistant's 16 Chinese test lines through the streaming "
+            "ASR Zipformer zh-en (zipformer-zh-en-stream, the default when measured), i.e. can "
+            "the voice act as the test speaker. Both rates include the speech model's own "
+            "mistakes, which cannot be told apart from the voice's; differences of 1-2% are "
+            "within its error. Script: "
             "scripts/speech_eval/run_tts_bench.py.",
         )
     )
