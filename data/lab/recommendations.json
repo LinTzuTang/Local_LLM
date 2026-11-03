@@ -1,6 +1,6 @@
 {
  "_about": "Which model for which situation, from the measured results (docs/SPEECH_EVALUATION.md, data/lab/*_benchmark.json). Models within about one percentage point (ASR) or a few points (other scores) are recommended together. Shown on Compare speech models -> Pick a model.",
- "date": "2026-11-02",
+ "date": "2026-11-03",
  "rows": [
   {
    "task": [
@@ -78,16 +78,16 @@
     "Chinese"
    ],
    "local": [
-    "Voxtral 4-bit（3.7%、0.7 秒定稿）；吵雜環境：Zipformer 中文 2025（人聲噪音 7.0%）；只要一句一句出字：Qwen3-ASR-1.7B＋停頓偵測（2.9%、一句說完 0.8 秒）",
-    "Voxtral 4-bit (3.7%, final in 0.7 s); noisy rooms: Zipformer Chinese 2025 (7.0% in babble noise); sentence by sentence: Qwen3-ASR-1.7B + pause detection (2.9%, 0.8 s after a sentence)"
+    "Voxtral 4-bit（4.9%、0.7 秒定稿；人聲噪音 3.5%）；只要一句一句出字：Qwen3-ASR-1.7B＋停頓偵測（2.9%、一句說完 0.8 秒）",
+    "Voxtral 4-bit (4.9%, final in 0.7 s; 3.5% in babble noise); sentence by sentence: Qwen3-ASR-1.7B + pause detection (2.9%, 0.8 s after a sentence)"
    ],
    "cloud": [
     "gpt-live-transcribe（1.2%、0.3 秒定稿）",
     "gpt-live-transcribe (1.2%, final in 0.3 s)"
    ],
    "note": [
-    "多人會議時雲端串流會大量漏字；Voxtral 遇人聲或辦公室噪音會停止出字",
-    "Cloud streaming drops much of a multi-speaker meeting; Voxtral stops writing in babble or office noise"
+    "多人會議時雲端串流會大量漏字；Voxtral 遇噪音會卡住不出字，11-03 起閘道會自動重開（見即時字幕的噪音表）",
+    "Cloud streaming drops much of a multi-speaker meeting; Voxtral can lock up in noise, and since 11-03 the gateway restarts it (see the live captions noise table)"
    ]
   },
   {

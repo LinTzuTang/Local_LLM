@@ -1,7 +1,7 @@
 {
  "_about": "Exported by scripts/speech_eval/export_streaming_benchmark.py; shown on Compare speech models -> Live -> Results.",
- "exported_at": "2026-10-28T11:29:56+08:00",
- "local_at": "2026-10-21T17:49:34+08:00",
+ "exported_at": "2026-11-03T18:37:15+08:00",
+ "local_at": "2026-11-03T18:22:22+08:00",
  "cloud_at": "2026-10-20T12:35:00+08:00",
  "hardware": "Apple M5 Pro, 64 GB",
  "cloud": "Azure OpenAI Realtime API, East US 2; Google Vertex AI Live API (global)",
@@ -17,7 +17,7 @@
   "voxtral-mini-4b-realtime-4bit": {
    "location": "local",
    "backend": "mlx-audio-realtime",
-   "memory_gb": 4.4
+   "memory_gb": 4.7
   },
   "zipformer-zh-2025-stream": {
    "location": "local",
@@ -282,62 +282,6 @@
    "rate_limited": 0
   },
   {
-   "model": "voxtral-mini-4b-realtime-4bit",
-   "sample": "meeting_zh.wav",
-   "metric": "CER",
-   "error_rate": 0.1421,
-   "first_partial_s": 1.025,
-   "final_median_s": 0.782,
-   "final_p90_s": 1.603,
-   "rtf": 0.4607,
-   "deletions": 31,
-   "ref_units": 373,
-   "valid": true,
-   "rate_limited": 0
-  },
-  {
-   "model": "voxtral-mini-4b-realtime-4bit",
-   "sample": "national_day_2026_zh.wav",
-   "metric": "CER",
-   "error_rate": 0.0367,
-   "first_partial_s": 1.108,
-   "final_median_s": 0.656,
-   "final_p90_s": 0.801,
-   "rtf": 0.4717,
-   "deletions": 0,
-   "ref_units": 735,
-   "valid": true,
-   "rate_limited": 0
-  },
-  {
-   "model": "voxtral-mini-4b-realtime-4bit",
-   "sample": "alimeeting_r8001_zh.flac",
-   "metric": "CER",
-   "error_rate": 0.5022,
-   "first_partial_s": 8.399,
-   "final_median_s": 0.824,
-   "final_p90_s": 3.099,
-   "rtf": 0.4781,
-   "deletions": 685,
-   "ref_units": 1605,
-   "valid": true,
-   "rate_limited": 0
-  },
-  {
-   "model": "voxtral-mini-4b-realtime-4bit",
-   "sample": "palau_hsiao_2026_en.wav",
-   "metric": "WER",
-   "error_rate": 0.0074,
-   "first_partial_s": 1.07,
-   "final_median_s": 0.843,
-   "final_p90_s": 1.159,
-   "rtf": 0.4821,
-   "deletions": 0,
-   "ref_units": 542,
-   "valid": true,
-   "rate_limited": 0
-  },
-  {
    "model": "x-asr-zh-en-160ms",
    "sample": "meeting_zh.wav",
    "metric": "CER",
@@ -444,6 +388,62 @@
    "final_median_s": 4.585,
    "final_p90_s": 13.0,
    "rtf": 0.0321,
+   "deletions": 0,
+   "ref_units": 542,
+   "valid": true,
+   "rate_limited": 0
+  },
+  {
+   "model": "voxtral-mini-4b-realtime-4bit",
+   "sample": "meeting_zh.wav",
+   "metric": "CER",
+   "error_rate": 0.118,
+   "first_partial_s": 1.025,
+   "final_median_s": 0.636,
+   "final_p90_s": 1.681,
+   "rtf": 0.4979,
+   "deletions": 18,
+   "ref_units": 373,
+   "valid": true,
+   "rate_limited": 0
+  },
+  {
+   "model": "voxtral-mini-4b-realtime-4bit",
+   "sample": "national_day_2026_zh.wav",
+   "metric": "CER",
+   "error_rate": 0.049,
+   "first_partial_s": 1.108,
+   "final_median_s": 0.661,
+   "final_p90_s": 0.778,
+   "rtf": 0.4681,
+   "deletions": 1,
+   "ref_units": 735,
+   "valid": true,
+   "rate_limited": 0
+  },
+  {
+   "model": "voxtral-mini-4b-realtime-4bit",
+   "sample": "alimeeting_r8001_zh.flac",
+   "metric": "CER",
+   "error_rate": 0.4947,
+   "first_partial_s": 9.237,
+   "final_median_s": 0.895,
+   "final_p90_s": 10.56,
+   "rtf": 0.5882,
+   "deletions": 664,
+   "ref_units": 1605,
+   "valid": true,
+   "rate_limited": 0
+  },
+  {
+   "model": "voxtral-mini-4b-realtime-4bit",
+   "sample": "palau_hsiao_2026_en.wav",
+   "metric": "WER",
+   "error_rate": 0.0074,
+   "first_partial_s": 1.075,
+   "final_median_s": 0.831,
+   "final_p90_s": 1.128,
+   "rtf": 0.486,
    "deletions": 0,
    "ref_units": 542,
    "valid": true,
@@ -2061,16 +2061,16 @@
     "where": "local",
     "error_rate": {
      "clean": 0.0389,
-     "babble10": 0.8054,
-     "babble0": 1.0,
-     "office5": 0.821,
+     "babble10": 0.035,
+     "babble0": 0.1595,
+     "office5": 0.0428,
      "telephone": 0.0506
     },
     "final_median_s": {
-     "clean": 0.652,
-     "babble10": 7.582,
-     "babble0": null,
-     "office5": 7.583,
+     "clean": 0.653,
+     "babble10": 0.663,
+     "babble0": 0.622,
+     "office5": 0.662,
      "telephone": 0.663
     }
    },
@@ -2152,8 +2152,8 @@
    }
   ],
   "notes": [
-   "**平台預設的 Voxtral 4-bit 怕人聲與辦公室噪音**：講到一半就不再出字（人聲 10 dB 錯 80.5%、0 dB 完全沒字、辦公室 82.1%），重跑結果相同；電話音質沒問題（5.1%）。這次是 92 秒連續說話，語音助理一句一句的短台詞沒有出現這個問題。**本機最耐噪音的是 Zipformer 中文 2025**（人聲 10 dB 7.0%、辦公室 13.2%、電話 7.0%），吵雜環境的即時字幕建議改用它；雲端 gpt-live-transcribe 最穩（多數條件 2–5%），但人聲 0 dB 也錯 23%。",
-   "**The platform's default Voxtral 4-bit fails in babble and office noise**: it stops writing part-way (80.5% at babble 10 dB, nothing at 0 dB, 82.1% in office noise), the same on a rerun; telephone audio is fine (5.1%). This is 92 s of continuous speech; the voice assistant's short lines did not show it. **The most robust local model is Zipformer Chinese 2025** (7.0% babble 10 dB, 13.2% office, 7.0% telephone): use it for live captions in noisy rooms. The cloud gpt-live-transcribe is steadiest (2-5% in most conditions) but also reaches 23% at babble 0 dB."
+   "**Voxtral 4-bit 原本遇人聲與辦公室噪音會卡住**：串流一開始就判定「沒人說話」、之後只輸出空白（人聲 10 dB 錯 80.5%、0 dB 完全沒字、辦公室 82.1%）；會不會卡住對量化與延遲設定很敏感（8-bit 也會、6-bit 不會），調參數不可靠。**11-03 閘道加上自動重開**（連續 3 秒只輸出空白就重開，並把這 3 秒的聲音重送）後：人聲 10 dB 3.5%、0 dB 16.0%、辦公室 4.3%，比本機的 Zipformer 中文 2025（7.0%、53.7%、13.2%）和雲端 gpt-live-transcribe 人聲 0 dB（23.0%）都準；乾淨與電話音質不變。表中 Voxtral 是修正後的數字。",
+   "**Voxtral 4-bit used to lock up in babble and office noise**: at the start of the stream it decided nobody was speaking and wrote only padding from then on (80.5% at babble 10 dB, nothing at 0 dB, 82.1% in office noise); whether it locks up is sensitive to quantisation and delay (8-bit too, 6-bit not), so tuning is not reliable. **Since 11-03 the gateway restarts the session** after 3 s of padding only and replays those 3 s: 3.5% at babble 10 dB, 16.0% at 0 dB, 4.3% in office noise, better than the local Zipformer Chinese 2025 (7.0%, 53.7%, 13.2%) and the cloud gpt-live-transcribe at babble 0 dB (23.0%); clean and telephone unchanged. The table shows Voxtral after the fix."
   ]
  }
 }

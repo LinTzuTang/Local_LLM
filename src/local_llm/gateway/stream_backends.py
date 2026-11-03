@@ -209,11 +209,26 @@ class VoxtralSession:
 
     The text is decoded here from the generated token ids with an incremental UTF-8 decoder:
     mlx-audio's own deltas slice successive decodes, so a Chinese character split across two
-    byte-level tokens leaves a replacement character behind and loses the real one."""
+    byte-level tokens leaves a replacement character behind and loses the real one.
+
+    `restart_quiet_s`: when the model has written nothing but padding for that long while audio
+    keeps coming, the session is replaced by a fresh one that is first given those seconds of
+    audio again (the old session wrote nothing for them, so nothing repeats; the replayed part
+    does not count towards the next restart). With other people talking in the background
+    Voxtral can settle into "nobody is speaking" at the start of a stream and stay there: on
+    the 92 s noise clips the 4-bit model wrote nothing after 27 s (babble 10 dB CER 80.5%,
+    office 5 dB 82.1%) or nothing at all (babble 0 dB). Whether it locks up flips with tiny
+    numeric changes (8-bit locks up too, 6-bit does not; other delays differ), so tuning does
+    not fix it. With 3 s and the replay the three clips came to 3.5%, 4.3% and 16.0%; on the
+    benchmark samples synthetic meeting 14.2 -> 11.8%, AliMeeting 50.2 -> 49.5%, English
+    unchanged, the National Day speech 3.7 -> 4.9% (two restarts in pauses). Restarting
+    without the replay lost the words in the quiet window (National Day 5.0%, AliMeeting
+    59.0%)."""
 
     append_only = True
 
-    def __init__(self, model, delay_ms: int | None, cache_limit_gb: float | None = None):
+    def __init__(self, model, delay_ms: int | None, cache_limit_gb: float | None = None,
+                 restart_quiet_s: float | None = None):  # fmt: skip
         import codecs
 
         # Decoding frame by frame churns through MLX buffers; with MLX's default (unlimited)
@@ -225,10 +240,18 @@ class VoxtralSession:
             import mlx.core as mx
 
             self.previous_limit = mx.set_cache_limit(int(cache_limit_gb * 2**30))
+        self.model, self.delay_ms = model, delay_ms
         self.inner = model.create_streaming_session(transcription_delay_ms=delay_ms)
         self.tokenizer = model._tokenizer
         self.utf8 = codecs.getincrementaldecoder("utf-8")(errors="replace")
         self.used = 0  # generated tokens already turned into text
+        self.pad = getattr(getattr(model, "config", None), "streaming_pad_token_id", None)
+        # the model writes one token per 80 ms of audio
+        self.quiet_tokens = int(restart_quiet_s / 0.08) if restart_quiet_s else 0
+        self.keep = int(restart_quiet_s * SAMPLE_RATE) if restart_quiet_s else 0
+        self.recent: list = []  # the last `keep` samples, replayed into a fresh session
+        self.skip = 0  # tokens of the replayed audio, not counted as new silence
+        self.restarts = 0
 
     def _text(self, final: bool = False) -> list[tuple[str, bool]]:
         tokens = self.inner.generated[self.used :]
@@ -248,7 +271,23 @@ class VoxtralSession:
 
     def feed(self, samples) -> list[tuple[str, bool]]:
         self.inner.feed(samples)
-        return self._run()
+        out = self._run()
+        if self.quiet_tokens and self.pad is not None:
+            import numpy as np
+
+            self.recent = (self.recent + [np.asarray(samples, dtype=np.float32)])[-200:]
+            while sum(len(r) for r in self.recent[1:]) >= self.keep:
+                self.recent.pop(0)
+            tail = self.inner.generated[self.skip :][-self.quiet_tokens :]
+            if len(tail) == self.quiet_tokens and all(int(t) == self.pad for t in tail):
+                with mlx_turn():
+                    self.inner = self.model.create_streaming_session(
+                        transcription_delay_ms=self.delay_ms
+                    )
+                self.inner.feed(np.concatenate(self.recent)[-self.keep :])
+                self.used, self.skip = 0, self.quiet_tokens
+                self.restarts += 1
+        return out
 
     def close(self) -> list[tuple[str, bool]]:
         self.inner.close()
@@ -266,7 +305,8 @@ class VoxtralSession:
 class MlxRealtimeBackend(StreamBackend):
     """Voxtral Mini 4B Realtime via mlx-audio on the GPU. Options: `transcription_delay_ms`
     (80-2400, multiples of 80; 480 recommended) trades latency for accuracy; `cache_limit_gb`
-    caps MLX's buffer cache during a session (see VoxtralSession)."""
+    caps MLX's buffer cache during a session; `restart_quiet_s` starts a fresh session after
+    that many seconds of padding only (see VoxtralSession)."""
 
     append_only = True
 
@@ -278,10 +318,12 @@ class MlxRealtimeBackend(StreamBackend):
             raise RuntimeError("this mlx-audio model has no streaming session")
         options = spec.options
         return {"model": model, "delay": options.get("transcription_delay_ms"),
-                "cache_limit_gb": options.get("cache_limit_gb")}, "mlx"  # fmt: skip
+                "cache_limit_gb": options.get("cache_limit_gb"),
+                "restart_quiet_s": options.get("restart_quiet_s")}, "mlx"  # fmt: skip
 
     def session(self, handle):
-        return VoxtralSession(handle["model"], handle["delay"], handle.get("cache_limit_gb"))
+        return VoxtralSession(handle["model"], handle["delay"], handle.get("cache_limit_gb"),
+                              handle.get("restart_quiet_s"))  # fmt: skip
 
 
 STREAM_BACKENDS = {

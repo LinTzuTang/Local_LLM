@@ -493,6 +493,54 @@ def test_voxtral_session_joins_characters_split_across_tokens():
     assert session.close() == []  # the end token adds no text
 
 
+def test_voxtral_session_restarts_after_padding_only():
+    from local_llm.gateway.stream_backends import VoxtralSession
+
+    vocab = {32: b"", 13: "安".encode(), 2: b""}
+    made = []
+
+    class Tokenizer:
+        def token_bytes(self, token_id):
+            return vocab[token_id]
+
+    class Inner:
+        """One token per fed frame: the fed value itself."""
+
+        def __init__(self):
+            self.generated, self._pos, self.done, self.pending = [], 0, False, []
+            made.append(self)
+
+        def feed(self, samples):
+            self.pending.append(int(samples[0]))
+
+        def close(self):
+            self.pending.append(2)
+
+        def step(self, max_decode_tokens=32):
+            if self.pending:
+                self.generated.append(self.pending.pop(0))
+                self._pos += 1
+                self.done = self.generated[-1] == 2
+
+    class Config:
+        streaming_pad_token_id = 32
+
+    class Model:
+        _tokenizer = Tokenizer()
+        config = Config()
+
+        def create_streaming_session(self, transcription_delay_ms=None):
+            return Inner()
+
+    session = VoxtralSession(Model(), 480, restart_quiet_s=0.24)  # three padding tokens
+    assert [session.feed([t] * 1280) for t in (32, 32)] == [[], []]
+    assert session.feed([32] * 1280) == [] and len(made) == 2 and session.restarts == 1
+    assert made[1].pending == [32]  # the quiet audio is given to the fresh session again
+    assert session.feed([13] * 1280) == [("安", True)]  # the fresh session's text comes through
+    assert session.feed([32] * 1280) == [] and session.restarts == 1  # replay not counted
+    assert session.close() == []
+
+
 class EnergySession:
     """Writes a character for each loud frame; commits after three quiet frames (endpoint)."""
 
