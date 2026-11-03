@@ -7,6 +7,7 @@
 | `national_day_2026_zh.wav` / `national_day_2026_zh.txt` | 真人錄音：賴清德總統 115 年國慶演說節錄，4 分 29 秒，照稿宣讀 | 見下 |
 | `national_day_2026_en.txt` | 上一列同一段落的**官方英譯**（翻譯評測的參考譯文） | 見下 |
 | `alimeeting_r8001_zh.flac` / `alimeeting_r8001_zh.txt` | 真實 4 人會議（AliMeeting），5 分鐘，遠場麥克風，大陸口音；講者時間在 `data/lab/speech_refs/alimeeting_r8001_zh.rttm` | 見下（CC BY-SA 4.0） |
+| `alimeeting_r8009_zh.flac` / `alimeeting_r8009_zh.txt` | 真實 2 人會議（AliMeeting），5 分鐘，遠場麥克風，大陸口音；講者時間在 `data/lab/speech_refs/alimeeting_r8009_zh.rttm` | 見下（CC BY-SA 4.0） |
 | `palau_hsiao_2026_en.wav` / `palau_hsiao_2026_en.txt` | 真人錄音：蕭美琴副總統在帛琉的英語致詞，4 分 59 秒（台灣口音英語） | 見下 |
 | `librispeech_20_en.flac` / `librispeech_20_en.txt` | 英文有聲書：LibriSpeech test-clean 20 句接成一段，3 分 6 秒（句間 0.8 秒靜音） | 見下（CC BY 4.0） |
 | （本機）`storage/speech_samples/hokkien_moe_20_nan.flac` | 台語：教育部台語辭典例句 20 句接成一段，1 分 47 秒；**不在 repo**，用 `scripts/make_speech_samples.py` 在本機產生 | 見下（CC BY-ND 3.0 TW） |
@@ -70,6 +71,12 @@
   講者時間轉成 RTTM（`data/lab/speech_refs/alimeeting_r8001_zh.rttm`，講者改名為 講者1–4）。多人同時說話時順序不唯一，整段 CER 會略為偏高。
 - **授權**：CC BY-SA 4.0。使用請標示「AliMeeting corpus (Yu et al., ICASSP 2022), OpenSLR 119」。
   本節錄只剪輯與轉檔，依相同授權（CC BY-SA 4.0）提供。
+
+## alimeeting_r8009_zh：AliMeeting 真實會議節錄（2 人）
+
+- **來源**：同上，評測集 `Eval_Ali` 的 `R8009_M8020` 遠場錄音**第 1 聲道**、前 300 秒（切在沒人說話處），16 kHz 單聲道 FLAC。
+- **參考答案**：資料集附的 TextGrid，依開始時間串接成 `alimeeting_r8009_zh.txt`；講者時間轉成 RTTM（`data/lab/speech_refs/alimeeting_r8009_zh.rttm`，講者改名為 講者1–2）。
+- **授權**：CC BY-SA 4.0，標示同上。本節錄只剪輯與轉檔，依相同授權提供。
 
 ## palau_hsiao_2026_en：蕭美琴副總統英語致詞
 

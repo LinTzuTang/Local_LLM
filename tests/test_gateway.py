@@ -26,7 +26,8 @@ STREAM_IDS = {
     "voxtral-mini-4b-realtime", "voxtral-mini-4b-realtime-4bit",
     "x-asr-zh-en-160ms", "x-asr-zh-en-480ms",
 }  # fmt: skip
-GATEWAY_IDS = ASR_IDS | STREAM_IDS | {"docling", "bge-reranker-v2-m3", "speaker-diarization"}
+GATEWAY_IDS = ASR_IDS | STREAM_IDS | {"docling", "bge-reranker-v2-m3", "speaker-diarization",
+                                     "nemotron-3-diarization", "streaming-sortformer-v2.1"}
 
 
 class FakeBackend(Backend):
@@ -675,3 +676,29 @@ def test_speech_and_ocr_endpoints(gateway, monkeypatch):
     monkeypatch.setattr(ocr, "jev_score", lambda image, text: 0.91)
     r = client.post("/v1/ocr/score", files={"file": ("p.png", b"x")}, data={"text": "一行文字"})
     assert r.status_code == 200 and r.json()["score"] == 0.91
+
+
+def test_mlx_diarization_backend_numbers_speakers_in_order(monkeypatch, tmp_path):
+    np = pytest.importorskip("numpy")
+    pytest.importorskip("mlx.core")
+    from types import SimpleNamespace
+
+    from local_llm.gateway import backends
+
+    silence = np.zeros(16000 * 3, dtype=np.float32)
+    monkeypatch.setattr(backends, "decode_audio", lambda path: silence)
+    seen = {}
+
+    class Model:
+        def generate(self, samples, sample_rate, threshold):
+            seen["threshold"] = threshold
+            seg = SimpleNamespace
+            return SimpleNamespace(segments=[seg(start=1.5, end=2.0, speaker=0),
+                                             seg(start=0.2, end=1.0, speaker=3),
+                                             seg(start=2.1, end=2.9, speaker=3)])  # fmt: skip
+
+    backend = backends.MlxDiarizationBackend()
+    out = backend.run({"model": Model(), "threshold": 0.5}, tmp_path / "a.wav", num_speakers=2)
+    assert seen["threshold"] == 0.5  # the count is ignored, the catalog threshold used
+    assert [s["speaker"] for s in out["segments"]] == [0, 1, 0]  # slot 3 spoke first
+    assert out["speakers"] == 2 and out["duration"] == 3.0

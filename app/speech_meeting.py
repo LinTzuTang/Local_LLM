@@ -20,6 +20,7 @@ import altair as alt
 import jobs
 import pandas as pd
 import speech_common as sc
+import speech_diarize_bench as dbench
 import streamlit as st
 from common import kept, save_run
 from i18n import tr
@@ -55,7 +56,8 @@ def meeting_work(job: jobs.Job, url: str) -> None:
     path = Path(state["audio"])
     job.detail, job.progress = "diarization", 0.05
     diar = gateway_client.diarize(
-        path, state["num_speakers"] or None, threshold=state["threshold"], base_url=url
+        path, state["num_speakers"] or None, model=state.get("diarizer", DIARIZER),
+        threshold=state["threshold"], base_url=url,
     )
     turns = diar["segments"]
     state["diar"] = {
@@ -110,7 +112,7 @@ def meeting_work(job: jobs.Job, url: str) -> None:
             "audio": state["audio_name"],
             "source": state["source"],
             "language": state["language"],
-            "diarizer": DIARIZER,
+            "diarizer": state.get("diarizer", DIARIZER),
             "asr": state["asr"],
             "method": state["method"],
             "num_speakers": state["num_speakers"] or None,
@@ -344,23 +346,38 @@ def benchmark_view() -> None:
         st.caption(about + "。" + data["about"])
 
 
+VIEWS = {
+    "analyse": (tr("分析一段錄音", "Analyse a recording"), "record_voice_over"),
+    "compare": (tr("用測試資料比較模型", "Compare models on test meetings"), "leaderboard"),
+}
+
+
 def meeting_page(url: str, status: dict) -> None:
+    st.session_state.setdefault("mt_view", "analyse")
+    view = st.segmented_control(
+        tr("做什麼", "Task"), list(VIEWS),
+        format_func=lambda v: f":material/{VIEWS[v][1]}: {VIEWS[v][0]}",
+        label_visibility="collapsed", **kept("mt_view"),
+    ) or "analyse"  # fmt: skip
     benchmark_view()
+    if view == "compare":
+        dbench.compare_page(url, status)
+        return
     labels = sc.names()
     installed = [m for m in labels if status.get(m, {}).get("installed")]
-    diarizer = status.get(DIARIZER)
-    if not diarizer:
+    diar_names = sc.names("diarize")
+    if not diar_names:
         st.error(tr("模型閘道沒有說話者分段模型。", "The gateway has no diarization model."))
         return
+    default = DIARIZER if DIARIZER in diar_names else next(iter(diar_names))
+    st.session_state.setdefault("mt_diarizer", default)
+    diarizer_id = st.selectbox(
+        tr("講者辨識模型", "Diarization model"), list(diar_names),
+        format_func=lambda m: sc.model_label(m, status, diar_names), **kept("mt_diarizer"),
+    )  # fmt: skip
+    diarizer = status.get(diarizer_id) or {"installed": False}
     if not diarizer["installed"]:
-        st.info(
-            tr(
-                "會議模式需要說話者分段模型（約 34MB，CPU 執行）。",
-                "Meeting mode needs the speaker diarization model (about 34 MB, runs on CPU).",
-            ),
-            icon=":material/record_voice_over:",
-        )
-        sc.download_missing([DIARIZER], status, "mt")
+        sc.download_missing([diarizer_id], status, "mt")
     chosen = sc.audio_choice("mt", default="meeting_zh.wav")
     sc.follow("mt", "reference", chosen, lambda s: sc.ref_file(s, ".rttm"))
     c1, c2, c3 = st.columns([1.3, 1, 1.4])
@@ -386,12 +403,17 @@ def meeting_page(url: str, status: dict) -> None:
         st.session_state.mt_speakers = count if count in SPEAKERS else 0
         st.session_state.mt_speakers_for = picked
     st.session_state.setdefault("mt_speakers", 0)
-    speakers = c2.selectbox(
-        tr("講者人數", "Speakers"),
-        SPEAKERS,
-        format_func=lambda n: str(n) if n else tr("自動估計", "Estimate"),
-        **kept("mt_speakers"),
-    )
+    speakers = 0
+    if dbench.takes_count(diarizer_id):
+        speakers = c2.selectbox(
+            tr("講者人數", "Speakers"),
+            SPEAKERS,
+            format_func=lambda n: str(n) if n else tr("自動估計", "Estimate"),
+            **kept("mt_speakers"),
+        )
+    else:
+        c2.caption(tr("這個模型自己判斷人數（最多 4 或 8 人），不接受指定人數。",
+                      "This model estimates the speaker count itself (up to 4 or 8)."))  # fmt: skip
     methods = {
         "merge": tr("合併時間軸", "Merge timestamps"),
         "turns": tr("逐段辨識", "Transcribe each turn"),
@@ -423,14 +445,16 @@ def meeting_page(url: str, status: dict) -> None:
                 "speaker; use 'Transcribe each turn' instead.",
             )
         )
-    threshold = 0.7
-    with st.expander(tr("進階：分群門檻", "Advanced: clustering threshold")):
-        st.session_state.setdefault("mt_threshold", 0.7)
-        threshold = st.slider(
-            tr("講者分群門檻（越低分出越多人；講者人數設定時不用）",
-               "Clustering threshold (lower = more speakers; unused when the count is set)"),
-            0.3, 1.2, step=0.05, **kept("mt_threshold"),
-        )  # fmt: skip
+    threshold = None  # the end-to-end models keep their own speaker-activity threshold
+    if dbench.takes_count(diarizer_id):  # sherpa-onnx: a clustering threshold
+        threshold = 0.7
+        with st.expander(tr("進階：分群門檻", "Advanced: clustering threshold")):
+            st.session_state.setdefault("mt_threshold", 0.7)
+            threshold = st.slider(
+                tr("講者分群門檻（越低分出越多人；講者人數設定時不用）",
+                   "Clustering threshold (lower = more speakers; unused when the count is set)"),
+                0.3, 1.2, step=0.05, **kept("mt_threshold"),
+            )  # fmt: skip
     reference = st.text_area(
         tr("參考講者時間軸（選填，用來計算 DER）", "Reference speaker turns (optional, for DER)"),
         height=110,
@@ -463,6 +487,7 @@ def meeting_page(url: str, status: dict) -> None:
                 "asr": asr,
                 "language": "zh",
                 "num_speakers": speakers,
+                "diarizer": diarizer_id,
                 "threshold": threshold,
                 "method": method,
                 "reference": reference.strip(),

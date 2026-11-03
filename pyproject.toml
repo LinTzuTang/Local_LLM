@@ -81,6 +81,7 @@ testpaths = ["tests"]
 "app/asr_bench.py" = ["E501"]  # the whole-clip ASR benchmark's copy
 "app/ocr_compare.py" = ["E501"]  # the OCR tab's copy
 "app/speech_bench.py" = ["E501"]  # the streaming benchmark's copy
+"app/speech_diarize_bench.py" = ["E501"]  # the diarization comparison's copy
 # Schema DDL and Chinese sample-data templates.
 "src/local_llm/company_db.py" = ["E501"]
 # Bilingual descriptions of the MCP servers and tools.

@@ -14,6 +14,7 @@ plain lines `<start> <end> <speaker>` (seconds or m:ss), parsed by `parse_refere
 
 import re
 from collections.abc import Iterable
+from pathlib import Path
 
 FRAME_S = 0.01
 
@@ -195,3 +196,45 @@ def der(reference: list[dict], hypothesis: list[dict], collar: float = 0.0) -> d
         "speech": round(speech * FRAME_S, 2),
         "mapping": mapping,
     }
+
+
+def azure_diarize(audio: Path, max_speakers: int = 10, locale: str = "zh-TW") -> dict:
+    """Who spoke when from Azure AI Speech Fast Transcription with diarization (the audio is
+    uploaded). Returns the gateway's shape: {"segments": [{"start", "end", "speaker", "text"}],
+    "speakers", "seconds"}; speakers numbered 0, 1, ... in order of first appearance. Azure
+    estimates the count up to `max_speakers`; it labels whole phrases, so overlapping speech
+    goes to one speaker."""
+    import json
+    import time
+
+    import httpx
+
+    from .neural_tts import azure_speech
+
+    creds = azure_speech()
+    if creds is None:
+        raise RuntimeError("no Azure Speech key: AZURE_SPEECH_KEY or AZURE_OPENAI_API_KEY in .env")
+    region, key = creds
+    url = (f"https://{region}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe"
+           "?api-version=2024-11-15")  # fmt: skip
+    definition = {"locales": [locale],
+                  "diarization": {"enabled": True, "maxSpeakers": max_speakers}}  # fmt: skip
+    start = time.perf_counter()
+    files = {"audio": (Path(audio).name, Path(audio).read_bytes()),
+             "definition": (None, json.dumps(definition), "application/json")}  # fmt: skip
+    for attempt in range(6):  # the Fast Transcription quota answers 429 when busy
+        r = httpx.post(url, headers={"Ocp-Apim-Subscription-Key": key}, timeout=600, files=files)
+        if r.status_code != 429:
+            break
+        time.sleep(20 * (attempt + 1))
+    r.raise_for_status()
+    order: dict = {}
+    segments = []
+    for p in sorted(r.json().get("phrases") or [], key=lambda p: p["offsetMilliseconds"]):
+        begin = p["offsetMilliseconds"] / 1000
+        end = begin + p["durationMilliseconds"] / 1000
+        segments.append({"start": round(begin, 2), "end": round(end, 2),
+                         "speaker": order.setdefault(p.get("speaker", 0), len(order)),
+                         "text": p.get("text", "")})  # fmt: skip
+    seconds = round(time.perf_counter() - start, 2)
+    return {"segments": segments, "speakers": len(order), "seconds": seconds}

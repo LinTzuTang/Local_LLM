@@ -22,6 +22,7 @@ import asr_bench
 import jobs
 import pandas as pd
 import speech_common as sc
+import speech_diarize_bench
 import speech_live
 import speech_meeting
 import speech_translate
@@ -735,6 +736,7 @@ def history_view(data: dict) -> None:
     views = {
         "translate": speech_translate.history_view,
         "meeting": speech_meeting.history_view,
+        "meeting_compare": speech_diarize_bench.history_view,
         "live": speech_live.history_view,
         "tts": speech_tts.history_view,
         "voice_chat": speech_voice.history_view,
@@ -796,6 +798,7 @@ def history_summary(data: dict) -> dict:
     summaries = {
         "translate": speech_translate.history_summary,
         "meeting": speech_meeting.history_summary,
+        "meeting_compare": speech_diarize_bench.history_summary,
         "live": speech_live.history_summary,
         "tts": speech_tts.history_summary,
         "voice_chat": speech_voice.history_summary,

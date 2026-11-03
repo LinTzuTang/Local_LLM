@@ -6209,7 +6209,6 @@
       "repo": "nvidia/Nemotron-3-Diarization",
       "url": "https://huggingface.co/nvidia/Nemotron-3-Diarization",
       "category": "diarize",
-      "status": "catalog",
       "params": "99M",
       "size_gb": 0.4,
       "langs": [
@@ -6223,23 +6222,47 @@
         "custom"
       ],
       "mac": "mlx",
-      "runtime": "mlx-audio／NeMo／NeMo-Speech.cpp",
-      "runtime_en": "mlx-audio / NeMo / NeMo-Speech.cpp",
-      "install": "uv add mlx-audio（mlx-community/Nemotron-3-Diarization）",
-      "install_en": "uv add mlx-audio (mlx-community/Nemotron-3-Diarization)",
+      "runtime": "mlx-audio（Apple GPU；模型閘道）",
+      "runtime_en": "mlx-audio (Apple GPU; model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
       "use": "端到端講者分離，最多 8 人；同一 checkpoint 支援串流（0.32–1.04 s）與離線",
       "use_en": "End-to-end diarization up to 8 speakers; one checkpoint for streaming (0.32-1.04 s) and offline",
       "note": "NVIDIA 2026-09；DIHARD III DER 12.7–13.6%（Sortformer v2.1 為 19.1–19.9%）；訓練含英、普通話等，官方未列支援語言；另有僅供評估的 -preview repo，正式版可商用",
       "note_en": "NVIDIA, 2026-09; DIHARD III DER 12.7-13.6% (Sortformer v2.1: 19.1-19.9%); trained on English, Mandarin and others, languages not formally listed; a separate evaluation-only -preview repo exists, the main one allows commercial use",
       "recommended": false,
-      "released": "2026-09"
+      "released": "2026-09",
+      "gateway": {
+        "id": "nemotron-3-diarization",
+        "task": "diarize",
+        "backend": "mlx-diarization",
+        "weights": [
+          {
+            "repo": "mlx-community/Nemotron-3-Diarization",
+            "revision": "59ed2dbfc1346dcea9d423c71306a3a2499c568f",
+            "files": [
+              "config.json",
+              "model.safetensors"
+            ],
+            "into": "mlx/nemotron-3-diarization"
+          }
+        ],
+        "path": "mlx/nemotron-3-diarization",
+        "size_gb": 0.2,
+        "license": "OpenMDW-1.1（可商用）",
+        "license_en": "OpenMDW-1.1 (commercial use allowed)",
+        "options": {
+          "threshold": 0.5
+        },
+        "note": "閘道從 Hugging Face 下載 mlx-community 的 MLX 轉檔（0.2GB，@59ed2db），用 mlx-audio 在 Apple GPU 上跑；端到端模型，自己判斷人數（最多 8 人），不接受指定人數。",
+        "note_en": "The gateway downloads mlx-community's MLX conversion (0.2 GB, @59ed2db) and runs it with mlx-audio on the Apple GPU; an end-to-end model that estimates the speaker count itself (up to 8) and takes none."
+      }
     },
     {
       "name": "Streaming Sortformer 4spk v2.1",
       "repo": "nvidia/diar_streaming_sortformer_4spk-v2.1",
       "url": "https://huggingface.co/nvidia/diar_streaming_sortformer_4spk-v2.1",
       "category": "diarize",
-      "status": "catalog",
       "params": "117M",
       "size_gb": 0.47,
       "langs": [
@@ -6251,16 +6274,41 @@
         "custom"
       ],
       "mac": "mlx",
-      "runtime": "mlx-audio／NeMo",
-      "runtime_en": "mlx-audio / NeMo",
-      "install": "uv add mlx-audio（mlx-community/diar_streaming_sortformer_4spk-v2.1-fp32）",
-      "install_en": "uv add mlx-audio (mlx-community/diar_streaming_sortformer_4spk-v2.1-fp32)",
+      "runtime": "mlx-audio（Apple GPU；模型閘道）",
+      "runtime_en": "mlx-audio (Apple GPU; model gateway)",
+      "install": "平台一鍵下載（模型閘道）",
+      "install_en": "One-click download in the platform (model gateway)",
       "use": "串流端到端講者分離，最多 4 人（低延遲設定 1.04 s）",
       "use_en": "Streaming end-to-end diarization, max 4 speakers (1.04 s low-latency config)",
       "note": "NVIDIA 2025-10；主要以英文訓練，5 人以上明顯退化；AMI SDM DER 20.6%；舊版 diar_sortformer_4spk-v1 為 CC-BY-NC-4.0（非商用）；已由 Nemotron 3 Diarization 取代",
       "note_en": "NVIDIA, 2025-10; trained mainly on English, degrades with 5+ speakers; AMI SDM DER 20.6%; older diar_sortformer_4spk-v1 is CC-BY-NC-4.0 (non-commercial); superseded by Nemotron 3 Diarization",
       "recommended": false,
-      "released": "2025-10"
+      "released": "2025-10",
+      "gateway": {
+        "id": "streaming-sortformer-v2.1",
+        "task": "diarize",
+        "backend": "mlx-diarization",
+        "weights": [
+          {
+            "repo": "mlx-community/diar_streaming_sortformer_4spk-v2.1-fp16",
+            "revision": "e23e6404bd9859e93edbf94a740eb1c7fc58f12e",
+            "files": [
+              "config.json",
+              "model.safetensors"
+            ],
+            "into": "mlx/streaming-sortformer-v2.1"
+          }
+        ],
+        "path": "mlx/streaming-sortformer-v2.1",
+        "size_gb": 0.24,
+        "license": "NVIDIA Open Model License（可商用）",
+        "license_en": "NVIDIA Open Model License (commercial use allowed)",
+        "options": {
+          "threshold": 0.5
+        },
+        "note": "閘道從 Hugging Face 下載 mlx-community 的 fp16 MLX 轉檔（0.24GB，@e23e640），用 mlx-audio 在 Apple GPU 上跑；端到端模型，自己判斷人數（最多 4 人），不接受指定人數。",
+        "note_en": "The gateway downloads mlx-community's fp16 MLX conversion (0.24 GB, @e23e640) and runs it with mlx-audio on the Apple GPU; an end-to-end model that estimates the speaker count itself (up to 4) and takes none."
+      }
     },
     {
       "name": "DiariZen WavLM-Large s80 md v2",

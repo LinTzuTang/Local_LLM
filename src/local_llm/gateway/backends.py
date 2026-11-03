@@ -503,6 +503,49 @@ class SherpaDiarizationBackend(Backend):
         }
 
 
+class MlxDiarizationBackend(Backend):
+    """Who spoke when with an end-to-end model in MLX (mlx-audio's vad models): NVIDIA
+    Nemotron 3 Diarization (up to 8 speakers) or Streaming Sortformer (4). They estimate the
+    speaker count themselves and take none; `threshold` is the speaker-activity threshold
+    (catalog option, 0.5 by default)."""
+
+    task = "diarize"
+
+    def load(self, spec, path):
+        from mlx_audio.vad import load
+
+        with mlx_turn():
+            model = load(str(path))
+        return {"model": model, "threshold": spec.options.get("threshold", 0.5)}, "mlx"
+
+    def run(
+        self,
+        handle,
+        audio: Path,
+        num_speakers: int | None = None,  # not used: the model estimates the count
+        threshold: float | None = None,
+    ):
+        import mlx.core as mx
+        import numpy as np
+
+        samples = np.ascontiguousarray(decode_audio(audio), dtype=np.float32)
+        with mlx_turn():
+            out = handle["model"].generate(samples, sample_rate=SAMPLE_RATE,
+                                           threshold=threshold or handle["threshold"])  # fmt: skip
+            mx.clear_cache()
+        order: dict[int, int] = {}  # model speaker slot -> 0, 1, ... in order of first appearance
+        segments = [
+            {"start": round(float(s.start), 2), "end": round(float(s.end), 2),
+             "speaker": order.setdefault(int(s.speaker), len(order))}
+            for s in sorted(out.segments, key=lambda s: s.start)
+        ]  # fmt: skip
+        return {
+            "segments": segments,
+            "speakers": len(order),
+            "duration": round(len(samples) / SAMPLE_RATE, 2),
+        }
+
+
 BACKENDS = {
     "mlx-whisper": WhisperBackend(),
     "mlx-audio": MlxAudioBackend(),
@@ -510,6 +553,7 @@ BACKENDS = {
     "docling": DoclingBackend(),
     "cross-encoder": CrossEncoderBackend(),
     "sherpa-diarization": SherpaDiarizationBackend(),
+    "mlx-diarization": MlxDiarizationBackend(),
 }
 
 

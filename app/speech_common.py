@@ -26,6 +26,7 @@ SAMPLES = [
     "national_day_2026_zh.wav",
     "meeting_zh.wav",
     "alimeeting_r8001_zh.flac",
+    "alimeeting_r8009_zh.flac",
     "palau_hsiao_2026_en.wav",
     "librispeech_20_en.flac",
     "hokkien_moe_20_nan.flac",
@@ -33,7 +34,8 @@ SAMPLES = [
 LOCAL_SAMPLES = {"hokkien_moe_20_nan.flac"}
 # Babble noise mixes in other speech; kept to the original recordings so results stay
 # comparable with earlier runs.
-BABBLE_SAMPLES = SAMPLES[:4]
+BABBLE_SAMPLES = ["national_day_2026_zh.wav", "meeting_zh.wav", "alimeeting_r8001_zh.flac",
+                  "palau_hsiao_2026_en.wav"]  # fmt: skip
 # Speaker turns and an English reference translation for the bundled samples (this project's).
 REFS_DIR = PROJECT_DIR / "data" / "lab" / "speech_refs"
 AUDIO_TYPES = sorted(t.lstrip(".") for t in media_tools.AUDIO_TYPES)
@@ -102,6 +104,10 @@ def sample_label(name: str) -> str:
             "真實會議：AliMeeting 4 人會議（5 分鐘，遠場麥克風，大陸口音）",
             "Real meeting: AliMeeting, 4 speakers (5 min, far-field mic, mainland accent)",
         ),
+        "alimeeting_r8009_zh.flac": tr(
+            "真實會議：AliMeeting 2 人會議（5 分鐘，遠場麥克風，大陸口音）",
+            "Real meeting: AliMeeting, 2 speakers (5 min, far-field mic, mainland accent)",
+        ),
         "librispeech_20_en.flac": tr(
             "英文有聲書：LibriSpeech 20 句（3 分 6 秒，朗讀）",
             "English audiobook: LibriSpeech, 20 sentences (3 min 6 s, read aloud)",
@@ -141,6 +147,13 @@ def sample_note(name: str) -> str:
             "逐字稿與講者時間取自資料集；CC BY-SA 4.0，來源見 data/lab/samples/README.md。",
             "AliMeeting Eval R8001_M8004, first 5 minutes (channel 1): 4 people around a table, "
             "with overlapping speech. Transcript and speaker turns from the dataset; CC BY-SA 4.0, "
+            "see data/lab/samples/README.md.",
+        ),
+        "alimeeting_r8009_zh.flac": tr(
+            "AliMeeting 評測集 R8009_M8020 前 5 分鐘（第 1 聲道），2 人對談。"
+            "逐字稿與講者時間取自資料集；CC BY-SA 4.0，來源見 data/lab/samples/README.md。",
+            "AliMeeting Eval R8009_M8020, first 5 minutes (channel 1): two people talking. "
+            "Transcript and speaker turns from the dataset; CC BY-SA 4.0, "
             "see data/lab/samples/README.md.",
         ),
         "librispeech_20_en.flac": tr(
