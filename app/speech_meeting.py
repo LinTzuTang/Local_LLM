@@ -13,6 +13,7 @@ computed with a 0.25 s collar (local_llm.diarization.der).
 """
 
 import html
+import json
 from pathlib import Path
 
 import altair as alt
@@ -313,7 +314,38 @@ def live_view(job: jobs.Job) -> None:
 # -- page -----------------------------------------------------------------------------------
 
 
+BENCH = Path(__file__).resolve().parents[1] / "data" / "lab" / "diarization_benchmark.json"
+
+
+def benchmark_view() -> None:
+    """DER of the diarization systems measured on the same meetings
+    (data/lab/diarization_benchmark.json)."""
+    try:
+        data = json.loads(BENCH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    title = tr(
+        "講者辨識模型實測比較（DER，越低越好）", "Diarization models compared (DER, lower = better)"
+    )
+    with st.expander(title, icon=":material/leaderboard:"):
+        df = pd.DataFrame(data["rows"])
+        modes = {"known": tr("告訴人數", "count given"), "estimated": tr("自己判斷", "estimated")}
+        df["mode"] = df["mode"].map(modes)
+        df["cell"] = df.apply(lambda r: f"{r['der']:.1%}（{r['speakers']} 人）", axis=1)
+        table = df.pivot_table(
+            index=["label", "mode"], columns="item_label", values="cell", aggfunc="first",
+            sort=False,
+        )[list(data["items"].values())]
+        table.index.names = [tr("系統", "System"), tr("人數", "Count")]
+        st.dataframe(table, width="stretch")
+        st.markdown(tr(*data["notes"]))
+        notes = df.drop_duplicates("label")[["label", "note"]]
+        about = " · ".join(f"{r.label}：{r.note}" for r in notes.itertuples())
+        st.caption(about + "。" + data["about"])
+
+
 def meeting_page(url: str, status: dict) -> None:
+    benchmark_view()
     labels = sc.names()
     installed = [m for m in labels if status.get(m, {}).get("installed")]
     diarizer = status.get(DIARIZER)
