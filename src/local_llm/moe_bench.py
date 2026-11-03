@@ -11,8 +11,11 @@ not); C is a reference only (different families):
   C  gpt-oss:20b (MoE, 32 experts, 4 used)         vs mistral-small3.2:24b (dense)  reference only
   D  gemma4:26b (MoE, 128 experts, 8 used)         vs gemma4:31b (dense)            nvfp4, MLX
   E  qwen3.6:35b-a3b-nvfp4 (MoE, about 3B active)  vs qwen3.6:27b-nvfp4 (dense)     nvfp4, MLX
+  F  qwen3.6:35b-a3b-q4_K_M                         vs qwen3.6:27b-q4_K_M            Q4_K_M, GGUF
 A, D and E are the fair pairs (same family, generation and quantisation); B mixes a coding MoE
 with a general dense model a generation apart and is kept for the first results; E replaces it.
+F is E's two models in GGUF instead of MLX: set beside E, it answers which format to pull when
+Ollama offers both.
 
 speed(): the model alone in Ollama (the others unloaded first), temperature 0, thinking off
 where the model allows it, num_ctx 20480: memory as Ollama reports it for the loaded model
@@ -52,6 +55,7 @@ PAIRS = {
     "C": (("gpt-oss:20b", "MoE"), ("mistral-small3.2:24b", "dense")),
     "D": (("gemma4:26b", "MoE"), ("gemma4:31b", "dense")),
     "E": (("qwen3.6:35b-a3b-nvfp4", "MoE"), ("qwen3.6:27b-nvfp4", "dense")),
+    "F": (("qwen3.6:35b-a3b-q4_K_M", "MoE"), ("qwen3.6:27b-q4_K_M", "dense")),
 }
 MODELS = {model: (pair, kind) for pair, members in PAIRS.items() for model, kind in members}
 SHORT = "請用三段話介紹台灣的半導體產業：發展歷史、目前的地位、未來的挑戰。"

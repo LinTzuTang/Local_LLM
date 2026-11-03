@@ -1,5 +1,5 @@
 {
- "date": "2026-10-31",
+ "date": "2026-11-03",
  "machine": "Apple M5 Pro, 64 GB",
  "questions": 200,
  "rows": [
@@ -212,6 +212,48 @@
    "tmmlu_correct": 150,
    "tmmlu_questions": 200,
    "tmmlu_accuracy": 0.75
+  },
+  {
+   "model": "qwen3.6:35b-a3b-q4_K_M",
+   "pair": "F",
+   "kind": "MoE",
+   "family": "qwen35moe",
+   "params": "36.0B",
+   "quant": "Q4_K_M",
+   "expert_count": 256,
+   "expert_used_count": 8,
+   "size_gb": 23.2,
+   "gen_tok_s": 73.2,
+   "prefill_4k_tok_s": 1477.0,
+   "first_4k_s": 2.12,
+   "prefill_16k_tok_s": 1687.0,
+   "first_16k_s": 7.94,
+   "gen_after_16k_tok_s": 66.3,
+   "at": "2026-11-03T18:37:27",
+   "tmmlu_correct": 147,
+   "tmmlu_questions": 200,
+   "tmmlu_accuracy": 0.735
+  },
+  {
+   "model": "qwen3.6:27b-q4_K_M",
+   "pair": "F",
+   "kind": "dense",
+   "family": "qwen35",
+   "params": "27.8B",
+   "quant": "Q4_K_M",
+   "expert_count": null,
+   "expert_used_count": null,
+   "size_gb": 17.6,
+   "gen_tok_s": 15.5,
+   "prefill_4k_tok_s": 295.1,
+   "first_4k_s": 10.6,
+   "prefill_16k_tok_s": 331.0,
+   "first_16k_s": 40.47,
+   "gen_after_16k_tok_s": 14.8,
+   "at": "2026-11-03T18:39:19",
+   "tmmlu_correct": 155,
+   "tmmlu_questions": 200,
+   "tmmlu_accuracy": 0.775
   }
  ],
  "offload": {
@@ -308,5 +350,9 @@
     "prefill_4k_tok_s": 630.1
    }
   ]
- }
+ },
+ "format_notes": [
+  "**同一個模型在 Mac 上選 MLX**：生成速度 MoE 104.9 對 73.2 tok/s、dense 28.9 對 15.5 tok/s，讀 16K 長文到第一個字也比較快（MoE 5.2 對 7.9 秒、dense 31.2 對 40.5 秒）；正確率在 200 題的誤差內（MoE 都是 73.5%，dense 75.0% 對 77.5%）。11-03 在和 F 組相同條件下重量 E 組：MoE 93.2 tok/s、dense 27.4 tok/s，仍明顯比 GGUF 快。GGUF 的好處是到處都能跑（NVIDIA、CPU、llama.cpp），dense 版記憶體也少一點（17.6 對 19.1 GB）。",
+  "**On a Mac, pick MLX for the same model**: generation 104.9 vs 73.2 tok/s (MoE) and 28.9 vs 15.5 tok/s (dense), and a 16K prompt reaches the first token sooner (MoE 5.2 vs 7.9 s, dense 31.2 vs 40.5 s); accuracy is within the margin of 200 questions (MoE 73.5% both, dense 75.0% vs 77.5%). Pair E measured again on 11-03 under the same conditions as F: MoE 93.2 tok/s, dense 27.4 tok/s, still clearly faster than GGUF. GGUF runs everywhere (NVIDIA, CPU, llama.cpp), and the dense one needs a little less memory (17.6 vs 19.1 GB)."
+ ]
 }

@@ -85,12 +85,14 @@ def results_view() -> None:
         return
     st.markdown(
         tr(
-            f"**{data['machine']}，Ollama，每個模型單獨載入**（{data['date']}）。**A、D、E 組最公平**：同家族、同一代、同量化的 MoE 與 dense；"
-            f"B 組 MoE 是 coding 版、dense 差一代；C 組不同家族，只當參考。正確率是 TMMLU+ {data['questions']} 題（台灣各類考試的選擇題）。",
-            f"**{data['machine']}, Ollama, each model loaded alone** ({data['date']}). **Pairs A, D and E "
+            f"**{data['machine']}，Ollama，每個模型單獨載入**（{data['date']}）。**A、D、E、F 組最公平**：同家族、同一代、同量化的 MoE 與 dense；"
+            f"B 組 MoE 是 coding 版、dense 差一代；C 組不同家族，只當參考；F 組是 E 組同兩個模型的 GGUF 版，用來比較格式。"
+            f"正確率是 TMMLU+ {data['questions']} 題（台灣各類考試的選擇題）。",
+            f"**{data['machine']}, Ollama, each model loaded alone** ({data['date']}). **Pairs A, D, E and F "
             "are the fair ones**: same family, generation and quantisation; in B the MoE is a coding "
             "model and the dense one a generation newer; C mixes families and is for "
-            f"reference only. Accuracy: {data['questions']} TMMLU+ questions (Taiwan exam multiple choice).",
+            "reference only; F is E's two models in GGUF, to compare the formats. "
+            f"Accuracy: {data['questions']} TMMLU+ questions (Taiwan exam multiple choice).",
         )
     )
     df = pd.DataFrame(data["rows"])
@@ -145,10 +147,10 @@ def results_view() -> None:
                  column_config={"TMMLU+": st.column_config.NumberColumn(format="percent")})  # fmt: skip
     st.markdown(
         tr(
-            "**結論**：MoE 生成快 2.7～7 倍、讀長文快 4～7 倍，五組都一樣；記憶體照總參數算，不會比較省。"
+            "**結論**：MoE 生成快 2.7～7 倍、讀長文快 4～7 倍，六組都一樣；記憶體照總參數算，不會比較省。"
             "**正確率要看家族**：Qwen（A、E）與 C 組差 3 個百分點內（200 題的誤差範圍內），"
             "但 Gemma 4 的 MoE（26B）比 dense（31B）少 8 個百分點，它的總參數也比較少。",
-            "**Takeaway**: MoE generates 2.7-7x and reads long prompts 4-7x faster in all five "
+            "**Takeaway**: MoE generates 2.7-7x and reads long prompts 4-7x faster in all six "
             "pairs; memory follows the total parameters, so it is not smaller. **Accuracy depends "
             "on the family**: Qwen (A, E) and C stay within 3 points (inside the error margin of 200 "
             "questions), but Gemma 4's MoE (26B) is 8 points below its dense 31B, which is also larger.",
@@ -157,15 +159,40 @@ def results_view() -> None:
     st.caption(
         tr(
             "記憶體是 Ollama 回報的載入量，含 20K context 的 KV 快取。生成：中文短問題、256 個字、3 次取中位數；"
-            "讀長文：約 4K 與 16K token 的中文文件。思考一律關閉（gpt-oss 關不掉，用最低強度）。A～C 組在 Ollama 0.40.3、D～E 組在 0.40.13 上量。"
+            "讀長文：約 4K 與 16K token 的中文文件。思考一律關閉（gpt-oss 關不掉，用最低強度）。A～C 組在 Ollama 0.40.3、D～F 組在 0.40.13 上量。"
             "腳本：scripts/llm_eval/run_moe_dense.py；方法：src/local_llm/moe_bench.py。",
             "Memory is what Ollama reports when loaded, including the KV cache for a 20K context. "
             "Generation: a short Chinese question, 256 tokens, median of 3; prefill: Chinese "
             "documents of about 4K and 16K tokens. Thinking off (gpt-oss cannot, so it reasons "
-            "at low). Pairs A-C measured on Ollama 0.40.3, D-E on 0.40.13. Script: scripts/llm_eval/run_moe_dense.py; method: src/local_llm/moe_bench.py.",
+            "at low). Pairs A-C measured on Ollama 0.40.3, D-F on 0.40.13. Script: scripts/llm_eval/run_moe_dense.py; method: src/local_llm/moe_bench.py.",
         )
     )
+    format_view(df)
     offload_view(data)
+
+
+FORMATS = {"E": "MLX（nvfp4）", "F": "GGUF（Q4_K_M）"}
+
+
+def format_view(df: pd.DataFrame) -> None:
+    """The same two Qwen3.6 models as MLX (pair E) and GGUF (pair F)."""
+    rows = df[df["pair"].isin(list(FORMATS))]
+    if set(rows["pair"]) != set(FORMATS):
+        return
+    st.subheader(tr("同一個模型：MLX 還是 GGUF", "The same model: MLX or GGUF"))
+    shown = rows.assign(format=rows["pair"].map(FORMATS))[
+        ["kind", "format", "model", "size_gb", "gen_tok_s", "prefill_16k_tok_s", "first_16k_s", "tmmlu_accuracy"]
+    ].rename(columns={
+        "kind": tr("類型", "Type"), "format": tr("格式", "Format"), "model": tr("模型", "Model"),
+        "size_gb": tr("記憶體 GB", "Memory GB"), "gen_tok_s": tr("生成 tok/s", "Gen tok/s"),
+        "prefill_16k_tok_s": tr("讀長文 tok/s", "Prefill tok/s"), "first_16k_s": tr("16K 首字（秒）", "16K first (s)"),
+        "tmmlu_accuracy": "TMMLU+",
+    })  # fmt: skip
+    st.dataframe(shown, hide_index=True, width="stretch",
+                 column_config={"TMMLU+": st.column_config.NumberColumn(format="percent")})  # fmt: skip
+    notes = json.loads(DATA.read_text(encoding="utf-8")).get("format_notes")
+    if notes:
+        st.markdown(tr(*notes))
 
 
 def offload_view(data: dict) -> None:
