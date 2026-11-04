@@ -91,17 +91,6 @@ PRESETS = {
 }
 
 MAX_MODELS = 6
-TAIWAN = [m["tag"] for m in catalog.models("taiwan") if m.get("recommended")]
-GROUPS = {
-    "default": [catalog.default_model()],
-    "taiwan": [catalog.default_model(), *TAIWAN],
-    "cohere": [catalog.default_model(), "command-r7b", "aya-expanse:8b"],
-}
-GROUP_LABELS = {
-    "default": tr("預設", "Default"),
-    "taiwan": tr("台灣主權 LLM", "Taiwan sovereign LLMs"),
-    "cohere": "Cohere",
-}
 
 
 models = installed_names()
@@ -115,18 +104,7 @@ options = chat_models + [
     and m["fit"] != "no"
     and catalog.normalize(m["tag"]) not in installed
 ]
-if st.session_state.get("compare_group") not in (None, *GROUP_LABELS):
-    st.session_state.pop("compare_group")  # "speech" moved to its own page (views/speech.py)
-group = st.pills(
-    tr("快速組合", "Quick sets"),
-    list(GROUP_LABELS),
-    format_func=GROUP_LABELS.get,
-    **kept("compare_group"),
-)
-if group and st.session_state.get("compare_group_applied") != group:
-    st.session_state.compare_models = [m for m in GROUPS[group] if m in options][:MAX_MODELS]
-    st.session_state.compare_group_applied = group
-st.session_state.setdefault("compare_models", [m for m in GROUPS["default"] if m in options])
+st.session_state.setdefault("compare_models", [m for m in [catalog.default_model()] if m in options])
 st.session_state.compare_models = [m for m in st.session_state.compare_models if m in options]
 selected = st.multiselect(
     tr(
