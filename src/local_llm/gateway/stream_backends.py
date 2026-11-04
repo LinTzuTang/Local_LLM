@@ -300,8 +300,10 @@ class VoxtralSession:
             if len(tail) == self.quiet_tokens and all(int(t) == self.pad for t in tail):
                 q, k = self.quiet_tokens, self.context_tokens
                 window = np.concatenate(self.recent)[-self.quiet_samples :]
-                whole = len(window) // SAMPLE_RATE * SAMPLE_RATE
-                levels = np.sqrt((window[:whole].reshape(-1, SAMPLE_RATE) ** 2).mean(axis=1))
+                size = min(SAMPLE_RATE, len(window))  # one-second blocks (a shorter window: one)
+                whole = len(window) // size * size if size else 0
+                blocks = window[:whole].reshape(-1, size) if whole else window[:0].reshape(0, 1)
+                levels = np.sqrt((blocks**2).mean(axis=1))
                 if not len(levels) or float(levels.min()) < SILENCE_RMS:
                     # A quiet second in the window: nobody was talking all along, so writing
                     # nothing is no lock-up (that is background talk going on and on). Without
