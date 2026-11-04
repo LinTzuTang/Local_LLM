@@ -563,7 +563,8 @@ class VoiceAgent:
                 if self.awaiting:
                     self.awaiting["resumed"] = True
             self.emit({"type": "vad", "state": "start", "at": t})
-            self._maybe_barge_in(t)
+            if not self.quick_barge:  # else speech_started already did, on time
+                self._maybe_barge_in(t)
         elif kind == "speech_end":
             t = round(event["t_audio"] + offset, 3)
             with self.lock:
@@ -701,6 +702,15 @@ class VoiceAgent:
             w.setframerate(16000)
             w.writeframes(bytes(self.audio[a:b]))
         return base64.b64encode(out.getvalue()).decode()
+
+    quick_barge = False  # the gateway reports speech starts itself (speech_started)
+
+    def speech_started(self) -> None:
+        """The user started talking, from the gateway's VAD on the audio as it arrives: barge
+        in now. The ASR worker's own VAD sees the same audio only after the recogniser has
+        taken it, as late as the recogniser is behind (measured 2-9 s on the test script, so
+        the assistant read its whole answer over the interrupting line)."""
+        self._maybe_barge_in(self.now())
 
     def _maybe_barge_in(self, t: float) -> None:
         with self.lock:

@@ -305,7 +305,16 @@ async def voice_agent_ws(
     target = listen if vad_only else pause_asr if pause else work
     threading.Thread(target=target, name=name, daemon=True).start()
 
+    # Barge-in from an energy VAD on the audio as it arrives (cheap, on the loop): the ASR
+    # worker's VAD comes after the recogniser and is as late as it is behind.
+    from local_llm import asr_streaming
+
+    quick = asr_streaming.OnlineVad(asr_streaming.RATE) if barge and not vad_only else None
+    agent.quick_barge = quick is not None
+    rest = b""
+
     async def receive() -> None:
+        nonlocal rest
         try:
             while True:
                 message = await websocket.receive()
@@ -313,6 +322,10 @@ async def voice_agent_ws(
                     break
                 if message.get("bytes"):
                     inbox.put((message["bytes"], time.perf_counter()))
+                    if quick is not None:
+                        samples, rest = asr_streaming.pcm16(rest + message["bytes"])
+                        if any(kind == "start" for kind, _ in quick.feed(samples)):
+                            agent.speech_started()
                 elif message.get("text"):
                     try:
                         data = json.loads(message["text"])

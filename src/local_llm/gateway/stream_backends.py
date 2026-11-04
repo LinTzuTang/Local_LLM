@@ -203,6 +203,11 @@ class SherpaOnlineBackend(StreamBackend):
 # -- Voxtral Realtime (mlx-audio) --------------------------------------------------------------
 
 
+# Voxtral restarts only while something is audible: the background talk it locks up on is far
+# louder (babble at 10 dB SNR about -30 dBFS) than a quiet room (about -50 dBFS)
+SILENCE_RMS = 10 ** (-40 / 20)
+
+
 class VoxtralSession:
     """mlx-audio's VoxtralStreamingSession: feed() queues audio, step() encodes what arrived
     and decodes up to the audio available; text is only ever appended.
@@ -294,6 +299,20 @@ class VoxtralSession:
             tail = old[self.skip :][-self.quiet_tokens :]
             if len(tail) == self.quiet_tokens and all(int(t) == self.pad for t in tail):
                 q, k = self.quiet_tokens, self.context_tokens
+                window = np.concatenate(self.recent)[-self.quiet_samples :]
+                whole = len(window) // SAMPLE_RATE * SAMPLE_RATE
+                levels = np.sqrt((window[:whole].reshape(-1, SAMPLE_RATE) ** 2).mean(axis=1))
+                if not len(levels) or float(levels.min()) < SILENCE_RMS:
+                    # A quiet second in the window: nobody was talking all along, so writing
+                    # nothing is no lock-up (that is background talk going on and on). Without
+                    # this the session restarted in silences and as a line began, before its
+                    # first words could come out, each time replaying seconds of audio: between
+                    # the assistant's replies the recogniser fell 2-6 s behind (the end of a
+                    # line, and a barge-in, then came that late). On the test script's lines
+                    # with silence between them: 140 ms of work per 100 ms of speech with
+                    # those restarts, 45 ms without.
+                    self.skip = len(old)  # look again after another quiet window
+                    return out
                 # what it wrote just before going quiet, not counting the replayed context:
                 # else every restart in a silence replays the context again, and the backlog
                 # grows by those seconds each time (live assistant: the ASR fell 10 s further
