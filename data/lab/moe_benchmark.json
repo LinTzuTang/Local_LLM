@@ -354,5 +354,86 @@
  "format_notes": [
   "**同一個模型在 Mac 上選 MLX**：生成速度 MoE 104.9 對 73.2 tok/s、dense 28.9 對 15.5 tok/s，讀 16K 長文到第一個字也比較快（MoE 5.2 對 7.9 秒、dense 31.2 對 40.5 秒）；正確率在 200 題的誤差內（MoE 都是 73.5%，dense 75.0% 對 77.5%）。11-03 在和 F 組相同條件下重量 E 組：MoE 93.2 tok/s、dense 27.4 tok/s，仍明顯比 GGUF 快。GGUF 的好處是到處都能跑（NVIDIA、CPU、llama.cpp），dense 版記憶體也少一點（17.6 對 19.1 GB）。",
   "**On a Mac, pick MLX for the same model**: generation 104.9 vs 73.2 tok/s (MoE) and 28.9 vs 15.5 tok/s (dense), and a 16K prompt reaches the first token sooner (MoE 5.2 vs 7.9 s, dense 31.2 vs 40.5 s); accuracy is within the margin of 200 questions (MoE 73.5% both, dense 75.0% vs 77.5%). Pair E measured again on 11-03 under the same conditions as F: MoE 93.2 tok/s, dense 27.4 tok/s, still clearly faster than GGUF. GGUF runs everywhere (NVIDIA, CPU, llama.cpp), and the dense one needs a little less memory (17.6 vs 19.1 GB)."
- ]
+ ],
+ "concurrency": {
+  "date": "2026-11-04",
+  "machine": "NVIDIA RTX PRO 6000 (96 GB)",
+  "engine": "vLLM 0.32.0, FP8",
+  "about": [
+   "每次送 1,024 個 token 的隨機提示、要 256 個 token；每種人數送 8 倍人數的請求。",
+   "Random 1,024-token prompts asking for 256 tokens; 8 x the concurrency requests each."
+  ],
+  "rows": [
+   {
+    "model": "Qwen3.6-35B-A3B-FP8",
+    "kind": "MoE",
+    "concurrency": 1,
+    "requests": 8,
+    "failed": 0,
+    "total_tok_s": 189.4,
+    "per_user_tok_s": 195.8,
+    "ttft_median_s": 0.05,
+    "ttft_p99_s": 0.05
+   },
+   {
+    "model": "Qwen3.6-35B-A3B-FP8",
+    "kind": "MoE",
+    "concurrency": 4,
+    "requests": 32,
+    "failed": 0,
+    "total_tok_s": 489.4,
+    "per_user_tok_s": 133.0,
+    "ttft_median_s": 0.11,
+    "ttft_p99_s": 0.72
+   },
+   {
+    "model": "Qwen3.6-35B-A3B-FP8",
+    "kind": "MoE",
+    "concurrency": 16,
+    "requests": 128,
+    "failed": 0,
+    "total_tok_s": 1103.3,
+    "per_user_tok_s": 74.6,
+    "ttft_median_s": 0.25,
+    "ttft_p99_s": 0.66
+   },
+   {
+    "model": "Qwen3.6-27B-FP8",
+    "kind": "dense",
+    "concurrency": 1,
+    "requests": 8,
+    "failed": 0,
+    "total_tok_s": 44.4,
+    "per_user_tok_s": 44.9,
+    "ttft_median_s": 0.09,
+    "ttft_p99_s": 0.13
+   },
+   {
+    "model": "Qwen3.6-27B-FP8",
+    "kind": "dense",
+    "concurrency": 4,
+    "requests": 32,
+    "failed": 0,
+    "total_tok_s": 156.2,
+    "per_user_tok_s": 41.0,
+    "ttft_median_s": 0.4,
+    "ttft_p99_s": 0.4
+   },
+   {
+    "model": "Qwen3.6-27B-FP8",
+    "kind": "dense",
+    "concurrency": 16,
+    "requests": 128,
+    "failed": 0,
+    "total_tok_s": 514.2,
+    "per_user_tok_s": 37.5,
+    "ttft_median_s": 1.43,
+    "ttft_p99_s": 1.46
+   }
+  ],
+  "notes": [
+   "**多人同時用時 MoE 的優勢更大**：16 人同時發問，MoE 每人每秒仍有 74.6 個字、全部加起來 1,103 tok/s，dense 每人 37.5、全部 514 tok/s；等第一個字 MoE 0.25 秒、dense 1.43 秒。一個人用時 MoE 每秒 195.8 個字、dense 44.9。MoE 人越多每人越慢（195.8 → 74.6），dense 幾乎不變（44.9 → 37.5），但一直比 MoE 慢。",
+   "**MoE gains more with many users**: with 16 at once the MoE still gives each 74.6 tokens/s (1,103 tokens/s in total), the dense model 37.5 (514 in total); first token 0.25 s vs 1.43 s. Alone: 195.8 vs 44.9 tokens/s. The MoE slows down per user as users are added (195.8 -> 74.6); the dense model barely does (44.9 -> 37.5) but stays slower."
+  ]
+ }
 }

@@ -169,6 +169,7 @@ def results_view() -> None:
     )
     format_view(df)
     offload_view(data)
+    concurrency_view(data)
 
 
 FORMATS = {"E": "MLX（nvfp4）", "F": "GGUF（Q4_K_M）"}
@@ -238,6 +239,38 @@ def offload_view(data: dict) -> None:
         )
     )
     st.caption(tr(f"工具：{off['tool']}。", f"Tool: {off['tool']}."))
+
+
+def concurrency_view(data: dict) -> None:
+    """Many users at once (data["concurrency"], vLLM on the NVIDIA GPU machine): per-user and
+    total generation speed and the wait for the first token at 1, 4 and 16 concurrent users."""
+    conc = data.get("concurrency")
+    if not conc:
+        return
+    st.subheader(tr("多人同時使用：MoE 還是 dense", "Many users at once: MoE or dense"))
+    st.markdown(tr(
+        f"公司伺服器上會有很多人同時用。在遠端 NVIDIA 主機（{conc['machine']}，{conc['engine']}）上用 vLLM 同時服務 1、4、16 人，"
+        f"比較 Qwen3.6-35B-A3B（MoE）與 Qwen3.6-27B（dense）（{conc['date']}）。{conc['about'][0]}",
+        f"A company server is used by many people at once. vLLM serving 1, 4 and 16 users at once on "
+        f"the NVIDIA machine ({conc['machine']}, {conc['engine']}): Qwen3.6-35B-A3B (MoE) vs "
+        f"Qwen3.6-27B (dense) ({conc['date']}). {conc['about'][1]}",
+    ))  # fmt: skip
+    df = pd.DataFrame(conc["rows"])
+    left, right = st.columns(2)
+    for col, key, title in ((left, "per_user_tok_s", tr("每人生成速度（tokens/秒）", "Per user (tokens/s)")),
+                            (right, "total_tok_s", tr("全部加起來（tokens/秒）", "All users (tokens/s)"))):  # fmt: skip
+        col.altair_chart(alt.Chart(df).mark_line(point=alt.OverlayMarkDef(size=80)).encode(
+            x=alt.X("concurrency:O", title=tr("同時人數", "Users at once")),
+            y=alt.Y(f"{key}:Q", title=title), color=alt.Color("kind:N", title=None, scale=KIND_COLORS),
+            tooltip=["model", "concurrency", key],
+        ).properties(height=260), width="stretch")  # fmt: skip
+    shown = df[["kind", "model", "concurrency", "per_user_tok_s", "total_tok_s", "ttft_median_s", "ttft_p99_s"]].rename(columns={
+        "kind": tr("類型", "Type"), "model": tr("模型", "Model"), "concurrency": tr("同時人數", "Users"),
+        "per_user_tok_s": tr("每人 tok/s", "Per user tok/s"), "total_tok_s": tr("總 tok/s", "Total tok/s"),
+        "ttft_median_s": tr("首字中位數（秒）", "First token median (s)"), "ttft_p99_s": tr("首字 p99（秒）", "First token p99 (s)"),
+    })  # fmt: skip
+    st.dataframe(shown, hide_index=True, width="stretch")
+    st.markdown(tr(*conc["notes"]))
 
 
 def moe_work(job: jobs.Job, models: list[str], n_questions: int, base_url: str) -> None:
