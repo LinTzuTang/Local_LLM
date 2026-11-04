@@ -699,8 +699,11 @@ export default function (component) {
     const lines = data.demo.lines.map((l) => ({ ...l, pcm: pcm16(l.pcm) }));
     await until(() => s.llmReady, 120000);
     await sleep(800);
-    const normal = lines.filter((l) => !l.barge);
-    const barge = lines.find((l) => l.barge);
+    // Without barge-in the assistant would not stop for the interrupting line and both would
+    // talk at once: then that line too waits for the reply, like the others.
+    const interrupts = Boolean(data.params.barge);
+    const normal = interrupts ? lines.filter((l) => !l.barge) : lines;
+    const barge = interrupts ? lines.find((l) => l.barge) : null;
     for (let i = 0; i < normal.length; i++) {
       if (!s || s.phase !== "live") return;
       s.demoStep = `${L.demo_step} ${i + 1}/${normal.length}: ${normal[i].text}`;

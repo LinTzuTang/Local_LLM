@@ -244,15 +244,23 @@ def limit(x: np.ndarray) -> np.ndarray:
     return y
 
 
+def voiced_level(x: np.ndarray, floor: float = 0.0) -> float:
+    """RMS of the voiced 20 ms frames (those above a tenth of the loudest and `floor`); 0 if
+    there are none."""
+    frame = 320
+    n = len(x) // frame
+    if not n:
+        return 0.0
+    rms = np.sqrt((x[: n * frame].reshape(n, frame) ** 2).mean(axis=1))
+    voiced = rms[(rms > rms.max() * 0.1) & (rms > floor)]
+    return float(np.sqrt((voiced**2).mean())) if len(voiced) else 0.0
+
+
 def loudness(x: np.ndarray) -> np.ndarray:
     """Gain to TARGET_RMS_DB over the voiced part, peaks softly limited below PEAK."""
     if not len(x):
         return x
-    frame = 320
-    n = len(x) // frame
-    rms = np.sqrt((x[: n * frame].reshape(n, frame) ** 2).mean(axis=1)) if n else np.array([0.0])
-    voiced = rms[rms > rms.max() * 0.1] if rms.max() > 0 else rms
-    level = float(np.sqrt((voiced**2).mean())) if len(voiced) else 0.0
+    level = voiced_level(x)
     if level <= 0:
         return x
     return limit(x * 10 ** (TARGET_RMS_DB / 20) / level)
@@ -409,10 +417,23 @@ def can_stream(voice: str, text: str) -> bool:
     return bool(v.get("stream")) and not (english(text) and not v.get("english"))
 
 
+# voice -> voiced level of the lines it streamed so far (a running mean), for the next line's gain
+_stream_levels: dict[str, float] = {}
+SILENT = 10 ** (-40 / 20)  # quieter frames are a breath or the silence before speech
+
+
 def render_stream(text: str, voice: str, sample_rate: int):
     """`text` as 16-bit WAV chunks while the model makes them (voices with `stream`): the
     first one comes in about 0.2 s instead of after the whole sentence. One gain for the whole
-    line, set from the first chunk, so the level does not jump between chunks."""
+    line, so the level does not jump between chunks.
+
+    The gain comes from the voice's earlier lines, not from the line's first chunk: a model's
+    level is steady from line to line (Qwen3-TTS 台灣腔: -21 to -26 dB over 11 pieces of three
+    replies) but its first 0.48 s chunk often holds only the silence before speech (-45 to -52
+    dB), which the old first-chunk gain pushed up to 30x: the pieces of one reply then came out
+    between -4 and -20 dB, loud and soft by turns. The very first line, with nothing to go on,
+    uses its first voiced chunk, at most 4x (silent chunks before it wait for that gain; they
+    are silence, so the first sound comes no later)."""
     import io
     import wave
 
@@ -420,18 +441,12 @@ def render_stream(text: str, voice: str, sample_rate: int):
         pieces = ((x, AZURE_RATE) for x in azure_chunks(text, voice))
     else:
         pieces = mlx_tts.stream(speech_text(text), VOICES[voice])
-    gain = None
-    for x, rate in pieces:
-        if not len(x):
-            continue
-        if gain is None:
-            n = len(x) // 320
-            rms = (
-                np.sqrt((x[: n * 320].reshape(n, 320) ** 2).mean(axis=1)) if n else np.array([0.0])
-            )
-            voiced = rms[rms > rms.max() * 0.1] if rms.max() > 0 else rms
-            level = float(np.sqrt((voiced**2).mean())) if len(voiced) else 0.0
-            gain = min(10 ** (TARGET_RMS_DB / 20) / level, 30.0) if level > 0 else 1.0
+    target = 10 ** (TARGET_RMS_DB / 20)
+    known = _stream_levels.get(voice)
+    gain = target / known if known else None
+    made, waiting = [], []
+
+    def wav(x: np.ndarray, rate: int) -> tuple[bytes, float]:
         y = _resample(limit(x * gain), rate, sample_rate)
         buf = io.BytesIO()
         with wave.open(buf, "wb") as w:
@@ -439,7 +454,28 @@ def render_stream(text: str, voice: str, sample_rate: int):
             w.setsampwidth(2)
             w.setframerate(sample_rate)
             w.writeframes((np.clip(y, -1, 1) * 32767).astype("<i2").tobytes())
-        yield buf.getvalue(), len(y) / sample_rate
+        return buf.getvalue(), len(y) / sample_rate
+
+    for x, rate in pieces:
+        if not len(x):
+            continue
+        made.append(x)
+        if gain is None:
+            level = voiced_level(x, SILENT)
+            if level <= 0:
+                waiting.append((x, rate))
+                continue
+            gain = min(target / level, 4.0)
+        while waiting:
+            yield wav(*waiting.pop(0))
+        yield wav(x, rate)
+    if waiting:  # nothing but silence
+        gain = 1.0
+        for x, rate in waiting:
+            yield wav(x, rate)
+    level = voiced_level(np.concatenate(made), SILENT) if made else 0.0
+    if level > 0:
+        _stream_levels[voice] = level if known is None else (known + level) / 2
 
 
 def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
