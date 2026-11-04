@@ -29,7 +29,9 @@ pages = {
         page("views/speech.py", "語音模型比較", "Compare speech models", ":material/graphic_eq:"),
         page("views/speech_guide.py", "依情境選語音模型", "Pick a speech model",
              ":material/recommend:"),
-        page("views/moe.py", "MoE vs Dense", "MoE vs dense", ":material/account_tree:"),
+        # views/moe.py (MoE vs dense results and runs) is off the menu for now (2026-11-05); its
+        # data stays in data/lab/moe_benchmark.json. Add this line back to show it again:
+        # page("views/moe.py", "MoE vs Dense", "MoE vs dense", ":material/account_tree:"),
         page("views/media.py", "語音與文件", "Speech & documents", ":material/mic:"),
     ],
     "Agents": [
