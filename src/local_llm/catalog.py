@@ -61,9 +61,14 @@ def tier_of(model: dict) -> dict:
 
 
 def is_chat(tag: str) -> bool:
-    """Usable on the chat/agent/compare pages (not an embedding or decision-only model)."""
-    caps = (find(tag) or {}).get("caps") or []
-    return not {"embedding", "decision"} & set(caps)
+    """Usable on the chat/agent/compare pages: not an embedding or decision-only model, and not an
+    OCR-only one (glm-ocr, minicpm-ocr, deepseek-ocr read text off images and do not converse;
+    vision models that also chat, such as granite3.2-vision, list more tasks than OCR)."""
+    entry = find(tag) or {}
+    if {"embedding", "decision"} & set(entry.get("caps") or []):
+        return False
+    tasks = set(entry.get("tasks") or [])
+    return not tasks or not tasks <= {"ocr"}
 
 
 def other_models(category: str | None = None) -> list[dict]:

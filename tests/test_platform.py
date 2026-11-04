@@ -270,9 +270,13 @@ def test_decision_and_embedding_models_are_not_offered_for_chat():
     assert catalog.is_chat("qwen3:30b-a3b")
     assert not catalog.is_chat("nimble:9b")
     assert not catalog.is_chat("bge-m3")
+    assert not catalog.is_chat("deepseek-ocr:3b")  # OCR only: reads text off images
+    assert not catalog.is_chat("glm-ocr")
+    assert catalog.is_chat("granite3.2-vision:2b")  # OCR and general vision
     for m in catalog.models():
         special = {"embedding", "decision"} & set(m["caps"])
-        assert catalog.is_chat(m["tag"]) == (not special), m["tag"]
+        ocr_only = bool(m.get("tasks")) and set(m["tasks"]) <= {"ocr"}
+        assert catalog.is_chat(m["tag"]) == (not special and not ocr_only), m["tag"]
 
 
 def test_thinking_mode_reads_declared_values(monkeypatch):
