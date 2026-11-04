@@ -262,6 +262,7 @@ class VoxtralSession:
         self.eos = getattr(getattr(model, "config", None), "eos_token_id", None)
         self.recent: list = []  # the last `keep` samples, replayed into a fresh session
         self.skip = 0  # tokens of the replayed audio, not counted as new silence
+        self.fresh = 0  # tokens before this are the replayed context's: not "heard" again
         self.restarts = 0
 
     def _text(self, final: bool = False) -> list[tuple[str, bool]]:
@@ -293,7 +294,11 @@ class VoxtralSession:
             tail = old[self.skip :][-self.quiet_tokens :]
             if len(tail) == self.quiet_tokens and all(int(t) == self.pad for t in tail):
                 q, k = self.quiet_tokens, self.context_tokens
-                before = old[-(q + k) : -q]  # what it wrote just before going quiet
+                # what it wrote just before going quiet, not counting the replayed context:
+                # else every restart in a silence replays the context again, and the backlog
+                # grows by those seconds each time (live assistant: the ASR fell 10 s further
+                # behind with every line of the test script)
+                before = old[self.fresh :][-(q + k) : -q]
                 heard = any(int(t) not in (self.pad, self.eos) for t in before)
                 audio = np.concatenate(self.recent)
                 quiet = audio[-self.quiet_samples :]
@@ -306,7 +311,7 @@ class VoxtralSession:
                     )
                 self.inner.feed(np.concatenate([context, quiet]))
                 drop = int(len(context) / SAMPLE_RATE / 0.08)  # the context's tokens: text dropped
-                self.used, self.skip = drop, drop + q
+                self.used, self.skip, self.fresh = drop, drop + q, drop
                 self.restarts += 1
         return out
 

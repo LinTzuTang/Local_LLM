@@ -242,7 +242,12 @@ export default function (component) {
         return;
       }
       s.lastPiece = performance.now();
-      s.queue.push({ sid: ev.speech_id, seq: ev.seq, buffer: buf });
+      const item = { sid: ev.speech_id, seq: ev.seq, buffer: buf };
+      if (s.demo && !s.made[ev.speech_id]) {
+        (s.held[ev.speech_id] = s.held[ev.speech_id] || []).push(item);
+        return;
+      }
+      s.queue.push(item);
       playNext();
     }).catch(() => send({ type: "played", speech_id: ev.speech_id, seq: ev.seq }));
   }
@@ -306,6 +311,10 @@ export default function (component) {
       });
     });
     if (s.flowing && s.stopped.has(s.flowing)) s.flowing = null;
+    ids.forEach((id) => {
+      (s.held[id] || []).forEach((item) => send({ type: "played", speech_id: item.sid, seq: item.seq, stopped: true }));
+      delete s.held[id];
+    });
     if (s.current && s.stopped.has(s.current.sid)) {
       const item = s.current;
       s.current = null;
@@ -400,9 +409,21 @@ export default function (component) {
         m.text = ev.text;
         m.kind = ev.kind;
         s.speechKind[ev.speech_id] = { kind: ev.kind, turn: ev.turn };
+        if (!s.speechAt[ev.speech_id]) s.speechAt[ev.speech_id] = performance.now();
+        if (ev.final) {
+          // fully made: the held pieces play now, any still decoding go straight to the queue
+          s.decodeChain = s.decodeChain.then(() => {
+            s.made[ev.speech_id] = true;
+            const held = s.held[ev.speech_id] || [];
+            delete s.held[ev.speech_id];
+            if (!s.stopped.has(ev.speech_id)) s.queue.push(...held);
+            playNext();
+          });
+        }
         break;
       }
       case "audio": {
+        if (!s.speechAt[ev.speech_id]) s.speechAt[ev.speech_id] = performance.now();
         const m = asstMessage(ev);
         m.kind = ev.kind;
         m.chunks = m.chunks || [];
@@ -607,28 +628,29 @@ export default function (component) {
     });
   }
 
-  // The test script waits for the assistant to finish a line before saying the next one: its
-  // reply has started playing (after a lookup, the spoken answer too), nothing is queued,
-  // playing or looking things up, and that has lasted QUIET_MS. An "idle" alone is not enough:
-  // a slow model (Qwen3-Omni, MiniCPM-o) streams speech in pieces with gaps, a model still
-  // loading or thinking has nothing queued yet, and a lookup leaves a gap between "let me
-  // check" and the answer. Each wait gives up after a while, so a model that stays silent does
-  // not stall the script.
-  const QUIET_MS = 2500;
-  function startedAfter(t0, kind) {
-    return Object.entries(s.speechStart).some(([sid, at]) =>
-      at >= t0 && (!kind || (s.speechKind[sid] || {}).kind === kind));
+  // The test script says a line only once the assistant is completely done with the last one:
+  // every reply it began after the line is fully made and played, nothing is looking things
+  // up, an "idle" has come since, and 1 s has passed. After a lookup it also waits for the
+  // spoken answer. Each wait gives up after a while, so a model that stays silent does not
+  // stall the script. (In this mode each reply is played only once fully made, see enqueueAudio,
+  // so a model that makes speech slowly still sounds whole; its timings are measured where it
+  // is made, so the comparison between models is unaffected.)
+  function mineSince(t0) {
+    return Object.entries(s.speechAt).filter(([, at]) => at >= t0).map(([sid]) => sid);
   }
-  async function answered(t0, toolsBefore) {
-    await until(() => startedAfter(t0), 60000);
-    if (s.toolCount > toolsBefore) await until(() => startedAfter(t0, "answer"), 90000);
-    let quietSince = null;
+  async function answered(t0, toolsBefore, idleBefore) {
+    // a duplex model may decide to stay quiet (MiniCPM-o on 「謝謝你，再見」): then on to
+    // the next line instead of waiting for a reply and an idle that never come
+    if (!(await until(() => mineSince(t0).length > 0, 45000))) return;
+    if (s.toolCount > toolsBefore) {
+      await until(() => mineSince(t0).some((sid) => (s.speechKind[sid] || {}).kind === "answer"), 120000);
+    }
     await until(() => {
-      const quiet = !s.current && !s.queue.length && !s.toolsRunning;
-      if (!quiet) { quietSince = null; return false; }
-      quietSince = quietSince || performance.now();
-      return performance.now() - quietSince > QUIET_MS;
-    }, 180000);
+      const mine = mineSince(t0);
+      return mine.every((sid) => s.made[sid] || s.stopped.has(sid)) && !Object.keys(s.held).length
+        && !s.current && !s.queue.length && !s.toolsRunning && s.idleCount > idleBefore;
+    }, 240000);
+    await sleep(1000);
   }
 
   async function until(test, ms) {
@@ -660,10 +682,11 @@ export default function (component) {
       render();
       const before = s.finals;
       const toolsBefore = s.toolCount;
+      const idleBefore = s.idleCount;
       const t0 = performance.now();
       await speak({ text: line.text, pcm: pcm16(line.pcm) });
       await until(() => s.finals > before, 15000);
-      await answered(t0, toolsBefore);
+      await answered(t0, toolsBefore, idleBefore);
       if (line.done) break;
     }
     s.demoStep = null;
@@ -684,6 +707,7 @@ export default function (component) {
       render();
       const before = s.finals;
       const toolsBefore = s.toolCount;
+      const idleBefore = s.idleCount;
       const t0 = performance.now();
       await speak(normal[i]);
       const last = i === normal.length - 1;
@@ -699,13 +723,14 @@ export default function (component) {
         render();
         const bargeBefore = s.finals;
         const bargeTools = s.toolCount;
+        const bargeIdle = s.idleCount;
         const bargeT0 = performance.now();
         await speak(barge);
         await until(() => s.finals > bargeBefore, 15000);
-        await answered(bargeT0, bargeTools);
+        await answered(bargeT0, bargeTools, bargeIdle);
       } else {
         await until(() => s.finals > before, 15000);
-        await answered(t0, toolsBefore);
+        await answered(t0, toolsBefore, idleBefore);
       }
     }
     s.demoStep = null;
@@ -724,6 +749,8 @@ export default function (component) {
       messages: [], cards: {}, turns: {}, events: [], speaking: new Set(),
       segs: { user: [], llm: [], asst: [], tool: [] }, speechKind: {}, speechStart: {},
       queue: [], current: null, flowing: null, lastPiece: 0, primeTimer: null,
+      // test-script mode: each reply is held until it is fully made, then played whole
+      demo: mode === "demo", held: {}, made: {}, speechAt: {},
       stopped: new Set(), decodeChain: Promise.resolve(),
       finals: 0, idleCount: 0, idleMark: 0, lastFinalTurn: null, bargeIns: 0, toolsRunning: 0, toolCount: 0,
       userSpeaking: false, lastT: null, lastLocal: 0, firstT: null, demoStep: null,
@@ -740,6 +767,7 @@ export default function (component) {
       net: p.net ? "1" : "0", barge: p.barge ? "1" : "0", s2tw: "1",
       engine: p.engine || "cascade", captions: p.captions === false ? "0" : "1",
       hear: p.hear ? "1" : "0",
+      held: mode === "demo" ? "1" : "0",  // replies are played once fully made (see enqueueAudio)
     });
     let ws;
     try {

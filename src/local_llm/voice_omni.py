@@ -488,6 +488,8 @@ class OmniAgent(VoiceAgent):
             turn = self.turns[speech["turn"]] if speech["turn"] is not None else None
             if turn is not None and turn.get("first_audio_sent") is None:
                 turn["first_audio_sent"] = self.now()
+            if turn is not None and speech["kind"] == "answer":
+                turn.setdefault("answer_audio_sent", self.now())
         self.emit(
             {
                 "type": "audio",

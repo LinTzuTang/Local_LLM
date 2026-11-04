@@ -84,6 +84,7 @@ async def voice_agent_ws(
     engine: str = "cascade",
     captions: bool = True,
     hear: bool = False,
+    held: bool = False,
 ) -> None:
     from local_llm import voice_agent, voice_cloud, voice_omni
 
@@ -134,6 +135,9 @@ async def voice_agent_ws(
             allow_network=net, barge_in=barge, base_url=ollama_url(), display=display,
             hears_audio=hear and llm in voice_agent.AUDIO_LLMS,
         )  # fmt: skip
+    # The page plays each reply only once it is fully made (its test script does): time the
+    # replies from when their audio was sent, not from when it started playing.
+    agent.held = held
     hears = getattr(agent, "on_audio", None)  # single speech models get the audio itself
 
     def listen() -> None:

@@ -206,6 +206,13 @@ def _to_simplified(text: str) -> str:
 
 
 STREAM_INTERVAL_S = 0.48  # seconds of audio per streamed chunk (Qwen3-TTS: 6 codec frames)
+# A cloned voice is sampled afresh for every piece of a reply (the live assistant speaks at
+# every sentence or comma), so its timbre wandered from piece to piece: with CAM++ speaker
+# embeddings the Qwen3-TTS 台灣腔 pieces of one reply matched each other 0.76 on average, the
+# worst pair 0.65 (temperature 0.9, free random seed). The same seed for every piece and a
+# cooler temperature keep it one voice: 0.81 / 0.75 (measured on 8 pieces).
+SEED = 0
+TEMPERATURE = {"qwen3-tts-0.6b-base": 0.6}  # model -> sampling temperature, cloned voices
 
 
 def _render(models: OrderedDict, v: dict, text: str,
@@ -224,6 +231,11 @@ def _render(models: OrderedDict, v: dict, text: str,
     if v.get("simplified"):
         text = _to_simplified(text)
     parts, rate, options = [], 24000, _options(v)
+    if v["model"] in TEMPERATURE:
+        options.setdefault("temperature", TEMPERATURE[v["model"]])
+    import mlx.core as mx
+
+    mx.random.seed(SEED)
     if sink is not None:
         options |= {"stream": True, "streaming_interval": STREAM_INTERVAL_S}
     for result in model.generate(text=text, **options):

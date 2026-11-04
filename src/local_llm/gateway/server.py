@@ -445,7 +445,7 @@ def create_app(
                        llm: str = "gemma4:12b", voice: str = "Meijia",
                        rate: int = 0, net: bool = False, barge: bool = True, s2tw: bool = True,
                        keep_alive: str | None = None, engine: str = "cascade",
-                       captions: bool = True, hear: bool = False):  # fmt: skip
+                       captions: bool = True, hear: bool = False, held: bool = False):  # fmt: skip
         """Live voice assistant: microphone PCM in, captions, assistant speech (WAV), tool
         progress and timings out (gateway/voice.py); `engine` picks the cascade or a single
         speech model (local_llm/voice_omni.py)."""
@@ -457,7 +457,7 @@ def create_app(
         except GatewayError:
             keep = None
         await voice_agent_ws(websocket, manager, asr, llm, voice, rate, net, barge, s2tw, keep,
-                             engine=engine, captions=captions, hear=hear)  # fmt: skip
+                             engine=engine, captions=captions, hear=hear, held=held)  # fmt: skip
 
     @app.post("/v1/audio/speech")
     def speech(body: SpeechRequest):

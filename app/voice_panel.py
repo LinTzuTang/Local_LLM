@@ -215,21 +215,29 @@ def panel(page: str = va.PAGE) -> None:
         local_single = single and engine not in voice_cloud.ENGINES
         captions = True
         if local_single:
-            st.session_state.setdefault("va_captions", True)
+            # Off by default: the streaming ASR shares the GPU with the speech model and falls
+            # behind it, and the reply only starts once the ASR has finished the line. Test
+            # script through the gateway (scripts/speech_eval/run_voice_e2e.py): Qwen3-Omni
+            # answered 24-38 s after the line with captions, 2.5-5.8 s without; MiniCPM-o
+            # 30-38 s with. The speech model hears the audio itself either way.
+            st.session_state.setdefault("va_captions", False)
             captions = st.toggle(
                 tr(
-                    "顯示使用者字幕（另外用串流辨識）",
-                    "Show the user's captions (a separate streaming ASR)",
+                    "顯示使用者字幕（另外用串流辨識，回應會慢很多）",
+                    "Show the user's captions (a separate streaming ASR; much slower replies)",
                 ),
                 help=tr(
                     "Qwen3-Omni、MiniCPM-o 只輸出自己的回答，不會回傳它聽到了什麼，所以畫面上的使用者字幕要另外用"
-                    "串流辨識產生（雲端的 gpt-realtime、gpt-live-1 會回傳，所以不用）。關掉就不跑辨識，只用音量偵測"
-                    "判斷你講完：回合式照樣在你講完時把那段聲音交給模型，只是看不到你說了什麼。",
+                    "串流辨識產生（雲端的 gpt-realtime、gpt-live-1 會回傳，所以不用）。但辨識模型和語音模型搶同一顆 "
+                    "GPU 會跟不上，而回答要等辨識定稿才開始：實測 Qwen3-Omni 開字幕要等 24–38 秒才回話，關掉 "
+                    "2.5–5.8 秒。關掉就不跑辨識，只用音量偵測判斷你講完：模型照樣聽到你的聲音，只是看不到你說了什麼。",
                     "Qwen3-Omni and MiniCPM-o only output their own replies and never say what they "
                     "heard, so the user's captions need a separate streaming ASR (the cloud "
-                    "gpt-realtime and gpt-live-1 send their transcript, so they need none). Off: no "
-                    "ASR, only an energy VAD finds the end of your turn; turn-based still gets your "
-                    "audio when you finish, you just do not see what you said.",
+                    "gpt-realtime and gpt-live-1 send their transcript, so they need none). But the "
+                    "ASR shares the GPU with the speech model and falls behind, and the reply waits "
+                    "for it: measured, Qwen3-Omni replied 24-38 s after the line with captions, "
+                    "2.5-5.8 s without. Off: no ASR, only an energy VAD finds the end of your turn; "
+                    "the model still hears you, you just do not see what you said.",
                 ),
                 **kept("va_captions"),
             )
@@ -639,9 +647,10 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
         english = bool(pairs) and all(voice_agent.is_english(t) for t, _ in pairs)
         default = va.USER_VOICE_EN if english else va.USER_VOICE
         voice_key = "va_user_voice_en" if english else "va_user_voice"
+        # macOS Tingting / Samantha, as in the evaluation: with the Qwen3-TTS Taiwanese clone
+        # MiniCPM-o answered some short lines in English (2 of 14, 0 with Tingting), and its
+        # synthesis competes with the models for the Mac. The clone stays in the list.
         user_default = next((n for n in voice_names if n.startswith(default)), None)
-        if not english:  # the Qwen3-TTS Taiwanese clone when it is installed
-            user_default = next((n for n in voice_names if n == va.USER_VOICE_TW), user_default)
         st.session_state.setdefault(voice_key, user_default or (voice_names or [""])[0])
 
         def user_label(name: str) -> str:
@@ -656,14 +665,15 @@ def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:
             voice_names or [""],
             format_func=user_label,
             help=tr(
-                "台詞用這個聲音合成，再即時送進串流辨識。中文預設 Qwen3-TTS 台灣腔（複製台灣講者的聲音）：實測串流辨識"
-                "錯字率 0.7%，跟 macOS 婷婷一樣清楚。"
+                "台詞用這個聲音合成，再即時送進串流辨識。中文預設 macOS 婷婷（評測用的聲音）；"
+                "Qwen3-TTS 台灣腔（複製台灣講者）也一樣清楚（串流辨識錯字率 0.7%），但 MiniCPM-o 聽它念的短句時偶爾會改用英文回答。"
                 "台詞第一次合成後會存起來，自訂台詞第一次每句要等幾秒。英文預設 Samantha。"
                 "Flo 代表 macOS 的 Eloquence 合成器（Eddy、Reed 等 8 個聲音只差音高），音質較機械、辨識較常出錯。"
                 "評測數字是用 macOS 婷婷念的台詞測的。",
                 "The lines are spoken by this voice and streamed through the ASR. Chinese "
-                "defaults to the Qwen3-TTS clone of a Taiwanese speaker: 0.7% errors through the "
-                "streaming ASR, as clear as macOS Tingting. "
+                "defaults to macOS Tingting (the evaluation's voice); the Qwen3-TTS clone of a "
+                "Taiwanese speaker is as clear (0.7% errors through the streaming ASR), but "
+                "MiniCPM-o sometimes answers its short lines in English. "
                 "Lines are cached after the first rendering; your own lines take a few seconds "
                 "each the first time. English defaults to Samantha. Flo stands for macOS's "
                 "Eloquence synthesiser (Eddy, Reed and six more differ only in pitch), robotic "

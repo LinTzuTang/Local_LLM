@@ -1010,6 +1010,8 @@ class VoiceAgent:
                     turn = self.turns[speech["turn"]] if speech["turn"] is not None else None
                     if turn is not None and turn.get("first_audio_sent") is None:
                         turn["first_audio_sent"] = self.now()
+                    if turn is not None and speech["kind"] == "answer":
+                        turn.setdefault("answer_audio_sent", self.now())
                 if first:
                     self.emit({"type": "assistant", "speech_id": speech["speech_id"],
                                "turn": speech["turn"], "kind": speech["kind"],
@@ -1025,7 +1027,7 @@ class VoiceAgent:
     # -- bookkeeping ----------------------------------------------------------------------------
 
     def _turn_metrics(self, turn: dict) -> None:
-        self.emit({"type": "turn", **metrics(turn, self.calls)})
+        self.emit({"type": "turn", **metrics(turn, self.calls, getattr(self, "held", False))})
 
     def _check_idle(self) -> None:
         with self.lock:
@@ -1077,7 +1079,8 @@ class VoiceAgent:
             "allow_network": self.allow_network,
             "barge_in": self.barge_in,
             "llm_load_s": self.llm_load_s,
-            "turns": [metrics(t, self.calls) for t in self.turns],
+            "turns": [metrics(t, self.calls, getattr(self, "held", False)) for t in self.turns],
+            "held": getattr(self, "held", False),
             "tool_calls": calls,
             "speeches": speeches,
             "user_speech": [list(v) for v in self.vad],
@@ -1108,14 +1111,16 @@ def _short(name: str, result: dict) -> dict:
     return result
 
 
-def metrics(turn: dict, calls: list[dict]) -> dict:
+def metrics(turn: dict, calls: list[dict], held: bool = False) -> dict:
     """A turn's timings (session clock, seconds) and the latencies derived from them:
     response_s = user stopped speaking -> the assistant's first audio started playing;
-    answer_s = user stopped speaking -> the spoken tool answer started playing."""
+    answer_s = user stopped speaking -> the spoken tool answer started playing. With `held`
+    (the page plays each reply only once it is fully made: its test script) they run to when
+    that audio was sent instead, so a slow model's whole reply does not count as its delay."""
     out = {k: turn.get(k) for k in (
         "turn", "user", "assistant", "answer", "decision", "speech_start", "speech_end",
         "asr_final", "llm_start", "llm_end", "llm_first_s", "llm_s", "llm_load_s", "repaired",
-        "first_audio_sent", "first_audio",
+        "first_audio_sent", "first_audio", "answer_audio_sent",
         "answer_audio", "answer_interrupted", "tool_calls", "speech_ids")}  # fmt: skip
     end = turn.get("speech_end")
 
@@ -1123,8 +1128,8 @@ def metrics(turn: dict, calls: list[dict]) -> dict:
         return round(t - end, 3) if t is not None and end is not None else None
 
     out["asr_s"] = since(turn.get("asr_final"))
-    out["response_s"] = since(turn.get("first_audio"))
-    out["answer_s"] = since(turn.get("answer_audio"))
+    out["response_s"] = since(turn.get("first_audio_sent" if held else "first_audio"))
+    out["answer_s"] = since(turn.get("answer_audio_sent" if held else "answer_audio"))
     mine = [c for c in calls if c["call_id"] in (turn.get("tool_calls") or [])]
     out["tool_s"] = round(sum(c.get("seconds") or 0 for c in mine), 3) if mine else None
     out["compose_first_s"] = next((c.get("compose_first_s") for c in mine), None)
