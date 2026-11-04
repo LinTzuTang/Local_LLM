@@ -1,6 +1,6 @@
 """Agent tools for the inbox (storage/inbox/): list files, transcribe audio, parse documents.
 
-Users drop meeting recordings and documents into the inbox (the "語音與文件" page has an upload
+Users drop meeting recordings and documents into the inbox (the "文件與 OCR" page has an upload
 box); agents only see file names and call these tools. Transcription and parsing run in the
 local model gateway (127.0.0.1:11500), so the files never leave this Mac.
 
@@ -124,7 +124,7 @@ def list_inbox_files() -> str:
     their type and size. Call this first to get exact file names."""
     rows = list_files()
     if not rows:
-        return "The inbox is empty. Ask the user to upload files on the Speech & documents page."
+        return "The inbox is empty. Ask the user to upload files on the Documents & OCR page."
     return "\n".join(
         f"- {r['name']} ({r['kind']}, {r['size_kb']} KB, {r['modified']})" for r in rows
     )

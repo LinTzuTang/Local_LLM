@@ -1,5 +1,5 @@
-"""Speech & documents: try the model gateway's speech-to-text, document parsing and reranker, and
-compare OCR models (ocr_compare.py).
+"""Documents & OCR: compare OCR models (ocr_compare.py), try the model gateway's document parsing
+and reranker, and fill the agents' inbox. Speech models are on the speech page (views/speech.py).
 
 Every result shows the HTTP call that produced it (the platform's theme: make API calls
 visible). Long calls run as background jobs, so switching pages does not stop them.
@@ -22,7 +22,7 @@ SAMPLE_AUDIO = media_tools.SAMPLES_DIR / "meeting_zh.wav"
 SAMPLE_DOC = media_tools.SAMPLES_DIR / "supplier_contract.pdf"
 AUDIO_TYPES = sorted(t.lstrip(".") for t in media_tools.AUDIO_TYPES)
 DOC_TYPES = sorted(t.lstrip(".") for t in media_tools.DOCUMENT_TYPES)
-AUDIO_MIME = {"mp3": "audio/mpeg", "m4a": "audio/mp4", "mp4": "audio/mp4", "mov": "video/quicktime"}
+PAGE_TASKS = {"doc", "rerank"}  # gateway models this page uses; speech ones are on views/speech.py
 TASK_LABELS = {
     "asr": tr("語音轉文字", "Speech to text"),
     "doc": tr("文件解析", "Document parsing"),
@@ -31,11 +31,11 @@ TASK_LABELS = {
 }
 
 ui.page_header(
-    "mic",
-    tr("語音與文件", "Speech & documents"),
+    "document_scanner",
+    tr("文件與 OCR", "Documents & OCR"),
     tr(
-        "Ollama 只跑 LLM 與 embedding。語音轉文字、文件解析、reranker 由本機的**模型閘道**提供，用法和 Ollama 一樣：一鍵下載、第一次使用時載入、閒置後自動卸載。資料不會離開這台電腦；每個結果下方都列出實際呼叫的 API。",
-        "Ollama only runs LLMs and embeddings. Speech-to-text, document parsing and reranking come from the local **model gateway**, which behaves like Ollama: one-click download, loaded on first use, unloaded when idle. Nothing leaves this Mac; every result shows the API call behind it.",
+        "圖片與掃描文件轉文字（OCR 比較）、PDF／Word 解析成 Markdown、檢索結果重新排序，以及給 agent 用的收件匣。文件解析與 reranker 由本機的**模型閘道**提供，OCR 模型在 Ollama；資料不會離開這台電腦，每個結果下方都列出實際呼叫的 API。語音模型請到「語音模型比較」。",
+        "Images and scans to text (Compare OCR), PDF/Word to Markdown, reranking retrieval results, and the inbox for agents. Document parsing and the reranker come from the local **model gateway**, the OCR models run in Ollama; nothing leaves this Mac and every result shows the API call behind it. Speech models are on Compare speech models.",
     ),
 )
 
@@ -68,6 +68,8 @@ def status_panel() -> None:
                       "From `GET /api/tags` and `GET /api/ps`."))  # fmt: skip
         rows = []
         for m in models.values():
+            if m["task"] not in PAGE_TASKS:
+                continue
             ps = loaded.get(m["id"])
             rows.append(
                 {
@@ -176,103 +178,17 @@ def api_call(method: str, path: str, request: dict, curl: str, response: dict) -
         st.json(response, expanded=1)
 
 
-def clock(seconds: float) -> str:
-    return f"{int(seconds // 60):02d}:{seconds % 60:05.2f}"
-
-
 # -- page -----------------------------------------------------------------------------------
 
 status_panel()
-tab_asr, tab_doc, tab_ocr, tab_rerank, tab_inbox = st.tabs(
+tab_ocr, tab_doc, tab_rerank, tab_inbox = st.tabs(
     [
-        ":material/mic: " + tr("語音轉文字", "Speech to text"),
-        ":material/description: " + tr("文件解析", "Document parsing"),
         ":material/document_scanner: " + tr("OCR 比較", "Compare OCR"),
+        ":material/description: " + tr("文件解析", "Document parsing"),
         ":material/sort: " + tr("重新排序（Rerank）", "Rerank"),
         ":material/inbox: " + tr("收件匣（給 agent）", "Inbox (for agents)"),
     ]
 )
-
-with tab_asr:
-    st.page_link(
-        "views/speech.py",
-        label=tr(
-            "想並排比較多個語音模型、測噪音與電話音質、翻成英文或分辨會議講者？到「語音模型比較」",
-            "Compare several speech models side by side, test noise and telephone audio, "
-            "translate to English or tell meeting speakers apart: Compare speech models",
-        ),
-        icon=":material/graphic_eq:",
-    )
-    left, right = st.columns([1, 1])
-    with left:
-        picked = pick_file("audio", "asr")
-        if picked:
-            ext = picked[0].rsplit(".", 1)[-1].lower()
-            st.audio(picked[1], format=AUDIO_MIME.get(ext, f"audio/{ext}"))
-    with right:
-        asr_model = model_select("asr", "asr_model")
-        languages = {
-            "zh": tr("中文", "Chinese"),
-            "en": tr("英文", "English"),
-            "auto": tr("自動偵測", "Detect"),
-        }
-        language = st.segmented_control(tr("語言", "Language"), list(languages), required=True,
-                                        format_func=languages.get, default="zh", key="asr_lang")  # fmt: skip
-        prompt = st.text_input(
-            tr("提示（initial prompt，選填）", "Prompt (initial prompt, optional)"),
-            "以下是繁體中文的會議錄音。" if language == "zh" else "",
-            key=f"asr_prompt_{language}",
-            help=tr(
-                "Whisper 會延續提示的寫法：寫繁體中文可讓 Whisper 輸出繁體；也可以放人名、產品名等專有名詞。Breeze-ASR-25 本身就輸出繁體。",
-                "Whisper continues the prompt's style: a Traditional-Chinese prompt steers Whisper to Traditional characters; names and product terms help too. Breeze-ASR-25 outputs Traditional Chinese by itself.",
-            ),
-        )
-        go = st.button(tr("轉成文字", "Transcribe"), type="primary",
-                       disabled=not (picked and asr_model))  # fmt: skip
-    if go and picked and asr_model:
-        name, data = picked
-        lang = None if language == "auto" else language
-
-        def asr_work(job, name=name, data=data, model=asr_model, lang=lang, prompt=prompt):
-            job.state["request"] = {"file": f"{name} ({len(data) / 1024:.0f} KB)", "model": model,
-                                    "language": lang, "prompt": prompt or None}  # fmt: skip
-            job.state["result"] = gateway_client.transcribe(
-                data, model=model, language=lang, filename=name, prompt=prompt or None,
-                base_url=URL,
-            )  # fmt: skip
-
-        start("media_asr_job", tr(f"轉文字：{name}", f"Transcribe {name}"), asr_work)
-    if job := current_job("media_asr_job"):
-        res, req = job.state["result"], job.state["request"]
-        st.divider()
-        a, b, c, d = st.columns(4)
-        a.metric(tr("音訊長度", "Audio length"), f"{res['duration']:.1f} s")
-        b.metric(tr("處理時間", "Processing time"), f"{res['seconds']:.1f} s")
-        c.metric(tr("速度", "Speed"), f"{res['duration'] / max(res['seconds'], 0.01):.1f}×",
-                 help=tr("音訊長度 ÷ 處理時間", "audio length ÷ processing time"))  # fmt: skip
-        d.metric(tr("其中載入模型", "Of which model load"), f"{res.get('load_seconds', 0):.1f} s")
-        st.markdown(f"**{res['model']}** · {tr('語言', 'language')} `{res['language']}`")
-        st.text_area(tr("逐字稿", "Transcript"), res["text"], height=150)
-        segments = pd.DataFrame(
-            [{tr("開始", "Start"): clock(s["start"]), tr("結束", "End"): clock(s["end"]),
-              tr("內容", "Text"): s["text"]} for s in res["segments"]]
-        )  # fmt: skip
-        st.dataframe(segments, hide_index=True, width="stretch", height=280)
-        lines = "\n".join(
-            f"[{clock(s['start'])}-{clock(s['end'])}] {s['text']}" for s in res["segments"]
-        )
-        st.download_button(tr("下載逐字稿（含時間軸）", "Download transcript (with timestamps)"),
-                           lines, file_name="transcript.txt")  # fmt: skip
-        form = " ".join(f"-F {k}={json.dumps(v, ensure_ascii=False)}" for k, v in req.items()
-                        if v and k != "file")  # fmt: skip
-        shown = {
-            **res,
-            "segments": res["segments"][:3]
-            + ([f"… {len(res['segments']) - 3} more"] if len(res["segments"]) > 3 else []),
-        }
-        api_call("POST", "/v1/audio/transcriptions", req,
-                 f"curl {URL}/v1/audio/transcriptions -F file=@{req['file'].split(' (')[0]} {form}",
-                 shown)  # fmt: skip
 
 with tab_doc:
     left, right = st.columns([1, 1])
