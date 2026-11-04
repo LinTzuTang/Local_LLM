@@ -232,10 +232,17 @@ def open_scenario(sid: str) -> None:
 # Collapsed like "About this tool" below: shortcuts into the scenario page, not the home page's
 # main content.
 with st.expander(tr("多 Agent 場景捷徑", "Multi-agent scenario shortcuts")):
+    st.page_link(
+        "views/scenarios.py",
+        label=tr("詳細請看「場景展示」：每個場景的說明、流程、執行與時間軸",
+                 "More on the Scenario gallery: each scenario's description, flow, runs and timeline"),
+        icon=":material/hub:",
+    )  # fmt: skip
     st.caption(
         tr(
-            "點「開啟」到場景展示頁執行；每次執行都會即時畫出流程與時間軸。",
-            "Open one to run it on the scenario page; every run draws its flow and timeline live.",
+            "或直接點下面的「開啟」，到場景展示頁執行該場景；每次執行都會即時畫出流程與時間軸。",
+            "Or press Open below to run one on the Scenario gallery; every run draws its flow "
+            "and timeline live.",
         )
     )
     # The live voice assistant is a page of its own, not a graph in scenarios.json.
