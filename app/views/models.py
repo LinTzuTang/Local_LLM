@@ -152,23 +152,31 @@ def stat(value, label: str, glyph: str = "") -> str:
     )
 
 
+def gateway_installed() -> int | None:
+    """How many models the model gateway has on disk (None when it is not running)."""
+    try:
+        return sum(bool(m.get("installed")) for m in gateway_client.models(gateway_url()))
+    except Exception:  # the gateway is down or unreachable: the stat shows a dash
+        return None
+
+
+gw_have = gateway_installed()
+others = catalog.other_models()
+servable = sum(not catalog.is_catalog_only(m) for m in others)
 st.markdown(
     '<div class="lab-stats">'
-    + stat(len(all_models), tr("個 Ollama／GGUF 模型", "Ollama / GGUF models"), "deployed_code")
+    + stat(len(all_models), tr("個 Ollama 模型", "Ollama models"), "deployed_code")
+    + stat(len(installed), tr("Ollama 已下載", "Ollama: downloaded"), "download_done")
     + stat(
-        sum(map(is_installed, all_models)),
-        tr("已下載到這台 Mac", "downloaded to this Mac"),
-        "download_done",
-    )
-    + stat(
-        sum(bool(m.get("recommended")) for m in all_models),
-        tr("平台推薦", "recommended"),
-        "star",
-    )
-    + stat(
-        len(catalog.other_models()),
-        tr("非 Ollama 模型（語音、文件、Reranker）", "non-Ollama models (speech, docs, rerank)"),
+        len(others),
+        tr(f"個非 Ollama 模型（語音、文件、OCR、Reranker；{servable} 個可經模型閘道下載，其餘僅列出參考）",
+           f"non-Ollama models (speech, docs, OCR, rerank; {servable} downloadable through the gateway, the rest listed for reference)"),
         "graphic_eq",
+    )
+    + stat(
+        "—" if gw_have is None else gw_have,
+        tr("非 Ollama 已下載（模型閘道）", "non-Ollama: downloaded (gateway)"),
+        "download_done",
     )
     + "</div>",
     unsafe_allow_html=True,
@@ -231,11 +239,7 @@ def gateway_row(m: dict, status: dict | None, loaded: dict | None, up: bool) -> 
     runs = runs_on(entry.get("mac")) if own else "—"
     note = " ".join(x for x in (loc(entry, "use"), loc(entry, "note")) if x)
     note = note if own and note else loc(m, "note")
-    flags = (
-        f'<span class="mc-flag">{ui.icon("star")}{tr("推薦", "Pick")}</span>'
-        if m.get("recommended")
-        else ""
-    )
+    flags = ""
     if loaded:
         until = (loaded["expires_at"] or "")[11:16] or tr("不限", "never")
         state = (f'<span class="ml-state have">{ui.icon("memory")}'
@@ -328,11 +332,7 @@ def catalog_row(m: dict, index: int) -> None:
     keys = [m["category"], *(["taiwan"] if m.get("taiwan") else []), *catalog.licence_keys(m),
             *(["narration"] if m.get("narration") else [])]  # fmt: skip
     sub = sep.join(x for x in (lang_text(m), loc(m, "license")) if x)
-    flags = (
-        f'<span class="mc-flag">{ui.icon("star")}{tr("推薦", "Pick")}</span>'
-        if m.get("recommended")
-        else ""
-    )
+    flags = ""
     via = m.get("served_by")
     if m.get("mac") == "native":
         state = chip(tr("內建，免下載", "Built in"), "builtin", "laptop_mac")
@@ -445,8 +445,7 @@ def candidates_table(members: list[dict]) -> None:
         pd.DataFrame(
             [
                 {
-                    tr("模型", "Model"): ("★ " if m.get("recommended") else "")
-                    + loc(m, "name")
+                    tr("模型", "Model"): loc(m, "name")
                     + (tr("（台灣）", " (Taiwan)") if m.get("taiwan") else ""),
                     tr("狀態", "Status"): f"✓ {m['gateway']['id']}"
                     if m.get("gateway")
@@ -570,7 +569,6 @@ def other_models_view() -> None:
         served_ids = {o["gateway"]["id"] for o in members if o.get("gateway")}
         served = [m for m in catalog.gateway_models() if m["id"] in served_ids]
         listed = [] if only_platform else [m for m in members if catalog.is_catalog_only(m)]
-        listed.sort(key=lambda m: not m.get("recommended"))
         if not served and not listed:
             continue
         shown += 1
@@ -629,8 +627,6 @@ def flag_html(m: dict) -> str:
     out = ""
     if m.get("default"):
         out += f'<span class="mc-flag default">{tr("平台預設", "Default")}</span>'
-    if m.get("recommended"):
-        out += f'<span class="mc-flag">{ui.icon("star")}{tr("推薦", "Pick")}</span>'
     return out
 
 
@@ -832,7 +828,7 @@ with st.container(border=True):
     )  # fmt: skip
     # Task, size tier and family live in a popover so the list starts higher on the page.
     more = sum(len(st.session_state.get(k) or []) for k in ("mf_tasks", "mf_tiers", "mf_family"))
-    c1, c2, c3, _ = st.columns([1.3, 1, 1.2, 2.6], vertical_alignment="center")
+    c1, c2, _ = st.columns([1.3, 1, 3.8], vertical_alignment="center")
     with c1.popover(
         tr("更多篩選", "More filters") + (f" · {more}" if more else ""),
         icon=":material/filter_list:",
@@ -854,7 +850,6 @@ with st.container(border=True):
     only_installed = c2.toggle(
         tr("只看已下載", "Installed only"), key="mf_installed", persist_state="session"
     )
-    only_rec = c3.toggle(tr("只看推薦", "Recommended only"), key="mf_rec", persist_state="session")
 
 terms = (query or "").casefold().split()
 rows = []
@@ -868,7 +863,7 @@ for m in all_models:
         continue
     if fam_sel and m["family"] not in fam_sel:
         continue
-    if (only_installed and not is_installed(m)) or (only_rec and not m.get("recommended")):
+    if only_installed and not is_installed(m):
         continue
     if terms and not all(t in search_text(m) for t in terms):
         continue
@@ -877,7 +872,6 @@ for m in all_models:
 SORT_KEYS = {
     "featured": lambda m: (
         not m.get("default"),
-        not m.get("recommended"),
         not is_installed(m),
         m["size_gb"],
     ),
@@ -889,7 +883,7 @@ SORT_KEYS = {
 rows.sort(key=SORT_KEYS[order or "featured"])
 
 FILTER_DEFAULTS = {"mf_query": "", "mf_caps": [], "mf_tasks": [], "mf_tiers": [], "mf_family": [],
-                   "mf_installed": False, "mf_rec": False}  # fmt: skip
+                   "mf_installed": False}  # fmt: skip
 
 
 def clear_filters() -> None:
@@ -911,7 +905,7 @@ for key, *_ in entries:
 
 # Paging: a new search or filter starts again at page 1.
 pages = max(1, -(-len(entries) // PAGE_SIZE))
-signature = repr([query, caps_sel, task_sel, tier_sel, fam_sel, only_installed, only_rec,
+signature = repr([query, caps_sel, task_sel, tier_sel, fam_sel, only_installed,
                   group, order])  # fmt: skip
 if st.session_state.get("mf_signature") != signature:
     st.session_state.mf_signature = signature

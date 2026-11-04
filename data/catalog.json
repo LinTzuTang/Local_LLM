@@ -169,6 +169,120 @@
       ]
     },
     {
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "tag": "qwen3.6:35b-a3b-nvfp4",
+      "size_gb": 23,
+      "note": "同一個 Qwen3.6 35B-A3B 的 MLX（nvfp4）版：實測在這台 Mac 生成 104.9 tok/s，比 GGUF 版（73.2）快，正確率相同（MoE F 組）。",
+      "note_en": "The MLX (nvfp4) build of Qwen3.6 35B-A3B: 104.9 tok/s measured on this Mac vs 73.2 for the GGUF build, same accuracy (MoE pair F)."
+    },
+    {
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "27B",
+      "context": 262144,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "tag": "qwen3.6:27b-nvfp4",
+      "size_gb": 18,
+      "note": "Qwen3.6 dense 27B 的 MLX（nvfp4）版：實測 28.9 tok/s，GGUF 版 15.5；MoE E 組的 dense。",
+      "note_en": "The MLX (nvfp4) build of the dense Qwen3.6 27B: 28.9 tok/s measured vs 15.5 for GGUF; the dense model of MoE pair E."
+    },
+    {
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "tag": "qwen3.6:35b-a3b-q4_K_M",
+      "size_gb": 23,
+      "note": "Qwen3.6 35B-A3B 的 GGUF Q4_K_M 版（不含看圖投影器）：在 Mac 上比 MLX 版慢（73.2 對 104.9 tok/s），NVIDIA、CPU 或 llama.cpp 才需要。",
+      "note_en": "GGUF Q4_K_M build of Qwen3.6 35B-A3B (no vision projector): slower than MLX on a Mac (73.2 vs 104.9 tok/s); for NVIDIA, CPU or llama.cpp."
+    },
+    {
+      "family": "Qwen3.6",
+      "description": "Qwen3.6 delivers substantial upgrades in agentic coding and thinking preservation than previous Qwen models.",
+      "params": "27B",
+      "context": 262144,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "tag": "qwen3.6:27b-q4_K_M",
+      "size_gb": 17,
+      "note": "Qwen3.6 27B 的 GGUF Q4_K_M 版：在 Mac 上比 MLX 版慢（15.5 對 28.9 tok/s），記憶體少一點。",
+      "note_en": "GGUF Q4_K_M build of Qwen3.6 27B: slower than MLX on a Mac (15.5 vs 28.9 tok/s), a little less memory."
+    },
+    {
       "tag": "qwen3.8:27b",
       "family": "Qwen3.8",
       "description": "Qwen3.8 delivers substantial gains across coding, professional work, research, and long-horizon agentic tasks.",
@@ -1502,6 +1616,30 @@
       "recommended": true
     },
     {
+      "tag": "minicpm-ocr",
+      "family": "MiniCPM",
+      "description": "MiniCPM-OCR 1.0 (OpenBMB): a small OCR model with a vision encoder, imported into Ollama from the official GGUF and Modelfile (with DSpark speculative decoding).",
+      "params": "0.75B + 0.44B vision",
+      "context": 262144,
+      "size_gb": 2.0,
+      "updated": "2026-10",
+      "caps": [
+        "vision"
+      ],
+      "tags": [
+        "ocr",
+        "long_context"
+      ],
+      "license": "請見模型頁",
+      "license_en": "See model page",
+      "fit": "ok",
+      "tasks": [
+        "ocr"
+      ],
+      "note": "平台 OCR 預設：實測每頁 3.0 秒，比 GLM-OCR 快 4 倍、準確度居次；用 scripts/setup_ocr_models.sh 從官方 GGUF 建立，不在 Ollama 官方模型庫。",
+      "note_en": "The platform's OCR default: 3.0 s per page measured, 4x faster than GLM-OCR and second in accuracy; built from the official GGUF with scripts/setup_ocr_models.sh, not in Ollama's library."
+    },
+    {
       "tag": "deepseek-r1:32b",
       "family": "DeepSeek",
       "description": "DeepSeek-R1 is a family of open reasoning models with performance approaching that of leading models, such as O3 and Gemini 2.5 Pro.",
@@ -2732,6 +2870,29 @@
         "router"
       ],
       "url": "https://huggingface.co/lianghsun/Llama-3.2-Taiwan-3B-Instruct-GGUF"
+    },
+    {
+      "tag": "phi4-mini:3.8b",
+      "family": "Phi",
+      "description": "Phi-4-mini-instruct is a lightweight open model from Microsoft with function calling and a 128K context.",
+      "params": "3.8B",
+      "context": 131072,
+      "size_gb": 2.5,
+      "updated": "2025-02",
+      "caps": [
+        "tools"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "mit",
+      "fit": "ok",
+      "tasks": [
+        "chat"
+      ],
+      "note": "Microsoft 的 3.8B 小模型；實測當語音助理前台判斷只對 24–32/46（小模型面對工具容易選錯），不建議當前台。",
+      "note_en": "Microsoft's 3.8B small model; as the voice assistant's front model it got 24-32/46 decisions right in our test (small models pick tools poorly); not recommended as the front model."
     }
   ],
   "tiers": [
