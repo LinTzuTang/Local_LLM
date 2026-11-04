@@ -57,11 +57,11 @@ def installed_names() -> list[str]:
 
 def model_label(tag: str, installed: set[str]) -> str:
     info = catalog.find(tag)
-    # Select box options cannot show icons, so plain text marks: ↓ to download, ★ recommended.
+    # Select box options cannot show icons, so a plain text mark: ↓ to download. (The catalog's
+    # hand-set "recommended" flags are not shown: they predate and disagree with our tests.)
     mark = "" if catalog.normalize(tag) in installed else "↓ "
     size = f" ({info['size_gb']}GB)" if info else ""
-    star = " ★" if info and info.get("recommended") else ""
-    return f"{mark}{tag}{size}{star}"
+    return f"{mark}{tag}{size}"
 
 
 def model_options(task: str | None = None, include_catalog: bool = True) -> list[str]:

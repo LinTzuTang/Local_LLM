@@ -497,9 +497,9 @@ RUNTIME_ROWS = [
     (["資料", "留在本機", "留在本機", "留在本機", "**上傳到雲端**"],
      ["Data", "Stays on this Mac", "Stays on this Mac", "Stays on this Mac",
       "**Uploaded to the cloud**"]),
-    (["平台頁面", "對話、Agent、比較", "「語音模型比較」「文件與 OCR」頁、agent 工具（會議與文件助理）",
+    (["平台頁面", "語言模型比較、Agent", "「語音模型比較」「其他模型比較」頁、agent 工具（會議與文件助理）",
       "只在模型庫列出", "只在模型庫列出"],
-     ["Pages", "Chat, Agent, Compare", "Compare speech models and Documents & OCR pages, agent tools",
+     ["Pages", "Language models, Agent", "Compare speech models and Other models pages, agent tools",
       "Listed in the library only", "Listed in the library only"]),
 ]  # fmt: skip
 

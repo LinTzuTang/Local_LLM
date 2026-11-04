@@ -1,4 +1,4 @@
-"""OCR tab of the Documents & OCR page: read one image with several local OCR engines
+"""OCR tab of the Other models page: read one image with several local OCR engines
 (local_llm/ocr.py), side by side, timed, optionally scored by MiniCPM-OCR Jev; and the benchmark
 on OmniDocBench pages (data/lab/ocr_benchmark.json, exported by scripts/ocr_eval/run_ocr.py)."""
 

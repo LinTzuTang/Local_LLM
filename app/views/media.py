@@ -1,5 +1,5 @@
-"""Documents & OCR: compare OCR models (ocr_compare.py), try the model gateway's document parsing
-and reranker, and fill the agents' inbox. Speech models are on the speech page (views/speech.py).
+"""Other models: compare OCR models (ocr_compare.py) and try the model gateway's document parsing
+and reranker. Language models are on views/llm.py, speech models on views/speech.py.
 
 Every result shows the HTTP call that produced it (the platform's theme: make API calls
 visible). Long calls run as background jobs, so switching pages does not stop them.
@@ -32,10 +32,10 @@ TASK_LABELS = {
 
 ui.page_header(
     "document_scanner",
-    tr("文件與 OCR", "Documents & OCR"),
+    tr("其他模型比較", "Other models"),
     tr(
-        "圖片與掃描文件轉文字（OCR 比較）、PDF／Word 解析成 Markdown、檢索結果重新排序，以及給 agent 用的收件匣。文件解析與 reranker 由本機的**模型閘道**提供，OCR 模型在 Ollama；資料不會離開這台電腦，每個結果下方都列出實際呼叫的 API。語音模型請到「語音模型比較」。",
-        "Images and scans to text (Compare OCR), PDF/Word to Markdown, reranking retrieval results, and the inbox for agents. Document parsing and the reranker come from the local **model gateway**, the OCR models run in Ollama; nothing leaves this Mac and every result shows the API call behind it. Speech models are on Compare speech models.",
+        "語言與語音以外的模型：圖片與掃描文件轉文字（OCR 比較）、PDF／Word 解析成 Markdown、檢索結果重新排序（Rerank）。文件解析與 reranker 由本機的**模型閘道**提供，OCR 模型在 Ollama；資料不會離開這台電腦，每個結果下方都列出實際呼叫的 API。語言模型請到「語言模型比較」，語音模型請到「語音模型比較」。",
+        "Models other than language and speech ones: images and scans to text (Compare OCR), PDF/Word to Markdown, reranking retrieval results. Document parsing and the reranker come from the local **model gateway**, the OCR models run in Ollama; nothing leaves this Mac and every result shows the API call behind it. Language models are on Language models, speech models on Compare speech models.",
     ),
 )
 
@@ -181,12 +181,11 @@ def api_call(method: str, path: str, request: dict, curl: str, response: dict) -
 # -- page -----------------------------------------------------------------------------------
 
 status_panel()
-tab_ocr, tab_doc, tab_rerank, tab_inbox = st.tabs(
+tab_ocr, tab_doc, tab_rerank = st.tabs(
     [
         ":material/document_scanner: " + tr("OCR 比較", "Compare OCR"),
         ":material/description: " + tr("文件解析", "Document parsing"),
         ":material/sort: " + tr("重新排序（Rerank）", "Rerank"),
-        ":material/inbox: " + tr("收件匣（給 agent）", "Inbox (for agents)"),
     ]
 )
 
@@ -294,46 +293,3 @@ with tab_rerank:
         api_call("POST", "/v1/rerank", req,
                  f"curl {URL}/v1/rerank -H 'content-type: application/json' -d '{body}'",
                  {"model": req["model"], "results": results})  # fmt: skip
-
-with tab_inbox:
-    st.markdown(
-        tr(
-            "Agent 看不到你的硬碟，只能透過工具讀 **收件匣**（`storage/inbox/`）裡的檔案：`list_inbox_files` 列出檔案、`transcribe_audio` 轉逐字稿、`parse_document` 解析文件；後兩個呼叫上面同一個模型閘道。在 Agent 頁選「會議與文件助理」即可使用。",
-            "Agents cannot see your disk; they read files in the **inbox** (`storage/inbox/`) through tools: `list_inbox_files`, `transcribe_audio` and `parse_document` (the last two call the same model gateway as above). Pick the 'Meetings & documents assistant' on the Agent page.",
-        )
-    )
-    uploads = st.file_uploader(tr("加入檔案", "Add files"), type=AUDIO_TYPES + DOC_TYPES,
-                               accept_multiple_files=True, key="inbox_upload")  # fmt: skip
-    a, b, c = st.columns([1, 1, 2])
-    if a.button(tr("放進收件匣", "Add to inbox"), type="primary", disabled=not uploads):
-        saved = [media_tools.save(u.name, u.getvalue()) for u in uploads]
-        st.success(tr("已加入：", "Added: ") + "、".join(saved))
-    if b.button(tr("放入範例檔", "Add the samples")):
-        st.success(tr("已加入：", "Added: ") + "、".join(media_tools.add_samples()))
-    if c.button(
-        tr("用「會議與文件助理」分析", "Analyse with the meetings & documents assistant"),
-        icon=":material/smart_toy:",
-    ):
-        st.session_state.agent_type = "meeting_docs"  # preselects it on the Agent page
-        st.switch_page("views/agent.py")
-    files = media_tools.list_files()
-    if files:
-        kinds = {
-            "audio": tr("音訊", "audio"),
-            "document": tr("文件", "document"),
-            "other": tr("其他", "other"),
-        }
-        st.dataframe(
-            pd.DataFrame([{tr("檔名", "Name"): f["name"], tr("類型", "Type"): kinds[f["kind"]],
-                           "KB": f["size_kb"], tr("修改時間", "Modified"): f["modified"]}
-                          for f in files]),
-            hide_index=True, width="stretch",
-        )  # fmt: skip
-        d1, d2 = st.columns([3, 1])
-        victim = d1.selectbox(tr("刪除檔案", "Delete a file"), [f["name"] for f in files],
-                              label_visibility="collapsed")  # fmt: skip
-        if d2.button(tr("刪除", "Delete"), key="inbox_delete"):
-            media_tools.remove(victim)
-            st.rerun()
-    else:
-        st.info(tr("收件匣是空的。", "The inbox is empty."))

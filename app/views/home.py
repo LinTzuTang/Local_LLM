@@ -267,7 +267,7 @@ if st.session_state.pop("_open_scenario", False):
 with st.expander(tr("關於這個工具與系統架構", "About this tool and its architecture")):
     st.markdown(
         tr(
-            "**兩個目的**：① 測試各種地端 LLM 的表現（模型庫、對話、模型比較、語音模型比較、文件與 OCR）；"
+            "**兩個目的**：① 測試各種地端 LLM 的表現（模型庫、語言模型比較、語音模型比較、其他模型比較）；"
             "② 展示多 Agent 場景（Agent 工作室、多 Agent 比較、場景展示、知識庫、總控 Coding Agent）。"
             "所有服務只監聽 127.0.0.1；權限由資料庫角色與檢索過濾強制，不靠 prompt。",
             "**Two goals**: ① benchmark local LLMs (model library, chat, compare, speech & "
