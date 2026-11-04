@@ -45,23 +45,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 links = st.columns(5)
-links[0].page_link(
-    "views/scenarios.py", label=tr("場景展示", "Scenario gallery"), icon=":material/hub:"
-)
-links[1].page_link(
-    "views/agent.py", label=tr("打造一個 Agent", "Build an agent"), icon=":material/smart_toy:"
-)
-links[2].page_link(
-    "views/llm.py", label=tr("比較語言模型", "Compare language models"), icon=":material/balance:"
-)
-links[3].page_link(
-    "views/speech.py",
-    label=tr("比較語音模型", "Compare speech models"),
-    icon=":material/graphic_eq:",
-)
-links[4].page_link(
-    "views/models.py", label=tr("瀏覽模型庫", "Browse models"), icon=":material/apps:"
-)
+SHORTCUTS = [  # models first, then building and the demo; the scenarios have their own section below
+    ("views/models.py", tr("瀏覽模型庫", "Browse models"), ":material/apps:"),
+    ("views/llm.py", tr("比較語言模型", "Compare language models"), ":material/balance:"),
+    ("views/speech.py", tr("比較語音模型", "Compare speech models"), ":material/graphic_eq:"),
+    ("views/agent.py", tr("打造一個 Agent", "Build an agent"), ":material/smart_toy:"),
+    ("views/voice_assistant.py", tr("即時語音助理", "Live voice assistant"), ":material/support_agent:"),
+]
+for col, (path, label, icon) in zip(links, SHORTCUTS, strict=True):
+    col.page_link(path, label=label, icon=icon)
 
 
 # --- live system status --------------------------------------------------------------------------
@@ -229,9 +221,11 @@ def open_scenario(sid: str) -> None:
     st.session_state["_open_scenario"] = True
 
 
-# Collapsed like "About this tool" below: shortcuts into the scenario page, not the home page's
-# main content.
-with st.expander(tr("多 Agent 場景捷徑", "Multi-agent scenario shortcuts")):
+# Collapsed like "About this tool" below: a glance at the scenarios, with the Scenario gallery for
+# the details.
+cards = [*scenarios, None]  # the live voice assistant is a page of its own, not a graph
+with st.expander(tr(f"多 Agent 場景速覽（目前 {len(cards)} 個）",
+                    f"Multi-agent scenarios at a glance ({len(cards)} now)")):  # fmt: skip
     st.page_link(
         "views/scenarios.py",
         label=tr("詳細請看「場景展示」：每個場景的說明、流程、執行與時間軸",
@@ -245,8 +239,6 @@ with st.expander(tr("多 Agent 場景捷徑", "Multi-agent scenario shortcuts"))
             "and timeline live.",
         )
     )
-    # The live voice assistant is a page of its own, not a graph in scenarios.json.
-    cards = [*scenarios, None]
     for row in range(0, len(cards), 3):
         for col, s in zip(st.columns(3, gap="medium"), cards[row : row + 3], strict=False):
             if s is None:
