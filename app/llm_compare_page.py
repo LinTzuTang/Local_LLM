@@ -1,3 +1,7 @@
+"""Compare mode of the Language models page (views/llm.py): one prompt to several models,
+side by side. Run as a script by views/llm.py (runpy), like a page of its own.
+"""
+
 import json
 import re
 
@@ -5,7 +9,6 @@ import i18n
 import jobs
 import pandas as pd
 import streamlit as st
-import ui
 from common import (
     installed_names,
     kept,
@@ -13,7 +16,6 @@ from common import (
     model_label,
     ollama_backend,
     ollama_url,
-    require_ollama,
     save_run,
     stats_caption,
 )
@@ -22,19 +24,13 @@ from i18n import tr
 from local_llm import catalog, ollama_admin
 from local_llm.streaming import collect, stream_chat
 
-ui.page_header(
-    "balance",
-    tr("模型比較", "Compare models"),
-    tr(
-        "同一個問題依序丟給多個語言模型（一次跑一個，速度數字才公平），並排比較答案與速度。"
-        "比較在背景執行，可以切換到其他頁面，回來再看結果。語音模型請到「語音模型比較」。",
-        "One prompt goes to several language models in turn (one at a time, so the speed "
-        "numbers are fair); compare answers and speed side by side. The comparison runs in the "
-        "background, so you can switch pages and come back for the results. Speech models have "
-        "their own page, Compare speech models.",
-    ),
-)
-require_ollama()
+st.caption(tr(
+    "同一個問題依序丟給多個語言模型（一次跑一個，速度數字才公平），並排比較答案與速度。"
+    "比較在背景執行，可以切換到其他頁面，回來再看結果。",
+    "One prompt goes to several language models in turn (one at a time, so the speed numbers "
+    "are fair); compare answers and speed side by side. It runs in the background, so you can "
+    "switch pages and come back for the results.",
+))  # fmt: skip
 
 # Prompt templates: id -> (label, prompt) per language.
 PRESETS = {
@@ -358,7 +354,7 @@ if st.button(label, type="primary", disabled=busy or not (selected and prompt)):
             f"比較 {len(selected)} 個模型",
             f"Compare {len(selected)} model{'' if len(selected) == 1 else 's'}",
         ),
-        "views/compare.py",
+        "views/llm.py",
         state={
             "prompt": prompt,
             "system": system,

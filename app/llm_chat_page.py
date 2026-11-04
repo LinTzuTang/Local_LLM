@@ -1,13 +1,15 @@
+"""Chat mode of the Language models page (views/llm.py): talk to one local model. Run as a
+script by views/llm.py (runpy), like a page of its own.
+"""
+
 import base64
 
 import jobs
 import streamlit as st
-import ui
 from common import (
     kept,
     model_picker,
     ollama_backend,
-    require_ollama,
     stats_caption,
     think_control,
 )
@@ -16,17 +18,11 @@ from i18n import current, tr
 from local_llm import catalog
 from local_llm.streaming import stream_chat
 
-ui.page_header(
-    "chat",
-    tr("對話測試", "Chat"),
-    tr(
-        "直接和一個地端模型對話：看它的回答品質、思考過程與速度（首字時間、tokens/s）。",
-        "Talk to one local model directly: answer quality, reasoning and speed "
-        "(time to first token, tokens/s).",
-    ),
-    eyebrow=tr("模型", "Models"),
-)
-require_ollama()
+st.caption(tr(
+    "直接和一個地端模型對話：看它的回答品質、思考過程與速度（首字時間、tokens/s）。",
+    "Talk to one local model directly: answer quality, reasoning and speed "
+    "(time to first token, tokens/s).",
+))  # fmt: skip
 lang = current()
 
 
@@ -207,7 +203,7 @@ if prompt := st.chat_input(tr("輸入訊息…", "Type a message…"), disabled=
     job = jobs.Job(
         "chat",
         tr(f"對話：{prompt[:12]}", f"Chat: {prompt[:16]}"),
-        "views/chat.py",
+        "views/llm.py",
         state={"model": model, "thinking": "", "answer": ""},
     )
     backend = ollama_backend()

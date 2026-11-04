@@ -66,13 +66,13 @@ STEPS = [
         "balance",
         "prepare",
         tr("比較模型", "Compare models"),
-        "views/compare.py",
-        tr("模型比較", "Compare models"),
+        "views/llm.py",
+        tr("語言模型比較", "Language models"),
         tr("選出公司預設模型", "Choose the default model"),
         tr(
-            "按「快速組合 → 台灣主權 LLM」，用「繁中寫作」題目跑一次，開啟裁判評分。"
+            "選幾個候選模型（例如 Gemma 4、Qwen、TAIDE、Breeze），用「繁中寫作」題目跑一次，開啟裁判評分。"
             "語音模型在「語音模型比較」：逐字稿、噪音與電話音質、翻成英文、會議講者。",
-            "Pick the 'Taiwan sovereign LLMs' preset, run the Traditional-Chinese writing prompt "
+            "Pick a few candidates (e.g. Gemma 4, Qwen, TAIDE, Breeze), run the Traditional-Chinese writing prompt "
             "and turn on the judge. Speech models are on 'Compare speech models': transcripts, "
             "noise and telephone audio, translation to English, meeting speakers.",
         ),

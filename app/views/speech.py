@@ -2,7 +2,7 @@
 meeting diarization, simulated live captions and text to speech. The modes live in
 speech_compare, speech_translate, speech_meeting, speech_live and speech_tts; the voice chat
 moved to the live voice assistant (its cascade takes streaming or whole-clip ASR), speech_voice
-still draws the saved voice-chat runs. The language-model comparison is views/compare.py."""
+still draws the saved voice-chat runs. The language-model comparison is views/llm.py."""
 
 import speech_common as sc
 import speech_compare

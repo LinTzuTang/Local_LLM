@@ -82,6 +82,8 @@ testpaths = ["tests"]
 "app/ocr_compare.py" = ["E501"]  # the OCR tab's copy
 "app/speech_bench.py" = ["E501"]  # the streaming benchmark's copy
 "app/speech_diarize_bench.py" = ["E501"]  # the diarization comparison's copy
+"app/llm_chat_page.py" = ["E501"]  # the Language models page's chat mode (was a view)
+"app/llm_compare_page.py" = ["E501"]  # the Language models page's compare mode (was a view)
 # Schema DDL and Chinese sample-data templates.
 "src/local_llm/company_db.py" = ["E501"]
 # Bilingual descriptions of the MCP servers and tools.

@@ -52,7 +52,7 @@ links[1].page_link(
     "views/agent.py", label=tr("打造一個 Agent", "Build an agent"), icon=":material/smart_toy:"
 )
 links[2].page_link(
-    "views/compare.py", label=tr("比較模型", "Compare models"), icon=":material/balance:"
+    "views/llm.py", label=tr("比較語言模型", "Compare language models"), icon=":material/balance:"
 )
 links[3].page_link(
     "views/speech.py",
