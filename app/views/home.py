@@ -221,13 +221,6 @@ st.markdown(f"#### {tr('系統現況', 'Live status')}")
 live_status()
 
 # --- scenarios ------------------------------------------------------------------------------------
-st.markdown(f"#### {tr('多 Agent 場景', 'Multi-agent scenarios')}")
-st.caption(
-    tr(
-        "點「開啟」到場景展示頁執行；每次執行都會即時畫出流程與時間軸。",
-        "Open one to run it on the scenario page; every run draws its flow and timeline live.",
-    )
-)
 scenarios = store.scenarios()
 
 
@@ -236,30 +229,39 @@ def open_scenario(sid: str) -> None:
     st.session_state["_open_scenario"] = True
 
 
-# The live voice assistant is a page of its own, not a graph in scenarios.json.
-cards = [*scenarios, None]
-for row in range(0, len(cards), 3):
-    for col, s in zip(st.columns(3, gap="medium"), cards[row : row + 3], strict=False):
-        if s is None:
-            voice_assistant.home_card(col)
-            continue
-        need = engine.requirements(s)
-        kinds = sorted({flow_ui.node_kind(n) for n in s["nodes"]} - {None})
-        models = [flow_ui.short_model(m) for m in sorted(need["ollama"] | need["gateway"])]
-        with col.container(border=True, height=450):
-            icon = flow_ui.category_icon(s.get("category"))
-            st.markdown(f":material/{icon}: **{pick(s['name'])}**")
-            st.graphviz_chart(flow_ui.flow_dot(s, compact=True), use_container_width=True)
-            st.markdown(ui.badges(kinds, models[:4]), unsafe_allow_html=True)
-            st.caption(pick(s.get("description")))
-            st.button(
-                tr("開啟", "Open"),
-                icon=":material/arrow_forward:",
-                key=f"open_{s['id']}",
-                on_click=open_scenario,
-                args=(s["id"],),
-                type="primary",
-            )
+# Collapsed like "About this tool" below: shortcuts into the scenario page, not the home page's
+# main content.
+with st.expander(tr("多 Agent 場景捷徑", "Multi-agent scenario shortcuts")):
+    st.caption(
+        tr(
+            "點「開啟」到場景展示頁執行；每次執行都會即時畫出流程與時間軸。",
+            "Open one to run it on the scenario page; every run draws its flow and timeline live.",
+        )
+    )
+    # The live voice assistant is a page of its own, not a graph in scenarios.json.
+    cards = [*scenarios, None]
+    for row in range(0, len(cards), 3):
+        for col, s in zip(st.columns(3, gap="medium"), cards[row : row + 3], strict=False):
+            if s is None:
+                voice_assistant.home_card(col)
+                continue
+            need = engine.requirements(s)
+            kinds = sorted({flow_ui.node_kind(n) for n in s["nodes"]} - {None})
+            models = [flow_ui.short_model(m) for m in sorted(need["ollama"] | need["gateway"])]
+            with col.container(border=True, height=450):
+                icon = flow_ui.category_icon(s.get("category"))
+                st.markdown(f":material/{icon}: **{pick(s['name'])}**")
+                st.graphviz_chart(flow_ui.flow_dot(s, compact=True), use_container_width=True)
+                st.markdown(ui.badges(kinds, models[:4]), unsafe_allow_html=True)
+                st.caption(pick(s.get("description")))
+                st.button(
+                    tr("開啟", "Open"),
+                    icon=":material/arrow_forward:",
+                    key=f"open_{s['id']}",
+                    on_click=open_scenario,
+                    args=(s["id"],),
+                    type="primary",
+                )
 if st.session_state.pop("_open_scenario", False):
     st.switch_page("views/scenarios.py")
 
