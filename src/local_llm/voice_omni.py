@@ -62,9 +62,15 @@ MINICPM_REF = (
     / "default_ref_audio.wav"
 )
 MINICPM_PORT = 9060
+# The evaluation's prompt said "reply in English when the user speaks English"; with the
+# platform's test speaker (the Qwen3-TTS Taiwanese clone) the model then answered short lines such
+# as 「我在板橋。」 in English, echoing them ("I'm in Banqiao.": 2 of 14 lines, 0 with macOS
+# Tingting). Saying that Chinese, accented or short, always gets Traditional Chinese and that it
+# must not translate or repeat the user brought that to 0 of 14 (2026-11-05).
 MINICPM_PROMPT = (
-    "<|audio_end|>你的任務是用這種聲音當一個即時語音助理。請用台灣慣用的繁體中文口語回答，一到兩句、簡短自然；"
-    "使用者說英文就用英文回答。你沒有連網，查不到即時天氣、預報或店家資訊；被問到時要老實說查不到，"
+    "<|audio_end|>你的任務是用這種聲音當一個即時語音助理。使用者說中文（包括台灣口音、很短的一句話）時，"
+    "一定要用台灣慣用的繁體中文口語回答，一到兩句、簡短自然，不要把使用者的話翻譯或重複一遍；"
+    "只有使用者整句都說英文時才用英文回答。你沒有連網，查不到即時天氣、預報或店家資訊；被問到時要老實說查不到，"
     "不要編造溫度、降雨機率、店名或營業時間。<|im_end|>\n<|im_start|>user\n"
 )  # fmt: skip
 

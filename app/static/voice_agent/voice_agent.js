@@ -241,6 +241,7 @@ export default function (component) {
         send({ type: "played", speech_id: ev.speech_id, seq: ev.seq, stopped: true });
         return;
       }
+      s.lastPiece = performance.now();
       s.queue.push({ sid: ev.speech_id, seq: ev.seq, buffer: buf });
       playNext();
     }).catch(() => send({ type: "played", speech_id: ev.speech_id, seq: ev.seq }));
@@ -251,9 +252,30 @@ export default function (component) {
     return m && m.chunks ? m.chunks.find((c) => c.seq === seq) : null;
   }
 
+  // Speech arrives in pieces as the model makes it. A model that makes speech barely faster than
+  // it plays (Qwen3-Omni: 0.67-0.8 s per second of speech alone, 1.2-1.5 s with any other work
+  // on the Mac, measured 2026-11-05) ran dry after every 0.6 s piece and stuttered. So a speech
+  // starts once PREBUFFER_S of it is queued, or once no new piece has come for SETTLE_MS (it is
+  // short, or finished); after running dry it waits the same way, pausing now and then instead
+  // of stuttering. Speech made faster than real time (the cascade's TTS) is hardly delayed.
+  const PREBUFFER_S = 2.0;
+  const SETTLE_MS = 1500;
+  function primed() {
+    const sid = s.queue[0].sid;
+    if (s.flowing === sid) return true;
+    const queued = s.queue.filter((q) => q.sid === sid).reduce((t, q) => t + q.buffer.duration, 0);
+    return queued >= PREBUFFER_S || performance.now() - s.lastPiece >= SETTLE_MS;
+  }
+
   function playNext() {
     if (s.current || !s.queue.length || !s.ctx) return;
+    if (!primed()) {
+      clearTimeout(s.primeTimer);
+      s.primeTimer = setTimeout(playNext, 100);
+      return;
+    }
     const item = s.queue.shift();
+    s.flowing = item.sid;
     const c = chunk(item.sid, item.seq);
     if (c) c.state = "playing";
     const source = s.ctx.createBufferSource();
@@ -264,6 +286,7 @@ export default function (component) {
     source.onended = () => {
       if (s.current !== item) return;
       s.current = null;
+      if (!s.queue.length || s.queue[0].sid !== item.sid) s.flowing = null;  // ran dry, or ended
       const done = chunk(item.sid, item.seq);
       if (done) done.state = "played";
       send({ type: "played", speech_id: item.sid, seq: item.seq });
@@ -282,6 +305,7 @@ export default function (component) {
         if (c.state === "queued") c.state = "cut";
       });
     });
+    if (s.flowing && s.stopped.has(s.flowing)) s.flowing = null;
     if (s.current && s.stopped.has(s.current.sid)) {
       const item = s.current;
       s.current = null;
@@ -415,6 +439,7 @@ export default function (component) {
         break;
       case "tool_start":
         s.cards[ev.call_id] = { ...ev, ok: null };
+        s.toolCount += 1;
         s.segs.tool.push({ id: ev.call_id, start: ev.start, end: null, name: ev.name });
         s.toolsRunning += 1;
         break;
@@ -582,11 +607,28 @@ export default function (component) {
     });
   }
 
-  // The assistant is done with a line: an "idle" came after the line was spoken (a model that
-  // never captions the user, or a caption that never came, still counts) and nothing of its
-  // speech is left to play.
-  function settled(idleBefore) {
-    return s.idleCount > idleBefore && !s.current && !s.queue.length;
+  // The test script waits for the assistant to finish a line before saying the next one: its
+  // reply has started playing (after a lookup, the spoken answer too), nothing is queued,
+  // playing or looking things up, and that has lasted QUIET_MS. An "idle" alone is not enough:
+  // a slow model (Qwen3-Omni, MiniCPM-o) streams speech in pieces with gaps, a model still
+  // loading or thinking has nothing queued yet, and a lookup leaves a gap between "let me
+  // check" and the answer. Each wait gives up after a while, so a model that stays silent does
+  // not stall the script.
+  const QUIET_MS = 2500;
+  function startedAfter(t0, kind) {
+    return Object.entries(s.speechStart).some(([sid, at]) =>
+      at >= t0 && (!kind || (s.speechKind[sid] || {}).kind === kind));
+  }
+  async function answered(t0, toolsBefore) {
+    await until(() => startedAfter(t0), 60000);
+    if (s.toolCount > toolsBefore) await until(() => startedAfter(t0, "answer"), 90000);
+    let quietSince = null;
+    await until(() => {
+      const quiet = !s.current && !s.queue.length && !s.toolsRunning;
+      if (!quiet) { quietSince = null; return false; }
+      quietSince = quietSince || performance.now();
+      return performance.now() - quietSince > QUIET_MS;
+    }, 180000);
   }
 
   async function until(test, ms) {
@@ -617,11 +659,11 @@ export default function (component) {
       s.demoStep = `${L.demo_step} ${i + 1}: ${line.text}`;
       render();
       const before = s.finals;
-      const idleBefore = s.idleCount;
+      const toolsBefore = s.toolCount;
+      const t0 = performance.now();
       await speak({ text: line.text, pcm: pcm16(line.pcm) });
       await until(() => s.finals > before, 15000);
-      await until(() => settled(idleBefore), 60000);
-      await sleep(700);
+      await answered(t0, toolsBefore);
       if (line.done) break;
     }
     s.demoStep = null;
@@ -641,7 +683,8 @@ export default function (component) {
       s.demoStep = `${L.demo_step} ${i + 1}/${normal.length}: ${normal[i].text}`;
       render();
       const before = s.finals;
-      const idleBefore = s.idleCount;
+      const toolsBefore = s.toolCount;
+      const t0 = performance.now();
       await speak(normal[i]);
       const last = i === normal.length - 1;
       if (last && barge) {
@@ -655,15 +698,15 @@ export default function (component) {
         s.demoStep = `${L.demo_barge}: ${barge.text}`;
         render();
         const bargeBefore = s.finals;
-        const bargeIdle = s.idleCount;
+        const bargeTools = s.toolCount;
+        const bargeT0 = performance.now();
         await speak(barge);
         await until(() => s.finals > bargeBefore, 15000);
-        await until(() => settled(bargeIdle), 60000);
+        await answered(bargeT0, bargeTools);
       } else {
         await until(() => s.finals > before, 15000);
-        await until(() => settled(idleBefore), 60000);
+        await answered(t0, toolsBefore);
       }
-      await sleep(700);
     }
     s.demoStep = null;
     await sleep(500);
@@ -680,8 +723,9 @@ export default function (component) {
       mountId, phase: "connecting", error: null, ready: false, llmReady: false,
       messages: [], cards: {}, turns: {}, events: [], speaking: new Set(),
       segs: { user: [], llm: [], asst: [], tool: [] }, speechKind: {}, speechStart: {},
-      queue: [], current: null, stopped: new Set(), decodeChain: Promise.resolve(),
-      finals: 0, idleCount: 0, idleMark: 0, lastFinalTurn: null, bargeIns: 0, toolsRunning: 0,
+      queue: [], current: null, flowing: null, lastPiece: 0, primeTimer: null,
+      stopped: new Set(), decodeChain: Promise.resolve(),
+      finals: 0, idleCount: 0, idleMark: 0, lastFinalTurn: null, bargeIns: 0, toolsRunning: 0, toolCount: 0,
       userSpeaking: false, lastT: null, lastLocal: 0, firstT: null, demoStep: null,
       pending: [], sent: 0, acc: 0, cnt: 0, phaseIn: 0, ratio: 3, feeding: null,
     };
