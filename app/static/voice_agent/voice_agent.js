@@ -694,6 +694,31 @@ export default function (component) {
     stop();
   }
 
+  // The barge line ("好，那就第一家吧") picks the first place, so it waits until the spoken
+  // answer has said that place: the sentence piece naming it has played to its end. Said
+  // 2.2 s into the answer it came while the assistant was still on 「內湖附近有幾間不錯的
+  // 早午餐店」, before any place. If the answer never names the first place as the lookup
+  // spells it, the first piece played out and barge_after_ms will do.
+  function namedFirst(turn) {
+    const m = s.messages.find((x) => x.role === "asst" && x.kind === "answer" && x.turn === turn);
+    if (!m || !m.chunks || !s.speechStart[m.sid]) return false;
+    const cards = Object.values(s.cards).filter((c) => c.name === "search_places");
+    const card = cards[cards.length - 1];
+    const places = (card && card.result && card.result.places) || [];
+    const name = places.length ? String(places[0].name || "").replace(/\s+/g, "") : "";
+    const chunks = [...m.chunks].sort((a, b) => a.seq - b.seq);
+    const starts = chunks.map((c, i) => (c.text ? i : -1)).filter((i) => i >= 0);  // piece starts
+    const played = (upto) => chunks.slice(0, upto).every((c) => c.state === "played");
+    const at = name ? starts.findIndex((i) => chunks[i].text.replace(/\s+/g, "").includes(name)) : -1;
+    if (at >= 0) {
+      const end = at + 1 < starts.length ? starts[at + 1] : chunks.length;
+      return played(end) && (end < chunks.length || s.made[m.sid]);
+    }
+    const firstEnd = starts.length > 1 ? starts[1] : chunks.length;
+    return played(firstEnd) && performance.now() - s.speechStart[m.sid] > data.demo.barge_after_ms
+      && (starts.length > 1 || s.made[m.sid]);
+  }
+
   async function runDemo() {
     if (data.demo.sim) return runSim();
     const lines = data.demo.lines.map((l) => ({ ...l, pcm: pcm16(l.pcm) }));
@@ -718,10 +743,7 @@ export default function (component) {
         // Interrupt while the assistant reads out the list.
         await until(() => s.finals > before, 15000);
         const turn = s.lastFinalTurn;
-        const reading = () => Object.entries(s.speechKind).some(([sid, k]) =>
-          k.turn === turn && k.kind === "answer" && s.speechStart[sid] &&
-          performance.now() - s.speechStart[sid] > data.demo.barge_after_ms);
-        await until(() => reading() || s.idleCount > s.idleMark, 60000);
+        await until(() => namedFirst(turn) || s.idleCount > s.idleMark, 60000);
         s.demoStep = `${L.demo_barge}: ${barge.text}`;
         render();
         const bargeBefore = s.finals;
