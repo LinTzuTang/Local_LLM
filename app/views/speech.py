@@ -8,12 +8,13 @@ import speech_common as sc
 import speech_compare
 import speech_live
 import speech_meeting
+import speech_pick
 import speech_simul
 import speech_translate
 import speech_tts
 import streamlit as st
 import ui
-from common import gateway_url, kept
+from common import gateway_url
 from i18n import tr
 
 ui.page_header(
@@ -38,25 +39,38 @@ MODES = {
     "live": (tr("串流（即時）", "Live"), "sensors"),
     "tts": (tr("文字轉語音", "Text to speech"), "text_to_speech"),
 }
-left, right = st.columns([3, 1], vertical_alignment="bottom")
-st.session_state.setdefault("speech_mode", "transcribe")
-# "voice_chat" moved to the voice assistant, "pick" to its own page (views/speech_guide.py)
-if st.session_state.speech_mode not in MODES:
-    st.session_state.speech_mode = "transcribe"
-mode = (
-    left.segmented_control(
-        tr("模式", "Mode"),
-        list(MODES),
-        format_func=lambda m: f":material/{MODES[m][1]}: {MODES[m][0]}",
-        label_visibility="collapsed",
-        **kept("speech_mode"),
-    )
-    or "transcribe"
-)
+# "Pick a model" (the recommendations) sits above the tests on its own, not as one of them:
+# speech_mode is None while it shows, and choosing a test switches to that test.
+st.session_state.setdefault("speech_mode", None)
+if st.session_state.speech_mode not in (None, *MODES):  # "voice_chat" moved to the voice assistant
+    st.session_state.speech_mode = None
+st.session_state["_speech_mode"] = st.session_state.speech_mode
+
+
+def show_pick() -> None:
+    st.session_state.speech_mode = st.session_state["_speech_mode"] = None
+
+
+def show_test() -> None:
+    st.session_state.speech_mode = st.session_state["_speech_mode"]
+
+
+top, right = st.columns([3, 1], vertical_alignment="center")
+top.button(
+    tr("依情境選模型（看建議，不用自己測）", "Pick a model (recommendations, no testing)"),
+    icon=":material/recommend:", on_click=show_pick,
+    type="primary" if st.session_state.speech_mode is None else "secondary",
+)  # fmt: skip
 with right:
     sc.s2tw_toggle()
-st.page_link("views/speech_guide.py", label=tr("不想自己測？看「依情境選語音模型」", "Not testing? See Pick a speech model"),
-             icon=":material/recommend:")  # fmt: skip
+st.segmented_control(
+    tr("自己測", "Run a test"), list(MODES), key="_speech_mode", on_change=show_test,
+    format_func=lambda m: f":material/{MODES[m][1]}: {MODES[m][0]}",
+)  # fmt: skip
+mode = st.session_state.speech_mode
+if mode is None:  # nothing runs: no gateway needed
+    speech_pick.pick_page()
+    st.stop()
 
 blurbs = {
     "transcribe": tr(
