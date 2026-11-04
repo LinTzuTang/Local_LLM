@@ -50,7 +50,7 @@ def systems_frame(data: dict) -> pd.DataFrame:
                 tr("系統", "System"): tr(s["name"], s["name_en"]),
                 tr("對話方式", "Way"): tr(*KINDS[s["kind"]]),
                 tr("跑在哪", "Where"): ui.where_names()[s["where"] != "local"],
-                tr("能查資料", "Lookups"): "✅" if s["tools"] else "—",
+                tr("有接工具（查資料）", "Tools wired (lookups)"): "✅" if s["tools"] else "—",
                 tr("說完到開口", "Starts talking"): _sec(s["start_s"]),
                 tr("說出查到的答案", "Says the answer"): _sec(s["answer_s"]),
                 tr("判斷正確", "Decisions right"): s["decisions"] or "—",

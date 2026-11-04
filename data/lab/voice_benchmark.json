@@ -29,8 +29,23 @@
    "traditional": 1.0,
    "grounded": 1.0,
    "natural": 4.3,
-   "note": "不用查資料的閒聊首選；20 GB",
-   "note_en": "Best for small talk without lookups; 20 GB"
+   "note": "沒接工具（系統提示說沒有連網）：不用查資料的閒聊首選；20 GB",
+   "note_en": "No tools (told it has no internet): best for small talk without lookups; 20 GB"
+  },
+  {
+   "name": "Qwen3-Omni 30B-A3B（接工具）",
+   "name_en": "Qwen3-Omni 30B-A3B (with tools)",
+   "kind": "turn",
+   "where": "local",
+   "tools": true,
+   "start_s": 1.37,
+   "answer_s": 2.48,
+   "decisions": "22/23",
+   "traditional": 1.0,
+   "grounded": 0.957,
+   "natural": 4.43,
+   "note": "11-04 接上和串接方案同一組工具（官方工具格式）：會自己查天氣、找店家；英文對話查完常改用中文（語言 20/23），有一次只說「我幫你查」卻沒呼叫；查資料的回合開口中位數 2.5 秒（最慢 11.9 秒）",
+   "note_en": "11-04 with the cascade's tools (official tool format): looks up weather and places itself; English conversations often switch to Chinese after a lookup (language 20/23), once it said it would look something up and called nothing; lookup turns start speaking after 2.5 s median (slowest 11.9 s)"
   },
   {
    "name": "MiniCPM-o 4.5",
