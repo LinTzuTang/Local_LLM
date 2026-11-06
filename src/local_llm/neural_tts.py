@@ -137,6 +137,27 @@ for _name, (_voice, _locale) in GOOGLE_TTS.items():
         "source": ("Google Cloud TTS・雲端", "Google Cloud TTS, cloud"),
         "limits": GOOGLE_TTS_LIMITS,
     }  # fmt: skip
+# ElevenLabs (elevenlabs.py): Taiwanese-accent voices of its voice library read by Eleven v4 Turbo
+# over its WebSocket, streamed. Measured 2026-11-05: 1.6-1.9% round-trip error over 9 voices,
+# first audio 0.12 s after the text (plus about 0.1 s to connect).
+ELEVENLABS_TTS_LIMITS = (
+    "雲端（ElevenLabs，Eleven v4 Turbo）：要能連網，要念的文字會上傳；邊合成邊回傳，送出文字後"
+    "第一段聲音約 0.12 秒（另加連線約 0.1 秒）。聲音庫裡的台灣口音聲音（配音員的專業聲音複製），"
+    "中英文、數字都行；依字數扣額度（Creator 方案每月 131,000 字元）。",
+    "Cloud (ElevenLabs, Eleven v4 Turbo): needs the network and the text is uploaded; audio "
+    "streams back, the first piece about 0.12 s after the text (plus about 0.1 s to connect). "
+    "Taiwanese-accent voices of its voice library (voice actors' professional clones); Chinese, "
+    "English and numbers are fine; uses credits per character (Creator plan: 131,000 a month).",
+)
+ELEVENLABS_TTS = {f"ElevenLabs {_n}（雲端）": _n for _n in ("Anna Su", "Yui", "Yu", "Evan")}
+for _name, _short in ELEVENLABS_TTS.items():
+    VOICES[_name] = {
+        "name": _name, "short": _name.removesuffix("（雲端）"), "locale": "zh_TW",
+        "engine": "elevenlabs", "voice": _short, "fast": False, "stream": True, "english": True,
+        "sample": "我是 ElevenLabs 的台灣口音聲音。", "cloud": True,
+        "source": ("ElevenLabs・雲端", "ElevenLabs, cloud"),
+        "limits": ELEVENLABS_TTS_LIMITS,
+    }  # fmt: skip
 VOICES |= mlx_tts.VOICES
 NATIVE_RATE = 22050
 # Every rendering is brought to TARGET_RMS_DB (macOS Tingting measures about -17), its peaks
@@ -173,6 +194,10 @@ def available(name: str) -> bool:
         from . import gcp_auth
 
         return gcp_auth.available()
+    if name in ELEVENLABS_TTS:
+        from . import elevenlabs
+
+        return elevenlabs.available()
     if name == VITS:
         return (VITS_DIR / "vits-mr-20250709.onnx").exists()
     if name in mlx_tts.VOICES:
@@ -439,6 +464,8 @@ def render_stream(text: str, voice: str, sample_rate: int):
 
     if VOICES[voice]["engine"] == "azure":
         pieces = ((x, AZURE_RATE) for x in azure_chunks(text, voice))
+    elif VOICES[voice]["engine"] == "elevenlabs":
+        pieces = elevenlabs_chunks(text, voice)
     else:
         pieces = mlx_tts.stream(speech_text(text), VOICES[voice])
     target = 10 ** (TARGET_RMS_DB / 20)
@@ -478,6 +505,29 @@ def render_stream(text: str, voice: str, sample_rate: int):
         _stream_levels[voice] = level if known is None else (known + level) / 2
 
 
+def elevenlabs_chunks(text: str, voice: str):
+    """An ElevenLabs voice's PCM pieces as float samples at elevenlabs.RATE (an odd trailing
+    byte waits for the next piece)."""
+    from . import elevenlabs
+
+    voice_id = elevenlabs.VOICES[VOICES[voice]["voice"]][0]
+    rest = b""
+    for piece in elevenlabs.turbo_chunks(text, voice_id):
+        data = rest + piece
+        cut = len(data) - len(data) % 2
+        rest = data[cut:]
+        if cut:
+            yield np.frombuffer(data[:cut], "<i2").astype(np.float32) / 32768, elevenlabs.RATE
+
+
+def render_elevenlabs(text: str, voice: str, out: Path, sample_rate: int) -> Path:
+    from . import elevenlabs
+
+    parts = [x for x, _ in elevenlabs_chunks(text, voice)]
+    x = np.concatenate(parts) if parts else np.zeros(0, np.float32)
+    return _write(out, _resample(loudness(x), elevenlabs.RATE, sample_rate), sample_rate)
+
+
 def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
     """One line with a neural voice (English lines with macOS Samantha unless the model
     speaks English too)."""
@@ -491,6 +541,8 @@ def render(text: str, voice: str, out: Path, sample_rate: int) -> Path:
         return render_azure(text, voice, out, sample_rate)
     if VOICES[voice]["engine"] == "google":
         return render_google(text, voice, out, sample_rate)
+    if VOICES[voice]["engine"] == "elevenlabs":
+        return render_elevenlabs(text, voice, out, sample_rate)
     if VOICES[voice]["engine"] == "mlx":
         return render_mlx(text, voice, out, sample_rate)
     return render_vits(text, out, sample_rate)

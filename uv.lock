@@ -697,6 +697,23 @@ standard = [
 ]
 
 [[package]]
+name = "elevenlabs"
+version = "2.76.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/61/99/8475a09b48affe3d62c2637259b2b84c1c3b0a25ecb23a163ff9f06de902/elevenlabs-2.76.0.tar.gz", hash = "sha256:4314223252c21d16aecdce19306618f78ffcfda4a61819a99e5a8d925f54b899", size = 907777, upload-time = "2026-11-04T10:05:49.577Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/bc/75a732d3c6d28d58bc253ebf00b1b46f2b47948ecf697c5f909f001c1384/elevenlabs-2.76.0-py3-none-any.whl", hash = "sha256:e0f63c0d5ea1cfcfa1116cd73232db2888b2d011a4a3c6ef068410054b933ad1", size = 2365964, upload-time = "2026-11-04T10:05:46.882Z" },
+]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1430,6 +1447,7 @@ dependencies = [
     { name = "aws-sdk-bedrock-runtime" },
     { name = "awscrt" },
     { name = "docling" },
+    { name = "elevenlabs" },
     { name = "faker" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -1480,6 +1498,7 @@ requires-dist = [
     { name = "aws-sdk-bedrock-runtime", specifier = ">=0.12.0" },
     { name = "awscrt", specifier = ">=0.38.0" },
     { name = "docling", specifier = ">=2.138.0" },
+    { name = "elevenlabs", specifier = ">=2.76.0" },
     { name = "faker", specifier = ">=40.43.0" },
     { name = "fastapi", specifier = ">=0.143.0" },
     { name = "httpx", specifier = ">=0.28,<1" },

@@ -38,6 +38,7 @@ dependencies = [
     "soxr>=1.1.0",
     "aws-sdk-bedrock-runtime>=0.12.0",
     "awscrt>=0.38.0",
+    "elevenlabs>=2.76.0",
 ]
 
 [project.scripts]

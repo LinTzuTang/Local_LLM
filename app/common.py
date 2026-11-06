@@ -103,9 +103,11 @@ def cloud_switch() -> None:
         key="_cloud_switch",
         on_change=changed,
         help=tr(
-            "打開後才能選雲端模型（Azure、Google、AWS 的語音對話、語音合成、同步口譯）。"
+            "打開後才能選雲端模型（Azure、Google、AWS、ElevenLabs 的語音對話、語音合成、"
+            "同步口譯）。"
             "選了雲端模型，錄音或文字會上傳到該服務；關閉時平台全部在本機執行。",
-            "Turn on to pick cloud models (Azure, Google, AWS voice chat, speech synthesis, "
+            "Turn on to pick cloud models (Azure, Google, AWS, ElevenLabs voice chat, speech "
+            "synthesis, "
             "interpreting). With a cloud model the audio or text goes to that service; off, "
             "everything runs on this machine.",
         ),

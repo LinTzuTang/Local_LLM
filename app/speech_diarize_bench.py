@@ -15,17 +15,19 @@ import streamlit as st
 from common import cloud_enabled, kept, save_run
 from i18n import tr
 
-from local_llm import catalog, gateway_client
+from local_llm import catalog, elevenlabs, gateway_client
 from local_llm import diarization as dz
 
 TESTSET = ["meeting_zh.wav", "alimeeting_r8001_zh.flac", "alimeeting_r8009_zh.flac"]
 AZURE = "azure-diarization"
+ELEVEN = "elevenlabs-diarization"
+CLOUD = (AZURE, ELEVEN)
 COLLAR_S = 0.25
 
 
 def takes_count(model: str) -> bool:
     """Whether the model can be told how many speakers there are."""
-    if model == AZURE:
+    if model in CLOUD:
         return True
     spec = next((m for m in catalog.gateway_models("diarize") if m["id"] == model), {})
     return spec.get("backend") == "sherpa-diarization"
@@ -35,6 +37,9 @@ def model_names() -> dict[str, str]:
     names = sc.names("diarize")
     if cloud_enabled():
         names[AZURE] = tr("Azure AI Speech 講者分離（雲端）", "Azure AI Speech diarization (cloud)")
+        if elevenlabs.available():
+            names[ELEVEN] = tr("ElevenLabs Scribe v2 講者分離（雲端）",
+                               "ElevenLabs Scribe v2 diarization (cloud)")  # fmt: skip
     return names
 
 
@@ -57,6 +62,8 @@ def compare_work(job: jobs.Job, url: str) -> None:
         try:
             if model == AZURE:
                 out = dz.azure_diarize(path, count or 10)
+            elif model == ELEVEN:
+                out = elevenlabs.diarize(path, count)
             else:
                 out = gateway_client.diarize(path, count, model=model, keep_alive=120, base_url=url)
         except Exception as exc:  # one failure should not stop the rest
@@ -122,11 +129,12 @@ def compare_page(url: str, status: dict) -> None:
     st.session_state.setdefault("mc_modes", ["estimated", "known"])
     modes = st.pills(tr("人數", "Speaker count"), list(mode_names), format_func=mode_names.get,
                      selection_mode="multi", **kept("mc_modes"))  # fmt: skip
-    gateway = [m for m in models if m != AZURE]
+    gateway = [m for m in models if m not in CLOUD]
     sc.download_missing(gateway, status, "mc")
-    ready = [m for m in models if m == AZURE or (status.get(m) or {}).get("installed")]
-    if AZURE in models:
-        st.caption(tr("Azure 會把錄音上傳到雲端。", "Azure uploads the recordings to the cloud."))
+    ready = [m for m in models if m in CLOUD or (status.get(m) or {}).get("installed")]
+    if any(m in CLOUD for m in models):
+        st.caption(tr("雲端模型（Azure、ElevenLabs）會把錄音上傳到雲端。",
+                      "Cloud models (Azure, ElevenLabs) upload the recordings."))  # fmt: skip
     job = jobs.get(st.session_state.get("mc_job"))
     busy = bool(job and job.running)
     if st.button(tr("開始比較", "Compare"), type="primary", icon=":material/play_arrow:",

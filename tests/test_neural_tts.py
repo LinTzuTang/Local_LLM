@@ -24,13 +24,15 @@ def test_neural_voices_are_listed_and_routed(monkeypatch, tmp_path):
     every = [v["name"] for v in tts.voices(("zh_TW",), neural="all")]
     azure = list(neural_tts.AZURE_TTS)  # cloud, but they stream: live
     google = [n for n, (_, loc) in neural_tts.GOOGLE_TTS.items() if loc == "zh_TW"]
-    taiwan = [neural_tts.VITS, *azure, *google, "Qwen3-TTS 台灣腔（複製）",
+    eleven = list(neural_tts.ELEVENLABS_TTS)  # cloud, streamed (Eleven v4 Turbo): live
+    taiwan = [neural_tts.VITS, *azure, *google, *eleven, "Qwen3-TTS 台灣腔（複製）",
               "VoxCPM2 台灣腔（複製）",
               "MOSS-TTS-Nano 台灣腔（複製）", "OmniVoice 台灣腔（複製）",
               "Breeze-TTS-2 台灣腔（複製）"]  # fmt: skip
     # live: the fast VITS, the streaming Azure voices (first piece in about 0.3 s) and the
     # streaming Qwen3-TTS clone (first chunk in about 0.2 s)
-    assert fast == [neural_tts.VITS, *azure, *google, "Qwen3-TTS 台灣腔（複製）"]
+    assert fast == [neural_tts.VITS, *azure, *google, *eleven, "Qwen3-TTS 台灣腔（複製）"]
+    assert tts.find("ElevenLabs Anna Su（雲端）")["engine"] == "elevenlabs"
     assert every == taiwan
     assert tts.find("Azure 曉臻（雲端）")["engine"] == "azure"
     mainland = [v["name"] for v in tts.voices(("zh_CN",))]
