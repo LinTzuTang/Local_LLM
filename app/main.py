@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import access
 import common
 import i18n
 import jobs
@@ -14,6 +15,17 @@ st.logo(str(Path(__file__).parent / "static" / "logo.svg"), size="large")
 ui.inject_css()
 
 i18n.current()
+
+# Shared behind the login proxy (LOCAL_LLM_AUTH=1): only the admin sees the coding agent.
+who = access.viewer()
+if who is None:
+    st.error(
+        tr(
+            "無法確認登入身分，請從平台的 HTTPS 網址重新登入。",
+            "Could not tell who you are; sign in again through the platform's HTTPS address.",
+        )
+    )
+    st.stop()
 
 
 def page(path: str, zh: str, en: str, icon: str, **kw) -> st.Page:
@@ -58,10 +70,24 @@ pages = {
         page("views/history.py", "執行紀錄", "Run history", ":material/history:"),
     ],
 }
+if who["role"] != "admin":
+    pages.pop(tr("總控", "Control"))
 current = st.navigation(pages, position="top")
 
-# Top-right corner of every page: background tasks and the language switch.
-_, cloud_col, tasks_col, lang_col = st.columns([6.6, 1.4, 1.7, 1.3], vertical_alignment="center")
+# Top-right corner of every page: background tasks and the language switch (and, when shared,
+# who is signed in).
+if who["user"]:
+    _, user_col, cloud_col, tasks_col, lang_col = st.columns(
+        [5.2, 1.4, 1.4, 1.7, 1.3], vertical_alignment="center"
+    )
+    with user_col:
+        with st.popover(who["user"], icon=":material/account_circle:"):
+            st.caption(tr("管理者", "Admin") if who["role"] == "admin" else tr("使用者", "User"))
+            st.markdown(f"[{tr('登出', 'Sign out')}](/auth/logout)")
+else:
+    _, cloud_col, tasks_col, lang_col = st.columns(
+        [6.6, 1.4, 1.7, 1.3], vertical_alignment="center"
+    )
 with cloud_col:
     common.cloud_switch()
 with tasks_col:

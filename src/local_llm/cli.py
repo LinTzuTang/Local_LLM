@@ -22,9 +22,14 @@ def main():
         from .coder.repl import main as code_main
 
         return code_main(sys.argv[2:])
+    if sys.argv[1:2] == ["users"]:  # platform accounts (auth.py)
+        from .auth import main as users_main
+
+        sys.exit(users_main(sys.argv[2:]))
     parser = argparse.ArgumentParser(
         description="LangChain local LLM demo",
-        epilog="`local-agent code --help`: the fully local coding agent for this project.",
+        epilog="`local-agent code --help`: the fully local coding agent for this project. "
+        "`local-agent users --help`: accounts when the platform is shared (LOCAL_LLM_AUTH=1).",
     )
     parser.add_argument(
         "mode", choices=["doctor", "chat", "agent", "code"], nargs="?", default="agent"

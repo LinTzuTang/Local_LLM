@@ -13,3 +13,9 @@ storage/
 
 # Azure realtime test from another session (own .venv)
 scripts/realtime-audio-quickstart-py/
+CLAUDE.local.md
+docs/NAVI_SYNC.md
+docs/NAVI_ISSUES.md
+
+# GCP machine details for scripts/remote (public repo)
+scripts/remote/config.local.sh

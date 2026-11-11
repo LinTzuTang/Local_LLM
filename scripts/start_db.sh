@@ -6,7 +6,12 @@ set -eu
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$PROJECT_DIR"
 export PATH="/opt/homebrew/opt/postgresql@18/bin:$HOME/.local/bin:$PATH"
-command -v pg_ctl >/dev/null || { echo "PostgreSQL not found: brew install postgresql@18" >&2; exit 1; }
+# Homebrew (macOS) puts pg_ctl on PATH; Debian/Ubuntu keep it in /usr/lib/postgresql/<ver>/bin.
+for d in /usr/lib/postgresql/*/bin; do [ -x "$d/pg_ctl" ] && PATH="$d:$PATH"; done
+command -v pg_ctl >/dev/null || {
+  echo "PostgreSQL not found: brew install postgresql@18 (Linux: ./scripts/remote/setup_linux.sh)" >&2
+  exit 1
+}
 DATA="$PROJECT_DIR/storage/pgdata"
 PORT=5433
 mkdir -p "$PROJECT_DIR/storage"

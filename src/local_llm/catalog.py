@@ -1,4 +1,5 @@
 import json
+import sys
 from functools import cache
 from pathlib import Path
 
@@ -119,13 +120,31 @@ def licence_keys(model: dict) -> list[str]:
     return keys
 
 
+# Gateway backends that need Apple's MLX: on Linux a model on one of these is served only when
+# its `linux` block names another backend (and usually other weights), else it is left out.
+MLX_BACKENDS = {"mlx-whisper", "mlx-audio", "mlx-audio-realtime", "mlx-diarization"}
+PLATFORM = sys.platform  # tests pin it to "darwin" so the catalog's shape is the same everywhere
+
+
+def for_platform(gw: dict, platform: str | None = None) -> dict | None:
+    """A catalog `gateway` block as this machine runs it: on Linux its `linux` keys replace
+    the macOS ones (backend, weights, path, convert, options); None when it needs MLX."""
+    linux = gw.get("linux")
+    gw = {k: v for k, v in gw.items() if k != "linux"}
+    if (platform or PLATFORM) == "darwin":
+        return gw
+    gw.update(linux or {})
+    return None if gw["backend"] in MLX_BACKENDS else gw
+
+
 def gateway_models(task: str | None = None) -> list[dict]:
-    """Non-Ollama models served by the model gateway: the entry's `gateway` block plus
-    display fields (name, license, recommended) from the entry itself."""
+    """Non-Ollama models served by the model gateway on this machine: the entry's `gateway`
+    block (for_platform) plus display fields (name, license, recommended) from the entry."""
     rows = []
     for m in other_models():
         if gw := m.get("gateway"):
-            if task is None or gw["task"] == task:
+            gw = for_platform(gw)
+            if gw and (task is None or gw["task"] == task):
                 keys = ("name", "name_en", "license", "license_en", "repo")
                 base = {k: m[k] for k in keys if k in m}
                 rows.append({**base, "recommended": m.get("recommended", False), **gw})

@@ -3119,6 +3119,31 @@
         "note_en": "The gateway downloads the transformers weights from MediaTek's official repo (model.safetensors, 3.1GB), converts them to MLX format locally (models/mlx/breeze-asr-25, fp16) and deletes the originals afterwards; community conversions are not used.",
         "options": {
           "translate": false
+        },
+        "linux": {
+          "backend": "hf-whisper",
+          "weights": [
+            {
+              "repo": "MediaTek-Research/Breeze-ASR-25",
+              "revision": "cffe7ccb404d025296a00758d0a33468bec3a9d0",
+              "files": [
+                "config.json",
+                "generation_config.json",
+                "preprocessor_config.json",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "vocab.json",
+                "merges.txt",
+                "added_tokens.json",
+                "special_tokens_map.json",
+                "normalizer.json",
+                "model.safetensors"
+              ],
+              "into": "hf-whisper/breeze-asr-25"
+            }
+          ],
+          "path": "hf-whisper/breeze-asr-25",
+          "convert": null
         }
       }
     },
@@ -3168,6 +3193,31 @@
             "condition_on_previous_text": false
           },
           "translate": false
+        },
+        "linux": {
+          "backend": "hf-whisper",
+          "weights": [
+            {
+              "repo": "adi-gov-tw/Taiwan-Tongues-ASR-CE-pretrained-v1.0",
+              "revision": "1180db44b24838d99f16ac8da093bd9238cf4f85",
+              "files": [
+                "config.json",
+                "generation_config.json",
+                "preprocessor_config.json",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "vocab.json",
+                "merges.txt",
+                "added_tokens.json",
+                "special_tokens_map.json",
+                "normalizer.json",
+                "model.safetensors"
+              ],
+              "into": "hf-whisper/taiwan-tongues-asr"
+            }
+          ],
+          "path": "hf-whisper/taiwan-tongues-asr",
+          "convert": null
         }
       }
     },
@@ -3208,6 +3258,31 @@
             "condition_on_previous_text": false
           },
           "translate": false
+        },
+        "linux": {
+          "backend": "hf-whisper",
+          "weights": [
+            {
+              "repo": "openai/whisper-large-v3-turbo",
+              "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+              "files": [
+                "config.json",
+                "generation_config.json",
+                "preprocessor_config.json",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "vocab.json",
+                "merges.txt",
+                "added_tokens.json",
+                "special_tokens_map.json",
+                "normalizer.json",
+                "model.safetensors"
+              ],
+              "into": "hf-whisper/whisper-large-v3-turbo"
+            }
+          ],
+          "path": "hf-whisper/whisper-large-v3-turbo",
+          "convert": null
         }
       }
     },
@@ -3251,6 +3326,31 @@
           "decode": {
             "condition_on_previous_text": false
           }
+        },
+        "linux": {
+          "backend": "hf-whisper",
+          "weights": [
+            {
+              "repo": "openai/whisper-large-v3",
+              "revision": "06f233fe06e710322aca913c1bc4249a0d71fce1",
+              "files": [
+                "config.json",
+                "generation_config.json",
+                "preprocessor_config.json",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "vocab.json",
+                "merges.txt",
+                "added_tokens.json",
+                "special_tokens_map.json",
+                "normalizer.json",
+                "model.safetensors"
+              ],
+              "into": "hf-whisper/whisper-large-v3"
+            }
+          ],
+          "path": "hf-whisper/whisper-large-v3",
+          "convert": null
         }
       }
     },
@@ -3549,6 +3649,33 @@
         "note_en": "The gateway downloads the transformers weights from MediaTek's official repo (two fp32 shards, 6.2 GB, @7b99268), converts them to MLX locally (models/mlx/breeze-asr-26, fp16, ~3.1 GB) and deletes the originals; community conversions are not used. The model writes Taiwanese Hokkien speech as Mandarin characters (not Taigi orthography or Tai-lo).",
         "options": {
           "translate": false
+        },
+        "linux": {
+          "backend": "hf-whisper",
+          "weights": [
+            {
+              "repo": "MediaTek-Research/Breeze-ASR-26",
+              "revision": "7b992682e7f5ceedd0a41ebec240f01ba469d19e",
+              "files": [
+                "config.json",
+                "generation_config.json",
+                "preprocessor_config.json",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "vocab.json",
+                "merges.txt",
+                "added_tokens.json",
+                "special_tokens_map.json",
+                "normalizer.json",
+                "model.safetensors.index.json",
+                "model-00001-of-00002.safetensors",
+                "model-00002-of-00002.safetensors"
+              ],
+              "into": "hf-whisper/breeze-asr-26"
+            }
+          ],
+          "path": "hf-whisper/breeze-asr-26",
+          "convert": null
         }
       }
     },

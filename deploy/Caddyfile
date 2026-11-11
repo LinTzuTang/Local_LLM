@@ -1,0 +1,59 @@
+# Reverse proxy for sharing Local Agent Lab with colleagues (LOCAL_LLM_AUTH=1).
+# Installed to /etc/caddy/Caddyfile by scripts/remote/setup_caddy.sh, with LAB_DOMAIN replaced.
+# Caddy gets and renews the HTTPS certificate itself (needs ports 80 and 443 open and the
+# domain's DNS pointing at this machine's static IP).
+#
+# Every request except the login pages first goes to the login service (auth_server.py,
+# 127.0.0.1:11600) with its cookie; only then is it passed on, with the account in
+# X-Lab-User / X-Lab-Role. Those two headers are removed from what the browser sent first, so
+# nobody can claim to be someone else. Everything behind it listens on 127.0.0.1 only.
+# The check itself is a plain request: a WebSocket's Connection/Upgrade headers are not passed
+# to the login service (it would refuse the check as a WebSocket to an HTTP route, 403).
+
+LAB_DOMAIN {
+	encode zstd gzip
+
+	# Login form, sign-in and sign-out.
+	handle /auth/* {
+		reverse_proxy 127.0.0.1:11600
+	}
+
+	# The model gateway: only the two WebSockets the browser opens itself (live captions and
+	# the voice assistant); the rest of its API is for the platform on this machine.
+	# The handle blocks are mutually exclusive (first match wins). Inside each, `route` keeps
+	# the steps in the written order (Caddy would otherwise run forward_auth before the header
+	# removal, which would then drop the identity it just copied in).
+	@gateway_ws path /gateway/v1/audio/stream/ws /gateway/v1/voice/agent/ws
+	handle @gateway_ws {
+		route {
+			request_header -X-Lab-User
+			request_header -X-Lab-Role
+			forward_auth 127.0.0.1:11600 {
+				uri /auth/check
+				header_up -Connection
+				header_up -Upgrade
+				copy_headers X-Lab-User X-Lab-Role
+			}
+			uri strip_prefix /gateway
+			reverse_proxy 127.0.0.1:11500
+		}
+	}
+	handle /gateway/* {
+		respond 404
+	}
+
+	# Everything else is the Streamlit platform.
+	handle {
+		route {
+			request_header -X-Lab-User
+			request_header -X-Lab-Role
+			forward_auth 127.0.0.1:11600 {
+				uri /auth/check
+				header_up -Connection
+				header_up -Upgrade
+				copy_headers X-Lab-User X-Lab-Role
+			}
+			reverse_proxy 127.0.0.1:8501
+		}
+	}
+}

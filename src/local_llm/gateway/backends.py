@@ -7,6 +7,7 @@ inputs and returns plain JSON-able data. Bad input raises ValueError (HTTP 400).
 
 import gc
 import re
+import subprocess
 import sys
 import threading
 import time
@@ -29,7 +30,8 @@ class Backend:
 
 
 # MLX runs one GPU graph at a time per process; two speech models transcribing at once (a
-# scenario with parallel branches) take turns instead of risking concurrent Metal work.
+# scenario with parallel branches) take turns instead of risking concurrent Metal work. The
+# CUDA Whisper backend (Linux) takes the same turns, so one transcription has the GPU at a time.
 MLX_LOCK = threading.Lock()
 SAMPLE_RATE = 16000
 
@@ -49,13 +51,29 @@ class mlx_turn:
 
 
 def decode_audio(path: Path):
-    """Any audio/video file -> 16 kHz mono float32 samples (ffmpeg, through mlx-whisper)."""
-    from mlx_whisper.audio import load_audio
+    """Any audio/video file -> 16 kHz mono float32 NumPy samples, decoded by ffmpeg (the same
+    command mlx-whisper's load_audio runs, without needing MLX)."""
+    import numpy as np
 
+    cmd = ["ffmpeg", "-nostdin", "-threads", "0", "-i", str(path), "-f", "s16le", "-ac", "1",
+           "-acodec", "pcm_s16le", "-ar", str(SAMPLE_RATE), "-"]  # fmt: skip
     try:
-        return load_audio(str(path))
-    except RuntimeError as exc:
-        raise ValueError(f"could not decode the audio file: {exc}") from exc
+        out = subprocess.run(cmd, capture_output=True, check=True).stdout
+    except FileNotFoundError as exc:
+        raise RuntimeError("ffmpeg not found; install it (brew / apt install ffmpeg)") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = exc.stderr.decode(errors="replace").strip().splitlines()[-1:] or [""]
+        raise ValueError(f"could not decode the audio file: {detail[0]}") from exc
+    return np.frombuffer(out, np.int16).astype(np.float32) / 32768.0
+
+
+def torch_device() -> str:
+    """The torch GPU of this machine: "cuda" (Linux, NVIDIA), "mps" (Apple) or "cpu"."""
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    return "mps" if torch.backends.mps.is_available() else "cpu"
 
 
 def _segments(raw, text: str, duration: float) -> list[dict]:
@@ -140,6 +158,77 @@ class WhisperBackend(Backend):
         with MLX_LOCK:
             if ModelHolder.model is handle["model"]:
                 ModelHolder.model = ModelHolder.model_path = None
+
+
+class HfWhisperBackend(Backend):
+    """Speech-to-text with transformers Whisper on the CUDA GPU (Linux): the same models as
+    mlx-whisper (Breeze-ASR-25/26, Taiwan-Tongues, Whisper large-v3 / turbo), loaded straight
+    from the official repos' safetensors in fp16 with no conversion.
+
+    Long audio is decoded with Whisper's own sequential long-form algorithm, like mlx-whisper
+    (the pipeline's chunk_length_s batching was 6x slower on a 3-minute clip and transformers
+    calls it experimental). `options.decode.condition_on_previous_text` maps to transformers'
+    condition_on_prev_tokens; `options.translate` is honoured as in WhisperBackend."""
+
+    task = "asr"
+
+    def load(self, spec, path):
+        import torch
+        from transformers import pipeline
+
+        device = torch_device()
+        dtype = torch.float16 if device != "cpu" else torch.float32
+        pipe = pipeline("automatic-speech-recognition", model=str(path), dtype=dtype,
+                        device=device)  # fmt: skip
+        decode = spec.options.get("decode", {})
+        handle = {"pipe": pipe, "translate": spec.options.get("translate"),
+                  "condition": decode.get("condition_on_previous_text")}  # fmt: skip
+        return handle, device
+
+    def run(
+        self,
+        handle,
+        audio: Path,
+        language: str | None = None,
+        prompt: str | None = None,
+        mode: str = "transcribe",
+    ):
+        if mode == "translate" and handle.get("translate") is False:
+            raise ValueError(
+                "this model does not translate (it writes the original language); use "
+                "whisper-large-v3, an audio LLM, or transcribe and translate with an LLM"
+            )
+        pipe = handle["pipe"]
+        samples = decode_audio(audio)
+        duration = len(samples) / SAMPLE_RATE
+        generate = {"task": mode}
+        if handle.get("condition") is not None:
+            generate["condition_on_prev_tokens"] = handle["condition"]
+        if language:
+            generate["language"] = language
+        if prompt:
+            ids = pipe.tokenizer.get_prompt_ids(prompt, return_tensors="pt")
+            generate["prompt_ids"] = ids.to(pipe.device)
+        with mlx_turn() as turn:
+            result = pipe(
+                {"raw": samples, "sampling_rate": SAMPLE_RATE},
+                return_timestamps=True,
+                generate_kwargs=generate,
+            )
+        text = (result.get("text") or "").strip()
+        raw = [
+            {"start": c["timestamp"][0] or 0.0,
+             "end": c["timestamp"][1] if c["timestamp"][1] is not None else duration,
+             "text": c.get("text", "")}
+            for c in result.get("chunks") or [] if c.get("timestamp")
+        ]  # fmt: skip
+        return {
+            "text": text,
+            "segments": _segments(raw, text, duration),
+            "language": language,
+            "duration": round(duration, 2),
+            "queue_seconds": turn.waited,
+        }
 
 
 # Qwen3-ASR names its languages in English ("Chinese"); the API takes ISO codes like Whisper.
@@ -343,10 +432,12 @@ class DoclingBackend(Backend):
             PdfFormatOption,
         )
 
+        mac = sys.platform == "darwin"
+        device = AcceleratorDevice.MPS if mac else AcceleratorDevice.AUTO  # AUTO: CUDA on Linux
         options = PdfPipelineOptions(
             artifacts_path=path,  # models/docling; Docling never downloads when this is set
             do_table_structure=True,
-            accelerator_options=AcceleratorOptions(device=AcceleratorDevice.MPS),
+            accelerator_options=AcceleratorOptions(device=device),
         )
         options.table_structure_options.mode = TableFormerMode.ACCURATE
         options.do_ocr, options.ocr_options, ocr = ocr_options()
@@ -360,7 +451,7 @@ class DoclingBackend(Backend):
         )  # fmt: skip
         converter.initialize_pipeline(InputFormat.PDF)  # load the models now, not on first use
         # Docling runs layout on MPS but keeps TableFormer on the CPU (faster there).
-        return {"converter": converter, "ocr": ocr}, "mps+cpu"
+        return {"converter": converter, "ocr": ocr}, "mps+cpu" if mac else "auto"
 
     def run(self, handle, document: Path):
         from docling.exceptions import ConversionError
@@ -412,14 +503,14 @@ class CrossEncoderBackend(Backend):
         import torch
         from sentence_transformers import CrossEncoder
 
-        device = "mps" if torch.backends.mps.is_available() else "cpu"
+        device = torch_device()
         model = CrossEncoder(
             str(path),
             device=device,
             max_length=spec.options.get("max_length", 1024),
             local_files_only=True,
             # Half precision halves memory on the GPU with no visible change in ranking.
-            model_kwargs={"dtype": torch.float16} if device == "mps" else None,
+            model_kwargs={"dtype": torch.float16} if device != "cpu" else None,
         )
         return model, device
 
@@ -564,6 +655,7 @@ class MlxDiarizationBackend(Backend):
 
 BACKENDS = {
     "mlx-whisper": WhisperBackend(),
+    "hf-whisper": HfWhisperBackend(),
     "mlx-audio": MlxAudioBackend(),
     "ollama-audio": OllamaAudioBackend(),
     "docling": DoclingBackend(),
@@ -574,12 +666,14 @@ BACKENDS = {
 
 
 def free_memory() -> None:
-    """Return freed model memory to macOS (after the last reference was dropped)."""
+    """Return freed model memory to the OS / GPU (after the last reference was dropped)."""
     gc.collect()
     if "torch" in sys.modules:
         import torch
 
-        if torch.backends.mps.is_available():
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif torch.backends.mps.is_available():
             torch.mps.empty_cache()
     if "mlx.core" in sys.modules:
         import mlx.core as mx

@@ -14,6 +14,7 @@ from datetime import datetime
 from functools import cache
 from pathlib import Path
 
+import access
 import speech_common as sc
 import speech_stream
 import streamlit as st
@@ -36,10 +37,9 @@ def component():
 
 
 def ws_url(url: str) -> str:
-    """The gateway's live endpoint for the browser: http://127.0.0.1:11500 -> ws://..."""
-    base = url.rstrip("/")
-    base = "wss://" + base[8:] if base.startswith("https://") else "ws://" + base.split("://")[-1]
-    return base + "/v1/audio/stream/ws"
+    """The gateway's live endpoint for the browser: http://127.0.0.1:11500 -> ws://..., or
+    wss://<host>/gateway/... when the page came through the login proxy (access.py)."""
+    return access.browser_gateway(url) + "/v1/audio/stream/ws"
 
 
 def labels() -> dict:

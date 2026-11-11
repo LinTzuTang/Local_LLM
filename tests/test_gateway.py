@@ -769,3 +769,38 @@ def test_mlx_diarization_backend_numbers_speakers_in_order(monkeypatch, tmp_path
     out = backend.run({"model": Streaming(), "threshold": 0.5}, tmp_path / "a.wav")
     assert out["segments"] == [{"start": 4.0, "end": 6.5, "speaker": 0},
                                {"start": 6.0, "end": 7.0, "speaker": 1}]  # fmt: skip
+
+
+def test_linux_serves_whisper_on_cuda_and_leaves_out_mlx_only_models():
+    from local_llm.gateway.backends import BACKENDS
+    from local_llm.gateway.stream_backends import STREAM_BACKENDS
+
+    blocks = [m["gateway"] for m in catalog.other_models() if m.get("gateway")]
+    mac = {g["id"]: catalog.for_platform(g, "darwin") for g in blocks}
+    linux = {g["id"]: catalog.for_platform(g, "linux") for g in blocks}
+    assert all(mac.values()) and not any("linux" in g for g in mac.values())
+    assert mac["breeze-asr-25"]["backend"] == "mlx-whisper"
+    breeze = linux["breeze-asr-25"]
+    assert breeze["backend"] == "hf-whisper" and breeze["convert"] is None
+    assert breeze["weights"][0]["repo"] == "MediaTek-Research/Breeze-ASR-25"
+    assert "preprocessor_config.json" in breeze["weights"][0]["files"]
+    assert linux["voxtral-mini-4b-realtime-4bit"] is None  # MLX only: hidden on Linux
+    served = [g for g in linux.values() if g]
+    assert {g["backend"] for g in served} <= set(BACKENDS) | set(STREAM_BACKENDS)
+    assert not {g["backend"] for g in served} & catalog.MLX_BACKENDS
+
+
+def test_decode_audio_reads_any_file_with_ffmpeg(tmp_path):
+    import shutil
+
+    from local_llm.gateway.backends import SAMPLE_RATE, decode_audio
+
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg not installed")
+    samples = decode_audio(Path("data/lab/samples/meeting_zh.wav"))
+    assert samples.dtype.name == "float32" and len(samples) > 60 * SAMPLE_RATE
+    assert abs(samples).max() <= 1.0
+    bad = tmp_path / "not_audio.wav"
+    bad.write_text("hello")
+    with pytest.raises(ValueError, match="could not decode"):
+        decode_audio(bad)

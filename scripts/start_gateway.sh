@@ -10,5 +10,5 @@ if curl -fsS "http://127.0.0.1:$PORT/api/version" >/dev/null 2>&1; then
   echo "Model gateway is already running at http://127.0.0.1:$PORT."
   exit 0
 fi
-command -v ffmpeg >/dev/null || echo "提醒：找不到 ffmpeg，語音轉文字會失敗（brew install ffmpeg）" >&2
+command -v ffmpeg >/dev/null || echo "提醒：找不到 ffmpeg，語音轉文字會失敗（brew install ffmpeg；Linux：apt install ffmpeg）" >&2
 exec uv run python -m local_llm.gateway

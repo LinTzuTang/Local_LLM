@@ -3,6 +3,7 @@ a typical 12-week plan for the fictional 300-person company, and the full write-
 
 import html
 
+import access
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -302,6 +303,8 @@ def step_card(i: int, s: dict) -> None:
             f'<div class="rm-txt">{esc(s["see"])}</div></div>',
             unsafe_allow_html=True,
         )
+        if s["page"] == "views/control.py" and not access.is_admin():
+            return  # the coding agent page is the admin's only
         st.page_link(
             s["page"],
             label=tr(f"開啟「{s['page_name']}」", f"Open {s['page_name']}"),

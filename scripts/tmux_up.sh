@@ -7,7 +7,7 @@ set -eu
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 SESSION=local_llm
 GATEWAY_PORT="${LOCAL_LLM_GATEWAY_PORT:-11500}"
-command -v tmux >/dev/null || { echo "tmux not found: brew install tmux" >&2; exit 1; }
+command -v tmux >/dev/null || { echo "tmux not found: brew install tmux (Linux: apt install tmux)" >&2; exit 1; }
 
 # Model gateway (speech, documents, reranker) in its own window, unless it already answers.
 start_gateway() {
@@ -19,8 +19,19 @@ start_gateway() {
   fi
 }
 
+# Login service for the reverse proxy, only when the platform is shared (LOCAL_LLM_AUTH=1 in
+# .env; see docs/GCP_DEPLOY.md).
+start_auth() {
+  grep -qE '^LOCAL_LLM_AUTH=(1|true|yes)' "$PROJECT_DIR/.env" 2>/dev/null || return 0
+  if ! tmux list-windows -t "$SESSION" -F '#W' | grep -qx auth; then
+    tmux new-window -d -t "$SESSION" -n auth -c "$PROJECT_DIR"
+    tmux send-keys -t "$SESSION:auth" "uv run python -m local_llm.auth_server" Enter
+  fi
+}
+
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   start_gateway
+  start_auth
   echo "tmux session '$SESSION' already running:"
   tmux list-windows -t "$SESSION"
   echo "Platform: http://127.0.0.1:8501   Attach: tmux attach -t $SESSION"
@@ -40,6 +51,7 @@ else
   done
 fi
 start_gateway
+start_auth
 tmux send-keys -t "$SESSION:app" "./scripts/start_app.sh --server.headless true" Enter
 
 for _ in $(seq 1 30); do

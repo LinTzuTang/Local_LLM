@@ -99,13 +99,19 @@ LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}
 
 
 def local_origin(origin: str | None) -> bool:
-    """A browser WebSocket from a page on this machine (or no browser at all). Browsers let any
-    web page open ws://127.0.0.1, so pages from elsewhere are refused."""
+    """A browser WebSocket from a page on this machine (or no browser at all), or from the
+    platform's own public address when it is shared behind the login proxy
+    (LOCAL_LLM_PUBLIC_URL; the proxy has already checked the session). Browsers let any web
+    page open ws://127.0.0.1, so pages from elsewhere are refused."""
     if not origin:
         return True
     from urllib.parse import urlparse
 
-    return (urlparse(origin).hostname or "") in LOCAL_HOSTS
+    from local_llm import auth
+
+    host = urlparse(origin).hostname or ""
+    public = urlparse(auth.public_url()).hostname if auth.enabled() else None
+    return host in LOCAL_HOSTS or (bool(public) and host == public)
 
 
 def normalize_language(value: str | None) -> str | None:

@@ -17,6 +17,7 @@ import wave
 from functools import cache
 from pathlib import Path
 
+import access
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -126,10 +127,9 @@ def component():
 
 
 def ws_url(url: str) -> str:
-    """The gateway's voice endpoint for the browser: http://127.0.0.1:11500 -> ws://..."""
-    base = url.rstrip("/")
-    base = "wss://" + base[8:] if base.startswith("https://") else "ws://" + base.split("://")[-1]
-    return base + "/v1/voice/agent/ws"
+    """The gateway's voice endpoint for the browser: http://127.0.0.1:11500 -> ws://..., or
+    wss://<host>/gateway/... when the page came through the login proxy (access.py)."""
+    return access.browser_gateway(url) + "/v1/voice/agent/ws"
 
 
 @st.cache_data(show_spinner=False)

@@ -5,6 +5,7 @@ import time
 import uuid
 from pathlib import Path
 
+import access
 import flow_ui
 import jobs
 import model_choice
@@ -623,7 +624,8 @@ with tab_def:
             "(it shows a diff for your approval).",
         )
     )
-    st.page_link("views/control.py", label=tr("開啟總控 Coding Agent →", "Open the coding agent →"))
+    if access.is_admin():  # the coding agent and the JSON editor change files on the server
+        st.page_link("views/control.py", label=tr("開啟總控 Coding Agent →", "Open the coding agent →"))
     with st.expander(tr("進階：直接編輯 JSON", "Advanced: edit the JSON")):
         text = st.text_area(
             tr("場景定義（JSON）", "Scenario definition (JSON)"),
@@ -643,7 +645,9 @@ with tab_def:
             for w in check.warnings:
                 st.warning(w)
             st.code(store.diff(scenario, edited_json), language="diff")
-            if st.button(
+            if not access.is_admin():
+                st.info(tr("只有管理者能儲存場景。", "Only the admin can save scenarios."))
+            elif st.button(
                 tr("驗證並儲存", "Validate & save"), type="primary", disabled=not check.ok
             ):
                 store.save_scenario(edited_json, source="ui")
