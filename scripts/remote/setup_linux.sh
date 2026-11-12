@@ -14,7 +14,8 @@ command -v nvidia-smi >/dev/null && nvidia-smi --query-gpu=name,memory.total --f
   || echo "提醒：找不到 nvidia-smi，語音模型會退回 CPU。" >&2
 
 sudo apt-get update -q
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q ffmpeg tmux postgresql rsync curl
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q ffmpeg tmux postgresql rsync curl \
+  fonts-noto-cjk
 # The platform runs its own cluster (127.0.0.1:5433, storage/pgdata); the distro's one on 5432
 # is not used.
 sudo systemctl disable --now postgresql >/dev/null 2>&1 || true

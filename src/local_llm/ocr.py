@@ -46,7 +46,13 @@ JEV_GGUF = MODELS / "MiniCPM-OCR-Jev-gguf"
 JEV_MODEL = JEV_GGUF / "MiniCPM-OCR-Jev-Q8_0.gguf"
 JEV_PORT = 18498
 OLLAMA = "http://127.0.0.1:11434"
-FONT = "/System/Library/Fonts/STHeiti Medium.ttc"
+# A CJK font for the sample image: macOS's own, or Noto CJK on Linux (apt install fonts-noto-cjk).
+FONTS = (
+    "/System/Library/Fonts/STHeiti Medium.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+)
+FONT = next((f for f in FONTS if Path(f).exists()), FONTS[0])
 
 # id -> facts shown on the platform; size in GB on disk.
 ENGINES = {

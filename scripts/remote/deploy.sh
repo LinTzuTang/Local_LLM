@@ -11,11 +11,11 @@ PROJECT_DIR=$(CDPATH= cd -- "$HERE/../.." && pwd)
 ip=$(vm_ip)
 [ -n "$ip" ] || { echo "$GCP_INSTANCE has no external IP (is it running?)" >&2; exit 1; }
 echo "Copying $PROJECT_DIR -> $REMOTE_USER@$ip:~/$REMOTE_DIR/"
-rsync -az --delete \
+rsync -az --delete --include=.env.example \
   --exclude=.git/ --exclude=.venv/ --exclude=.runtime/ --exclude=__pycache__/ \
   --exclude=.pytest_cache/ --exclude=.ruff_cache/ \
   --exclude=/models/ --exclude=/storage/ --exclude=/runs/ \
-  --exclude=.env --exclude='.env.*' --include=.env.example \
+  --exclude=.env --exclude='.env.*' \
   --exclude=.DS_Store \
   -e "ssh $(ssh_opts | tr '\n' ' ')" \
   "$PROJECT_DIR/" "$REMOTE_USER@$ip:$REMOTE_DIR/"

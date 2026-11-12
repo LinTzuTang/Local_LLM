@@ -60,6 +60,8 @@ ssh ... 'cd ~/Local_LLM && ./scripts/remote/setup_linux.sh'
 - 角色：`admin` 看得到「總控 Coding Agent」、可以儲存場景 JSON；`user` 看不到總控頁（直接輸入網址也進不去）。從機器本身或 SSH tunnel 連進來（沒經過 Caddy）視為管理者。
 - 沒開 `LOCAL_LLM_AUTH` 時（Mac）一切照舊。
 
+**還沒有網域時先自己試登入版**：遠端跑 `./scripts/remote/setup_caddy.sh --local`（Caddy 只聽遠端 127.0.0.1:8080，HTTP），Mac 跑 `./scripts/remote/tunnel.sh --login`，打開 http://127.0.0.1:18080 。Mac 上自己的平台（8501／11500）不用關。
+
 **要先請 IT 處理**（你的帳號沒有這些權限）：固定外部 IP、一個網域（DNS 指到該 IP）、防火牆開 TCP 80 和 443（80 是 Caddy 申請憑證用）。
 
 之後在遠端執行一次：
