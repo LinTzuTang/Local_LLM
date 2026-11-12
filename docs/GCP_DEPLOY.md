@@ -57,6 +57,7 @@ ssh ... 'cd ~/Local_LLM && ./scripts/remote/setup_linux.sh'
 
 - 登入服務（`src/local_llm/auth_server.py`）檢查 cookie，通過後 Caddy 把帳號寫進 `X-Lab-User`／`X-Lab-Role` 再轉給平台；瀏覽器自己送來的同名 header 會先被刪掉。閘道只開放瀏覽器會直接連的兩個 WebSocket。
 - 帳號存在遠端 `storage/auth/users.json`（scrypt 雜湊），cookie 用 `storage/auth/secret` 簽章，有效 7 天；改密碼、改角色、刪帳號都會讓該帳號的登入立即失效。同一帳號或同一 IP 10 分鐘內錯 5 次會鎖 10 分鐘。
+- 管理者用 `users add`／`users passwd` 設的是**臨時密碼**：同事登入後會先被帶到「修改密碼」頁（`/auth/password`），改成自己的密碼才能用平台。只存雜湊，管理者看不到同事改的密碼，只能重設。之後也能從右上角帳號選單的「修改密碼」自己改。
 - 角色：`admin` 看得到「總控 Coding Agent」、可以儲存場景 JSON；`user` 看不到總控頁（直接輸入網址也進不去）。從機器本身或 SSH tunnel 連進來（沒經過 Caddy）視為管理者。
 - 沒開 `LOCAL_LLM_AUTH` 時（Mac）一切照舊。
 

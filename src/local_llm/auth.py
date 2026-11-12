@@ -12,6 +12,10 @@ session cookie is signed with storage/auth/secret. Manage accounts on the machin
     uv run local-agent users passwd alice
     uv run local-agent users list
     uv run local-agent users remove alice
+
+A password set with `add` or `passwd` is temporary: on the next sign-in the user is sent to
+/auth/password and has to choose their own before using the platform. Only the hash is kept, so
+nobody (the admin included) can read the password they choose; the admin can only reset it.
 """
 
 import argparse
@@ -76,8 +80,9 @@ def check_password(password: str, stored: str) -> bool:
 
 
 class Users:
-    """storage/auth/users.json: {"users": {name: {"hash", "role", "gen", "created"}}}.
-    `gen` goes up on every password or role change, which ends that user's open sessions."""
+    """storage/auth/users.json: {"users": {name: {"hash", "role", "gen", "created", ...}}}.
+    `gen` goes up on every password or role change, which ends that user's open sessions;
+    `must_change` marks a password the admin set, which the user has to replace."""
 
     def __init__(self, folder: Path = AUTH_DIR):
         self.folder = folder
@@ -99,7 +104,10 @@ class Users:
     def get(self, name: str) -> dict | None:
         return self.load().get(name)
 
-    def set_password(self, name: str, password: str, role: str | None = None) -> None:
+    def set_password(
+        self, name: str, password: str, role: str | None = None, temporary: bool = False
+    ) -> None:
+        """Set a password; `temporary` (one the admin chose) makes the user replace it."""
         if not NAME_RE.fullmatch(name):
             raise ValueError("name: 2-32 characters, lowercase letters, digits, . _ -")
         if len(password) < MIN_PASSWORD:
@@ -114,8 +122,19 @@ class Users:
             "role": role,
             "gen": old.get("gen", 0) + 1,
             "created": old.get("created", time.strftime("%Y-%m-%dT%H:%M:%S%z")),
+            "must_change": temporary,
         }
         self.save(users)
+
+    def change_own(self, name: str, old_password: str, new_password: str) -> None:
+        """The user replaces their password (ends their other sessions); ValueError says why not."""
+        if self.verify(name, old_password) is None:
+            raise ValueError("old")
+        if new_password == old_password:
+            raise ValueError("same")
+        if len(new_password) < MIN_PASSWORD:
+            raise ValueError("short")
+        self.set_password(name, new_password)
 
     def remove(self, name: str) -> bool:
         users = self.load()
@@ -198,10 +217,14 @@ def _ask_password() -> str:
 def main(argv: list[str] | None = None, users: Users | None = None) -> int:
     parser = argparse.ArgumentParser(prog="local-agent users", description="Platform accounts")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    add = sub.add_parser("add", help="create an account (asks for the password)")
+    add = sub.add_parser(
+        "add", help="create an account (asks for a temporary password the user must change)"
+    )
     add.add_argument("name")
     add.add_argument("--admin", action="store_true", help="may use the coding agent page")
-    passwd = sub.add_parser("passwd", help="change a password (signs the user out)")
+    passwd = sub.add_parser(
+        "passwd", help="reset a password to a temporary one (signs the user out)"
+    )
     passwd.add_argument("name")
     role = sub.add_parser("role", help="change a role (signs the user out)")
     role.add_argument("name")
@@ -214,17 +237,19 @@ def main(argv: list[str] | None = None, users: Users | None = None) -> int:
     try:
         if args.cmd == "list":
             for name, user in sorted(users.load().items()):
-                print(f"{name:24} {user['role']:6} created {user.get('created', '?')}")
+                state = "  (temporary password)" if user.get("must_change") else ""
+                print(f"{name:24} {user['role']:6} created {user.get('created', '?')}{state}")
         elif args.cmd == "add":
             if users.get(args.name):
                 raise ValueError(f"{args.name} exists; use `passwd` or `role`")
-            users.set_password(args.name, _ask_password(), "admin" if args.admin else "user")
-            print(f"Created {args.name}")
+            role = "admin" if args.admin else "user"
+            users.set_password(args.name, _ask_password(), role, temporary=True)
+            print(f"Created {args.name}; they choose their own password at the first sign-in")
         elif args.cmd == "passwd":
             if not users.get(args.name):
                 raise ValueError(f"no account {args.name}")
-            users.set_password(args.name, _ask_password())
-            print(f"Changed the password of {args.name}")
+            users.set_password(args.name, _ask_password(), temporary=True)
+            print(f"Reset the password of {args.name}; they choose a new one at the next sign-in")
         elif args.cmd == "role":
             user = users.get(args.name)
             if not user:

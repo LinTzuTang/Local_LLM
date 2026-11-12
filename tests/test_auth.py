@@ -112,6 +112,65 @@ def test_users_command(tmp_path, monkeypatch, capsys):
     assert auth.main(["remove", "dana"], store) == 0 and store.get("dana") is None
 
 
+def test_admin_passwords_are_temporary(tmp_path, monkeypatch):
+    store = auth.Users(tmp_path)
+    monkeypatch.setattr(auth.getpass, "getpass", lambda prompt="": PASSWORD)
+    assert auth.main(["add", "erin"], store) == 0
+    assert store.get("erin")["must_change"]
+    store.change_own("erin", PASSWORD, "erin's own password")
+    assert not store.get("erin")["must_change"]
+    assert auth.main(["passwd", "erin"], store) == 0  # a reset is temporary again
+    assert store.get("erin")["must_change"]
+
+
+def test_first_sign_in_with_a_temporary_password_must_change_it(client, users):
+    users.set_password("carol", PASSWORD, temporary=True)
+    r = login(client, name="carol", next="/models")
+    assert r.status_code == 303 and r.headers["location"] == "/auth/password?next=/models"
+    # Until she does, every page sends her there and nothing else gets through.
+    r = client.get("/auth/check", headers={"X-Forwarded-Uri": "/agent"})
+    assert r.status_code == 302 and r.headers["location"] == "/auth/password?next=/agent"
+    assert (
+        client.get("/auth/check", headers={"X-Forwarded-Uri": "/_stcore/stream"}).status_code == 401
+    )
+    page = client.get("/auth/password", params={"next": "/models"}).text
+    assert "臨時密碼" in page and "Cancel" not in page
+    new = "carol's own secret"
+    r = client.post("/auth/password", data={"old": PASSWORD, "new": new, "again": new,
+                                            "next": "/models"})  # fmt: skip
+    assert r.status_code == 303 and r.headers["location"] == "/models"
+    assert client.get("/auth/check").headers["x-lab-user"] == "carol"  # fresh cookie works
+    assert users.verify("carol", new) and not users.verify("carol", PASSWORD)
+    assert new not in users.file.read_text()
+
+
+def test_changing_your_password_checks_the_old_one_and_signs_out_elsewhere(client, users, tmp_path):
+    login(client)
+    other = TestClient(client.app, base_url="https://lab.example.com", follow_redirects=False)
+    login(other)
+    assert "Cancel" in client.get("/auth/password").text
+    for data, why in (
+        ({"old": "wrong pass", "new": "a fresh password", "again": "a fresh password"}, "目前的"),
+        ({"old": PASSWORD, "new": "a fresh password", "again": "a different one!"}, "不一樣"),
+        ({"old": PASSWORD, "new": "short", "again": "short"}, "至少"),
+        ({"old": PASSWORD, "new": PASSWORD, "again": PASSWORD}, "一樣"),
+    ):  # fmt: skip
+        r = client.post("/auth/password", data=data)
+        assert r.status_code == 400 and why in r.text
+    r = client.post("/auth/password", data={"old": PASSWORD, "new": "a fresh password",
+                                            "again": "a fresh password"})  # fmt: skip
+    assert r.status_code == 303
+    assert client.get("/auth/check").status_code == 204
+    assert other.get("/auth/check", headers={"X-Forwarded-Uri": "/"}).status_code == 302
+
+
+def test_password_page_needs_a_session(client):
+    r = client.get("/auth/password")
+    assert r.status_code == 303 and r.headers["location"].startswith("/auth/login?next=")
+    r = client.post("/auth/password", data={"old": PASSWORD, "new": "x" * 12, "again": "x" * 12})
+    assert r.status_code == 303 and r.headers["location"] == "/auth/login"
+
+
 def test_gateway_accepts_the_public_origin_only_when_shared(monkeypatch):
     monkeypatch.setenv("LOCAL_LLM_PUBLIC_URL", "https://lab.example.com")
     monkeypatch.delenv("LOCAL_LLM_AUTH", raising=False)
