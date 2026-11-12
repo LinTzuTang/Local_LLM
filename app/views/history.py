@@ -60,20 +60,20 @@ CSS = """
 .hx-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
   margin: .2rem 0 1rem 0; }
 .hx-stat { border: 1px solid var(--lab-border); border-radius: 14px; padding: 10px 16px;
-  background: #FFFFFF; }
-.hx-stat .v { font-size: 1.45rem; font-weight: 750; color: #0F172A; line-height: 1.25; }
+  background: var(--lab-surface); }
+.hx-stat .v { font-size: 1.45rem; font-weight: 750; color: var(--lab-text); line-height: 1.25; }
 .hx-stat .k { font-size: .78rem; color: var(--lab-muted); }
-.hx-day { font-size: .76rem; font-weight: 700; color: #64748B; letter-spacing: .06em;
+.hx-day { font-size: .76rem; font-weight: 700; color: var(--lab-muted); letter-spacing: .06em;
   text-transform: uppercase; margin: 1.1rem 0 .1rem 2px; }
 .hx-row { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
 .hx-icon { flex: 0 0 42px; height: 42px; border-radius: 12px; display: flex;
   align-items: center; justify-content: center; font-size: 1.3rem; }
 .hx-main { flex: 1 1 auto; min-width: 0; }
-.hx-title { font-weight: 650; font-size: 1rem; color: #0F172A; line-height: 1.35;
+.hx-title { font-weight: 650; font-size: 1rem; color: var(--lab-text); line-height: 1.35;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hx-snip { color: #64748B; font-size: .86rem; line-height: 1.4; margin: 1px 0 6px 0;
+.hx-snip { color: var(--lab-muted); font-size: .86rem; line-height: 1.4; margin: 1px 0 6px 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hx-meta { flex: 0 0 auto; text-align: right; font-size: .8rem; color: #64748B;
+.hx-meta { flex: 0 0 auto; text-align: right; font-size: .8rem; color: var(--lab-muted);
   line-height: 1.7; white-space: nowrap; }
 .hx-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .hx-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 9px;
@@ -87,10 +87,10 @@ CSS = """
   line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
   overflow: hidden; }
 .hx-head .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
-  color: #64748B; font-size: .85rem; }
-.hx-sec { font-size: .8rem; font-weight: 700; color: #475569; letter-spacing: .05em;
+  color: var(--lab-muted); font-size: .85rem; }
+.hx-sec { font-size: .8rem; font-weight: 700; color: var(--lab-text-3); letter-spacing: .05em;
   text-transform: uppercase; margin: .2rem 0 .4rem 0; }
-.hx-quote { border-left: 3px solid #C7D2FE; background: #F8FAFC; border-radius: 0 10px 10px 0;
+.hx-quote { border-left: 3px solid rgba(45, 212, 191, .45); background: var(--lab-surface-2); border-radius: 0 10px 10px 0;
   padding: 8px 14px; color: #1E293B; white-space: pre-wrap; font-size: .95rem; }
 .hx-colhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .hx-colhead b { font-size: 1rem; }
@@ -379,10 +379,7 @@ def kind_meta(fam: str, kind: str = "") -> tuple[str, str, str]:
 def chip(text: str, color: str, icon: str = "") -> str:
     """Coloured chip; `icon` is an optional Material Symbols name shown before the text."""
     mark = ui.icon(icon) + " " if icon else ""
-    return (
-        f'<span class="hx-chip" style="color:{color};border-color:{color}33;'
-        f'background:{color}0F">{mark}{esc(text)}</span>'
-    )
+    return f'<span class="hx-chip" style="{ui.chip_style(color)}">{mark}{esc(text)}</span>'
 
 
 def status_chip(status: str) -> str:
@@ -872,7 +869,7 @@ def scenario_view(data: dict, run: dict, scenarios: dict) -> None:
         if sc:
             safely(
                 lambda: st.graphviz_chart(
-                    flow_ui.flow_dot(sc, steps, finished=True), width="content"
+                    ui.themed_dot(flow_ui.flow_dot(sc, steps, finished=True)), width="content"
                 ),
                 tr("流程圖", "flow diagram"),
             )

@@ -11,6 +11,7 @@ barge-in is spoken while the assistant reads out a lookup result.
 import speech_common as sc
 import speech_stream
 import streamlit as st
+import ui
 import voice_assistant as va
 import voice_bench
 from common import (
@@ -474,8 +475,9 @@ def panel(page: str = va.PAGE) -> None:
 
         st.markdown(f"**{tr('架構', 'How it works')}**")
         tts_label = voice_source(tts.find(voice, voices)) if kind == "cascade" else None
-        st.graphviz_chart(va.flow_dot(kind, engine, captions=captions, tts_label=tts_label,
-                                      pause=asr in va.PAUSE_MODELS, hear=hear),
+        st.graphviz_chart(ui.themed_dot(va.flow_dot(kind, engine, captions=captions,
+                                                    tts_label=tts_label,
+                                                    pause=asr in va.PAUSE_MODELS, hear=hear)),
                           width="content")  # fmt: skip
 
     demo, script_note = test_script(user_names, short)

@@ -1,12 +1,64 @@
+# Day and night themes; each viewer picks one with the switch at the top right (theme_switch.py),
+# and until then the system setting decides. app/ui.py PALETTES has the same colours for the
+# platform's own HTML. Low saturation on purpose: easy on the eyes for long sessions.
+#
+# Fonts are bundled (app/static/fonts, SIL OFL) so the app looks the same offline and on every
+# machine: Inter for Latin text and headings, JetBrains Mono for numbers and labels; Chinese
+# falls through to the system's PingFang / Noto Sans CJK.
+[server]
+enableStaticServing = true
+
 [theme]
-base = "light"
-primaryColor = "#4F46E5"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F5F7FB"
-textColor = "#1F2937"
-linkColor = "#4F46E5"
+font = "Inter, -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', 'Noto Sans CJK TC', sans-serif"
+headingFont = "Inter, -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', 'Noto Sans CJK TC', sans-serif"
+codeFont = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace"
 baseRadius = "medium"
+headingFontWeights = [760, 720, 680, 650, 620, 600]
 showSidebarBorder = true
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/fonts/InterVariable.woff2"
+weight = "100 900"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/fonts/InterVariable-Italic.woff2"
+weight = "100 900"
+style = "italic"
+
+[[theme.fontFaces]]
+family = "JetBrains Mono"
+url = "app/static/fonts/JetBrainsMono-Regular.woff2"
+weight = "400"
+
+[[theme.fontFaces]]
+family = "JetBrains Mono"
+url = "app/static/fonts/JetBrainsMono-SemiBold.woff2"
+weight = "600"
+
+[theme.light]
+primaryColor = "#2F7F76"
+backgroundColor = "#F5F4F0"
+secondaryBackgroundColor = "#EBE9E3"
+textColor = "#22282B"
+linkColor = "#2F7F76"
+borderColor = "#DDD9D0"
+dataframeBorderColor = "#E3E0D8"
+dataframeHeaderBackgroundColor = "#EFEDE7"
+codeBackgroundColor = "#EBE9E3"
+
+[theme.dark]
+primaryColor = "#4E9C93"
+backgroundColor = "#141B1D"
+secondaryBackgroundColor = "#1D2829"
+textColor = "#D8E1DF"
+linkColor = "#86C5BC"
+borderColor = "#2B3A3C"
+dataframeBorderColor = "#2B3A3C"
+dataframeHeaderBackgroundColor = "#1D2829"
+codeBackgroundColor = "#1D2829"
 
 [client]
 toolbarMode = "minimal"

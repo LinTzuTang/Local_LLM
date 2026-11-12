@@ -38,12 +38,12 @@ ui.page_header(
 st.markdown(
     """<style>
 .sc-title {display: flex; align-items: center; gap: 10px; font-size: 1.3rem; font-weight: 750;
-  line-height: 1.3; margin: .1rem 0 0 0; color: #0F172A; flex-wrap: wrap;}
+  line-height: 1.3; margin: .1rem 0 0 0; color: var(--lab-text); flex-wrap: wrap;}
 .sc-title .lab-badges {margin: 0 0 0 4px;}
 .st-key-sc_picker [data-testid="stButtonGroup"] button {min-height: 2rem; padding: 0 9px; gap: 4px;}
 .st-key-sc_picker [data-testid="stButtonGroup"] button p {font-size: .8rem;}
 .st-key-sc_picker [data-testid="stButtonGroup"] [data-testid="stIconMaterial"] {font-size: 1rem;}
-.sc-title > .ms {font-size: 22px; color: var(--lab-primary); background: #EEF2FF; border-radius: 9px;
+.sc-title > .ms {font-size: 22px; color: var(--lab-primary); background: var(--lab-tint); border-radius: 9px;
   padding: 5px; vertical-align: 0;}
 </style>""",
     unsafe_allow_html=True,
@@ -402,7 +402,10 @@ with tab_run:
         finished = bool(run and run.status in ("done", "error", "cancelled"))
         with flow_box.container():
             shown_s = run.scenario if run else effective
-            st.graphviz_chart(flow_ui.flow_dot(shown_s, trace, finished), use_container_width=True)
+            st.graphviz_chart(
+                ui.themed_dot(flow_ui.flow_dot(shown_s, trace, finished)),
+                use_container_width=True,
+            )
             if run and run.status != "pending":
                 state = {
                     "running": tr("執行中", "Running"),
@@ -479,7 +482,7 @@ with tab_def:
             "or algorithm and writes its result to a field the next steps can use.",
         )
     )
-    st.graphviz_chart(flow_ui.flow_dot(effective), use_container_width=True)
+    st.graphviz_chart(ui.themed_dot(flow_ui.flow_dot(effective)), use_container_width=True)
     rows = []
     for i, node in enumerate(scenario["nodes"], start=1):
         ntype = NODE_TYPES[node["type"]]

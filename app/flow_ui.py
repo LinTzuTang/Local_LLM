@@ -50,7 +50,7 @@ CATEGORY_ICONS = {
     "pipeline": "account_tree",
     "comparison": "compare_arrows",
 }
-PRIMARY = "#4F46E5"
+PRIMARY = "#0F766E"  # ui.PRIMARY
 
 
 def category_icon(category: str | None) -> str:
@@ -97,8 +97,8 @@ def flow_dot(
         f'node [shape=box, style="rounded,filled", fontname="Helvetica", '
         f'fontsize={15 if compact else 11}, color="#CBD5E1", penwidth=1.2, '
         f'margin="{"0.08,0.04" if compact else "0.14,0.06"}"]',
-        'edge [color="#94A3B8", arrowsize=0.7, fontname="Helvetica", fontsize=9, '
-        'fontcolor="#64748B"]',
+        'edge [color="#7D918F", arrowsize=0.7, fontname="Helvetica", fontsize=9, '
+        'fontcolor="#7E8F8D"]',
         f'START [shape=circle, label="{"" if compact else "▶"}", '
         f"width={0.14 if compact else 0.32}, fixedsize=true, style=filled, "
         f'fillcolor="{PRIMARY}", color="{PRIMARY}", fontcolor="white", fontsize=10]',
@@ -200,7 +200,7 @@ def timeline(trace: list[dict], running: bool, elapsed: float) -> None:
     )
     text = (
         alt.Chart(df)
-        .mark_text(align="left", dx=4, fontSize=10, color="#475569")
+        .mark_text(align="left", dx=4, fontSize=10, color="#7E8F8D")
         .encode(x="end:Q", y=alt.Y("step:N", sort=order, title=None), text="model:N")
     )
     st.altair_chart(chart + text, use_container_width=True)
@@ -299,7 +299,7 @@ def architecture_dot() -> str:
 
     nodes = {
         "ui": box("Streamlit UI", tr("中英雙語・背景工作", "bilingual · background jobs"),
-                  ', fillcolor="#EEF2FF", color="#4F46E5"'),
+                  ', fillcolor="#E3F1EE", color="#0F766E"'),
         "engine": box(tr("場景引擎", "Scenario engine"), "scenarios.json → StateGraph"),
         "agents": box("Agents", "agents.json · tools · skills · HITL"),
         "coder": box(tr("總控 Coding Agent", "Coding agent"),
@@ -312,7 +312,7 @@ def architecture_dot() -> str:
         "mcp": box("MCP / " + tr("技能", "skills"), tr("本機工具伺服器", "local tool servers"),
                    ', fillcolor="#F1F5F9"'),
         "web": box(tr("外部 API", "External APIs"), tr("需人工核准", "human approval"),
-                   ', style="rounded,dashed", fillcolor="white"'),
+                   ', style="rounded,filled,dashed", fillcolor="white"'),
     }  # fmt: skip
     core = " ".join(f"{n} {nodes.pop(n)}" for n in ("engine", "agents", "coder"))
     return "\n".join(
@@ -321,12 +321,12 @@ def architecture_dot() -> str:
             'graph [rankdir=LR, bgcolor="transparent", nodesep=0.25, ranksep=0.6]',
             'node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, '
             'color="#CBD5E1", fillcolor="#F8FAFC", margin="0.15,0.07"]',
-            'edge [color="#94A3B8", arrowsize=0.7]',
+            'edge [color="#7D918F", arrowsize=0.7]',
             *(f"{name} {attrs}" for name, attrs in nodes.items()),
             'subgraph cluster_core { label="LangGraph / LangChain"; fontname="Helvetica"; '
-            f'fontsize=10; color="#E2E8F0"; style="rounded"; {core} }}',
+            f'fontsize=10; fontcolor="#7E8F8D"; color="#9AA8A6"; style="rounded"; {core} }}',
             "ui -> engine; ui -> agents; ui -> coder",
-            'coder -> engine [style=dashed, label=" edit", fontsize=9, fontcolor="#64748B"]',
+            'coder -> engine [style=dashed, label=" edit", fontsize=9, fontcolor="#7E8F8D"]',
             "coder -> agents [style=dashed]",
             "engine -> agents; engine -> ollama; engine -> gateway; engine -> kb",
             "agents -> ollama; agents -> pg; agents -> mcp; agents -> web [style=dashed]",

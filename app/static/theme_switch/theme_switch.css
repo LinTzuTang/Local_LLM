@@ -1,0 +1,12 @@
+.ts-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  height: 40px; padding: 0 12px; border-radius: 9px; cursor: pointer; font: inherit;
+  font-size: .92rem; font-weight: 600; color: var(--st-text-color);
+  background: var(--st-background-color); border: 1px solid var(--st-border-color, #ccc);
+  transition: border-color .2s, color .2s;
+}
+.ts-btn:hover { border-color: var(--st-primary-color); color: var(--st-primary-color); }
+.ts-icon { font-family: "Material Symbols Rounded"; font-size: 1.15rem; line-height: 1;
+  font-weight: normal; font-style: normal; letter-spacing: normal; white-space: nowrap;
+  font-feature-settings: "liga"; transition: transform .4s; }
+.ts-btn:hover .ts-icon { transform: rotate(-20deg); }

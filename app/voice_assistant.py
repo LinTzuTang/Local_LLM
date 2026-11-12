@@ -499,7 +499,7 @@ def flow_dot(kind: str = "cascade", engine: str | None = None, *, captions: bool
   rankdir=LR; bgcolor="transparent"; pad=0.1; nodesep=0.25; ranksep=0.3;
   node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize={node_size},
         fillcolor="#EEF2FF", color="#C7D2FE", fontcolor="#1E293B"];
-  edge [fontname="Helvetica", fontsize={edge_size}, color="#94A3B8", fontcolor="#64748B"];
+  edge [fontname="Helvetica", fontsize={edge_size}, color="#7D918F", fontcolor="#7E8F8D"];
 """
     green = 'fillcolor="#ECFDF5", color="#A7F3D0"'
     amber = 'fillcolor="#FFFBEB", color="#FCD34D"'
@@ -667,7 +667,7 @@ def home_card(col) -> None:
     """The live voice assistant as a card among the home page's scenarios."""
     with col.container(border=True, height=450):
         st.markdown(f":material/support_agent: **{tr('即時語音助理', 'Live voice assistant')}**")
-        st.graphviz_chart(flow_dot(compact=True), use_container_width=True)
+        st.graphviz_chart(ui.themed_dot(flow_dot(compact=True)), use_container_width=True)
         st.markdown(
             ui.badges(["stream", "voice_chat", "tools", "tts"], [voice_agent.DEFAULT_LLM]),
             unsafe_allow_html=True,

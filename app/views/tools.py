@@ -80,8 +80,7 @@ def pill(text: str, color: str, icon: str = "") -> str:
     """Coloured chip; `icon` is an optional Material Symbols name shown before the text."""
     mark = ui.icon(icon) + " " if icon else ""
     return (
-        f'<span class="lab-badge" style="color:{color};border-color:{color}33;'
-        f'background:{color}0F">{mark}{html.escape(text)}</span>'
+        f'<span class="lab-badge" style="{ui.chip_style(color)}">{mark}{html.escape(text)}</span>'
     )
 
 

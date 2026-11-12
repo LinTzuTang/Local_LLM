@@ -38,13 +38,14 @@ def table(rows: list[dict]) -> str:
             f"<tr><td><b>{task}</b></td><td>{lang}</td>"
             + f'<td style="background:{ui.LOCAL_TINT}">{html.escape(tr(*r["local"]))}</td>'
             + f'<td style="background:{ui.CLOUD_TINT}">{html.escape(tr(*r["cloud"]))}</td>'
-            + f'<td style="color:#64748B">{html.escape(tr(*r["note"]))}</td></tr>'
+            + f'<td style="color:var(--lab-muted)">{html.escape(tr(*r["note"]))}</td></tr>'
         )  # fmt: skip
     return (
         '<table style="width:100%;border-collapse:collapse;font-size:0.92rem">'
         f'<thead><tr style="text-align:left">{head}</tr></thead>'
         f"<tbody>{''.join(body)}</tbody></table>"
-        "<style>table td,table th{border:1px solid #E2E8F0;padding:6px 8px;vertical-align:top}"
+        "<style>table td,table th{border:1px solid var(--lab-border);padding:6px 8px;"
+        "vertical-align:top}"
         "</style>"
     )
 

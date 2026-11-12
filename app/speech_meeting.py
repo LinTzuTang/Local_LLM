@@ -184,8 +184,9 @@ def transcript_html(labelled: list[dict]) -> str:
     for t in labelled:
         c = colors[t["speaker"]]
         rows.append(
-            f'<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #E2E8F0">'
-            f'<div style="flex:0 0 118px;font-size:.8rem;color:#64748B">'
+            '<div style="display:flex;gap:12px;padding:6px 0;'
+            'border-bottom:1px solid var(--lab-border)">'
+            f'<div style="flex:0 0 118px;font-size:.8rem;color:var(--lab-muted)">'
             f"{clock(t['start'])}–{clock(t['end'])}<br>"
             f'<b style="color:{c}">{html.escape(names[t["speaker"]])}</b></div>'
             f'<div style="flex:1;line-height:1.7">{html.escape(sc.show(t["text"]))}</div></div>'

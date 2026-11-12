@@ -40,8 +40,8 @@ def pipeline_dot() -> str:
             'graph [rankdir=LR, bgcolor="transparent", nodesep=0.25, ranksep=0.35]',
             'node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, '
             'color="#CBD5E1", margin="0.12,0.06"]',
-            'edge [color="#94A3B8", arrowsize=0.7, fontname="Helvetica", fontsize=9, '
-            'fontcolor="#64748B"]',
+            'edge [color="#7D918F", arrowsize=0.7, fontname="Helvetica", fontsize=9, '
+            'fontcolor="#7E8F8D"]',
             n("docs", tr("文件", "Documents"), "md · pdf · docx", "#F8FAFC"),
             n("parse", tr("解析＋切段", "Parse + chunk"), "Docling · headings", "#FCE7F3"),
             n("idx", tr("兩種索引", "Two indexes"), "BM25 · bge-m3", "#ECFDF5"),
@@ -49,7 +49,7 @@ def pipeline_dot() -> str:
                 "q",
                 tr("問題", "Question"),
                 tr("＋提問者部門", "+ asker's department"),
-                "#EEF2FF",
+                "#E3F1EE",
             ),
             n(
                 "acl",
@@ -66,7 +66,7 @@ def pipeline_dot() -> str:
             ),
             n("rrf", "RRF", "Σ 1/(60+rank)", "#ECFDF5"),
             n("rr", "Rerank", "bge-reranker-v2-m3", "#CCFBF1"),
-            n("llm", tr("LLM 回答", "LLM answer"), tr("引用 [n]", "cites [n]"), "#EEF2FF"),
+            n("llm", tr("LLM 回答", "LLM answer"), tr("引用 [n]", "cites [n]"), "#E3F1EE"),
             "docs -> parse -> idx",
             "q -> acl; idx -> acl [style=dotted]",
             "acl -> bm25; acl -> vec; bm25 -> rrf; vec -> rrf",
@@ -76,7 +76,7 @@ def pipeline_dot() -> str:
     )
 
 
-st.graphviz_chart(pipeline_dot(), use_container_width=True)
+st.graphviz_chart(ui.themed_dot(pipeline_dot()), use_container_width=True)
 
 ROLES = {
     "all": tr("全公司", "Everyone"),

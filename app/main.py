@@ -6,15 +6,18 @@ import access
 import common
 import i18n
 import jobs
+import model_news
 import streamlit as st
+import theme_switch
 import ui
 from i18n import tr
 
 st.set_page_config(page_title="Local Agent Lab", page_icon=":material/science:", layout="wide")
-st.logo(str(Path(__file__).parent / "static" / "logo.svg"), size="large")
+st.logo(str(Path(__file__).parent / "static" / f"logo_{ui.theme()}.svg"), size="large")
 ui.inject_css()
 
 i18n.current()
+model_news.start_background()  # weekly look for models the catalog does not list yet
 
 # Shared behind the login proxy (LOCAL_LLM_AUTH=1): only the admin sees the coding agent.
 who = access.viewer()
@@ -33,7 +36,11 @@ def page(path: str, zh: str, en: str, icon: str, **kw) -> st.Page:
 
 
 pages = {
-    "": [page("views/home.py", "首頁", "Home", ":material/home:", default=True)],
+    # Pages outside a section show as plain links, always before the section menus.
+    "": [
+        page("views/home.py", "首頁", "Home", ":material/home:", default=True),
+        page("views/history.py", "執行紀錄", "Run history", ":material/history:"),
+    ],
     tr("模型", "Models"): [
         page("views/models.py", "模型庫", "Model library", ":material/apps:"),
         page("views/llm.py", "語言模型比較", "Language models", ":material/balance:"),
@@ -65,10 +72,8 @@ pages = {
     tr("總控", "Control"): [
         page("views/control.py", "總控 Coding Agent", "Coding agent", ":material/terminal:"),
     ],
-    tr("更多", "More"): [
-        page("views/roadmap.py", "導入路線圖", "Adoption roadmap", ":material/map:"),
-        page("views/history.py", "執行紀錄", "Run history", ":material/history:"),
-    ],
+    # views/roadmap.py (adoption roadmap) is off the menu for now (2026-11-12). Add it back with:
+    # page("views/roadmap.py", "導入路線圖", "Adoption roadmap", ":material/map:"),
 }
 if who["role"] != "admin":
     pages.pop(tr("總控", "Control"))
@@ -77,21 +82,26 @@ current = st.navigation(pages, position="top")
 # Top-right corner of every page: background tasks and the language switch (and, when shared,
 # who is signed in).
 if who["user"]:
-    _, user_col, cloud_col, tasks_col, lang_col = st.columns(
-        [5.2, 1.4, 1.4, 1.7, 1.3], vertical_alignment="center"
+    _, user_col, cloud_col, tasks_col, theme_col, lang_col = st.columns(
+        [4.2, 1.4, 1.4, 1.7, 1.0, 1.3], vertical_alignment="center"
     )
     with user_col:
         with st.popover(who["user"], icon=":material/account_circle:"):
             st.caption(tr("管理者", "Admin") if who["role"] == "admin" else tr("使用者", "User"))
+            # Both are pages of the login service (auth_server.py): the password never
+            # passes through the platform itself.
+            st.markdown(f"[{tr('修改密碼', 'Change password')}](/auth/password)")
             st.markdown(f"[{tr('登出', 'Sign out')}](/auth/logout)")
 else:
-    _, cloud_col, tasks_col, lang_col = st.columns(
-        [6.6, 1.4, 1.7, 1.3], vertical_alignment="center"
+    _, cloud_col, tasks_col, theme_col, lang_col = st.columns(
+        [5.6, 1.4, 1.7, 1.0, 1.3], vertical_alignment="center"
     )
 with cloud_col:
     common.cloud_switch()
 with tasks_col:
     jobs.header_popover()
+with theme_col:
+    theme_switch.switch()
 with lang_col:
     i18n.switch()
 current.run()

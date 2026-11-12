@@ -101,7 +101,7 @@ def column_chips(visible: list[str], columns: list[str]) -> str:
             )
         else:
             parts.append(
-                '<span class="lab-pill" style="background:#F8FAFC;color:#94A3B8;'
+                '<span class="lab-pill" style="background:var(--lab-surface-2);color:var(--lab-faint);'
                 f'text-decoration:line-through">{name}</span>'
             )
     return f'<div class="lab-badges">{"".join(parts)}</div>'
@@ -111,9 +111,9 @@ def matrix_style(value: str) -> str:
     if value.startswith(MARKS["all"]):
         return "background-color: #ECFDF5; color: #047857"
     if value.startswith(MARKS["some"]):
-        return "background-color: #FFFBEB; color: #B45309"
+        return f"background-color: rgba(245, 158, 11, .14); color: {'#E0B866' if ui.is_dark() else '#A16207'}"
     if value.startswith(MARKS["none"]):
-        return "background-color: #F8FAFC; color: #94A3B8"
+        return f"background-color: rgba(148, 163, 184, .06); color: {'#7D8C8A' if ui.is_dark() else '#8A9194'}"
     return ""
 
 
