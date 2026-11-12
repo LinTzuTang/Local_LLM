@@ -26,10 +26,15 @@ def main():
         from .auth import main as users_main
 
         sys.exit(users_main(sys.argv[2:]))
+    if sys.argv[1:2] == ["model-watch"]:  # look for models the catalog does not list yet
+        from .model_watch import main as watch_main
+
+        sys.exit(watch_main(sys.argv[2:]))
     parser = argparse.ArgumentParser(
         description="LangChain local LLM demo",
         epilog="`local-agent code --help`: the fully local coding agent for this project. "
-        "`local-agent users --help`: accounts when the platform is shared (LOCAL_LLM_AUTH=1).",
+        "`local-agent users --help`: accounts when the platform is shared (LOCAL_LLM_AUTH=1). "
+        "`local-agent model-watch`: look for new models now (the platform does it weekly).",
     )
     parser.add_argument(
         "mode", choices=["doctor", "chat", "agent", "code"], nargs="?", default="agent"

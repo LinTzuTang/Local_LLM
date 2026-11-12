@@ -64,23 +64,29 @@ all_models = catalog.models()
 st.markdown(
     """
 <style>
-.lab-stats {display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
-  margin: .2rem 0 .6rem 0;}
-.lab-stat {border: 1px solid var(--lab-border); border-radius: 14px; padding: 10px 16px;
-  background: linear-gradient(180deg, #FFFFFF, #F8FAFC);}
-.lab-stat .v {font-size: 1.55rem; font-weight: 750; line-height: 1.2; color: #0F172A;}
-.lab-stat .k {font-size: .8rem; color: var(--lab-muted);}
+/* the four counts at the top: buttons drawn as tiles (the bold number on its own line) */
+.st-key-lab_stats {margin: .2rem 0 .6rem 0;}
+.st-key-lab_stats button {height: 100%; justify-content: flex-start; align-items: flex-start;
+  text-align: left; border: 1px solid var(--lab-border); border-radius: 14px; padding: 10px 16px;
+  background: linear-gradient(180deg, var(--lab-surface), var(--lab-surface-2));}
+.st-key-lab_stats button:hover {border-color: var(--lab-primary);}
+.st-key-lab_stats button div, .st-key-lab_stats button p {text-align: left; justify-content: flex-start;}
+.st-key-lab_stats button p {font-size: .8rem; color: var(--lab-muted); white-space: normal;}
+.st-key-lab_stats button p strong {display: block; font-size: 1.55rem; font-weight: 750;
+  line-height: 1.2; color: var(--lab-text);}
+.st-key-lab_stats button p .material-symbols-rounded,
+.st-key-lab_stats button p [data-testid="stIconMaterial"] {color: var(--lab-primary);}
 .tier-strip {display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px;}
 .tier-tile {border: 1px solid var(--lab-border); border-radius: 12px; padding: 10px 12px;
-  background: #FFFFFF;}
+  background: var(--lab-surface);}
 .tier-tile .t {font-weight: 700;} .tier-tile .r {color: var(--lab-primary); font-size: .78rem;
-  font-weight: 650;} .tier-tile .s {font-size: .8rem; color: #475569; margin: 4px 0;}
+  font-weight: 650;} .tier-tile .s {font-size: .8rem; color: var(--lab-text-3); margin: 4px 0;}
 .tier-tile .n {font-size: .76rem; color: var(--lab-muted);}
 .mc-section {display: flex; align-items: baseline; gap: 10px; margin: 1.1rem 0 .1rem 0;}
 .mc-section h3 {margin: 0; padding: 0; font-size: 1.25rem; font-weight: 750;}
 .mc-section .d {color: var(--lab-muted); font-size: .88rem;}
-.mc-section .c {margin-left: auto; font-size: .78rem; font-weight: 650; color: #475569;
-  background: #F1F5F9; border-radius: 999px; padding: 2px 10px; white-space: nowrap;}
+.mc-section .c {margin-left: auto; font-size: .78rem; font-weight: 650; color: var(--lab-text-3);
+  background: var(--lab-surface-2); border-radius: 999px; padding: 2px 10px; white-space: nowrap;}
 /* list layout: one compact row per model */
 .ml-grid {display: grid; gap: 12px; align-items: center;
   grid-template-columns: minmax(0, 2.3fr) minmax(0, .7fr) minmax(0, .6fr) minmax(0, .55fr)
@@ -90,38 +96,37 @@ st.markdown(
 .ml-head {font-size: .7rem; font-weight: 650; text-transform: uppercase; letter-spacing: .05em;
   color: var(--lab-muted); padding: 2px 0 6px 0;}
 .ml-name {display: flex; align-items: center; gap: 6px; min-width: 0;}
-.ml-name b {font-weight: 700; font-size: .95rem; color: #0F172A; overflow: hidden;
+.ml-name b {font-weight: 700; font-size: .95rem; color: var(--lab-text); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;}
 .ml-sub {color: var(--lab-muted); font-size: .76rem; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap;}
-.ml-num {font-size: .86rem; color: #1F2937; font-variant-numeric: tabular-nums;
+.ml-num {font-size: .86rem; color: var(--lab-text); font-variant-numeric: tabular-nums;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.ml-num.dim {color: #475569;}
+.ml-num.dim {color: var(--lab-text-3);}
 .ml-state {font-size: .8rem; white-space: nowrap; display: inline-flex; align-items: center;
   gap: 4px;}
 .ml-state .ms {font-size: 16px; vertical-align: 0;}
-.ml-state.have {color: #15803D; font-weight: 650;}
+.ml-state.have {color: var(--lab-ok); font-weight: 650;}
 .mc-flag {font-size: .68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px;
-  background: #FEF3C7; color: #92400E; white-space: nowrap; flex-shrink: 0;
+  background: rgba(245, 158, 11, .16); color: var(--lab-warn); white-space: nowrap; flex-shrink: 0;
   display: inline-flex; align-items: center; gap: 2px;}
 .mc-flag .ms {font-size: 12px; vertical-align: 0;}
-.mc-flag.default {background: #EEF2FF; color: #4338CA;}
+.mc-flag.default {background: var(--lab-tint); color: var(--lab-primary-strong);}
 .mc-chip {font-size: .74rem; font-weight: 650; padding: 1px 8px; border-radius: 999px;
   white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; border: 1px solid;}
 .mc-chip .ms {font-size: 13px; vertical-align: 0;}
-.mc-chip.catalog {color: #475569; background: #F8FAFC; border-color: #CBD5E1;
+.mc-chip.catalog {color: var(--lab-text-3); background: var(--lab-surface-2); border-color: var(--lab-border-strong);
   border-style: dashed;}
-.mc-chip.builtin, .mc-chip.deployed {color: #15803D; background: #F0FDF4; border-color: #BBF7D0;}
-.mc-chip.idle {color: #64748B; background: #F8FAFC; border-color: #E2E8F0;}
-.mc-chip.cloud {color: #C2410C; background: #FFF7ED; border-color: #FDBA74;}
-[class*="st-key-mrow_cat_"] .ml-name b {color: #334155; font-weight: 650;}
-[class*="st-key-mrow_"] {border-top: 1px solid #EEF2F7; padding-top: 6px;}
+.mc-chip.builtin, .mc-chip.deployed {color: var(--lab-ok); background: rgba(22, 163, 74, .14); border-color: rgba(74, 222, 128, .35);}
+.mc-chip.idle {color: var(--lab-muted); background: var(--lab-surface-2); border-color: var(--lab-border);}
+.mc-chip.cloud {color: var(--lab-warn-2); background: rgba(234, 88, 12, .14); border-color: rgba(251, 146, 60, .45);}
+[class*="st-key-mrow_cat_"] .ml-name b {color: var(--lab-text-2); font-weight: 650;}
+[class*="st-key-mrow_"] {border-top: 1px solid var(--lab-border); padding-top: 6px;}
 [class*="st-key-mrow_"] button {min-height: 2rem; padding-top: 2px; padding-bottom: 2px;}
 .mc-section .ms {color: var(--lab-primary); font-size: 1.2rem; vertical-align: -0.15em;}
-.fit-ok {color: #15803D; font-weight: 650;} .fit-tight {color: #B45309; font-weight: 650;}
-.fit-no {color: #B91C1C; font-weight: 650;}
-@media (max-width: 900px) {.lab-stats {grid-template-columns: repeat(2, minmax(0, 1fr));}
-  .tier-strip {grid-template-columns: repeat(2, minmax(0, 1fr));}}
+.fit-ok {color: var(--lab-ok); font-weight: 650;} .fit-tight {color: var(--lab-warn); font-weight: 650;}
+.fit-no {color: var(--lab-bad); font-weight: 650;}
+@media (max-width: 900px) {.tier-strip {grid-template-columns: repeat(2, minmax(0, 1fr));}}
 </style>
 """,
     unsafe_allow_html=True,
@@ -137,50 +142,100 @@ ui.page_header(
     eyebrow=tr("模型", "Models"),
 )
 require_ollama()
-installed = {catalog.normalize(m["name"]) for m in ollama_admin.installed(ollama_url())}
+ollama_have = ollama_admin.installed(ollama_url())
+installed = {catalog.normalize(m["name"]) for m in ollama_have}
 
 
 def is_installed(m: dict) -> bool:
     return catalog.normalize(m["tag"]) in installed
 
 
-def stat(value, label: str, glyph: str = "") -> str:
-    mark = ui.icon(glyph, color="var(--lab-primary)") + " " if glyph else ""
-    return (
-        f'<div class="lab-stat"><div class="v">{esc(value)}</div>'
-        f'<div class="k">{mark}{esc(label)}</div></div>'
-    )
-
-
-def gateway_installed() -> int | None:
-    """How many models the model gateway has on disk (None when it is not running)."""
+def gateway_models() -> list[dict] | None:
+    """The model gateway's models (None when it is not running)."""
     try:
-        return sum(bool(m.get("installed")) for m in gateway_client.models(gateway_url()))
+        return gateway_client.models(gateway_url())
     except Exception:  # the gateway is down or unreachable: the stat shows a dash
         return None
 
 
-gw_have = gateway_installed()
+gw_models = gateway_models()
+gw_have = None if gw_models is None else [m for m in gw_models if m.get("installed")]
 others = catalog.other_models()
 servable = sum(not catalog.is_catalog_only(m) for m in others)
-st.markdown(
-    '<div class="lab-stats">'
-    + stat(len(all_models), tr("個 Ollama 模型", "Ollama models"), "deployed_code")
-    + stat(len(installed), tr("Ollama 已下載", "Ollama: downloaded"), "download_done")
-    + stat(
-        len(others),
-        tr(f"個非 Ollama 模型（語音、文件、OCR、Reranker；{servable} 個可經模型閘道下載，其餘僅列出參考）",
-           f"non-Ollama models (speech, docs, OCR, rerank; {servable} downloadable through the gateway, the rest listed for reference)"),
-        "graphic_eq",
+
+
+def yes(flag: bool) -> str:
+    return tr("是", "Yes") if flag else ""
+
+
+# The four counts at the top open the list behind them.
+@st.dialog(tr("模型清單", "Models"), width="large")
+def stat_list(kind: str) -> None:
+    name, size, have = tr("模型", "Model"), tr("大小 (GB)", "Size (GB)"), tr("已下載", "Downloaded")
+    if kind == "ollama":
+        st.markdown(
+            tr(
+                f"**{len(all_models)} 個 Ollama 模型**（平台整理的目錄）",
+                f"**{len(all_models)} Ollama models** (the platform's catalog)",
+            )
+        )
+        rows = [{name: m["tag"], tr("家族", "Family"): m.get("family", ""),
+                 tr("參數", "Params"): m.get("params", ""), size: m.get("size_gb"),
+                 have: yes(is_installed(m))} for m in all_models]  # fmt: skip
+    elif kind == "ollama_have":
+        st.markdown(
+            tr(
+                f"**Ollama 已下載 {len(ollama_have)} 個**",
+                f"**{len(ollama_have)} downloaded in Ollama**",
+            )
+        )
+        known = {catalog.normalize(m["tag"]) for m in all_models}
+        rows = [{name: m["name"], size: round(m.get("size", 0) / 1e9, 1),
+                 tr("在目錄中", "In catalog"): yes(catalog.normalize(m["name"]) in known)}
+                for m in sorted(ollama_have, key=lambda m: m["name"])]  # fmt: skip
+    elif kind == "others":
+        st.markdown(
+            tr(
+                f"**{len(others)} 個非 Ollama 模型**（{servable} 個可經模型閘道下載）",
+                f"**{len(others)} non-Ollama models** ({servable} downloadable through the gateway)",
+            )
+        )
+        rows = [{name: m["name"], tr("類別", "Category"): ui.cap_text(m["category"]),
+                 tr("參數", "Params"): m.get("params", ""),
+                 tr("可經閘道下載", "Via gateway"): yes(not catalog.is_catalog_only(m)),
+                 tr("用途", "Use"): loc(m, "use") or ""} for m in others]  # fmt: skip
+    else:
+        if gw_have is None:
+            st.info(tr("模型閘道沒有在執行。", "The model gateway is not running."))
+            return
+        st.markdown(
+            tr(
+                f"**模型閘道已下載 {len(gw_have)} 個**",
+                f"**{len(gw_have)} downloaded through the gateway**",
+            )
+        )
+        rows = [{name: m.get("name") or m["id"], "ID": m["id"], tr("類別", "Category"): ui.cap_text(m.get("task", "")),
+                 size: m.get("size_gb"), tr("後端", "Backend"): m.get("backend", "")} for m in gw_have]  # fmt: skip
+    st.dataframe(
+        pd.DataFrame(rows), hide_index=True, width="stretch", height=min(38 + 35 * len(rows), 560)
     )
-    + stat(
-        "—" if gw_have is None else gw_have,
-        tr("非 Ollama 已下載（模型閘道）", "non-Ollama: downloaded (gateway)"),
-        "download_done",
-    )
-    + "</div>",
-    unsafe_allow_html=True,
-)
+
+
+stats = [
+    ("ollama", len(all_models), "deployed_code", tr("個 Ollama 模型", "Ollama models")),
+    ("ollama_have", len(ollama_have), "download_done", tr("Ollama 已下載", "Ollama: downloaded")),
+    ("others", len(others), "graphic_eq",
+     tr(f"個非 Ollama 模型（語音、文件、OCR、Reranker；{servable} 個可經模型閘道下載，其餘僅列出參考）",
+        f"non-Ollama models (speech, docs, OCR, rerank; {servable} downloadable through the gateway, the rest listed for reference)")),
+    ("gateway_have", "—" if gw_have is None else len(gw_have), "download_done",
+     tr("非 Ollama 已下載（模型閘道）", "non-Ollama: downloaded (gateway)")),
+]  # fmt: skip
+for col, (kind, value, glyph, label) in zip(
+    st.container(key="lab_stats").columns(4), stats, strict=True
+):
+    if col.button(f"**{value}** :material/{glyph}: {label}", key=f"stat_{kind}", width="stretch",
+                  help=tr("點開看清單", "Show the list")):  # fmt: skip
+        stat_list(kind)
 st.caption(
     f"{loc(data, 'memory_note')} "
     + tr(

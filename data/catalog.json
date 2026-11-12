@@ -2893,6 +2893,693 @@
       ],
       "note": "Microsoft 的 3.8B 小模型；實測當語音助理前台判斷只對 24–32/46（小模型面對工具容易選錯），不建議當前台。",
       "note_en": "Microsoft's 3.8B small model; as the voice assistant's front model it got 24-32/46 decisions right in our test (small models pick tools poorly); not recommended as the front model."
+    },
+    {
+      "tag": "ripple-preview:65b",
+      "family": "Ripple",
+      "description": "65B dense model built for agentic coding, with up to 1M tokens of context.",
+      "params": "65B",
+      "context": 1048576,
+      "size_gb": 46,
+      "updated": "2026-11",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "tight",
+      "note": "Ricursive Intelligence 從零訓練的 65B dense 模型（每 token 65B 全部啟用），以 RL 訓練成 agentic coding，官方報 Terminal-Bench 2.1 80.5；預訓練語料以英文與程式碼為主，中文能力未標示。Mac 下載 MLX NVFP4 約 46GB，幾乎吃滿 GPU 記憶體；另有 65b-q4_K_M（39GB）。尚未實測。",
+      "note_en": "Ricursive Intelligence's 65B dense model trained from scratch (all 65B active per token), RL-trained for agentic coding; reports 80.5 on Terminal-Bench 2.1. Pretraining corpus is predominantly English and code; Chinese support not stated. On a Mac it downloads the MLX NVFP4 build (about 46 GB), nearly all of GPU memory; there is also 65b-q4_K_M (39 GB). Not tested.",
+      "tasks": [
+        "code"
+      ],
+      "url": "https://ollama.com/library/ripple-preview"
+    },
+    {
+      "tag": "autotrust-jev:9b",
+      "family": "AutoTrust JEV",
+      "description": "AutoTrust’s decision models return choices, yes/no probabilities, and ratings for the questions you supply",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 11,
+      "updated": "2026-11",
+      "caps": [
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：輸入文字＋問題與選項，回傳選項、是非機率與評分（/v1/systemone）。AutoTrust 以 Qwen3.5-9B 微調；9B 只收文字，看圖要用 :27b-vl（21GB）或 :35b。卡片寫訓練語料為英文，中文未系統評測。尚未實測。",
+      "note_en": "A decision model, not a chat model: give it text plus questions and options and it returns a choice, yes/no probabilities and ratings (/v1/systemone). AutoTrust fine-tune of Qwen3.5-9B; the 9B is text-only, so use :27b-vl (21 GB) or :35b for images. The card says the training corpus is English and Chinese was not systematically measured. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/autotrust-jev"
+    },
+    {
+      "tag": "autotrust-jev:35b",
+      "family": "AutoTrust JEV",
+      "description": "AutoTrust’s decision models return choices, yes/no probabilities, and ratings for the questions you supply",
+      "params": "35B (3B active)",
+      "context": 262144,
+      "size_gb": 26,
+      "updated": "2026-11",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "AutoTrust JEV 的 35B 版（Qwen3.5-35B-A3B 微調），決策模型、可判讀圖片，回傳選項、是非機率與評分，不生成文字；卡片標示英文。尚未實測。",
+      "note_en": "AutoTrust JEV 35B (fine-tuned from Qwen3.5-35B-A3B): a decision model that also reads images and returns choices, yes/no probabilities and ratings without generating text; the card lists English. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/autotrust-jev"
+    },
+    {
+      "tag": "pplx-decider-flash:4b",
+      "family": "pplx-decider",
+      "description": "pplx-decider-flash is a 4B decision model from Perplexity, built on Qwen3.5-4B",
+      "params": "4B",
+      "context": 262144,
+      "size_gb": 5.6,
+      "updated": "2026-11",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：Perplexity 以 Qwen3.5-4B 從 27B 版蒸餾，同樣格式、可看圖，大小約 1/7；官方 Decision Index 0.3 為 58.88（pplx-decider 為 68.09）。主打延遲與成本優先的路由；語言未標示。尚未實測。",
+      "note_en": "A decision model, not a chat model: Perplexity distilled it from the 27B models onto Qwen3.5-4B, with the same request format and image support at about one seventh the size; reports 58.88 on Decision Index 0.3 (pplx-decider: 68.09). Aimed at routing where latency and cost matter most; languages not stated. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/pplx-decider-flash"
+    },
+    {
+      "tag": "pplx-decider:27b",
+      "family": "pplx-decider",
+      "description": "pplx-decider is a 27B decision model from Perplexity, fine-tuned from Qwen3.8-27B",
+      "params": "27B",
+      "context": 262144,
+      "size_gb": 17,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：Perplexity 以 Qwen3.8-27B 微調，輸入文字／JSON／圖片＋問題，一次 forward 回傳每個選項的機率（/v1/systemone、ollama run --ask）；官方 11 項基準 85.7%（Jev 84.5%）。此 tag 為 q4_K_M（17GB）；HF 卡片標示已有 v1.1；語言未標示。尚未實測。",
+      "note_en": "A decision model, not a chat model: Perplexity fine-tune of Qwen3.8-27B; give it text, JSON or images plus questions and it returns a probability for every option in one forward pass (/v1/systemone, ollama run --ask); reports 85.7% over 11 benchmarks (Jev 84.5%). This tag is q4_K_M (17 GB); the HF card points to a newer v1.1; languages not stated. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/pplx-decider"
+    },
+    {
+      "tag": "mimo-v2.6:9b",
+      "family": "MiMo",
+      "description": "MiMo-V2.6-Distill-Qwen-9B is Xiaomi MiMo’s 9B model for code and agent workflows",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 8.7,
+      "updated": "2026-11",
+      "caps": [
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "MIT",
+      "fit": "ok",
+      "note": "小米 MiMo 以 Qwen3.5-9B 用 MiMo 產生的資料微調的 coding／agent 模型，可看圖、思考、呼叫工具；官方報 SWE Pro 44.6（底模 32.0）、Terminal Bench 2.1 37.1（底模 27.0）。卡片未標示語言，中文承襲底模。Mac 下載 MLX NVFP4 約 8.7GB。尚未實測。",
+      "note_en": "Xiaomi MiMo's coding/agent model, fine-tuned from Qwen3.5-9B on MiMo-generated data; reads images, thinks and calls tools; reports SWE Pro 44.6 (base 32.0) and Terminal Bench 2.1 37.1 (base 27.0). The card lists no languages; Chinese comes from the base model. On a Mac it downloads the MLX NVFP4 build (about 8.7 GB). Not tested.",
+      "tasks": [
+        "code",
+        "vision"
+      ],
+      "url": "https://ollama.com/library/mimo-v2.6"
+    },
+    {
+      "tag": "flint:40b",
+      "family": "Flint",
+      "description": "Flint is a 39.8 billion-parameter mixture-of-experts model from Recursive, built for coding agents.",
+      "params": "39.8B (2.5B active)",
+      "context": 262144,
+      "size_gb": 23,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "code",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Recursive 從零訓練的 coding agent MoE（每 token 約 2.5B 啟用），可思考與多輪呼叫工具，用於查 bug、實作功能、寫測試；官方報 SWE-bench Verified 74.2%、Terminal-Bench 2.1 54.9%。卡片未標示支援語言，中文能力不明。尚未實測。",
+      "note_en": "Recursive's coding-agent MoE trained from scratch (about 2.5B active per token); thinks and calls tools over many turns to investigate bugs, implement features and write tests; reports 74.2% on SWE-bench Verified and 54.9% on Terminal-Bench 2.1. The card lists no languages, so Chinese support is unknown. Not tested.",
+      "tasks": [
+        "code"
+      ],
+      "url": "https://ollama.com/library/flint"
+    },
+    {
+      "tag": "d3",
+      "family": "d3 (Decision 3.0)",
+      "description": "Turn text, structured data, and images into scored choices, yes/no answers, and ratings.",
+      "params": "4B",
+      "context": 4096,
+      "size_gb": 5.6,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：vLLM Semantic Router 的 Decision 3.0（4B，Qwen3.5-4B 微調），可判讀文字、JSON 與圖片，回傳選項、是非與評分的機率。官方 Jev Decision Index 0.3.2 文字 52.6、視覺 63.2（原始權重）。Ollama 版 context 只有 4,096，需 Ollama 0.40.9 以上；語言未標示。尚未實測。",
+      "note_en": "A decision model, not a chat model: vLLM Semantic Router's Decision 3.0 (4B, fine-tuned from Qwen3.5-4B) reads text, JSON and images and returns probabilities for choices, yes/no and ratings. Reports Jev Decision Index 0.3.2 text 52.6 / vision 63.2 (original weights). The Ollama packages use a 4,096-token context and need Ollama 0.40.9+; languages not stated. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d3"
+    },
+    {
+      "tag": "d3:2b",
+      "family": "d3 (Decision 3.0)",
+      "description": "Turn text, structured data, and images into scored choices, yes/no answers, and ratings.",
+      "params": "2B",
+      "context": 4096,
+      "size_gb": 3.1,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Decision 3.0 最小版，約 3GB 可看圖做決策，官方定位為快速的本機路由與分類；官方指數文字 38.9、視覺 54.7。Ollama 版 context 4,096。尚未實測。",
+      "note_en": "Smallest Decision 3.0 model: image-capable decisions in about 3 GB, positioned for fast local routing and classification; reports index text 38.9 / vision 54.7. Ollama packages use a 4,096-token context. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d3"
+    },
+    {
+      "tag": "d3:9b",
+      "family": "d3 (Decision 3.0)",
+      "description": "Turn text, structured data, and images into scored choices, yes/no answers, and ratings.",
+      "params": "9B",
+      "context": 4096,
+      "size_gb": 10,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Decision 3.0 9B 版，官方定位為較難的決策；官方指數文字 55.8、視覺 66.9。Ollama 版 context 4,096。尚未實測。",
+      "note_en": "Decision 3.0 9B, positioned for harder decisions; reports index text 55.8 / vision 66.9. Ollama packages use a 4,096-token context. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d3"
+    },
+    {
+      "tag": "d3:27b",
+      "family": "d3 (Decision 3.0)",
+      "description": "Turn text, structured data, and images into scored choices, yes/no answers, and ratings.",
+      "params": "27B",
+      "context": 4096,
+      "size_gb": 29,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "tight",
+      "note": "Decision 3.0 旗艦（Qwen3.8-27B 微調），官方 Jev Decision Index 0.3.2 文字 66.3、視覺 71.3，卡片稱文字榜第一；Ollama 標示在 Apple Silicon 載入約 28.61GB，需先卸載其他模型。Ollama 版 context 4,096。尚未實測。",
+      "note_en": "Decision 3.0 flagship (fine-tuned from Qwen3.8-27B); reports Jev Decision Index 0.3.2 text 66.3 / vision 71.3 and the card claims first place on the text board; Ollama lists about 28.61 GB loaded on Apple Silicon, so unload other models first. Ollama packages use a 4,096-token context. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d3"
+    },
+    {
+      "tag": "nemotron-3.5-bolt:e4b",
+      "family": "NVIDIA Nemotron",
+      "description": "Nemotron 3.5 Bolt is NVIDIA’s compact vision-language model for local coding, reasoning, and tool use.",
+      "params": "8B (4B effective)",
+      "context": 131072,
+      "size_gb": 7.2,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "OpenMDW-1.1",
+      "fit": "ok",
+      "note": "NVIDIA 以 Gemma 4 E4B 再訓練，加強多輪工具呼叫、指令遵循，主打裝置端語音與對話助理；後訓練語言含中文，可開關思考。Ollama 標示可看圖、128K（Mac 下載的 MLX NVFP4 版約 7.2GB、標示 64K），NVIDIA 卡片則寫只收文字、64K。尚未實測。",
+      "note_en": "NVIDIA post-trained Gemma 4 E4B for better multi-turn tool use and instruction following, aimed at on-device voice and chat assistants; post-training languages include Chinese, thinking can be toggled. Ollama lists image input and 128K (the MLX NVFP4 build a Mac downloads is about 7.2 GB and lists 64K), while NVIDIA's card says text-only input and 64K. Not tested.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "url": "https://ollama.com/library/nemotron-3.5-bolt"
+    },
+    {
+      "tag": "nemotron-3.5-bolt:74b-a9b",
+      "family": "NVIDIA Nemotron",
+      "description": "Nemotron 3.5 Bolt is NVIDIA’s compact vision-language model for local coding, reasoning, and tool use.",
+      "params": "74B (9B active)",
+      "context": 262144,
+      "size_gb": 25,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking",
+        "vision"
+      ],
+      "tags": [
+        "code",
+        "multilingual",
+        "long_context",
+        "moe",
+        "commercial_ok"
+      ],
+      "license": "OpenMDW-1.1",
+      "fit": "no",
+      "note": "此系列的預設 tag（latest）：由 Nemotron 3.5 Super 壓縮的 Mamba-2/Transformer MoE，專家權重 2-bit（IQ2_XXS），約 25GB，可看圖、呼叫工具；Ollama 註明目前不支援 Apple Silicon／Metal，只能放 NVIDIA GPU 機器（例如 GCP）。卡片支援語言含中文。尚未實測。",
+      "note_en": "The family's default (latest) tag: a Mamba-2/Transformer MoE compressed from Nemotron 3.5 Super with 2-bit (IQ2_XXS) expert weights, about 25 GB, with vision and tool calls; Ollama says Apple Silicon/Metal is not supported yet, so it needs an NVIDIA GPU machine (e.g. GCP). The card lists Chinese among supported languages. Not tested.",
+      "tasks": [
+        "chat",
+        "vision",
+        "code"
+      ],
+      "url": "https://ollama.com/library/nemotron-3.5-bolt"
+    },
+    {
+      "tag": "lfm3:1.7b",
+      "family": "Liquid LFM",
+      "description": "LFM3-1.7B is a tri-hybrid model for local agents and specialized applications.",
+      "params": "1.7B",
+      "context": 262144,
+      "size_gb": 1.7,
+      "updated": "2026-10",
+      "caps": [
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "Liquid AI 第三代 1.7B 文字模型（卷積＋滑動視窗＋全域注意力三混合架構），為本機 agent、工具呼叫、結構化輸出與領域微調設計；官方列 16 種語言含中文，並說不適合寫程式 agent 或複雜多步推理。尚未實測。",
+      "note_en": "Liquid AI's third-generation 1.7B text model (tri-hybrid: convolutions, sliding-window and global attention), built for local agents, tool calling, structured output and domain fine-tuning; lists 16 languages including Chinese, and Liquid says it is not meant for agentic coding or complex multi-step reasoning. Not tested.",
+      "tasks": [
+        "chat",
+        "router"
+      ],
+      "url": "https://ollama.com/library/lfm3",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "lfm3-vl:2b",
+      "family": "Liquid LFM",
+      "description": "LFM3-VL-2B is a vision-language model for on-device visual understanding.",
+      "params": "1.9B",
+      "context": 128000,
+      "size_gb": 1.7,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "Liquid AI LFM3 的看圖版（LFM3-1.7B＋自家視覺編碼器），用於文件、圖表、App 畫面問答、物件定位與機器人空間推理；16 種語言含中文；官方說不適合寫程式、多輪對話與複雜推理，影片輸入「即將推出」。尚未實測。",
+      "note_en": "Liquid AI's LFM3 vision model (LFM3-1.7B plus an in-house vision encoder) for questions about documents, charts and app screens, object grounding and spatial reasoning for robots; 16 languages including Chinese; Liquid says it is not for coding, multi-turn chat or complex reasoning, and video input is 'coming soon'. Not tested.",
+      "tasks": [
+        "vision"
+      ],
+      "url": "https://ollama.com/library/lfm3-vl",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "lfm3-audio:2b",
+      "family": "Liquid LFM",
+      "description": "LFM3-Audio-2B is a compact, fully featured audio model.",
+      "params": "2B",
+      "context": 128000,
+      "size_gb": 2.1,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "audio"
+      ],
+      "tags": [
+        "translate",
+        "multilingual",
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "Liquid AI 2B 語音模型：輸入文字或語音，輸出文字、語音或兩者；可做語音辨識、語音合成、語音翻譯（18 種語言含中文）、音訊問答與口說工具呼叫。語音對話（說話→語音回覆）官方標示只支援英語。尚未實測。",
+      "note_en": "Liquid AI's 2B audio model: text or speech in, text, speech or both out; does speech recognition, speech synthesis and speech translation (18 languages including Chinese), questions about recordings and spoken tool calls. Voice chat (speech in, spoken reply) is English only per Liquid. Not tested.",
+      "audio_note": "Ollama 0.40.12 版本說明寫 lfm3-audio 可做語音辨識、翻譯與 TTS，0.40.13 起 TTS 也能在 Linux／Windows 跑；但模型頁的輸入欄只標 Text，官方 API 文件沒寫怎麼送音訊，語音輸出文件（/v1/audio/speech）也只提 Phonon。Ollama 裡的音訊進出要實測確認。",
+      "audio_note_en": "Ollama 0.40.12 release notes say lfm3-audio does speech recognition, translation and TTS, and 0.40.13 adds TTS on Linux and Windows; but the model page lists Text as the only input, the API docs do not say how to send audio, and the speech-output docs (/v1/audio/speech) only mention Phonon. Audio in and out through Ollama needs a hands-on check.",
+      "tasks": [
+        "chat",
+        "translate"
+      ],
+      "url": "https://ollama.com/library/lfm3-audio",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "lfm3-omni:2b",
+      "family": "Liquid LFM",
+      "description": "a single end-to-end model that understands text, images, video and audio, and answers in text and speech",
+      "params": "2B",
+      "context": 128000,
+      "size_gb": 2.4,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "audio"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "Liquid AI 第一個全模態模型：看得懂文字、圖片、影片與音訊，用文字或語音回答，一個模型取代 ASR＋視覺模型＋LLM＋TTS；文字 16 種、語音 18 種語言（均含中文）；不支援思考模式。尚未實測。",
+      "note_en": "Liquid AI's first omni-modal model: understands text, images, video and audio and answers in text or speech, replacing separate ASR, vision, LLM and TTS models; 16 text and 18 speech languages (both include Chinese); no thinking mode. Not tested.",
+      "audio_note": "Ollama 0.40.12 版本說明寫 lfm3-omni 一個模型處理文字、圖片與音訊，0.40.13 說它的 TTS 也能在 Linux／Windows 跑；但模型頁輸入欄只標 Text、Image，官方文件沒寫音訊輸入方式，語音輸出文件只提 Phonon。Ollama 裡的音訊進出要實測確認。",
+      "audio_note_en": "Ollama 0.40.12 release notes say lfm3-omni handles text, images and audio in one model, and 0.40.13 says its TTS also runs on Linux and Windows; but the model page lists only Text and Image as input, the docs do not say how to send audio, and the speech-output docs only mention Phonon. Audio in and out through Ollama needs a hands-on check.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "url": "https://ollama.com/library/lfm3-omni",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "d1:2b",
+      "family": "Liquid d1",
+      "description": "d1 is a 3B decision model from Liquid AI, built on LFM2.5-VL-3B",
+      "params": "2B",
+      "context": 128000,
+      "size_gb": 3.9,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "multilingual",
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：輸入文字或圖片＋問題，一次前向就回傳每個選項的機率（Ollama /v1/systemone、ollama run --ask）。這是 0.40.12 新增、以 LFM3 為底的 2B 版（HF：d1-2B，底模 LFM3-VL-2B）；用於路由、內容審查、評分、看圖檢查、agent 步驟把關；16 種語言含中文。尚未實測。",
+      "note_en": "A decision model, not a chat model: give it text or images plus questions and it returns a probability for every answer in one forward pass (Ollama /v1/systemone, ollama run --ask). This is the 2B version built on LFM3, added in 0.40.12 (HF: d1-2B, base LFM3-VL-2B); for routing, moderation, judging answers, image checks and gating agent steps; 16 languages including Chinese. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d1",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "d1:3b",
+      "family": "Liquid d1",
+      "description": "d1 is a 3B decision model from Liquid AI, built on LFM2.5-VL-3B",
+      "params": "3B",
+      "context": 32768,
+      "size_gb": 3.7,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision"
+      ],
+      "tags": [
+        "multilingual"
+      ],
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型（Ollama /v1/systemone）；d1:latest 目前指向此版，底模 LFM2.5-VL-3B，context 32K；16 種語言含中文。Liquid 報 Decision Index 0.2.1 48.57 分（35B-A3B Decider 47.11）。新的 d1:2b 底模換成 LFM3、context 125K。尚未實測。",
+      "note_en": "A decision model, not a chat model (Ollama /v1/systemone); d1:latest currently points here, base LFM2.5-VL-3B, 32K context; 16 languages including Chinese. Liquid reports 48.57 on Decision Index 0.2.1 (35B-A3B Decider: 47.11). The newer d1:2b is built on LFM3 with 125K context. Not tested.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d1",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "d1-omni:600m",
+      "family": "Liquid d1",
+      "description": "d1-omni is a multimodal 600M decision model from Liquid AI",
+      "params": "587M",
+      "context": 128000,
+      "size_gb": 0.85,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision",
+        "audio"
+      ],
+      "tags": [
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型：對文字、JSON、圖片或一段短語音回答預先定義的問題並給機率（/v1/systemone）；底模 LFM2.5-Encoder-350M。Ollama 頁說語音只訓練英語。要最準的文字／圖片判斷，官方建議用 d1。尚未實測。",
+      "note_en": "A decision model, not a chat model: answers predefined questions about text, JSON, images or a short voice clip with probabilities (/v1/systemone); base LFM2.5-Encoder-350M. The Ollama page says speech training data was English only. For the most accurate text/image decisions Liquid points to d1. Not tested.",
+      "audio_note": "Ollama 頁面有寫用法：把一段 base64 WAV 放在 images 欄位，音訊和圖片不能同時送；超過 30 秒會截斷，只支援英語語音。不會產生文字或語音輸出。",
+      "audio_note_en": "The Ollama page documents it: put one base64 WAV clip in the images field, and send audio or images, not both; clips are cut at 30 s and speech is English only. It produces no text or speech output.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d1-omni",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "d1-omni:2b",
+      "family": "Liquid d1",
+      "description": "d1-omni is a multimodal 600M decision model from Liquid AI",
+      "params": "2B",
+      "context": 128000,
+      "size_gb": 4.4,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "decision",
+        "audio"
+      ],
+      "tags": [
+        "long_context"
+      ],
+      "fit": "ok",
+      "note": "決策模型，不是聊天模型（/v1/systemone）。Ollama 頁面沒有說明這個 2B tag；0.40.12 版本說明寫 d1 新增以 LFM3 為底的 2B 版、d1-omni 加上音訊。對應的 HF 卡片（d1-Omni-2B，底模 LFM3-Omni-2B）寫語音問題涵蓋中文等 12 種語言，但 Ollama 頁的語言說明只寫英語語音。尚未實測。",
+      "note_en": "A decision model, not a chat model (/v1/systemone). The Ollama page does not describe this 2B tag; the 0.40.12 release notes say d1 gained a 2B size built on LFM3 and d1-omni adds audio. The matching HF card (d1-Omni-2B, base LFM3-Omni-2B) lists speech in 12 languages including Chinese, but the Ollama page only mentions English speech. Not tested.",
+      "audio_note": "Ollama 頁面的音訊用法（base64 WAV 放 images 欄位、30 秒、只限英語）是寫給 600M 版；2B tag 是否同樣用法、是否支援中文語音，頁面沒寫，要實測。",
+      "audio_note_en": "The Ollama page's audio instructions (base64 WAV in the images field, 30 s, English only) are written for the 600M model; the page does not say whether the 2B tag works the same way or accepts Chinese speech, so it needs a hands-on check.",
+      "tasks": [
+        "router"
+      ],
+      "url": "https://ollama.com/library/d1-omni",
+      "license": "LFM Open License v1.0（年營收 1,000 萬美元以下可商用）",
+      "license_en": "LFM Open License v1.0 (commercial use for companies under US$10M annual revenue)"
+    },
+    {
+      "tag": "phonon:latest",
+      "family": "Phonon",
+      "description": "Phonon is Gradium’s text-to-speech family. It turns written text into spoken audio as it generates, making it useful for reading assistant replies, narrating passages, and adding a voice to local apps.",
+      "params": "31M",
+      "context": 8192,
+      "size_gb": 0.11,
+      "updated": "2026-10",
+      "caps": [],
+      "tags": [
+        "commercial_ok"
+      ],
+      "license": "apache-2.0（40M 版為 CC BY-NC 4.0，不可商用）",
+      "license_en": "apache-2.0 (the 40M models are CC BY-NC 4.0, non-commercial)",
+      "fit": "ok",
+      "note": "Gradium 的文字轉語音模型，不是聊天模型：Ollama 透過 OpenAI 相容的 /v1/audio/speech 串流輸出 24 kHz 語音（官方說需 0.40.9 以上；部落格寫目前只在 Apple Silicon Mac）。latest 為 31M 英語版；另有 40M 法、德、西、葡與 multilingual（五種語言合一）。不支援中文，對我們用處不大。尚未實測。",
+      "note_en": "Gradium's text-to-speech model, not a chat model: Ollama streams 24 kHz speech through the OpenAI-compatible /v1/audio/speech endpoint (docs say 0.40.9 or later; the blog says Apple Silicon Macs only for now). latest is the 31M English model; there are also 40M French, German, Spanish, Portuguese and multilingual (all five) models. No Chinese, so of little use to us. Not tested.",
+      "tasks": [],
+      "url": "https://ollama.com/library/phonon"
+    },
+    {
+      "tag": "bonsai-2:2b",
+      "family": "Bonsai 2",
+      "description": "Bonsai 2 from Prism ML is a family of vision models built for ternary weights – smaller models with close to full-precision quality.",
+      "params": "2B",
+      "context": 262144,
+      "size_gb": 0.91,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Prism ML 把 Qwen3.5-2B 壓成三值權重（−1／0／+1），大小約一般 4-bit 的一半；支援看圖、工具呼叫與思考。卡片沒列支援語言，底模 Qwen 有中文，但壓縮後中文品質未說明。尚未實測。",
+      "note_en": "Prism ML's ternary-weight (−1/0/+1) version of Qwen3.5-2B, about half the size of a usual 4-bit build; supports images, tool calls and thinking. The card lists no languages; the Qwen base handles Chinese, but Chinese quality after compression is not stated. Not tested.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "url": "https://ollama.com/library/bonsai-2"
+    },
+    {
+      "tag": "bonsai-2:4b",
+      "family": "Bonsai 2",
+      "description": "Bonsai 2 from Prism ML is a family of vision models built for ternary weights – smaller models with close to full-precision quality.",
+      "params": "4B",
+      "context": 262144,
+      "size_gb": 1.6,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Prism ML 把 Qwen3.5-4B 壓成三值權重（−1／0／+1），大小約一般 4-bit 的一半；支援看圖、工具呼叫與思考。卡片沒列支援語言，底模 Qwen 有中文，但壓縮後中文品質未說明。尚未實測。",
+      "note_en": "Prism ML's ternary-weight (−1/0/+1) version of Qwen3.5-4B, about half the size of a usual 4-bit build; supports images, tool calls and thinking. The card lists no languages; the Qwen base handles Chinese, but Chinese quality after compression is not stated. Not tested.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "url": "https://ollama.com/library/bonsai-2"
+    },
+    {
+      "tag": "bonsai-2:9b",
+      "family": "Bonsai 2",
+      "description": "Bonsai 2 from Prism ML is a family of vision models built for ternary weights – smaller models with close to full-precision quality.",
+      "params": "9B",
+      "context": 262144,
+      "size_gb": 3.2,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Prism ML 把 Qwen3.5-9B 壓成三值權重（−1／0／+1），大小約一般 4-bit 的一半；支援看圖、工具呼叫與思考。卡片沒列支援語言，底模 Qwen 有中文，但壓縮後中文品質未說明。bonsai-2:latest 指向此版；同底模的 qwen3.5:9b 約 7.6GB。尚未實測。",
+      "note_en": "Prism ML's ternary-weight (−1/0/+1) version of Qwen3.5-9B, about half the size of a usual 4-bit build; supports images, tool calls and thinking. The card lists no languages; the Qwen base handles Chinese, but Chinese quality after compression is not stated. bonsai-2:latest points here; qwen3.5:9b on the same base is about 7.6 GB. Not tested.",
+      "tasks": [
+        "chat",
+        "vision"
+      ],
+      "url": "https://ollama.com/library/bonsai-2"
+    },
+    {
+      "tag": "bonsai-2:27b",
+      "family": "Bonsai 2",
+      "description": "Bonsai 2 from Prism ML is a family of vision models built for ternary weights – smaller models with close to full-precision quality.",
+      "params": "27B",
+      "context": 262144,
+      "size_gb": 8.3,
+      "updated": "2026-10",
+      "caps": [
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "tags": [
+        "long_context",
+        "commercial_ok"
+      ],
+      "license": "apache-2.0",
+      "fit": "ok",
+      "note": "Prism ML 把 Qwen3.8-27B 壓成三值權重（−1／0／+1），大小約一般 4-bit 的一半；支援看圖、工具呼叫與思考。卡片沒列支援語言，底模 Qwen 有中文，但壓縮後中文品質未說明。官方稱 14 項思考模式評測平均 84.78、保留 FP16 的 98.2%；同底模的 qwen3.8:27b 約 18GB。尚未實測。",
+      "note_en": "Prism ML's ternary-weight (−1/0/+1) version of Qwen3.8-27B, about half the size of a usual 4-bit build; supports images, tool calls and thinking. The card lists no languages; the Qwen base handles Chinese, but Chinese quality after compression is not stated. Prism ML reports an 84.78 average over 14 thinking-mode benchmarks, 98.2% of FP16; qwen3.8:27b on the same base is about 18 GB. Not tested.",
+      "tasks": [
+        "chat",
+        "vision",
+        "reasoning"
+      ],
+      "url": "https://ollama.com/library/bonsai-2"
     }
   ],
   "tiers": [
@@ -6832,6 +7519,395 @@
       "use_en": "Pairs with Qwen3-Embedding",
       "note": "",
       "note_en": "",
+      "recommended": false
+    },
+    {
+      "name": "Nemotron 3.5 Transcribe 30B-A4B",
+      "repo": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B",
+      "url": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B",
+      "category": "asr",
+      "status": "catalog",
+      "params": "34B（每 token 約 4.3B 啟用，含音訊編碼器）",
+      "params_en": "34B (about 4.3B active per token, incl. audio encoder)",
+      "size_gb": 67.5,
+      "langs": [
+        "multi",
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es"
+      ],
+      "license": "OpenMDW-1.1（可商用）",
+      "license_en": "OpenMDW-1.1 (commercial use allowed)",
+      "mac": "mlx",
+      "runtime": "mlx-audio（MLX，社群 4bit）／vLLM 0.32、SGLang-Omni（NVIDIA）",
+      "runtime_en": "mlx-audio (MLX, community 4-bit) / vLLM 0.32, SGLang-Omni (NVIDIA)",
+      "install": "pip install 'mlx-audio[stt] @ git+https://github.com/Blaizzy/mlx-audio.git@92decb7577878ef8e9274c1a7e33084760be03aa'（模型 nativ-community/Nemotron-3.5-Transcribe-30B-A4B-EA-4bit，約 19.3 GB）",
+      "install_en": "pip install 'mlx-audio[stt] @ git+https://github.com/Blaizzy/mlx-audio.git@92decb7577878ef8e9274c1a7e33084760be03aa' (model nativ-community/Nemotron-3.5-Transcribe-30B-A4B-EA-4bit, about 19.3 GB)",
+      "use": "長錄音（最長 1 小時）離線轉寫、說話者標記、字級時間戳、語音翻譯、音訊問答",
+      "use_en": "Offline transcription of long recordings (up to 1 hour), speaker tags, word timestamps, speech translation, audio Q&A",
+      "note": "NVIDIA 2026-10；以 Nemotron 3.5 Lightning 30B-A3B（Mamba-Transformer MoE）為底；40 種語言，但普通話只列在最低的「Supported（可能需要微調）」等級；官方 FLEURS 中文 CER 8.62%、ASCEND 中英夾雜 18.74%、AISHELL-4 cpCER 32.91、AliMeeting 34.95（中文會議數字不如目錄中的 MOSS-Transcribe-Diarize）；英文 Open ASR 平均 WER 4.71（官方稱開放權重第一）；官方只支援 NVIDIA GPU（單張 H100 80GB，另有 FP8／NVFP4 版）；Mac 用社群 MLX 4bit（mlx-audio 已列入），社群轉檔只驗證英文；卡片無台灣口音或繁體輸出資訊。尚未實測。",
+      "note_en": "NVIDIA, 2026-10; built on Nemotron 3.5 Lightning 30B-A3B (Mamba-Transformer MoE); 40 languages, but Mandarin is only in the lowest 'Supported (may need fine-tuning)' tier; official FLEURS Chinese CER 8.62%, ASCEND zh-en code-switching 18.74%, AISHELL-4 cpCER 32.91, AliMeeting 34.95 (Chinese meeting numbers trail MOSS-Transcribe-Diarize in this catalog); English Open ASR mean WER 4.71 (claimed best open-weight); officially NVIDIA GPUs only (one H100 80GB; FP8/NVFP4 variants exist); on Mac use the community MLX 4-bit (listed by mlx-audio), whose checks cover English only; nothing on Taiwan accent or Traditional output. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "ZONOS3-Mini",
+      "repo": "Zyphra/ZONOS3-Mini",
+      "url": "https://huggingface.co/Zyphra/ZONOS3-Mini",
+      "category": "tts",
+      "status": "catalog",
+      "params": "800M（每 token 約 100M 啟用，MoE）",
+      "params_en": "800M (about 100M active per token, MoE)",
+      "size_gb": 30.7,
+      "langs": [
+        "multi",
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es"
+      ],
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio（MLX）／Zyphra 原生執行環境（CUDA、MLX、ggml、WebGPU）／SGLang-Omni",
+      "runtime_en": "mlx-audio (MLX) / Zyphra native runtimes (CUDA, MLX, ggml, WebGPU) / SGLang-Omni",
+      "install": "pip install -U mlx-audio（模型 mlx-community/ZONOS3-Mini，約 1.4 GB）",
+      "install_en": "pip install -U mlx-audio (model mlx-community/ZONOS3-Mini, about 1.4 GB)",
+      "use": "零樣本聲音複製（不需參考逐字稿）、描述年齡／口音設計聲音、情緒與語速控制，44.1 kHz 串流",
+      "use_en": "Zero-shot voice cloning (no reference transcript needed), voice design by age/accent, emotion and pace control, 44.1 kHz streaming",
+      "note": "Zyphra 2026-11；43 種語言，內建 27 個聲音中普通話只有 2 個（Haoran 男、Meilin 女）；卡片沒有中文單獨數據；H100 首段音訊約 80 ms（官方）；可在瀏覽器 WebGPU 執行；repo 含 CUDA／GGUF／WebGPU 多套權重共約 30.7 GB，MLX 版只要約 1.4 GB；mlx-audio 版不含語音編輯與口音轉接器。尚未實測。",
+      "note_en": "Zyphra, 2026-11; 43 languages, but only 2 of the 27 built-in voices are Mandarin (Haoran male, Meilin female); no separate Chinese numbers on the card; about 80 ms to first audio on an H100 (official); runs in the browser via WebGPU; the repo bundles CUDA/GGUF/WebGPU weights (about 30.7 GB in all) while the MLX build is about 1.4 GB; the mlx-audio port leaves out speech editing and accent adapters. Not tested.",
+      "released": "2026-11",
+      "recommended": false
+    },
+    {
+      "name": "Audio8-TTS-Realistic-Air",
+      "repo": "Edge0/Audio8-TTS-Realistic-Air",
+      "url": "https://huggingface.co/Edge0/Audio8-TTS-Realistic-Air",
+      "category": "tts",
+      "status": "catalog",
+      "params": "0.6B（不含 codec）",
+      "params_en": "0.6B (excluding codec)",
+      "size_gb": 2.6,
+      "langs": [
+        "zh",
+        "yue",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es",
+        "multi"
+      ],
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "mlx-audio ≥0.4.7（MLX）／Transformers（PyTorch）／SGLang-Omni",
+      "runtime_en": "mlx-audio >=0.4.7 (MLX) / Transformers (PyTorch) / SGLang-Omni",
+      "install": "pip install -U \"mlx-audio>=0.4.7\"（模型 mlx-community/Audio8-TTS-Realistic-0.6b-bf16）",
+      "install_en": "pip install -U \"mlx-audio>=0.4.7\" (model mlx-community/Audio8-TTS-Realistic-0.6b-bf16)",
+      "use": "零樣本聲音複製（需參考音逐字稿）、無參考音直接合成，23 種語言，44.1 kHz",
+      "use_en": "Zero-shot voice cloning (needs the reference transcript) or synthesis without a reference, 23 languages, 44.1 kHz",
+      "note": "Edge0 2026-10（原名 Audio8-TTS-Realistic-0.6b，11-02 改名，權重相同）；Preview-0.6b 的加強版，DualAR 架構仿 Fish Audio S2 Pro；官方 Seed-TTS 中文 CER 1.029%（困難句 12.797%）、CV3 中文 1.814%，粵語 MiniMax CER 31.349% 偏差；官方建議 CUDA GPU；另有 nativ-community 4／8bit MLX 與 GGUF；複製聲音需取得同意。尚未實測。",
+      "note_en": "Edge0, 2026-10 (published as Audio8-TTS-Realistic-0.6b, renamed 11-02 with unchanged weights); an improved Preview-0.6b using a DualAR design modeled on Fish Audio S2 Pro; official Seed-TTS Chinese CER 1.029% (hard set 12.797%), CV3 Chinese 1.814%, Cantonese MiniMax CER 31.349% is weak; CUDA GPU recommended officially; nativ-community 4/8-bit MLX and GGUF builds exist; get consent before cloning voices. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "Fish Audio Drama 3",
+      "repo": "fishaudio/drama-3",
+      "url": "https://huggingface.co/fishaudio/drama-3",
+      "category": "tts",
+      "status": "catalog",
+      "params": "35B（每 token 3B 啟用，MoE）",
+      "params_en": "35B (3B active per token, MoE)",
+      "size_gb": 41.5,
+      "langs": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es",
+        "multi"
+      ],
+      "license": "Fish Audio Community License v1.0（研究／非商用免費；年營收 50 萬美元以下可商用）",
+      "license_en": "Fish Audio Community License v1.0 (free for research/non-commercial; commercial use under US$500K annual revenue)",
+      "mac": "mlx",
+      "runtime": "mlx-audio ≥0.6.2（MLX，社群 4bit）／SGLang-Omni、vLLM-Omni（NVIDIA）",
+      "runtime_en": "mlx-audio >=0.6.2 (MLX, community 4-bit) / SGLang-Omni, vLLM-Omni (NVIDIA)",
+      "install": "pip install -U \"mlx-audio>=0.6.2\"（模型 mlx-community/fish-audio-drama-3-4bit，約 22 GB）",
+      "install_en": "pip install -U \"mlx-audio>=0.6.2\" (model mlx-community/fish-audio-drama-3-4bit, about 22 GB)",
+      "use": "多角色長篇配音（一段文字最多 16 個說話者）、聲音複製、[嘆氣] 等事件標記、沿用前一版重新改字",
+      "use_en": "Multi-character long-form voice work (up to 16 speakers per text), voice cloning, inline cues like [sighs], re-editing words from a previous take",
+      "note": "Fish Audio 2026-10（10-29 更新權重）；MoE 文字骨幹，專家權重 FP8；H200 單路首段音訊約 89 ms（官方）；MLX 4bit 為社群非官方轉檔：M3 Max 約 2 倍即時、生成時峰值約 26 GB；卡片無中文數據；HF 標籤寫 research license，LICENSE 檔則為 Community License v1.0（評測測試屬非商用）；前代 Fish Audio S2 Pro 已在目錄。尚未實測。",
+      "note_en": "Fish Audio, 2026-10 (weights updated 10-29); MoE text backbone with FP8 experts; about 89 ms to first audio for one stream on an H200 (official); the MLX 4-bit is an unofficial community conversion: about 2x real time on an M3 Max, about 26 GB peak while generating; no Chinese numbers on the card; the HF tag says research license but the LICENSE file is Community License v1.0 (evaluation and testing count as non-commercial); its predecessor Fish Audio S2 Pro is already in the catalog. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "Ming-3.0-tts-0.5B",
+      "repo": "inclusionAI/Ming-3.0-tts-0.5B",
+      "url": "https://huggingface.co/inclusionAI/Ming-3.0-tts-0.5B",
+      "category": "tts",
+      "status": "catalog",
+      "params": "0.5B",
+      "size_gb": 3.0,
+      "langs": [
+        "zh",
+        "yue",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es"
+      ],
+      "license": "mit",
+      "mac": "mlx",
+      "runtime": "mlx-audio ≥0.6.1（MLX）／Ming-3.0-tts（PyTorch）",
+      "runtime_en": "mlx-audio >=0.6.1 (MLX) / Ming-3.0-tts (PyTorch)",
+      "install": "pip install -U \"mlx-audio>=0.6.1\"（模型 mlx-community/Ming-3.0-tts-0.5B-8bit，1.5 GB）",
+      "install_en": "pip install -U \"mlx-audio>=0.6.1\" (model mlx-community/Ming-3.0-tts-0.5B-8bit, 1.5 GB)",
+      "use": "零樣本聲音複製、文字描述設計聲音、情緒／語速／音高／音量控制、14 種呼吸笑聲嘆氣等標記、四川話與粵語",
+      "use_en": "Zero-shot voice cloning, voice design from a text description, emotion/speed/pitch/volume control, 14 inline tags for breath, laughter, sighs etc., Sichuanese and Cantonese",
+      "note": "inclusionAI 2026-09；Qwen2.5-0.5B 為底，44.1 kHz；官方 Seed-TTS 中文 WER 0.800%（同表 CosyVoice3-0.5B 1.160%、Qwen3-TTS-12Hz-1.7B-Base 0.770%）；社群 MLX 8bit 在 M4 Pro RTF 0.39、峰值記憶體 2.2 GB；mlx-audio 0.6.0 以前會念錯字；官方只在 NVIDIA 上測試；另有 MoE 版 Ming-3.0-tts-tiny；卡片無台灣腔資訊。尚未實測。",
+      "note_en": "inclusionAI, 2026-09; Qwen2.5-0.5B backbone, 44.1 kHz; official Seed-TTS Chinese WER 0.800% (same table: CosyVoice3-0.5B 1.160%, Qwen3-TTS-12Hz-1.7B-Base 0.770%); community MLX 8-bit runs at RTF 0.39 with 2.2 GB peak memory on an M4 Pro; mlx-audio 0.6.0 and earlier say the wrong words; officially tested on NVIDIA only; an MoE sibling Ming-3.0-tts-tiny exists; nothing on a Taiwan accent. Not tested.",
+      "released": "2026-09",
+      "recommended": false
+    },
+    {
+      "name": "KittenTTS 2",
+      "repo": "KittenML/kitten-tts-2",
+      "url": "https://huggingface.co/KittenML/kitten-tts-2",
+      "category": "tts",
+      "status": "catalog",
+      "params": "1.7B",
+      "size_gb": 8.2,
+      "langs": [
+        "en",
+        "zh",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es",
+        "multi"
+      ],
+      "license": "Stellon Labs Community License（年營收或累計募資 100 萬美元以下可商用）",
+      "license_en": "Stellon Labs Community License (commercial use under US$1M annual revenue or total funding)",
+      "mac": "cpu",
+      "runtime": "kittenml（PyTorch）／kitten-tts-2-cpp（llama.cpp 分支）",
+      "runtime_en": "kittenml (PyTorch) / kitten-tts-2-cpp (llama.cpp fork)",
+      "install": "pip install kittenml",
+      "use": "115 個內建聲音、5–30 秒參考音複製聲音、情緒與事件標記（Beta）",
+      "use_en": "115 built-in voices, voice cloning from 5-30 s of audio, emotion and event tags (beta)",
+      "note": "KittenML（Stellon Labs）2026-09；語言模型為 1.58-bit 三值權重，實際載入約 0.95 GB（repo 含多種打包共約 8.2 GB）；16 種語言靠對應聲音帶口音，中文只有 1 個內建聲音；文字正規化只適合英文，中文要設 normalize=False；卡片無中文數據；mlx-audio 只支援舊版 KittenTTS 0.8（英文），沒有 MLX 版。尚未實測。",
+      "note_en": "KittenML (Stellon Labs), 2026-09; the language model uses 1.58-bit ternary weights, so a load pulls about 0.95 GB (the repo holds several packings, about 8.2 GB in all); 16 languages are reached through voices that carry the accent, with just one built-in Chinese voice; the text normalizer is English-only, so Chinese needs normalize=False; no Chinese numbers on the card; mlx-audio only supports the older English KittenTTS 0.8, so there is no MLX build. Not tested.",
+      "released": "2026-09",
+      "recommended": false
+    },
+    {
+      "name": "Apriel Voice 27B Preview",
+      "repo": "ServiceNow-AI/Apriel-Voice-27B-preview",
+      "url": "https://huggingface.co/ServiceNow-AI/Apriel-Voice-27B-preview",
+      "category": "voice_chat",
+      "status": "catalog",
+      "params": "27B（Gemma 4 26B-A4B 骨幹）",
+      "params_en": "27B (Gemma 4 26B-A4B backbone)",
+      "size_gb": 54.5,
+      "langs": [
+        "multi",
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es"
+      ],
+      "license": "mit",
+      "mac": "cuda",
+      "runtime": "vLLM 0.32（官方 Docker 映像或 vLLM PR #64683）／Transformers",
+      "runtime_en": "vLLM 0.32 (official Docker image or vLLM PR #64683) / Transformers",
+      "install": "docker.io/amant555/vllm_apriel_voice:plain-26b-v0.32.0（vllm serve，--trust-remote-code）",
+      "install_en": "docker.io/amant555/vllm_apriel_voice:plain-26b-v0.32.0 (vllm serve, --trust-remote-code)",
+      "use": "聽語音、回文字與工具呼叫的語音助理大腦（需外接 TTS）；也能轉寫、語音翻譯、語音問答，約 30 分鐘內的長錄音表現好",
+      "use_en": "Speech-in, text-and-tool-call-out brain for voice assistants (needs an external TTS); also transcription, speech translation and spoken Q&A, good on recordings up to about 30 minutes",
+      "note": "ServiceNow 2026-10；Whisper large-v3-turbo 編碼器接 Gemma 4 26B-A4B；會聽不會說；官方英語 τ-Voice 成功率 65.51%、LibriSpeech test-clean WER 2.23%；卡片坦言多語表現不均，無中文數據；官方範例用 4 張 H100；bf16 約 54.5 GB，Mac 放不下且無 MLX 版。尚未實測。",
+      "note_en": "ServiceNow, 2026-10; Whisper large-v3-turbo encoder on a Gemma 4 26B-A4B backbone; listens but does not speak; official English τ-Voice success 65.51%, LibriSpeech test-clean WER 2.23%; the card says multilingual quality is uneven and gives no Chinese numbers; official examples use 4x H100; bf16 is about 54.5 GB, too big for the Mac and with no MLX build. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "Unlimited-OCR 2",
+      "repo": "baidu/Unlimited-OCR-2",
+      "url": "https://huggingface.co/baidu/Unlimited-OCR-2",
+      "category": "doc",
+      "status": "catalog",
+      "params": "3.3B",
+      "size_gb": 6.7,
+      "langs": [
+        "multi"
+      ],
+      "license": "mit",
+      "mac": "cuda",
+      "runtime": "transformers（CUDA）／SGLang（客製版 wheel）",
+      "runtime_en": "transformers (CUDA) / SGLang (custom wheel)",
+      "install": "pip install transformers==4.52.1 torch==2.13.0 addict einops easydict（trust_remote_code，官方在 A800 測試）",
+      "install_en": "pip install transformers==4.52.1 torch==2.13.0 addict einops easydict (trust_remote_code; officially tested on an A800)",
+      "use": "超長文件解析：整份多頁 PDF 一次送進去，可跨頁合併表格與段落",
+      "use_en": "Ultra-long document parsing: send a whole multi-page PDF in one request, with cross-page merging of tables and paragraphs",
+      "note": "百度 ERNIE 團隊 2026-10，DeepSeek-OCR 的延伸版；SR-SWA 注意力讓記憶體不隨頁數增加，官方稱 MPDocBench、MarathonDocBench（百頁級）最佳。卡片只標 multilingual，沒寫繁中表現；同系的 DeepSeek-OCR 在我們的繁中測試只有 0.433。官方程式只支援 CUDA；社群有 mlx-community/Unlimited-OCR-2-4bit（需未合併的 mlx-vlm 分支）與 GGUF（需打補丁的 llama.cpp）；Ollama 上的 frob/、richardyoung/unlimited-ocr 是第 1 版不是 2。尚未實測。",
+      "note_en": "Baidu ERNIE team, 2026-10, an extension of DeepSeek-OCR; SR-SWA attention keeps memory flat as page count grows, and it claims the best scores on MPDocBench and MarathonDocBench (hundreds of pages). The card only says multilingual and gives no Traditional Chinese results; its relative DeepSeek-OCR scored 0.433 on our Traditional Chinese test. Official code is CUDA-only; community builds exist: mlx-community/Unlimited-OCR-2-4bit (needs an unmerged mlx-vlm branch) and GGUF (needs a patched llama.cpp); frob/ and richardyoung/unlimited-ocr on Ollama are version 1, not 2. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "Xiaomi-OCR-0",
+      "repo": "xiaomi-research/Xiaomi-OCR-0",
+      "url": "https://huggingface.co/xiaomi-research/Xiaomi-OCR-0",
+      "category": "doc",
+      "status": "catalog",
+      "params": "0.8B",
+      "size_gb": 1.75,
+      "langs": [
+        "zh",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "mac": "mps",
+      "runtime": "transformers（CUDA／MPS／CPU）；社群 Ollama、GGUF、MLX 版",
+      "runtime_en": "transformers (CUDA / MPS / CPU); community Ollama, GGUF and MLX builds",
+      "install": "uv pip install \"transformers==5.17.0\" \"torch==2.14.0\" torchvision pillow；或 ollama pull longwayxu/xiaomi-ocr-0:bf16（社群版，約 1.8 GB）",
+      "install_en": "uv pip install \"transformers==5.17.0\" \"torch==2.14.0\" torchvision pillow; or ollama pull longwayxu/xiaomi-ocr-0:bf16 (community build, about 1.8 GB)",
+      "use": "整頁文件轉 Markdown（表格 OTSL、公式 LaTeX）、翻拍／歪斜文件、文件問答與欄位擷取（KIE）",
+      "use_en": "Whole-page document to Markdown (tables as OTSL, formulas as LaTeX), recaptured / skewed pages, document QA and key information extraction (KIE)",
+      "note": "小米 2026-09，Qwen3.5-0.8B 微調；官方報 OmniDocBench v1.6 96.83（PaddleOCR-VL-1.6 96.33、GLM-OCR 95.22）、Real5-OmniDocBench 95.24。卡片沒列支援語言，但範例是中文行書千字文。Ollama 版為社群打包，官方提醒要配合其前處理與提示詞，只 pull 模型不會自動設定。尚未實測。",
+      "note_en": "Xiaomi, 2026-09, fine-tuned from Qwen3.5-0.8B; officially reports OmniDocBench v1.6 96.83 (PaddleOCR-VL-1.6 96.33, GLM-OCR 95.22) and Real5-OmniDocBench 95.24. The card lists no languages, but its example is a Chinese running-script Thousand Character Classic. The Ollama build is community-made, and the authors note it needs their preprocessing and prompt; pulling the model alone does not set them up. Not tested.",
+      "released": "2026-09",
+      "recommended": false
+    },
+    {
+      "name": "Indra OCR",
+      "repo": "datalab-to/indra-ocr",
+      "url": "https://huggingface.co/datalab-to/indra-ocr",
+      "category": "doc",
+      "status": "catalog",
+      "params": "約 7.3M（多個 ONNX 小模型）",
+      "params_en": "About 7.3M (several small ONNX models)",
+      "size_gb": 0.08,
+      "langs": [
+        "zh",
+        "ja",
+        "ko",
+        "en",
+        "fr",
+        "de",
+        "es",
+        "multi"
+      ],
+      "license": "修改版 OpenRAIL-M（研究、個人、年營收或募資 2,000 萬美元以下新創可免費；不得與其 API 競爭）；程式 Apache-2.0",
+      "license_en": "Modified OpenRAIL-M (free for research, personal use and startups under US$20M funding/revenue; may not compete with their API); code Apache-2.0",
+      "mac": "onnx",
+      "runtime": "ONNX Runtime（不需 PyTorch、不需 GPU）",
+      "runtime_en": "ONNX Runtime (no PyTorch, no GPU)",
+      "install": "pip install indra-ocr（第一次執行下載約 76 MB 模型）",
+      "install_en": "pip install indra-ocr (downloads about 76 MB of models on first run)",
+      "use": "CPU 快速 OCR：PDF／圖片 → Markdown、純文字或含框線 JSON；可讀直排中日文、旋轉頁面",
+      "use_en": "Fast CPU OCR: PDF / images → Markdown, plain text or JSON with boxes; reads vertical CJK text and rotated pages",
+      "note": "Datalab 2026-10；中文辨識器支援簡繁，官方在 OmniDocBench v1.5 簡中頁面文字編輯距離 0.237、英文 0.114；4 核約 0.2 秒一頁。官方自己說不適合合併儲存格的複雜表格、手寫與老舊掃描檔，直排比橫排差。定位接近 macOS Vision，但在 Linux 也能跑。公司使用需確認授權。尚未實測。",
+      "note_en": "Datalab, 2026-10; the Chinese recognizer covers Simplified and Traditional, with official OmniDocBench v1.5 text edit distance 0.237 on Simplified Chinese pages and 0.114 on English; about 0.2 s per page on 4 cores. The authors say it is not for complex tables with merged cells, handwriting or old scans, and vertical text reads worse than horizontal. Similar role to macOS Vision, but it also runs on Linux. Check the license before company use. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "Surya 2.5",
+      "repo": "datalab-to/surya-ocr-2.5",
+      "url": "https://huggingface.co/datalab-to/surya-ocr-2.5",
+      "category": "doc",
+      "status": "catalog",
+      "params": "689M",
+      "size_gb": 1.38,
+      "langs": [
+        "multi"
+      ],
+      "license": "修改版 AI Pubs OpenRAIL-M（研究、個人、年營收或募資 500 萬美元以下新創可免費）；程式 Apache-2.0",
+      "license_en": "Modified AI Pubs OpenRAIL-M (free for research, personal use and startups under US$5M funding/revenue); code Apache-2.0",
+      "mac": "mlx",
+      "runtime": "surya-ocr ＋ llama.cpp（Apple Silicon 預設）／vLLM（NVIDIA）／MLX（實驗）",
+      "runtime_en": "surya-ocr + llama.cpp (default on Apple Silicon) / vLLM (NVIDIA) / MLX (experimental)",
+      "install": "pip install surya-ocr；brew install llama.cpp（官方 GGUF：datalab-to/surya-ocr-2.5-gguf）",
+      "install_en": "pip install surya-ocr; brew install llama.cpp (official GGUF: datalab-to/surya-ocr-2.5-gguf)",
+      "use": "版面分析＋閱讀順序、整頁 OCR、表格轉 HTML（含合併儲存格）、公式 LaTeX",
+      "use_en": "Layout analysis with reading order, full-page OCR, tables as HTML (with merged cells), formulas as LaTeX",
+      "note": "Datalab 2026-10，一顆 VLM 包辦版面、OCR、表格；官方 OmniParseBench 85.9，91 語內部測試中文 75.7%（英文 90.3%）。官方在 M4 Max 用 llama.cpp、8 個同時請求約 0.19 頁／秒，單頁中位數 38.9 秒。權重授權限制大公司商用。尚未實測。",
+      "note_en": "Datalab, 2026-10; one VLM handles layout, OCR and tables; officially 85.9 on OmniParseBench and 75.7% for Chinese in their 91-language internal test (English 90.3%). Officially about 0.19 pages/s on an M4 Max with llama.cpp at 8 concurrent requests, median 38.9 s per page. The weights license restricts commercial use by larger companies. Not tested.",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "MiniCPM-OCR Jev",
+      "repo": "openbmb/MiniCPM-OCR-Jev",
+      "url": "https://huggingface.co/openbmb/MiniCPM-OCR-Jev",
+      "category": "doc",
+      "status": "catalog",
+      "params": "2B",
+      "size_gb": 4.43,
+      "langs": [
+        "zh",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "mac": "mlx",
+      "runtime": "llama.cpp（llama-server，平台用 Q8_0 GGUF）／vLLM／SGLang／Ollama",
+      "runtime_en": "llama.cpp (llama-server; the platform uses the Q8_0 GGUF) / vLLM / SGLang / Ollama",
+      "install": "./scripts/setup_ocr_models.sh（下載 openbmb/MiniCPM-OCR-Jev-gguf Q8_0＋mmproj，約 2.7 GB；需 brew install llama.cpp）",
+      "install_en": "./scripts/setup_ocr_models.sh (downloads openbmb/MiniCPM-OCR-Jev-gguf Q8_0 + mmproj, about 2.7 GB; needs brew install llama.cpp)",
+      "use": "OCR 結果驗證：輸入區塊圖片與候選文字，回傳 0–1 正確性分數，用來自動放行、送人工或從多個 OCR 挑最好的",
+      "use_en": "OCR verification: give it a region image and a candidate text and it returns a 0–1 correctness score, for auto-accepting, routing to human review, or picking the best of several OCR outputs",
+      "note": "OpenBMB 2026-10，Qwen3.5-2B 改成二元分類頭，不是 OCR 本身。官方 JevOCRBench AUROC 93.6。已接上平台（模型閘道按需啟動 llama-server）：我們 150 個區塊實測 AUROC 0.816，門檻 0.9 自動通過 36.7%、其中 75.5% 完全正確，還不夠當自動驗收（見 TEST_STATUS 第 13 節）。",
+      "note_en": "OpenBMB, 2026-10; Qwen3.5-2B with a binary classification head, not an OCR model itself. Official JevOCRBench AUROC 93.6. Already wired into the platform (the gateway starts llama-server on demand): on our 150 regions AUROC was 0.816, and a 0.9 threshold auto-passed 36.7%, of which 75.5% were fully correct, not yet good enough for automatic acceptance (see TEST_STATUS section 13).",
+      "released": "2026-10",
+      "recommended": false
+    },
+    {
+      "name": "Nemotron-3.5-Rerank-8B",
+      "repo": "nvidia/Nemotron-3.5-Rerank-8B-BF16",
+      "url": "https://huggingface.co/nvidia/Nemotron-3.5-Rerank-8B-BF16",
+      "category": "rerank",
+      "status": "catalog",
+      "params": "8.38B",
+      "size_gb": 16.76,
+      "langs": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "fr",
+        "de",
+        "es",
+        "multi"
+      ],
+      "license": "OpenMDW-1.1（可商用）；基底 Ministral-3-8B 為 apache-2.0",
+      "license_en": "OpenMDW-1.1 (commercial use allowed); base Ministral-3-8B is apache-2.0",
+      "mac": "cuda",
+      "runtime": "sentence-transformers（CrossEncoder）／transformers／vLLM（官方只支援 Linux＋NVIDIA）",
+      "runtime_en": "sentence-transformers (CrossEncoder) / transformers / vLLM (officially Linux + NVIDIA only)",
+      "install": "uv pip install \"sentence-transformers[image]==6.1.0\" \"transformers==5.20.0\"（建議另裝 flash-attn）",
+      "install_en": "uv pip install \"sentence-transformers[image]==6.1.0\" \"transformers==5.20.0\" (flash-attn recommended)",
+      "use": "多語、多模態 RAG 重新排序：文件可以是文字、頁面圖片或兩者（含圖表、表格），context 32K",
+      "use_en": "Multilingual, multimodal RAG re-ranking: documents can be text, page images or both (charts and tables included), 32K context",
+      "note": "NVIDIA 2026-10；文字評測 34 種語言、圖片評測 18 種語言，都含中文（未提繁中）。官方 ViDoRe V3 NDCG@10 67.56（圖＋文），高於 Qwen3-VL-Reranker-8B 66.03。比現有 bge-reranker-v2-m3（0.6B）大十多倍，價值在「直接用頁面圖片排序」。社群有 MLX 4／8-bit（netprojects，需其 nemotron_mlx 套件）與 GGUF（需打補丁的 llama.cpp）。尚未實測。",
+      "note_en": "NVIDIA, 2026-10; text evaluated in 34 languages and images in 18, both including Chinese (Traditional not mentioned). Official ViDoRe V3 NDCG@10 67.56 (image + text), ahead of Qwen3-VL-Reranker-8B at 66.03. More than ten times the size of our bge-reranker-v2-m3 (0.6B); its value is ranking page images directly. Community MLX 4/8-bit (netprojects, needs their nemotron_mlx package) and GGUF (needs a patched llama.cpp) exist. Not tested.",
+      "released": "2026-10",
       "recommended": false
     }
   ],
