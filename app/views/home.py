@@ -24,21 +24,21 @@ st.markdown(
 /* hero: an ink panel with a slow aurora, a grid that fades out, and this machine on the right */
 .st-key-lab_hero {position: relative; overflow: hidden; isolation: isolate;
   padding: 2.2rem 2.4rem 3.6rem; border-radius: 22px; margin: .2rem 0 0 0;
-  color: #E2EBE9; background-color: var(--lab-ink);
+  color: #E2E8F2; background-color: var(--lab-ink);
   background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
   background-size: 30px 30px;
   box-shadow: 0 24px 50px -30px rgba(14, 26, 28, .6), inset 0 0 0 1px rgba(255,255,255,.06);}
 .st-key-lab_hero::before {content: ""; position: absolute; inset: -40%; z-index: -2;
   background:
-    radial-gradient(closest-side at 30% 40%, rgba(107, 186, 175, .18), transparent 70%),
-    radial-gradient(closest-side at 72% 30%, rgba(130, 165, 205, .13), transparent 70%),
-    radial-gradient(closest-side at 60% 75%, rgba(160, 150, 200, .09), transparent 70%);
+    radial-gradient(closest-side at 30% 40%, rgba(110, 150, 220, .18), transparent 70%),
+    radial-gradient(closest-side at 72% 30%, rgba(150, 140, 215, .13), transparent 70%),
+    radial-gradient(closest-side at 60% 75%, rgba(110, 190, 215, .09), transparent 70%);
   filter: blur(10px); animation: lab-drift 22s ease-in-out infinite alternate;}
 .st-key-lab_hero::after {content: ""; position: absolute; inset: 0; z-index: -1;
   border-radius: inherit; padding: 1px; pointer-events: none;
   background: conic-gradient(from var(--lab-angle), transparent 0 70%,
-    rgba(143, 207, 197, .55) 80%, rgba(169, 196, 228, .5) 86%, transparent 92%);
+    rgba(157, 187, 232, .55) 80%, rgba(189, 179, 232, .5) 86%, transparent 92%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude; animation: lab-spin 7s linear infinite;}
 @keyframes lab-drift {0% {transform: translate3d(-4%, -2%, 0) rotate(0deg);}
@@ -48,17 +48,17 @@ st.markdown(
 .st-key-lab_hero h1 {font-size: 3.2rem; font-weight: 820; letter-spacing: -0.04em; margin: .4rem 0 0;
   padding: 0; line-height: 1.02; color: #F6F5F1;}
 .st-key-lab_hero h1 em {font-style: normal;
-  background: linear-gradient(100deg, #9FD6CD 0%, #A9C4E4 55%, #BDB4DE 100%);
+  background: linear-gradient(100deg, #A9C4EC 0%, #BDB3E8 55%, #9ED0E4 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 0 12px rgba(107, 186, 175, .25));}
-.st-key-lab_hero p {font-size: 1.05rem; color: #A9BDBA; margin: .8rem 0 0; max-width: 600px;}
+  filter: drop-shadow(0 0 12px rgba(110, 150, 220, .25));}
+.st-key-lab_hero p {font-size: 1.05rem; color: #A9B4C8; margin: .8rem 0 0; max-width: 600px;}
 /* this machine */
 .lab-machine {position: relative; border-radius: 14px; padding: 1rem 1.1rem 1.05rem;
   background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.025));
   border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(6px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.08);}
 .lab-machine .hd {display: flex; align-items: center; gap: 8px; font-family: var(--lab-mono);
-  font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: #8FA6A3;}
+  font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: #8F9CB3;}
 .lab-machine .kind {margin-left: auto; padding: 2px 9px; border-radius: 999px; font-weight: 700;
   letter-spacing: .06em; color: #0E1A1C; background: var(--kind, #2DD4BF);
   box-shadow: none;}
@@ -70,8 +70,8 @@ st.markdown(
   letter-spacing: -0.01em;}
 .lab-machine dl {display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 14px;
   margin: 0;}
-.lab-machine dt {font-size: .76rem; color: #8FA6A3; white-space: nowrap;}
-.lab-machine dd {margin: 0; font-family: var(--lab-mono); font-size: .8rem; color: #E8F3F1;
+.lab-machine dt {font-size: .76rem; color: #8F9CB3; white-space: nowrap;}
+.lab-machine dd {margin: 0; font-family: var(--lab-mono); font-size: .8rem; color: #E6ECF5;
   overflow-wrap: anywhere;}
 @media (max-width: 900px) {.st-key-lab_hero {padding: 1.5rem;}
   .st-key-lab_hero h1 {font-size: 2.3rem;}}
@@ -141,9 +141,9 @@ def this_machine() -> dict:
 
 
 MACHINE_KIND = {  # label and colour of the badge: tells a Mac from the GCP machine at a glance
-    "mac": (tr("本機 Mac", "This Mac"), "#8FCFC5"),
+    "mac": (tr("本機 Mac", "This Mac"), "#9DBBE8"),
     "gcp": (tr("GCP 雲端主機", "GCP VM"), "#E2C285"),
-    "linux": (tr("Linux 主機", "Linux host"), "#BDB4DE"),
+    "linux": (tr("Linux 主機", "Linux host"), "#9ED0E4"),
 }
 FACT_LABELS = {
     "zone": tr("位置", "Where"),

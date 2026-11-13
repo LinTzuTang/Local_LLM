@@ -130,29 +130,29 @@ def html_icons(text: str) -> str:
 # (warm paper, ink) by day, "lab at night" (soft charcoal) by night. One muted teal throughout,
 # monospace for labels and numbers; colours are kept low in saturation so long sessions are easy
 # on the eyes. Streamlit's own widgets use the same values from .streamlit/config.toml.
-PRIMARY = "#4E9C93"  # bars and diagram accents: reads on both backgrounds
-PRIMARY_TINT = "rgba(78, 156, 147, .14)"
+PRIMARY = "#5B83C2"  # bars and diagram accents: reads on both backgrounds
+PRIMARY_TINT = "rgba(91, 131, 194, .14)"
 
 PALETTES = {
     "light": {
-        "primary": "#2F7F76", "primary-strong": "#24655E", "tint": "#E4EFEC",
-        "signal": "#4FA39A", "paper": "#F5F4F0", "surface": "#FFFFFF", "surface-2": "#F1EFE9",
-        "text": "#22282B", "heading": "#15191B", "text-2": "#3E474A", "text-3": "#545D60",
-        "muted": "#6B7174", "faint": "#8A9194", "border": "#DDD9D0", "border-strong": "#CBC6BB",
-        "track": "#E9E6DF", "other": "#CFCAC0", "ok": "#2F855A", "warn": "#A16207",
-        "warn-2": "#C05621", "bad": "#B83232", "header": "rgba(245, 244, 240, .88)",
-        "glow-a": "rgba(78, 156, 147, .06)", "glow-b": "rgba(122, 160, 200, .06)",
-        "card-sheen": "rgba(255, 255, 255, 0)", "selection": "#CFE5E0",
+        "primary": "#2D5A9C", "primary-strong": "#234A83", "tint": "#E4EBF6",
+        "signal": "#4A78BE", "paper": "#F4F5F8", "surface": "#FFFFFF", "surface-2": "#EEF0F5",
+        "text": "#1F2430", "heading": "#141821", "text-2": "#3B4352", "text-3": "#515A6A",
+        "muted": "#687183", "faint": "#8A91A0", "border": "#DADEE6", "border-strong": "#C6CCD7",
+        "track": "#E6E9EF", "other": "#CCD2DD", "ok": "#2F855A", "warn": "#A16207",
+        "warn-2": "#C05621", "bad": "#B83232", "header": "rgba(244, 245, 248, .88)",
+        "glow-a": "rgba(74, 120, 190, .06)", "glow-b": "rgba(120, 110, 200, .05)",
+        "card-sheen": "rgba(255, 255, 255, 0)", "selection": "#CFDCF0",
     },
     "dark": {
-        "primary": "#6BBAAF", "primary-strong": "#9ED3CA", "tint": "rgba(107, 186, 175, .12)",
-        "signal": "#7CC4B9", "paper": "#141B1D", "surface": "#182123", "surface-2": "#1D2829",
-        "text": "#D8E1DF", "heading": "#EEF3F2", "text-2": "#B8C6C4", "text-3": "#A2B2B0",
-        "muted": "#8A9997", "faint": "#7D8C8A", "border": "#2B3A3C", "border-strong": "#3A4C4E",
-        "track": "#243235", "other": "#4A5F62", "ok": "#7FC79B", "warn": "#E0B866",
-        "warn-2": "#E2A27A", "bad": "#E59A9A", "header": "rgba(20, 27, 29, .82)",
-        "glow-a": "rgba(107, 186, 175, .05)", "glow-b": "rgba(130, 165, 205, .05)",
-        "card-sheen": "rgba(255, 255, 255, .02)", "selection": "rgba(107, 186, 175, .35)",
+        "primary": "#86A9E0", "primary-strong": "#AFC6EE", "tint": "rgba(134, 169, 224, .13)",
+        "signal": "#95B5E8", "paper": "#12161D", "surface": "#171C25", "surface-2": "#1C2330",
+        "text": "#D9DFEA", "heading": "#EEF2F8", "text-2": "#B9C3D3", "text-3": "#A3AEC0",
+        "muted": "#8A95A8", "faint": "#7C879A", "border": "#2A3343", "border-strong": "#384356",
+        "track": "#232B39", "other": "#475268", "ok": "#7FC79B", "warn": "#E0B866",
+        "warn-2": "#E2A27A", "bad": "#E59A9A", "header": "rgba(18, 22, 29, .82)",
+        "glow-a": "rgba(110, 150, 220, .05)", "glow-b": "rgba(150, 140, 210, .05)",
+        "card-sheen": "rgba(255, 255, 255, .02)", "selection": "rgba(134, 169, 224, .35)",
     },
 }  # fmt: skip
 
@@ -252,7 +252,7 @@ def chip_style(color: str) -> str:
 CSS = """
 <style>
 :root {
-  --lab-ink: #142326; --lab-ink-2: #1A2D30;
+  --lab-ink: #141C2C; --lab-ink-2: #1A2437;
   --lab-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
   --lab-sans: Inter, -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC",
     "Noto Sans CJK TC", "Helvetica Neue", Arial, sans-serif;
@@ -310,9 +310,9 @@ button[kind="primary"]:hover { transform: translateY(-1px); filter: brightness(1
   font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; vertical-align: -0.18em;
   user-select: none; }
 .lab-header .icon { width: 50px; height: 50px; border-radius: 13px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; color: #8FCFC5;
-  background: radial-gradient(circle at 30% 20%, #24403F, var(--lab-ink) 75%);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 6px 16px -8px rgba(10, 20, 22, .45); }
+  display: flex; align-items: center; justify-content: center; color: #9DBBE8;
+  background: radial-gradient(circle at 30% 20%, #26375A, var(--lab-ink) 75%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 6px 16px -8px rgba(12, 18, 32, .45); }
 .lab-header .icon .ms { font-size: 27px; vertical-align: 0; }
 .lab-header h1 { font-size: 1.9rem; font-weight: 760; margin: 0; padding: 0; line-height: 1.15;
   color: var(--lab-heading); }

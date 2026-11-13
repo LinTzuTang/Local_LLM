@@ -50,7 +50,7 @@ CATEGORY_ICONS = {
     "pipeline": "account_tree",
     "comparison": "compare_arrows",
 }
-PRIMARY = "#0F766E"  # ui.PRIMARY
+PRIMARY = "#2D5A9C"  # ui.PRIMARY
 
 
 def category_icon(category: str | None) -> str:
@@ -299,7 +299,7 @@ def architecture_dot() -> str:
 
     nodes = {
         "ui": box("Streamlit UI", tr("中英雙語・背景工作", "bilingual · background jobs"),
-                  ', fillcolor="#E3F1EE", color="#0F766E"'),
+                  ', fillcolor="#E4EBF6", color="#2D5A9C"'),
         "engine": box(tr("場景引擎", "Scenario engine"), "scenarios.json → StateGraph"),
         "agents": box("Agents", "agents.json · tools · skills · HITL"),
         "coder": box(tr("總控 Coding Agent", "Coding agent"),

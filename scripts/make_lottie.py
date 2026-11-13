@@ -31,7 +31,7 @@ def rgb(hex_colour: str) -> list[float]:
     return [round(int(h[i : i + 2], 16) / 255, 4) for i in (0, 2, 4)] + [1]
 
 
-TEAL, PALE, WARM, INK = rgb("#8FCFC5"), rgb("#DCE6E4"), rgb("#EFD9A6"), rgb("#1B3032")
+TEAL, PALE, WARM, INK = rgb("#9DBBE8"), rgb("#DCE3EE"), rgb("#EFD9A6"), rgb("#1B2840")
 DOT_COLOURS = [PALE, TEAL, WARM]
 
 

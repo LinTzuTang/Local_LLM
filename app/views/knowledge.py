@@ -49,7 +49,7 @@ def pipeline_dot() -> str:
                 "q",
                 tr("問題", "Question"),
                 tr("＋提問者部門", "+ asker's department"),
-                "#E3F1EE",
+                "#E4EBF6",
             ),
             n(
                 "acl",
@@ -66,7 +66,7 @@ def pipeline_dot() -> str:
             ),
             n("rrf", "RRF", "Σ 1/(60+rank)", "#ECFDF5"),
             n("rr", "Rerank", "bge-reranker-v2-m3", "#CCFBF1"),
-            n("llm", tr("LLM 回答", "LLM answer"), tr("引用 [n]", "cites [n]"), "#E3F1EE"),
+            n("llm", tr("LLM 回答", "LLM answer"), tr("引用 [n]", "cites [n]"), "#E4EBF6"),
             "docs -> parse -> idx",
             "q -> acl; idx -> acl [style=dotted]",
             "acl -> bm25; acl -> vec; bm25 -> rrf; vec -> rrf",

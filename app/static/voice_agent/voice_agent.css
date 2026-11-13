@@ -4,8 +4,8 @@
   --va-line: var(--st-border-color, #e5e7eb);
   --va-bg: var(--st-background-color, #ffffff);
   --va-soft: var(--st-secondary-background-color, #f1efe9);
-  --va-user: #3d7f8f;
-  --va-asst: #0f766e;
+  --va-user: #3d5f99;
+  --va-asst: #2D5A9C;
   --va-tool: #d97706;
   --va-llm: #7c3aed;
   --va-cut: #dc2626;
@@ -25,7 +25,7 @@
   border: 1px solid var(--va-line); background: var(--va-bg); color: inherit;
 }
 .va-bar .va-mic { background: var(--st-primary-color, #4f46e5); border-color: transparent; color: #fff; }
-.va-bar .va-demo { border-color: rgba(78, 156, 147, .45); color: var(--st-primary-color, #3d7f8f); background: rgba(78, 156, 147, .1); }
+.va-bar .va-demo { border-color: rgba(79, 120, 184, .45); color: var(--st-primary-color, #3d5f99); background: rgba(79, 120, 184, .1); }
 .va-bar button:disabled { opacity: 0.45; cursor: default; }
 .va-state { margin-left: auto; display: inline-flex; align-items: center; gap: 0.45rem;
   font-size: 0.9rem; }

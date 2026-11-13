@@ -1,6 +1,6 @@
-# Day and night themes; each viewer picks one with the switch at the top right (theme_switch.py),
-# and until then the system setting decides. app/ui.py PALETTES has the same colours for the
-# platform's own HTML. Low saturation on purpose: easy on the eyes for long sessions.
+# Deep blue, low saturation on purpose (easy on the eyes for long sessions). Day and night
+# themes: each viewer picks one with the switch at the top right (theme_switch.py), and until
+# then the system setting decides. app/ui.py PALETTES has the same colours for our own HTML.
 #
 # Fonts are bundled (app/static/fonts, SIL OFL) so the app looks the same offline and on every
 # machine: Inter for Latin text and headings, JetBrains Mono for numbers and labels; Chinese
@@ -39,26 +39,26 @@ url = "app/static/fonts/JetBrainsMono-SemiBold.woff2"
 weight = "600"
 
 [theme.light]
-primaryColor = "#2F7F76"
-backgroundColor = "#F5F4F0"
-secondaryBackgroundColor = "#EBE9E3"
-textColor = "#22282B"
-linkColor = "#2F7F76"
-borderColor = "#DDD9D0"
-dataframeBorderColor = "#E3E0D8"
-dataframeHeaderBackgroundColor = "#EFEDE7"
-codeBackgroundColor = "#EBE9E3"
+primaryColor = "#2D5A9C"
+backgroundColor = "#F4F5F8"
+secondaryBackgroundColor = "#E9ECF2"
+textColor = "#1F2430"
+linkColor = "#2D5A9C"
+borderColor = "#DADEE6"
+dataframeBorderColor = "#E1E4EB"
+dataframeHeaderBackgroundColor = "#EEF0F5"
+codeBackgroundColor = "#E9ECF2"
 
 [theme.dark]
-primaryColor = "#4E9C93"
-backgroundColor = "#141B1D"
-secondaryBackgroundColor = "#1D2829"
-textColor = "#D8E1DF"
-linkColor = "#86C5BC"
-borderColor = "#2B3A3C"
-dataframeBorderColor = "#2B3A3C"
-dataframeHeaderBackgroundColor = "#1D2829"
-codeBackgroundColor = "#1D2829"
+primaryColor = "#4F78B8"
+backgroundColor = "#12161D"
+secondaryBackgroundColor = "#1C2330"
+textColor = "#D9DFEA"
+linkColor = "#9DBBE8"
+borderColor = "#2A3343"
+dataframeBorderColor = "#2A3343"
+dataframeHeaderBackgroundColor = "#1C2330"
+codeBackgroundColor = "#1C2330"
 
 [client]
 toolbarMode = "minimal"

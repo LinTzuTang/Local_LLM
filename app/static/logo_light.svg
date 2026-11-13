@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="300" height="56" viewBox="0 0 300 56">
   <!-- Ink tile with three linked agents in the teal signal colour (app/ui.py palette). -->
-  <rect x="2" y="4" width="48" height="48" rx="12" fill="#142326"/>
-  <path d="M16 20 L36 20 M16 20 L26 38 M36 20 L26 38" stroke="#8FCFC5" stroke-width="2.4" opacity=".55"/>
-  <circle cx="16" cy="20" r="5" fill="#8FCFC5"/><circle cx="36" cy="20" r="5" fill="#F6F5F1"/>
+  <rect x="2" y="4" width="48" height="48" rx="12" fill="#141C2C"/>
+  <path d="M16 20 L36 20 M16 20 L26 38 M36 20 L26 38" stroke="#9DBBE8" stroke-width="2.4" opacity=".55"/>
+  <circle cx="16" cy="20" r="5" fill="#9DBBE8"/><circle cx="36" cy="20" r="5" fill="#F6F5F1"/>
   <circle cx="26" cy="38" r="5" fill="#F6F5F1"/>
   <text x="62" y="36" font-family="-apple-system, 'SF Pro Display', Helvetica, Arial, sans-serif" font-size="23" font-weight="760" letter-spacing="-0.4" fill="#15191B">Local Agent Lab</text>
 </svg>
