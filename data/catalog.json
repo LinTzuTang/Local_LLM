@@ -1,5 +1,14 @@
 {
   "checked_date": "2026-10-13",
+  "additions": [
+    {
+      "date": "2026-11-12",
+      "models": 26,
+      "other_models": 13,
+      "note": "每週新模型檢查找到的模型，依模型頁整理；尚未實測",
+      "note_en": "Found by the weekly new-model check and written up from their model pages; not tested yet"
+    }
+  ],
   "source": "https://ollama.com/search?c=local 與各模型頁、tags 頁（名稱、介紹原文、參數、context、下載大小、更新月份、能力標籤），以及 Hugging Face GGUF；授權取自模型的 license 層或模型卡，無法取得時標示「請見模型頁」",
   "source_en": "https://ollama.com/search?c=local plus each model page and tags page (names, original descriptions, parameters, context, download sizes, update month, capability badges), and Hugging Face GGUF; licences come from the model's licence layer or model card, otherwise marked \"See model page\"",
   "memory_note": "64GB 統一記憶體，macOS 預設約 48GB 可給 GPU；fit=ok 表示可與 embedding 等小模型同時載入，tight 需先卸載其他模型，no 放不下。大小為這台 Mac 的下載量：同一個 tag 同時有 GGUF 與 MLX 版時，Apple Silicon 會下載 MLX 版。",

@@ -15,7 +15,7 @@ import ui
 from common import download_control, gateway_url, ollama_url, pull_progress, require_ollama
 from i18n import current, tr
 
-from local_llm import catalog, gateway_client, ollama_admin
+from local_llm import catalog, gateway_client, model_watch, ollama_admin
 
 lang = current()
 data = catalog.load_catalog()
@@ -236,13 +236,33 @@ for col, (kind, value, glyph, label) in zip(
     if col.button(f"**{value}** :material/{glyph}: {label}", key=f"stat_{kind}", width="stretch",
                   help=tr("點開看清單", "Show the list")):  # fmt: skip
         stat_list(kind)
-st.caption(
-    f"{loc(data, 'memory_note')} "
-    + tr(
-        f"資料來源：[Ollama 本機模型](https://ollama.com/search?c=local)，查核日期 {data['checked_date']}。",
-        f"Source: [Ollama local models](https://ollama.com/search?c=local), checked on {data['checked_date']}.",
-    )
-)
+
+
+def source_note() -> str:
+    """Where the catalog comes from and how fresh each part is: the full check, models added
+    since, and the last weekly look for new ones (model_watch)."""
+    parts = [
+        tr(
+            f"資料來源：[Ollama 本機模型](https://ollama.com/search?c=local)，"
+            f"整份目錄查核於 {data['checked_date']}",
+            f"Source: [Ollama local models](https://ollama.com/search?c=local); the whole "
+            f"catalog was checked on {data['checked_date']}",
+        )
+    ]
+    for a in data.get("additions", []):
+        n = a["models"] + a["other_models"]
+        parts.append(
+            tr(f"{a['date']} 新增 {n} 個（尚未實測）", f"{n} added on {a['date']} (not tested)")
+        )
+    last = (model_watch.load().get("last_check") or "")[:10]
+    if last:
+        parts.append(
+            tr(f"每週自動檢查新模型，上次 {last}", f"new models checked weekly, last on {last}")
+        )
+    return tr("；", "; ").join(parts) + tr("。", ".")
+
+
+st.caption(f"{loc(data, 'memory_note')} " + source_note())
 
 if pulls := [j for j in jobs.active() if j.kind == "pull"]:
     with st.container(border=True):

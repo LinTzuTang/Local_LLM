@@ -15,8 +15,14 @@ LONG_CONTEXT = 128_000  # tokens; Ollama shows 128000 as "125K"
 
 
 @cache
-def load_catalog() -> dict:
+def _read_catalog(mtime_ns: int) -> dict:
     return json.loads(CATALOG_FILE.read_text())
+
+
+def load_catalog() -> dict:
+    """data/catalog.json, read again whenever the file changes (a running platform picks up an
+    edited catalog without a restart)."""
+    return _read_catalog(CATALOG_FILE.stat().st_mtime_ns)
 
 
 def localized(obj: dict, field: str, lang: str):

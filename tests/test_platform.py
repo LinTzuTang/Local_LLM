@@ -1,3 +1,4 @@
+import os
 import re
 
 import pytest
@@ -293,3 +294,13 @@ def test_thinking_mode_reads_declared_values(monkeypatch):
     assert ollama_admin.thinking_mode("always") == "always"
     assert ollama_admin.thinking_mode("template") == "optional"
     assert ollama_admin.thinking_mode("plain") == "none"
+
+
+def test_catalog_is_read_again_when_the_file_changes(tmp_path, monkeypatch):
+    path = tmp_path / "catalog.json"
+    path.write_text('{"models": [1]}')
+    monkeypatch.setattr(catalog, "CATALOG_FILE", path)
+    assert catalog.load_catalog()["models"] == [1]
+    path.write_text('{"models": [1, 2]}')
+    os.utime(path, ns=(path.stat().st_atime_ns, path.stat().st_mtime_ns + 1_000_000))
+    assert catalog.load_catalog()["models"] == [1, 2]
