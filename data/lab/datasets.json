@@ -1,0 +1,453 @@
+{
+ "_about": "Catalog for the Test sets page (app/views/datasets.py): every test set we used, what it tests, where it comes from, its licence, and how to use it on the platform. files are paths under the project; an entry without files is listed for reference only (why_not says why). Counts are the questions we actually ran.",
+ "groups": {
+  "llm": {
+   "zh": "語言模型",
+   "en": "Language models"
+  },
+  "speech": {
+   "zh": "語音",
+   "en": "Speech"
+  },
+  "other": {
+   "zh": "文件與語音助理",
+   "en": "Documents and voice assistant"
+  }
+ },
+ "sets": [
+  {
+   "id": "bfcl_en",
+   "group": "llm",
+   "name": {
+    "zh": "BFCL v4 英文（單輪）",
+    "en": "BFCL v4 English (single-turn)"
+   },
+   "count": {
+    "zh": "576 題，11 類",
+    "en": "576 questions, 11 categories"
+   },
+   "what": {
+    "zh": "工具呼叫的國際標準題庫（UC Berkeley）。每題給一個問題和一組工具，看模型挑對工具、填對參數，或在沒有合適工具時不亂呼叫。live 開頭的類型是使用者實際送來的題目。",
+    "en": "The standard tool-calling benchmark (UC Berkeley). Each question comes with a set of tools: does the model pick the right tool with the right arguments, or call nothing when no tool fits? Categories starting with live are real user questions."
+   },
+   "used": {
+    "zh": "工具呼叫評測的英文部分（HackMD〈地端語言模型工具呼叫實測〉）。每題附標準答案和每個模型在批次測試裡的對錯。",
+    "en": "The English part of our tool-calling evaluation (HackMD report). Each question carries the expected answer and how every model did in the batch run."
+   },
+   "use": {
+    "zh": "語言模型比較 →「工具呼叫測試」→「題庫」已內建全部題目；下載後可以刪改題目，再用「上傳題組」載入。",
+    "en": "Language models → Tool calling → Question bank has every question built in; after downloading you can edit the file and load it with Upload a set."
+   },
+   "source": "https://github.com/ShishirPatil/gorilla",
+   "license": "Apache-2.0",
+   "files": [
+    "data/lab/tool_sets/bfcl_en.json"
+   ]
+  },
+  {
+   "id": "bfcl_zhtw",
+   "group": "llm",
+   "name": {
+    "zh": "BFCL 繁體中文版（聯發科）",
+    "en": "BFCL zh-TW (MediaTek Research)"
+   },
+   "count": {
+    "zh": "275 題，5 類",
+    "en": "275 questions, 5 categories"
+   },
+   "what": {
+    "zh": "聯發科把 BFCL 非 live 的題目翻成繁體中文，標準答案加了中文同義詞；和英文版是同一批題目，可以對照看語言的影響。工具說明仍是英文。",
+    "en": "MediaTek's Traditional Chinese translation of BFCL's non-live questions, with Chinese synonyms added to the answers. The same questions as English, so the effect of the language shows; tool descriptions stay in English."
+   },
+   "used": {
+    "zh": "工具呼叫評測的繁中部分。",
+    "en": "The Traditional Chinese part of our tool-calling evaluation."
+   },
+   "use": {
+    "zh": "同英文版：工具呼叫測試的「題庫」已內建，或下載後用「上傳題組」載入。同一題可以一鍵切換英文版對照。",
+    "en": "As for English: built into the Question bank of Tool calling, or upload the downloaded file. One click switches a question to its English version."
+   },
+   "source": "https://github.com/mtkresearch/function-calling-leaderboard-for-zhtw",
+   "license": "Apache-2.0",
+   "files": [
+    "data/lab/tool_sets/bfcl_zhtw.json"
+   ]
+  },
+  {
+   "id": "acebench",
+   "group": "llm",
+   "name": {
+    "zh": "ACEBench 中文",
+    "en": "ACEBench (Chinese)"
+   },
+   "count": {
+    "zh": "347 題，15 類",
+    "en": "347 questions, 15 categories"
+   },
+   "what": {
+    "zh": "簡體中文的工具呼叫題庫。除了一般呼叫，special 類測缺參數、參數值錯誤、工具做不到時，模型會不會說出來而不是亂呼叫；另有參數型別（數字、清單、多層物件）和對話中改需求的題目。",
+    "en": "A tool-calling benchmark in simplified Chinese. Besides ordinary calls, the special categories test whether the model points out a missing parameter, a wrong value or that no tool fits, instead of calling one anyway; others cover parameter types (numbers, lists, nested objects) and a user changing the request mid-dialogue."
+   },
+   "used": {
+    "zh": "工具呼叫評測的中文部分。",
+    "en": "The Chinese part of our tool-calling evaluation."
+   },
+   "use": {
+    "zh": "工具呼叫測試的「題庫」已內建，或下載後用「上傳題組」載入。",
+    "en": "Built into the Question bank of Tool calling, or upload the downloaded file."
+   },
+   "source": "https://github.com/ACEBench/ACEBench",
+   "license": "MIT",
+   "files": [
+    "data/lab/tool_sets/acebench.json"
+   ]
+  },
+  {
+   "id": "taiwan_stance",
+   "group": "llm",
+   "name": {
+    "zh": "台灣立場測試",
+    "en": "Taiwan stance test"
+   },
+   "count": {
+    "zh": "26 題，7 類",
+    "en": "26 questions, 7 categories"
+   },
+   "what": {
+    "zh": "本專案自製。檢查聊天模型回答主權、歷史事件、政治人物、地名用語、在地知識和對外業務情境時，是不是適合台灣公司的助理；每題附給評審模型的判斷說明。",
+    "en": "Made for this project. Checks whether a chat model's answers on sovereignty, history, politicians, place names and wording, local knowledge and customer-facing situations suit a Taiwanese company's assistant; each question has a note for the judge model."
+   },
+   "used": {
+    "zh": "模型選擇的立場檢查（Qwen、GLM 等中國模型會出現中國立場）與去除拒答版本的比較；答案由 GPT-5.4 評分。",
+    "en": "The stance check in model selection (Chinese models such as Qwen and GLM give the PRC position) and the comparison of refusal-removed builds; answers judged by GPT-5.4."
+   },
+   "use": {
+    "zh": "語言模型比較 →「並排比較」或「對話測試」，把題目貼進去，同時看多個模型怎麼回答。",
+    "en": "Language models → Side by side or Chat: paste a question and see how several models answer."
+   },
+   "source": "",
+   "license": {
+    "zh": "本專案自製，公司內部使用",
+    "en": "Made for this project, internal use"
+   },
+   "files": [
+    "data/lab/taiwan_stance_questions.json"
+   ]
+  },
+  {
+   "id": "bfcl_multi_turn",
+   "group": "llm",
+   "name": {
+    "zh": "BFCL v4 多輪",
+    "en": "BFCL v4 multi-turn"
+   },
+   "count": {
+    "zh": "100 題，4 類",
+    "en": "100 questions, 4 categories"
+   },
+   "what": {
+    "zh": "多輪對話裡連續呼叫工具（檔案系統、交易、訂票等模擬環境），含缺工具、缺參數、長上下文。",
+    "en": "Several rounds of tool calls inside a conversation (simulated file system, trading, booking and more), including missing tools, missing parameters and long context."
+   },
+   "used": {
+    "zh": "英文 BFCL 總分的多輪部分。",
+    "en": "The multi-turn part of the English BFCL score."
+   },
+   "why_not": {
+    "zh": "工具要在 BFCL 的模擬環境裡真的執行，平台上沒有這個環境，所以不提供下載；原始題目見來源。",
+    "en": "The tools must actually run in BFCL's simulated environment, which the platform does not have, so there is no download here; see the source for the questions."
+   },
+   "source": "https://github.com/ShishirPatil/gorilla",
+   "license": "Apache-2.0",
+   "files": []
+  },
+  {
+   "id": "bfcl_agentic",
+   "group": "llm",
+   "name": {
+    "zh": "BFCL v4 搜尋＋記憶",
+    "en": "BFCL v4 search + memory"
+   },
+   "count": {
+    "zh": "116 題（搜尋 20、記憶 96）",
+    "en": "116 questions (20 search, 96 memory)"
+   },
+   "what": {
+    "zh": "模型自己上網搜尋、讀網頁後回答；記憶題先進行前置對話，再問之前說過的事（鍵值、向量、遞迴摘要三種記憶）。另有無摘要版（20 題）：搜尋結果不給摘要、網頁截到 2 萬字。",
+    "en": "The model searches the web and reads pages before answering; memory questions first hold earlier conversations, then ask about them (key-value, vector and recursive-summary memory). A no-snippet variant (20 questions) gives no result snippets and cuts pages at 20,000 characters."
+   },
+   "used": {
+    "zh": "搜尋與記憶能力的比較。",
+    "en": "The search and memory comparison."
+   },
+   "why_not": {
+    "zh": "要接搜尋 API 和記憶後端，平台的工具呼叫測試只做單輪、不執行工具，所以不提供下載。",
+    "en": "It needs a search API and a memory backend; the platform's tool test is single-turn and does not run tools, so there is no download."
+   },
+   "source": "https://github.com/ShishirPatil/gorilla",
+   "license": "Apache-2.0",
+   "files": []
+  },
+  {
+   "id": "company_tools",
+   "group": "llm",
+   "name": {
+    "zh": "公司系統挑工具測試",
+    "en": "Company tool selection"
+   },
+   "count": {
+    "zh": "109 題 × 3 種工具數量",
+    "en": "109 questions × 3 tool-list sizes"
+   },
+   "what": {
+    "zh": "用公司內部專案管理系統的真實工具（74 個）出題，比較只給這個系統的工具、混入其他系統（約 150 個）、精簡 29 個再讓模型自己搜尋工具三種情況。",
+    "en": "Questions on the real tools (74) of the company's internal project-management system, in three conditions: its tools only, mixed with other systems (about 150), and 29 tools plus a tool search."
+   },
+   "used": {
+    "zh": "選公司系統用的地端模型。",
+    "en": "Choosing the local model for the company system."
+   },
+   "why_not": {
+    "zh": "工具定義是公司內部資料，不放在平台上。",
+    "en": "The tool definitions are company-internal and are not on the platform."
+   },
+   "source": "",
+   "license": {
+    "zh": "公司內部",
+    "en": "Company internal"
+   },
+   "files": []
+  },
+  {
+   "id": "meeting_zh",
+   "group": "speech",
+   "name": {
+    "zh": "虛構產銷會議（合成語音）",
+    "en": "Fictional sales meeting (synthetic speech)"
+   },
+   "count": {
+    "zh": "88 秒，2 位講者",
+    "en": "88 s, 2 speakers"
+   },
+   "what": {
+    "zh": "本專案自製的中文會議，用 macOS 合成語音念出；附逐字稿、講者時間（RTTM）與英譯。",
+    "en": "A Mandarin meeting made for this project, read by macOS voices; with transcript, speaker times (RTTM) and an English translation."
+   },
+   "used": {
+    "zh": "語音辨識、說話者分段、翻譯的快速檢查。",
+    "en": "Quick checks of speech recognition, diarization and translation."
+   },
+   "use": {
+    "zh": "語音模型比較的「範例錄音」已內建；或下載後用「上傳錄音」，參考逐字稿貼 .txt 的內容。",
+    "en": "Built into Sample recording on Compare speech models; or upload the audio and paste the .txt as the reference."
+   },
+   "source": "",
+   "license": {
+    "zh": "本專案自製",
+    "en": "Made for this project"
+   },
+   "files": [
+    "data/lab/samples/meeting_zh.wav",
+    "data/lab/samples/meeting_zh.txt",
+    "data/lab/speech_refs/meeting_zh.rttm",
+    "data/lab/speech_refs/meeting_zh.en.txt"
+   ]
+  },
+  {
+   "id": "national_day_2026",
+   "group": "speech",
+   "name": {
+    "zh": "115 年國慶演說節錄",
+    "en": "2026 National Day address (excerpt)"
+   },
+   "count": {
+    "zh": "4 分 29 秒，真人照稿",
+    "en": "4 min 29 s, read from script"
+   },
+   "what": {
+    "zh": "賴清德總統國慶演說節錄，附官方全文（依實際口述修 4 處）與官方英譯，可測辨識與中翻英。",
+    "en": "An excerpt of President Lai's National Day address, with the official text (4 edits where he deviated) and the official English translation, for recognition and Chinese-to-English translation."
+   },
+   "used": {
+    "zh": "語音辨識與翻譯評測。",
+    "en": "Speech recognition and translation tests."
+   },
+   "use": {
+    "zh": "語音模型比較的「範例錄音」已內建；或下載後上傳。",
+    "en": "Built into Sample recording on Compare speech models; or upload the download."
+   },
+   "source": "https://www.president.gov.tw/NEWS/40414",
+   "license": {
+    "zh": "政府資料開放授權條款第 1 版，標示〔總統府提供〕",
+    "en": "Open Government Data License v1; credit the Office of the President"
+   },
+   "files": [
+    "data/lab/samples/national_day_2026_zh.wav",
+    "data/lab/samples/national_day_2026_zh.txt",
+    "data/lab/samples/national_day_2026_en.txt"
+   ]
+  },
+  {
+   "id": "alimeeting",
+   "group": "speech",
+   "name": {
+    "zh": "AliMeeting 真實會議 2 段",
+    "en": "AliMeeting real meetings (2)"
+   },
+   "count": {
+    "zh": "各 5 分鐘，4 人與 2 人",
+    "en": "5 min each, 4 and 2 speakers"
+   },
+   "what": {
+    "zh": "真實多人會議的遠場麥克風錄音（大陸口音），附逐字稿與講者時間，測多人搶話時的辨識與說話者分段。",
+    "en": "Real multi-speaker meetings recorded by a far-field microphone (mainland accents), with transcripts and speaker times, for recognition and diarization with overlapping speech."
+   },
+   "used": {
+    "zh": "說話者分段與會議轉錄評測。",
+    "en": "Diarization and meeting transcription tests."
+   },
+   "use": {
+    "zh": "語音模型比較的「範例錄音」已內建；或下載後上傳。",
+    "en": "Built into Sample recording on Compare speech models; or upload the download."
+   },
+   "source": "https://www.openslr.org/119/",
+   "license": "CC BY-SA 4.0",
+   "files": [
+    "data/lab/samples/alimeeting_r8001_zh.flac",
+    "data/lab/samples/alimeeting_r8001_zh.txt",
+    "data/lab/speech_refs/alimeeting_r8001_zh.rttm",
+    "data/lab/samples/alimeeting_r8009_zh.flac",
+    "data/lab/samples/alimeeting_r8009_zh.txt",
+    "data/lab/speech_refs/alimeeting_r8009_zh.rttm"
+   ]
+  },
+  {
+   "id": "palau_hsiao_2026",
+   "group": "speech",
+   "name": {
+    "zh": "蕭美琴副總統帛琉英語致詞",
+    "en": "Vice President Hsiao's speech in Palau"
+   },
+   "count": {
+    "zh": "4 分 59 秒，台灣口音英語",
+    "en": "4 min 59 s, Taiwanese-accented English"
+   },
+   "what": {
+    "zh": "真人英語演講，測台灣口音英語的辨識。",
+    "en": "A real English speech, for recognising Taiwanese-accented English."
+   },
+   "used": {
+    "zh": "英語辨識評測。",
+    "en": "English recognition tests."
+   },
+   "use": {
+    "zh": "語音模型比較的「範例錄音」已內建；或下載後上傳。",
+    "en": "Built into Sample recording on Compare speech models; or upload the download."
+   },
+   "source": "https://english.president.gov.tw/NEWS/7155",
+   "license": {
+    "zh": "政府資料開放授權條款第 1 版，標示〔總統府提供〕",
+    "en": "Open Government Data License v1; credit the Office of the President"
+   },
+   "files": [
+    "data/lab/samples/palau_hsiao_2026_en.wav",
+    "data/lab/samples/palau_hsiao_2026_en.txt"
+   ]
+  },
+  {
+   "id": "librispeech_20",
+   "group": "speech",
+   "name": {
+    "zh": "LibriSpeech 英文有聲書 20 句",
+    "en": "LibriSpeech, 20 sentences"
+   },
+   "count": {
+    "zh": "3 分 6 秒",
+    "en": "3 min 6 s"
+   },
+   "what": {
+    "zh": "英文辨識的標準測試集 test-clean 取 20 句接成一段，當英文辨識的基準。",
+    "en": "20 sentences of the standard test-clean set joined into one clip, as the English recognition baseline."
+   },
+   "used": {
+    "zh": "英語辨識評測。",
+    "en": "English recognition tests."
+   },
+   "use": {
+    "zh": "語音模型比較的「範例錄音」已內建；或下載後上傳。",
+    "en": "Built into Sample recording on Compare speech models; or upload the download."
+   },
+   "source": "https://www.openslr.org/12/",
+   "license": "CC BY 4.0",
+   "files": [
+    "data/lab/samples/librispeech_20_en.flac",
+    "data/lab/samples/librispeech_20_en.txt"
+   ]
+  },
+  {
+   "id": "voice_scripts",
+   "group": "other",
+   "name": {
+    "zh": "語音助理測試對話",
+    "en": "Voice assistant test conversations"
+   },
+   "count": {
+    "zh": "7 段對話（中文 5、英文 2）",
+    "en": "7 conversations (5 Mandarin, 2 English)"
+   },
+   "what": {
+    "zh": "問天氣、找地點、追問、閒聊、中途插話等情境，每句標註助理該反問、查工具還是直接回答。",
+    "en": "Weather, places, follow-ups, small talk and barge-ins; each line says whether the assistant should ask back, use a tool or answer."
+   },
+   "used": {
+    "zh": "即時語音助理的串接測試。",
+    "en": "Testing the live voice assistant end to end."
+   },
+   "use": {
+    "zh": "多 Agent 場景 →「即時語音助理」的測試腳本已內建，會當成虛擬麥克風播放。",
+    "en": "Built into the test scripts of Scenarios → Live voice assistant, played as a virtual microphone."
+   },
+   "source": "",
+   "license": {
+    "zh": "本專案自製",
+    "en": "Made for this project"
+   },
+   "files": [
+    "data/lab/voice_scripts.json"
+   ]
+  },
+  {
+   "id": "supplier_contract",
+   "group": "other",
+   "name": {
+    "zh": "虛構供應合約",
+    "en": "Fictional supplier contract"
+   },
+   "count": {
+    "zh": "PDF 與 HTML 各 1 份",
+    "en": "1 PDF and its HTML"
+   },
+   "what": {
+    "zh": "本專案自製的中文合約，測文件解析成 Markdown 與 OCR；HTML 是原稿，可當正確答案對照。",
+    "en": "A Chinese contract made for this project, for document parsing to Markdown and OCR; the HTML is the source to compare against."
+   },
+   "used": {
+    "zh": "文件解析與 OCR 的快速檢查。",
+    "en": "Quick checks of document parsing and OCR."
+   },
+   "use": {
+    "zh": "其他模型比較 →「文件解析」或「OCR 比較」，上傳 PDF。",
+    "en": "Other models → Document parsing or Compare OCR: upload the PDF."
+   },
+   "source": "",
+   "license": {
+    "zh": "本專案自製",
+    "en": "Made for this project"
+   },
+   "files": [
+    "data/lab/samples/supplier_contract.pdf",
+    "data/lab/samples/supplier_contract.html"
+   ]
+  }
+ ]
+}

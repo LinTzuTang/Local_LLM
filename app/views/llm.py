@@ -1,5 +1,5 @@
-"""Language models: compare several side by side, or chat with one. The two modes are the former
-Compare models and Chat pages (llm_compare_page.py, llm_chat_page.py), run here as scripts so
+"""Language models: compare several side by side, chat with one, or test tool calling. The modes
+are separate scripts (llm_compare_page.py, llm_chat_page.py, llm_tools_page.py), run here so
 they keep their own state, background jobs and live fragments."""
 
 import runpy
@@ -14,9 +14,10 @@ ui.page_header(
     "balance",
     tr("語言模型比較", "Language models"),
     tr(
-        "同一個問題並排比較多個地端語言模型的答案與速度，或直接和一個模型對話。語音模型請到「語音模型比較」。",
-        "Compare several local language models side by side on one prompt, or chat with one. "
-        "Speech models have their own page, Compare speech models.",
+        "同一個問題並排比較多個地端語言模型的答案與速度、直接和一個模型對話，或現場測工具呼叫。"
+        "語音模型請到「語音模型比較」。",
+        "Compare several local language models side by side on one prompt, chat with one, or "
+        "test tool calling live. Speech models have their own page, Compare speech models.",
     ),
     eyebrow=tr("模型", "Models"),
 )
@@ -25,6 +26,7 @@ require_ollama()
 MODES = {
     "compare": (tr("並排比較", "Side by side"), "balance", "llm_compare_page.py"),
     "chat": (tr("對話測試", "Chat"), "chat", "llm_chat_page.py"),
+    "tools": (tr("工具呼叫測試", "Tool calling"), "build", "llm_tools_page.py"),
 }
 st.session_state.setdefault("llm_mode", "compare")
 mode = (

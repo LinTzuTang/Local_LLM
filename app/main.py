@@ -51,6 +51,7 @@ pages = {
         page("views/media.py", "其他模型比較", "Other models", ":material/category:"),
         page("views/elevenlabs.py", "ElevenLabs（雲端）", "ElevenLabs (cloud)",
              ":material/record_voice_over:"),
+        page("views/datasets.py", "測試資料集", "Test sets", ":material/dataset:"),
     ],
     "Agents": [
         page("views/agent.py", "Agent 工作室", "Agent studio", ":material/smart_toy:"),
