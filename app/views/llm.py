@@ -1,5 +1,6 @@
-"""Language models: compare several side by side, chat with one, or test tool calling. The modes
-are separate scripts (llm_compare_page.py, llm_chat_page.py, llm_tools_page.py), run here so
+"""Language models: compare several side by side, chat with one, test tool calling, or run the
+multi-step tests. The modes are separate scripts (llm_compare_page.py, llm_chat_page.py,
+llm_tools_page.py, llm_steps_page.py), run here so
 they keep their own state, background jobs and live fragments."""
 
 import runpy
@@ -27,6 +28,7 @@ MODES = {
     "compare": (tr("並排比較", "Side by side"), "balance", "llm_compare_page.py"),
     "chat": (tr("對話測試", "Chat"), "chat", "llm_chat_page.py"),
     "tools": (tr("工具呼叫測試", "Tool calling"), "build", "llm_tools_page.py"),
+    "steps": (tr("多步驟測試", "Multi-step"), "route", "llm_steps_page.py"),
 }
 st.session_state.setdefault("llm_mode", "compare")
 mode = (
