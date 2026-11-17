@@ -70,6 +70,7 @@ ssh ... 'cd ~/Local_LLM && ./scripts/remote/setup_linux.sh'
 ```sh
 ./scripts/remote/setup_caddy.sh lab.example.com   # 裝 Caddy、寫 /etc/caddy/Caddyfile、開 LOCAL_LLM_AUTH、建第一個管理者
 ./scripts/tmux_down.sh && ./scripts/tmux_up.sh    # 重啟後 tmux 會多一個 auth 視窗
+./scripts/remote/setup_autostart.sh               # 每次開機自動跑 tmux_up（systemd 服務 local-llm；--remove 關掉）
 uv run local-agent users add <name>               # 新增同事（--admin 為管理者）
 uv run local-agent users passwd|role|remove|list ...
 ```
