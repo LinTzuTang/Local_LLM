@@ -219,6 +219,70 @@
    "files": []
   },
   {
+   "id": "livecodebench",
+   "group": "llm",
+   "name": {
+    "zh": "LiveCodeBench v6（寫程式）",
+    "en": "LiveCodeBench v6 (coding)"
+   },
+   "count": {
+    "zh": "60 題（簡單、中等、困難各 20）",
+    "en": "60 questions (20 easy, 20 medium, 20 hard)"
+   },
+   "what": {
+    "zh": "程式競賽題（AtCoder、LeetCode）：讀題目敘述寫一支 Python 程式，公開與隱藏測資全部通過才算對。取 v6 在 2025-01～04 新增的 175 題裡固定的 60 題，避開模型訓練時看過的舊題。",
+    "en": "Contest problems (AtCoder, LeetCode): write a Python program from the statement; it must pass every public and hidden test. A fixed 60 of the 175 problems v6 added for 2025-01 to 04, so models are unlikely to have trained on them."
+   },
+   "used": {
+    "zh": "地端模型寫程式能力的比較（21 個模型）。",
+    "en": "The coding comparison of local models (21 models)."
+   },
+   "use": {
+    "zh": "「語言模型比較 → 寫程式測試」可以現場挑題跑，用同一支評分程式。",
+    "en": "Language models → Coding runs any of them live with the same tester."
+   },
+   "why_not": {
+    "zh": "題目檔很大（含隱藏測資），不提供下載，見來源。",
+    "en": "The question file is large (it holds the hidden tests), so there is no download here; see the source."
+   },
+   "source": "https://github.com/LiveCodeBench/LiveCodeBench",
+   "license": {
+    "zh": "見來源",
+    "en": "See source"
+   },
+   "files": []
+  },
+  {
+   "id": "aider_polyglot",
+   "group": "llm",
+   "name": {
+    "zh": "Aider Polyglot（改程式）",
+    "en": "Aider Polyglot (editing code)"
+   },
+   "count": {
+    "zh": "75 題，6 種語言",
+    "en": "75 exercises, 6 languages"
+   },
+   "what": {
+    "zh": "Exercism 練習題：在既有的專案檔案裡把程式寫完、通過該語言的單元測試；第一次沒過會看到錯誤訊息再改一次。從 225 題固定抽 75 題（C++、Go、Java、JavaScript、Python、Rust）。",
+    "en": "Exercism exercises: finish the code in existing project files so the language's unit tests pass; after a failure the model sees the errors and tries once more. A fixed 75 of the 225 (C++, Go, Java, JavaScript, Python, Rust)."
+   },
+   "used": {
+    "zh": "比競賽題更接近 coding agent 的寫程式比較（4 個模型，初步）。",
+    "en": "A coding comparison closer to a coding agent's work than contest problems (4 models, preliminary)."
+   },
+   "why_not": {
+    "zh": "要 Docker 和六種語言的執行環境，平台上不能跑，所以不提供下載；題目見來源。",
+    "en": "It needs Docker and six language toolchains, which the platform does not run, so there is no download; see the source for the exercises."
+   },
+   "source": "https://github.com/Aider-AI/polyglot-benchmark",
+   "license": {
+    "zh": "見來源",
+    "en": "See source"
+   },
+   "files": []
+  },
+  {
    "id": "meeting_zh",
    "group": "speech",
    "name": {

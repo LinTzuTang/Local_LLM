@@ -46,6 +46,18 @@ ssh ... 'cd ~/Local_LLM && ./scripts/remote/setup_linux.sh'
 - **不要直接對外開平台的 port**：Streamlit（8501）、閘道（11500）、登入服務（11600）都只聽 127.0.0.1；對外只能經過下面的 Caddy（443）。
 - `deploy.sh` 不複製 `models/`、`storage/`、`runs/`、`.env`、`.git/`。
 
+## 語言模型頁的測試在遠端要有的檔案
+
+`storage/` 不會被 `deploy.sh` 複製，下面這些要在遠端自己準備；缺檔案時該項測試會顯示原因、不提供執行。
+
+| 模式 | 需要 |
+|---|---|
+| 多步驟測試 | `storage/llm_eval/bfcl_venv`（BFCL 執行環境）、`scripts/llm_eval/run_bfcl*.py` 與題目清單 |
+| 寫程式測試 | `scripts/llm_eval/run_lcb.py`、`storage/coding_eval/lcb_data/test6.jsonl`（題目）、`storage/coding_eval/LiveCodeBench`（官方 repo）、`storage/coding_eval/lcb_venv`（評分用的 Python 環境） |
+| 評測分數 → Artificial Analysis | `storage/llm_eval/aa/aa_models.json`：管理者在頁面按「重新抓取」，或執行 `uv run python -m local_llm.aa_scores` |
+
+「評測分數 → 我們的實測」讀 `data/lab/llm_benchmarks.json`（在 git 裡），不用另外準備。
+
 ## 開放給同事：帳號密碼登入
 
 ```

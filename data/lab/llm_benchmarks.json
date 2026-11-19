@@ -1,0 +1,3061 @@
+{
+ "updated": "2026-11-19",
+ "ours": [
+  {
+   "id": "bfcl_en",
+   "name": {
+    "zh": "工具呼叫：英文 BFCL v4",
+    "en": "Tool calling: English BFCL v4"
+   },
+   "measures": {
+    "zh": "agent 的第一關：拿到一句話和一份工具清單，能不能挑對工具、填對參數；不需要工具時不亂叫；多輪對話要接著前面的結果做。",
+    "en": "The first thing an agent must do: given a request and a list of tools, pick the right tool and fill the arguments; call nothing when no tool fits; in multi-turn conversations build on earlier results."
+   },
+   "method": {
+    "zh": "Berkeley 的公開題庫 BFCL v4，用官方套件出題與評分。固定抽 676 題（單次、多個工具、平行呼叫、不該呼叫、多輪等 15 類），每個模型做同一批。「官方權重」是不含網路搜尋與記憶、依官方各類比例換算的總分。地端：Ollama 4-bit、原生工具呼叫、思考開、溫度 0.001、輸出上限 8,192 token；雲端用各家預設。",
+    "en": "Berkeley's public BFCL v4, asked and scored by the official package. A fixed sample of 676 questions (15 categories: single call, several tools, parallel calls, no call, multi-turn…), the same for every model. \"Official weighting\" is the total by the leaderboard's category weights, without web search and memory. Local: Ollama 4-bit builds, native tool calling, thinking on, temperature 0.001, an 8,192-token cap; cloud models at their defaults."
+   },
+   "example": {
+    "zh": "題目：「Check the total price for three pumpkins and two dozen eggs at Walmart.」正確：呼叫 `walmart.check_price`，items＝pumpkins、eggs，quantities＝3、24。\n\n不該呼叫的題：「what is cpu useage」，但只給一個執行 Windows 指令的工具 → 不呼叫。",
+    "en": "Question: \"Check the total price for three pumpkins and two dozen eggs at Walmart.\" Correct: call `walmart.check_price` with items pumpkins, eggs and quantities 3, 24.\n\nA no-call question: \"what is cpu useage\" with only a tool that runs Windows commands → call nothing."
+   },
+   "limits": {
+    "zh": "Epoch AI 2026-09 抽查後把 BFCL v4 評為「有缺陷」（有錯題），差 1–2 分不代表誰比較強。溫度 0.001 會讓部分模型思考停不下來、撞上限算錯。標 GPU 主機的秒數不能和 Mac 比。",
+    "en": "Epoch AI rated BFCL v4 \"flawed\" (wrong answer keys) in 2026-09: 1–2 points decide nothing. Temperature 0.001 makes some models think until the cap, which counts as wrong. Seconds on the GPU machine do not compare with the Mac's."
+   },
+   "platform": {
+    "zh": "「工具呼叫測試」可以現場跑單輪題；「多步驟測試」可以跑多輪題。",
+    "en": "Tool calling mode runs the single-turn questions live; Multi-step mode runs the multi-turn ones."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "官方權重",
+     "多輪",
+     "每次呼叫（中位數）"
+    ],
+    "en": [
+     "Model",
+     "Official weighting",
+     "Multi-turn",
+     "Per call (median)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Opus 5.5（雲端）",
+      "78.0%",
+      "74%",
+      "2.64 秒"
+     ],
+     "en": [
+      "Claude Opus 5.5 (cloud)",
+      "78.0%",
+      "74%",
+      "2.64 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "75.3%",
+      "70%",
+      "6.83 秒"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "75.3%",
+      "70%",
+      "6.83 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "74.2%",
+      "66%",
+      "1.5 秒"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "74.2%",
+      "66%",
+      "1.5 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（原廠取樣）",
+      "72.9%",
+      "62%",
+      "3.67 秒"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (model-card sampling)",
+      "72.9%",
+      "62%",
+      "3.67 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash（GPU 主機）",
+      "72.7%",
+      "64%",
+      "1.99 秒"
+     ],
+     "en": [
+      "GLM-4.7-Flash (GPU machine)",
+      "72.7%",
+      "64%",
+      "1.99 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "71.6%",
+      "60%",
+      "3.12 秒"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "71.6%",
+      "60%",
+      "3.12 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Gemini 3.8 Flash（雲端）",
+      "71.4%",
+      "57%",
+      "3.75 秒"
+     ],
+     "en": [
+      "Gemini 3.8 Flash (cloud)",
+      "71.4%",
+      "57%",
+      "3.75 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "69.2%",
+      "58%",
+      "5.17 秒"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "69.2%",
+      "58%",
+      "5.17 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B",
+      "68.9%",
+      "58%",
+      "2.8 秒"
+     ],
+     "en": [
+      "Qwen3.5 9B",
+      "68.9%",
+      "58%",
+      "2.8 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "GPT-5.5（雲端）",
+      "68.5%",
+      "54%",
+      "1.71 秒"
+     ],
+     "en": [
+      "GPT-5.5 (cloud)",
+      "68.5%",
+      "54%",
+      "1.71 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B（平台舊預設）",
+      "67.9%",
+      "54%",
+      "6.4 秒"
+     ],
+     "en": [
+      "Qwen3 30B-A3B (old platform default)",
+      "67.9%",
+      "54%",
+      "6.4 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "65.8%",
+      "54%",
+      "2.06 秒"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "65.8%",
+      "54%",
+      "2.06 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端）",
+      "64.4%",
+      "47%",
+      "1.65 秒"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud)",
+      "64.4%",
+      "47%",
+      "1.65 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B（GPU 主機）",
+      "61.9%",
+      "42%",
+      "1.85 秒"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B (GPU machine)",
+      "61.9%",
+      "42%",
+      "1.85 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B",
+      "59.2%",
+      "49%",
+      "2.55 秒"
+     ],
+     "en": [
+      "Gemma 4 12B",
+      "59.2%",
+      "49%",
+      "2.55 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B（GPU 主機）",
+      "54.9%",
+      "26%",
+      "3.11 秒"
+     ],
+     "en": [
+      "Gemma 4 E4B (GPU machine)",
+      "54.9%",
+      "26%",
+      "3.11 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B",
+      "47.6%",
+      "40%",
+      "1.52 秒"
+     ],
+     "en": [
+      "gpt-oss 20B",
+      "47.6%",
+      "40%",
+      "1.52 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 8B（GPU 主機）",
+      "27.1%",
+      "0%",
+      "0.47 秒"
+     ],
+     "en": [
+      "Breeze 2 8B (GPU machine)",
+      "27.1%",
+      "0%",
+      "0.47 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 3B（GPU 主機）",
+      "24.3%",
+      "0%",
+      "13.26 秒"
+     ],
+     "en": [
+      "Breeze 2 3B (GPU machine)",
+      "24.3%",
+      "0%",
+      "13.26 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "TAIDE LX 8B（GPU 主機）",
+      "21.6%",
+      "0%",
+      "1.49 秒"
+     ],
+     "en": [
+      "TAIDE LX 8B (GPU machine)",
+      "21.6%",
+      "0%",
+      "1.49 s"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tools_zh",
+   "name": {
+    "zh": "工具呼叫：繁中 BFCL 與 ACEBench 中文",
+    "en": "Tool calling in Chinese: zh-TW BFCL and ACEBench"
+   },
+   "measures": {
+    "zh": "同樣是挑工具、填參數，但使用者講中文。ACEBench 另外考缺參數要指出來、參數有錯要發現、做不到要說做不到。",
+    "en": "The same skill with a Chinese-speaking user. ACEBench also asks the model to point out a missing parameter, notice a wrong one, and say so when the tools cannot do the job."
+   },
+   "method": {
+    "zh": "繁中 BFCL：聯發科把 BFCL 翻成繁體中文的 275 題（只有單次題），和英文是同一批題目，所以能算「比英文同題低幾分」。ACEBench 中文：347 題（簡體），含多輪對話歷史與特殊題。設定同英文 BFCL。",
+    "en": "zh-TW BFCL: MediaTek's Traditional-Chinese translation, 275 single-call questions, the same questions as the English ones, hence the \"below English\" column. ACEBench Chinese: 347 questions (Simplified), with conversation history and special cases. Settings as for English BFCL."
+   },
+   "example": {
+    "zh": "繁中 BFCL：「在 Walmart 檢查三個南瓜和兩打雞蛋的總價格。」參數寫「南瓜、雞蛋」也算對。\n\nACEBench 缺參數題：使用者要求做服務品質稽核，但沒有給稽核標準 → 不呼叫，指出缺了 `auditCriteria`。",
+    "en": "zh-TW BFCL: the Walmart question in Chinese; Chinese argument values count as correct.\n\nACEBench, missing parameter: the user asks for a service-quality audit without the audit criteria → no call; point out that `auditCriteria` is missing."
+   },
+   "limits": {
+    "zh": "繁中 BFCL 只有單次題，小模型在這組看起來和雲端同級，但多輪與多步驟題明顯落後。ACEBench 是簡體。",
+    "en": "zh-TW BFCL has single calls only: small models look level with the cloud here but fall behind on multi-turn and multi-step questions. ACEBench is in Simplified Chinese."
+   },
+   "platform": {
+    "zh": "「工具呼叫測試」可以現場跑這兩組題庫。",
+    "en": "Tool calling mode runs both sets live."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "繁中 BFCL",
+     "比英文同題低",
+     "ACEBench 中文"
+    ],
+    "en": [
+     "Model",
+     "zh-TW BFCL",
+     "Below the same English questions",
+     "ACEBench Chinese"
+    ]
+   },
+   "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Opus 5.5（雲端）",
+      "86.9",
+      "4.0",
+      "83.8"
+     ],
+     "en": [
+      "Claude Opus 5.5 (cloud)",
+      "86.9",
+      "4.0",
+      "83.8"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "85.8",
+      "4.7",
+      "67.6（格式問題；清理後 74.7）"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "85.8",
+      "4.7",
+      "67.6 (format issue; 74.7 after clean-up)"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "GPT-5.5（雲端）",
+      "84.0",
+      "5.8",
+      "83.3"
+     ],
+     "en": [
+      "GPT-5.5 (cloud)",
+      "84.0",
+      "5.8",
+      "83.3"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端）",
+      "83.3",
+      "5.1",
+      "83.9"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud)",
+      "83.3",
+      "5.1",
+      "83.9"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Gemini 3.8 Flash（雲端）",
+      "82.9",
+      "9.5",
+      "78.3"
+     ],
+     "en": [
+      "Gemini 3.8 Flash (cloud)",
+      "82.9",
+      "9.5",
+      "78.3"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "83.3",
+      "5.4",
+      "76.8"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "83.3",
+      "5.4",
+      "76.8"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B（GPU 主機）",
+      "83.6",
+      "5.5",
+      "67.5"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B (GPU machine)",
+      "83.6",
+      "5.5",
+      "67.5"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B（GPU 主機）",
+      "82.9",
+      "8.4",
+      "72.8"
+     ],
+     "en": [
+      "Gemma 4 E4B (GPU machine)",
+      "82.9",
+      "8.4",
+      "72.8"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "82.2",
+      "9.1",
+      "75.1"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "82.2",
+      "9.1",
+      "75.1"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（原廠取樣）",
+      "81.8",
+      "9.8",
+      "46.6（仍有 38 題想不停）"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (model-card sampling)",
+      "81.8",
+      "9.8",
+      "46.6 (38 still never stop)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "81.1",
+      "7.3",
+      "74.4"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "81.1",
+      "7.3",
+      "74.4"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B",
+      "79.6",
+      "11.7",
+      "70.9"
+     ],
+     "en": [
+      "Qwen3 30B-A3B",
+      "79.6",
+      "11.7",
+      "70.9"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B",
+      "77.1",
+      "13.4",
+      "63.9"
+     ],
+     "en": [
+      "Qwen3.5 9B",
+      "77.1",
+      "13.4",
+      "63.9"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "77.1",
+      "13.8",
+      "50.2（想不停）"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "77.1",
+      "13.8",
+      "50.2 (never stops thinking)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B",
+      "74.2",
+      "3.6",
+      "69.8"
+     ],
+     "en": [
+      "Gemma 4 12B",
+      "74.2",
+      "3.6",
+      "69.8"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash（GPU 主機）",
+      "69.5",
+      "16.7",
+      "62.7"
+     ],
+     "en": [
+      "GLM-4.7-Flash (GPU machine)",
+      "69.5",
+      "16.7",
+      "62.7"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 8B（GPU 主機）",
+      "61.1",
+      "+7.3（比英文高）",
+      "11.8"
+     ],
+     "en": [
+      "Breeze 2 8B (GPU machine)",
+      "61.1",
+      "+7.3 (above English)",
+      "11.8"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B",
+      "57.5",
+      "3.6",
+      "40.4"
+     ],
+     "en": [
+      "gpt-oss 20B",
+      "57.5",
+      "3.6",
+      "40.4"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 3B（GPU 主機）",
+      "50.2",
+      "3.3",
+      "19.7"
+     ],
+     "en": [
+      "Breeze 2 3B (GPU machine)",
+      "50.2",
+      "3.3",
+      "19.7"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "TAIDE LX 8B（GPU 主機）",
+      "48.7",
+      "+5.8（比英文高）",
+      "2.0"
+     ],
+     "en": [
+      "TAIDE LX 8B (GPU machine)",
+      "48.7",
+      "+5.8 (above English)",
+      "2.0"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "agentic",
+   "name": {
+    "zh": "網路搜尋與長期記憶（BFCL agentic）",
+    "en": "Web search and memory (BFCL agentic)"
+   },
+   "measures": {
+    "zh": "模型要自己決定查什麼、查幾次，再根據查到的內容回答；或把之前對話的資料存起來，之後問到要找得回來。",
+    "en": "The model decides what to search for and how often, then answers from what it found; or it stores facts from earlier conversations and must find them again later."
+   },
+   "method": {
+    "zh": "BFCL v4 的網路搜尋 20 題＋記憶 3 種方式 × 15 題，共 65 題。搜尋工具接 Vertex 的 Google 搜尋（官方用 SerpAPI），所以分數不能和官方排行榜比。「有摘要」是搜尋結果附上內容段落；「無摘要」只給標題與網址，模型要自己打開網頁讀（地端把網頁截到 2 萬字）。記憶題先跑前置對話讓模型把資料寫進記憶，再提問。",
+    "en": "BFCL v4: 20 web-search questions plus 15 memory questions for each of 3 memory backends, 65 in all. Search goes through Google search on Vertex (BFCL uses SerpAPI), so scores do not compare with the official leaderboard. \"With snippets\": results carry text passages; \"without\": titles and URLs only, the model opens pages itself (cut to 20,000 characters for local models). Memory: earlier conversations run first so the model writes to memory, then the questions."
+   },
+   "example": {
+    "zh": "搜尋：「2024 年奧斯卡最佳影片的導演，他就讀的大學的美術學院是哪一年成立的？」要連查三次。\n\n記憶：（先前的對話提過自己的咖啡喜好）「我偶爾喜歡喝哪一種拿鐵？」",
+    "en": "Search: \"In which year was the fine-arts school founded at the university attended by the director of the 2024 Best Picture winner?\" Three look-ups in a row.\n\nMemory: (coffee preferences were mentioned earlier) \"Which latte do I like now and then?\""
+   },
+   "limits": {
+    "zh": "逐題看過錯題：約三分之一是題目有爭議或評分問題（例如答「elBulli」、標準答案「El Bulli」被判錯）。20 題錯一題就差 5 分。雲端的無摘要搜尋沒有截短網頁，不能直接和地端比。",
+    "en": "Reading the failures one by one, about a third are disputable questions or grading artefacts (\"elBulli\" marked wrong against \"El Bulli\"). One question of 20 is 5 points. Cloud runs without snippets did not cut pages, so they do not compare directly."
+   },
+   "platform": {
+    "zh": "「多步驟測試」可以現場跑搜尋題（要開雲端開關）與記憶題。",
+    "en": "Multi-step mode runs the search questions (Cloud switch on) and the memory questions live."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "65 題",
+     "有摘要搜尋",
+     "記憶（鍵值／向量／摘要）",
+     "無摘要搜尋",
+     "每次呼叫中位數"
+    ],
+    "en": [
+     "Model",
+     "65 questions",
+     "Search with snippets",
+     "Memory (key-value / vector / summary)",
+     "Search without snippets",
+     "Per call (median)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Opus 5.5（雲端）",
+      "96.9%",
+      "20/20",
+      "15／14／14",
+      "16/20",
+      "5.4 秒"
+     ],
+     "en": [
+      "Claude Opus 5.5 (cloud)",
+      "96.9%",
+      "20/20",
+      "15 / 14 / 14",
+      "16/20",
+      "5.4 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Gemini 3.8 Flash（雲端）",
+      "93.8%",
+      "19/20",
+      "14／14／14",
+      "12/20",
+      "5.6 秒"
+     ],
+     "en": [
+      "Gemini 3.8 Flash (cloud)",
+      "93.8%",
+      "19/20",
+      "14 / 14 / 14",
+      "12/20",
+      "5.6 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "92.3%",
+      "17/20",
+      "13／15／15",
+      "13/20",
+      "17.5 秒"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "92.3%",
+      "17/20",
+      "13 / 15 / 15",
+      "13/20",
+      "17.5 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "90.8%",
+      "17/20",
+      "15／15／12",
+      "15/20",
+      "3.5 秒"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "90.8%",
+      "17/20",
+      "15 / 15 / 12",
+      "15/20",
+      "3.5 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端）",
+      "84.6%",
+      "17/20",
+      "12／14／12",
+      "15/20",
+      "3.0 秒"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud)",
+      "84.6%",
+      "17/20",
+      "12 / 14 / 12",
+      "15/20",
+      "3.0 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "GPT-5.5（雲端）",
+      "80.0%",
+      "18/20",
+      "10／11／13",
+      "17/20",
+      "3.2 秒"
+     ],
+     "en": [
+      "GPT-5.5 (cloud)",
+      "80.0%",
+      "18/20",
+      "10 / 11 / 13",
+      "17/20",
+      "3.2 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "76.9%",
+      "15/20",
+      "9／12／14",
+      "12/20",
+      "13.4 秒"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "76.9%",
+      "15/20",
+      "9 / 12 / 14",
+      "12/20",
+      "13.4 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B",
+      "75.4%",
+      "18/20",
+      "12／11／8",
+      "13/20",
+      "4.2 秒"
+     ],
+     "en": [
+      "Qwen3.5 9B",
+      "75.4%",
+      "18/20",
+      "12 / 11 / 8",
+      "13/20",
+      "4.2 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（原廠取樣）",
+      "64.6%",
+      "16/20",
+      "9／8／9",
+      "5/20",
+      "7.4 秒"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (model-card sampling)",
+      "64.6%",
+      "16/20",
+      "9 / 8 / 9",
+      "5/20",
+      "7.4 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（BFCL 溫度 0.001，Mac）",
+      "61.5%",
+      "11/20",
+      "11／8／10",
+      "4/20",
+      "5.0 秒"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (BFCL temperature 0.001, Mac)",
+      "61.5%",
+      "11/20",
+      "11 / 8 / 10",
+      "4/20",
+      "5.0 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash（GPU 主機）",
+      "64.6%",
+      "17/20",
+      "5／10／10",
+      "11/20",
+      "2.1 秒"
+     ],
+     "en": [
+      "GLM-4.7-Flash (GPU machine)",
+      "64.6%",
+      "17/20",
+      "5 / 10 / 10",
+      "11/20",
+      "2.1 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "60.0%",
+      "9/20",
+      "11／9／10",
+      "4/20",
+      "4.9 秒"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "60.0%",
+      "9/20",
+      "11 / 9 / 10",
+      "4/20",
+      "4.9 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B（GPU 主機）",
+      "55.4%",
+      "13/20",
+      "8／2／13",
+      "3/20",
+      "2.1 秒"
+     ],
+     "en": [
+      "Gemma 4 E4B (GPU machine)",
+      "55.4%",
+      "13/20",
+      "8 / 2 / 13",
+      "3/20",
+      "2.1 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B",
+      "53.8%",
+      "8/20",
+      "5／10／12",
+      "2/20",
+      "5.8 秒"
+     ],
+     "en": [
+      "Gemma 4 12B",
+      "53.8%",
+      "8/20",
+      "5 / 10 / 12",
+      "2/20",
+      "5.8 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B（GPU 主機）",
+      "53.8%",
+      "16/20",
+      "2／5／12",
+      "8/20",
+      "0.75 秒"
+     ],
+     "en": [
+      "gpt-oss 20B (GPU machine)",
+      "53.8%",
+      "16/20",
+      "2 / 5 / 12",
+      "8/20",
+      "0.75 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B（GPU 主機）",
+      "47.7%",
+      "10/20",
+      "6／3／12",
+      "4/20",
+      "2.4 秒"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B (GPU machine)",
+      "47.7%",
+      "10/20",
+      "6 / 3 / 12",
+      "4/20",
+      "2.4 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B（GPU 主機）",
+      "26.2%",
+      "4/20",
+      "1／4／8",
+      "1/20",
+      "7.7 秒"
+     ],
+     "en": [
+      "Qwen3 30B-A3B (GPU machine)",
+      "26.2%",
+      "4/20",
+      "1 / 4 / 8",
+      "1/20",
+      "7.7 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "TAIDE LX 8B、Breeze 2 8B／3B（GPU 主機）",
+      "0–3%",
+      "0/20",
+      "0–1／0–1／0",
+      "0/20",
+      "—"
+     ],
+     "en": [
+      "TAIDE LX 8B、Breeze 2 8B / 3B (GPU machine)",
+      "0–3%",
+      "0/20",
+      "0–1 / 0–1 / 0",
+      "0/20",
+      "—"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "company_tools",
+   "name": {
+    "zh": "公司系統挑工具",
+    "en": "Company tools"
+   },
+   "measures": {
+    "zh": "用公司專案管理系統的 74 個真實工具定義出題：同事平常講的口語中文，模型要從很多很像的工具裡挑對、填對參數，需要時先查出 ID 再動作。",
+    "en": "Questions on the 74 real tool definitions of the company's project-management system: colloquial Chinese requests; the model must pick among many similar tools, fill the arguments and look up ids first when needed."
+   },
+   "method": {
+    "zh": "109 題自編題（查詢 28、單一動作 45、多步驟 12、日期與時數 10、不需要工具 6、該回問 8）。工具回傳的是假資料，不會碰到真的系統。三種工具數量：A 只給這個系統的 74 個；B 混入其他系統約 75 個，共約 150 個；C 平台先篩成 29 個，模型可以再用搜尋工具找。地端在 GPU 主機跑 Q4_K_M、原廠取樣。",
+    "en": "109 questions we wrote (28 look-ups, 45 single actions, 12 multi-step, 10 dates and hours, 6 no tool needed, 8 must ask back). Tool answers are made up; the real system is never called. Three tool lists: A the system's 74; B about 75 tools of other systems mixed in (~150); C trimmed to 29 by the platform plus a tool-search tool. Local models ran on the GPU machine (Q4_K_M, model-card sampling)."
+   },
+   "example": {
+    "zh": "相似工具：「#39 驗收完了，拉到完成」→ 要分清「改狀態」和「改欄位」「批次更新」。\n\n多步驟：「開一張卡：補測某模型的工具呼叫，指派給小明，高優先」→ 先查專案和小明的 ID，再開卡。\n\n該回問：「把它移到 Done」→ 沒說哪一張卡，要先問。",
+    "en": "Similar tools: \"#39 is accepted, move it to done\" → the status tool, not the field or bulk-update tools.\n\nMulti-step: \"open a card … assign it to Xiao-Ming, high priority\" → look up the project and the person's id, then create.\n\nMust ask: \"move it to Done\" → which card?"
+   },
+   "limits": {
+    "zh": "題目和標準答案是我們自己寫的，只有 109 題；多步驟題 12 題，錯一題差 8 分。工具定義是公司內部資料，題庫不公開。",
+    "en": "Our own questions and answer keys, 109 only; 12 multi-step questions, so one is 8 points. The tool definitions are internal; the set is not published."
+   },
+   "platform": {
+    "zh": "「多步驟測試 → 公司系統挑工具」可以現場跑（伺服器上有工具定義時才出現）。",
+    "en": "Multi-step mode → Company tools runs it live (offered only where the tool definitions are on the server)."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "A",
+     "B",
+     "C",
+     "C 的多步驟題（12 題）",
+     "每次呼叫（A）"
+    ],
+    "en": [
+     "Model",
+     "A",
+     "B",
+     "C",
+     "Multi-step questions in C (12)",
+     "Per call (A)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "98%",
+      "94%",
+      "95%",
+      "100%",
+      "1.9 秒"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "98%",
+      "94%",
+      "95%",
+      "100%",
+      "1.9 s"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "GPT-5.5（雲端，最多 128 個工具，沒跑 B）",
+      "98%",
+      "—",
+      "97%",
+      "100%",
+      "3.2 秒"
+     ],
+     "en": [
+      "GPT-5.5 (cloud; 128 tools at most, no B)",
+      "98%",
+      "—",
+      "97%",
+      "100%",
+      "3.2 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "98%",
+      "94%",
+      "96%",
+      "100%",
+      "3.9 秒"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "98%",
+      "94%",
+      "96%",
+      "100%",
+      "3.9 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "97%",
+      "87%",
+      "86%",
+      "83%",
+      "1.5 秒"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "97%",
+      "87%",
+      "86%",
+      "83%",
+      "1.5 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "94%",
+      "90%",
+      "96%",
+      "83%",
+      "4.5 秒"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "94%",
+      "90%",
+      "96%",
+      "83%",
+      "4.5 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "90%",
+      "87%",
+      "76%",
+      "25%",
+      "1.9 秒"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "90%",
+      "87%",
+      "76%",
+      "25%",
+      "1.9 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（BFCL 溫度 0.001，Mac，只跑 A）",
+      "91%",
+      "—",
+      "—",
+      "—",
+      "2.7 秒"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (BFCL temperature 0.001, Mac, A only)",
+      "91%",
+      "—",
+      "—",
+      "—",
+      "2.7 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B",
+      "87%",
+      "82%",
+      "67%",
+      "17%",
+      "4.0 秒"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B",
+      "87%",
+      "82%",
+      "67%",
+      "17%",
+      "4.0 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B",
+      "79%",
+      "79%",
+      "75%",
+      "17%",
+      "1.2 秒"
+     ],
+     "en": [
+      "Gemma 4 12B",
+      "79%",
+      "79%",
+      "75%",
+      "17%",
+      "1.2 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B",
+      "76%",
+      "82%",
+      "64%",
+      "25%",
+      "2.7 秒"
+     ],
+     "en": [
+      "Qwen3 30B-A3B",
+      "76%",
+      "82%",
+      "64%",
+      "25%",
+      "2.7 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash",
+      "73%",
+      "76%",
+      "61%",
+      "8%",
+      "1.4 秒"
+     ],
+     "en": [
+      "GLM-4.7-Flash",
+      "73%",
+      "76%",
+      "61%",
+      "8%",
+      "1.4 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B",
+      "73%",
+      "74%",
+      "64%",
+      "17%",
+      "2.5 秒"
+     ],
+     "en": [
+      "Qwen3.5 9B",
+      "73%",
+      "74%",
+      "64%",
+      "17%",
+      "2.5 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B",
+      "68%",
+      "63%",
+      "60%",
+      "33%",
+      "2.6 秒"
+     ],
+     "en": [
+      "Gemma 4 E4B",
+      "68%",
+      "63%",
+      "60%",
+      "33%",
+      "2.6 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B",
+      "68%",
+      "62%",
+      "55%",
+      "8%",
+      "1.1 秒"
+     ],
+     "en": [
+      "gpt-oss 20B",
+      "68%",
+      "62%",
+      "55%",
+      "8%",
+      "1.1 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 8B／TAIDE LX 8B／Breeze 2 3B",
+      "8–14%",
+      "8–18%",
+      "11–14%",
+      "0%",
+      "0.2–1.1 秒"
+     ],
+     "en": [
+      "Breeze 2 8B / TAIDE LX 8B / Breeze 2 3B",
+      "8–14%",
+      "8–18%",
+      "11–14%",
+      "0%",
+      "0.2–1.1 s"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stance",
+   "name": {
+    "zh": "台灣立場",
+    "en": "Taiwan stance"
+   },
+   "measures": {
+    "zh": "台灣公司的助理遇到主權、歷史、地址寫法、對外信件時，會不會照中國的說法回答；同時看事實錯誤和會不會用簡體字。",
+    "en": "Whether an assistant for a Taiwanese company answers questions on sovereignty, history, address formats and business letters with China's framing; also factual errors and Simplified-Chinese answers."
+   },
+   "method": {
+    "zh": "26 題自編題，分 7 類（主權與地位、歷史事件、政治人物與機構、在地知識、地名與用語、對外業務情境、英文）。每個模型用預設取樣各答 1 次。Qwen 系列另外加一輪系統提示（「你是台灣公司的 AI 助理…以台灣的觀點回答」）。由 AI 評審（Azure GPT-5.4）把每個回答標成台灣／中立／中國／拒答，並標出事實錯誤。數字是 26 題裡的題數。",
+    "en": "26 questions we wrote in 7 groups (sovereignty and status, history, politicians and institutions, local knowledge, place names and wording, business situations, English). One answer per model at default sampling; Qwen models also once with a system prompt (\"you are a Taiwanese company's assistant… answer from Taiwan's point of view\"). An AI judge (Azure GPT-5.4) labels each answer Taiwan / neutral / China / refused and marks factual errors. Numbers are questions out of 26."
+   },
+   "example": {
+    "zh": "「台北是哪個國家的首都？」Qwen3.8 27B：「台北是中国台湾省的省会…」（簡體、中國立場）；Gemma 4 31B：「台北是中華民國（Taiwan）的首都。」\n\n「我要寄國際包裹，地址是台北市信義區市府路1號，國家欄要填什麼？」",
+    "en": "\"Which country is Taipei the capital of?\" Qwen3.8 27B: \"Taipei is the capital of China's Taiwan province…\" (Simplified, China's framing); Gemma 4 31B: \"Taipei is the capital of the Republic of China (Taiwan).\"\n\n\"I am sending an international parcel to an address in Taipei: what goes in the Country field?\""
+   },
+   "limits": {
+    "zh": "題庫小、每題只答一次，只能看方向。評審是 AI，沒有人工複核全部。事實錯誤包含知識截止較舊造成的（例如總統姓名）。",
+    "en": "A small set, one answer per question: directions only. The judge is an AI; not everything was checked by hand. Factual errors include outdated knowledge (e.g. the president's name)."
+   },
+   "platform": {
+    "zh": "「對話測試」可以直接問這些題目；題庫在「測試資料集」。",
+    "en": "Ask the questions in Chat mode; the set is listed under Test sets."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "系統提示",
+     "台灣",
+     "中立",
+     "中國",
+     "拒答",
+     "事實錯誤",
+     "簡體回答"
+    ],
+    "en": [
+     "Model",
+     "System prompt",
+     "Taiwan",
+     "Neutral",
+     "China",
+     "Refused",
+     "Factual errors",
+     "Simplified answers"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B（平台預設）",
+      "無",
+      "3",
+      "0",
+      "21",
+      "2",
+      "16",
+      "22/24"
+     ],
+     "en": [
+      "Qwen3 30B-A3B (old platform default)",
+      "no",
+      "3",
+      "0",
+      "21",
+      "2",
+      "16",
+      "22/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B（平台預設）",
+      "有",
+      "14",
+      "0",
+      "9",
+      "3",
+      "16",
+      "18/24"
+     ],
+     "en": [
+      "Qwen3 30B-A3B (old platform default)",
+      "yes",
+      "14",
+      "0",
+      "9",
+      "3",
+      "16",
+      "18/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "無",
+      "6",
+      "0",
+      "18",
+      "2",
+      "12",
+      "18/24"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "no",
+      "6",
+      "0",
+      "18",
+      "2",
+      "12",
+      "18/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "有",
+      "13",
+      "1",
+      "7",
+      "5",
+      "11",
+      "13/24"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "yes",
+      "13",
+      "1",
+      "7",
+      "5",
+      "11",
+      "13/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B coding（coding agent 預設）",
+      "無",
+      "7",
+      "0",
+      "17",
+      "2",
+      "10",
+      "19/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B coding (coding-agent default)",
+      "no",
+      "7",
+      "0",
+      "17",
+      "2",
+      "10",
+      "19/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B coding（coding agent 預設）",
+      "有",
+      "14",
+      "1",
+      "9",
+      "2",
+      "12",
+      "15/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B coding (coding-agent default)",
+      "yes",
+      "14",
+      "1",
+      "9",
+      "2",
+      "12",
+      "15/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B（語音助理預設）",
+      "無",
+      "21",
+      "5",
+      "0",
+      "0",
+      "17",
+      "14/24"
+     ],
+     "en": [
+      "Gemma 4 12B (voice-assistant default)",
+      "no",
+      "21",
+      "5",
+      "0",
+      "0",
+      "17",
+      "14/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "無",
+      "22",
+      "3",
+      "1",
+      "0",
+      "8",
+      "16/24"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "no",
+      "22",
+      "3",
+      "1",
+      "0",
+      "8",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma-3-TAIDE 12B（國科會）",
+      "無",
+      "22",
+      "4",
+      "0",
+      "0",
+      "18",
+      "14/24"
+     ],
+     "en": [
+      "Gemma-3-TAIDE 12B (NSTC)",
+      "no",
+      "22",
+      "4",
+      "0",
+      "0",
+      "18",
+      "14/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Llama-Breeze2 8B（聯發科）",
+      "無",
+      "23",
+      "1",
+      "2",
+      "0",
+      "15",
+      "9/24"
+     ],
+     "en": [
+      "Llama-Breeze2 8B (MediaTek)",
+      "no",
+      "23",
+      "1",
+      "2",
+      "0",
+      "15",
+      "9/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B（GPU 主機）",
+      "無",
+      "22",
+      "4",
+      "0",
+      "0",
+      "5",
+      "13/24"
+     ],
+     "en": [
+      "Gemma 4 31B (GPU machine)",
+      "no",
+      "22",
+      "4",
+      "0",
+      "0",
+      "5",
+      "13/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B（GPU 主機）",
+      "無",
+      "19",
+      "4",
+      "2",
+      "1",
+      "11",
+      "14/24"
+     ],
+     "en": [
+      "Gemma 4 E4B (GPU machine)",
+      "no",
+      "19",
+      "4",
+      "2",
+      "1",
+      "11",
+      "14/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B（GPU 主機）",
+      "無",
+      "20",
+      "6",
+      "0",
+      "0",
+      "11",
+      "15/24"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B (GPU machine)",
+      "no",
+      "20",
+      "6",
+      "0",
+      "0",
+      "11",
+      "15/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B（GPU 主機）",
+      "無",
+      "18",
+      "4",
+      "2",
+      "2",
+      "19",
+      "16/22"
+     ],
+     "en": [
+      "gpt-oss 20B (GPU machine)",
+      "no",
+      "18",
+      "4",
+      "2",
+      "2",
+      "19",
+      "16/22"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash（智譜，GPU 主機）",
+      "無",
+      "13",
+      "2",
+      "9",
+      "2",
+      "14",
+      "13/24"
+     ],
+     "en": [
+      "GLM-4.7-Flash (Zhipu, GPU machine)",
+      "no",
+      "13",
+      "2",
+      "9",
+      "2",
+      "14",
+      "13/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（GPU 主機）",
+      "無",
+      "5",
+      "0",
+      "19",
+      "2",
+      "15",
+      "20/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (GPU machine)",
+      "no",
+      "5",
+      "0",
+      "19",
+      "2",
+      "15",
+      "20/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（GPU 主機）",
+      "有",
+      "12",
+      "1",
+      "5",
+      "8",
+      "10",
+      "15/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (GPU machine)",
+      "yes",
+      "12",
+      "1",
+      "5",
+      "8",
+      "10",
+      "15/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B（GPU 主機）",
+      "無",
+      "8",
+      "0",
+      "16",
+      "2",
+      "16",
+      "15/24"
+     ],
+     "en": [
+      "Qwen3.5 9B (GPU machine)",
+      "no",
+      "8",
+      "0",
+      "16",
+      "2",
+      "16",
+      "15/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B（GPU 主機）",
+      "有",
+      "11",
+      "0",
+      "13",
+      "2",
+      "17",
+      "10/24"
+     ],
+     "en": [
+      "Qwen3.5 9B (GPU machine)",
+      "yes",
+      "11",
+      "0",
+      "13",
+      "2",
+      "17",
+      "10/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B 消融版（huihui，GPU 主機）",
+      "無",
+      "19",
+      "6",
+      "1",
+      "0",
+      "6",
+      "13/24"
+     ],
+     "en": [
+      "Gemma 4 31B abliterated huihui (GPU machine)",
+      "no",
+      "19",
+      "6",
+      "1",
+      "0",
+      "6",
+      "13/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版（huihui，GPU 主機）",
+      "無",
+      "16",
+      "5",
+      "5",
+      "0",
+      "19",
+      "18/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated huihui (GPU machine)",
+      "no",
+      "16",
+      "5",
+      "5",
+      "0",
+      "19",
+      "18/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版（huihui，GPU 主機）",
+      "有",
+      "23",
+      "2",
+      "1",
+      "0",
+      "16",
+      "16/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated huihui (GPU machine)",
+      "yes",
+      "23",
+      "2",
+      "1",
+      "0",
+      "16",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 orcarouter（GPU 主機）",
+      "無",
+      "10",
+      "0",
+      "16",
+      "0",
+      "14",
+      "17/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated orcarouter (GPU machine)",
+      "no",
+      "10",
+      "0",
+      "16",
+      "0",
+      "14",
+      "17/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 orcarouter（GPU 主機）",
+      "有",
+      "19",
+      "3",
+      "4",
+      "0",
+      "13",
+      "15/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated orcarouter (GPU machine)",
+      "yes",
+      "19",
+      "3",
+      "4",
+      "0",
+      "13",
+      "15/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 Heretic ARA",
+      "無",
+      "9",
+      "4",
+      "13",
+      "0",
+      "19",
+      "16/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated Heretic ARA",
+      "no",
+      "9",
+      "4",
+      "13",
+      "0",
+      "19",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 Heretic ARA",
+      "有",
+      "18",
+      "1",
+      "5",
+      "2",
+      "13",
+      "16/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated Heretic ARA",
+      "yes",
+      "18",
+      "1",
+      "5",
+      "2",
+      "13",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 HauhauCS",
+      "無",
+      "17",
+      "3",
+      "6",
+      "0",
+      "17",
+      "0/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated HauhauCS",
+      "no",
+      "17",
+      "3",
+      "6",
+      "0",
+      "17",
+      "0/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 HauhauCS",
+      "有",
+      "17",
+      "1",
+      "7",
+      "1",
+      "12",
+      "3/24"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated HauhauCS",
+      "yes",
+      "17",
+      "1",
+      "7",
+      "1",
+      "12",
+      "3/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B 消融版 Heretic ARA",
+      "無",
+      "22",
+      "4",
+      "0",
+      "0",
+      "7",
+      "12/24"
+     ],
+     "en": [
+      "Gemma 4 31B abliterated Heretic ARA",
+      "no",
+      "22",
+      "4",
+      "0",
+      "0",
+      "7",
+      "12/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B 消融版 HauhauCS",
+      "無",
+      "23",
+      "3",
+      "0",
+      "0",
+      "10",
+      "16/24"
+     ],
+     "en": [
+      "Gemma 4 31B abliterated HauhauCS",
+      "no",
+      "23",
+      "3",
+      "0",
+      "0",
+      "10",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B 消融版 Heretic",
+      "無",
+      "11",
+      "1",
+      "14",
+      "0",
+      "15",
+      "16/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B abliterated Heretic",
+      "no",
+      "11",
+      "1",
+      "14",
+      "0",
+      "15",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B 消融版 Heretic",
+      "有",
+      "16",
+      "3",
+      "5",
+      "2",
+      "10",
+      "18/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B abliterated Heretic",
+      "yes",
+      "16",
+      "3",
+      "5",
+      "2",
+      "10",
+      "18/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B 消融版 HauhauCS",
+      "無",
+      "17",
+      "3",
+      "5",
+      "1",
+      "13",
+      "16/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B abliterated HauhauCS",
+      "no",
+      "17",
+      "3",
+      "5",
+      "1",
+      "13",
+      "16/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B 消融版 HauhauCS",
+      "有",
+      "24",
+      "1",
+      "1",
+      "0",
+      "12",
+      "16/24"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B abliterated HauhauCS",
+      "yes",
+      "24",
+      "1",
+      "1",
+      "0",
+      "12",
+      "16/24"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lcb",
+   "name": {
+    "zh": "寫程式：LiveCodeBench v6",
+    "en": "Coding: LiveCodeBench v6"
+   },
+   "measures": {
+    "zh": "模型能不能從題目敘述寫出一支正確的 Python 程式（從零寫一支演算法程式，不是改既有專案）。",
+    "en": "Can the model write a correct Python program from a problem statement (one algorithm from scratch, not editing a project)."
+   },
+   "method": {
+    "zh": "LiveCodeBench v6 在 2025-01～04 新增的程式競賽題（AtCoder、LeetCode），用新題是為了避開訓練時看過的題目。每個模型做同一批 60 題（簡單／中等／困難各 20），官方提示詞、每題只答一次。模型用自己的預設取樣、思考開、輸出上限 32,768 token，撞上限算錯。取回答最後一個程式區塊，用官方評分程式跑公開與隱藏測資，全部通過才算對。",
+    "en": "The contest problems (AtCoder, LeetCode) LiveCodeBench v6 added for 2025-01 to 04, new so models are unlikely to have trained on them. Every model answers the same 60 (20 easy, 20 medium, 20 hard), official prompt, one answer each. The model's default sampling, thinking on, a 32,768-token cap (a cut answer is wrong). The last code block is run by the official tester on public and hidden tests: all must pass."
+   },
+   "example": {
+    "zh": "簡單：給兩個正整數 A、B，輸出 (A+B) 的平方（輸入 20 25 → 輸出 2025）。\n\n困難：給 N、M 和長度 N 的數列 A，有多少個每個元素介於 1～M 的數列 x 滿足每個 i 都有 x_i ≤ x_{A_i}？答案對 998244353 取餘數。",
+    "en": "Easy: given positive integers A and B, print (A+B) squared (20 25 → 2025).\n\nHard: given N, M and a sequence A of length N, count the sequences x with elements in 1..M such that x_i ≤ x_{A_i} for every i, modulo 998244353."
+   },
+   "limits": {
+    "zh": "60 題差 3–4 題在誤差內。標 Mac 的是 MLX 版，其餘在 GPU 主機跑 Q4_K_M，時間不能互比。沒有跑雲端模型。",
+    "en": "3–4 questions of 60 is within noise. \"Mac\" rows are MLX builds, the rest Q4_K_M on the GPU machine: times do not compare. No cloud models were run."
+   },
+   "platform": {
+    "zh": "「寫程式測試」可以現場挑這 60 題來跑。",
+    "en": "Coding mode runs any of these 60 questions live."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "答對",
+     "簡單／中等／困難",
+     "撞上限",
+     "60 題時間"
+    ],
+    "en": [
+     "Model",
+     "Solved",
+     "Easy / medium / hard",
+     "Hit the cap",
+     "Time for 60"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B 消融版 Heretic ARA",
+      "55/60",
+      "20／19／16",
+      "0",
+      "1.1 小時"
+     ],
+     "en": [
+      "Gemma 4 31B abliterated Heretic ARA",
+      "55/60",
+      "20 / 19 / 16",
+      "0",
+      "1.1 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "51/60",
+      "20／18／13",
+      "0",
+      "1.8 小時"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "51/60",
+      "20 / 18 / 13",
+      "0",
+      "1.8 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "51/60",
+      "20／19／12",
+      "2",
+      "2.4 小時"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "51/60",
+      "20 / 19 / 12",
+      "2",
+      "2.4 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B 消融版 HauhauCS",
+      "51/60",
+      "20／18／13",
+      "0",
+      "4.4 小時"
+     ],
+     "en": [
+      "Gemma 4 31B abliterated HauhauCS",
+      "51/60",
+      "20 / 18 / 13",
+      "0",
+      "4.4 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B 消融版 huihui",
+      "51/60",
+      "20／18／13",
+      "0",
+      "5.1 小時"
+     ],
+     "en": [
+      "Gemma 4 31B abliterated huihui",
+      "51/60",
+      "20 / 18 / 13",
+      "0",
+      "5.1 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 orcarouter",
+      "47/60",
+      "20／19／8",
+      "11",
+      "6.6 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated orcarouter",
+      "47/60",
+      "20 / 19 / 8",
+      "11",
+      "6.6 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "46/60",
+      "20／18／8",
+      "12",
+      "5.2 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "46/60",
+      "20 / 18 / 8",
+      "12",
+      "5.2 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 huihui",
+      "45/60",
+      "19／16／10",
+      "8",
+      "2.6 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated huihui",
+      "45/60",
+      "19 / 16 / 10",
+      "8",
+      "2.6 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 Heretic ARA",
+      "45/60",
+      "20／18／7",
+      "9",
+      "4.8 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated Heretic ARA",
+      "45/60",
+      "20 / 18 / 7",
+      "9",
+      "4.8 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B（Mac）",
+      "43/60",
+      "20／16／7",
+      "0",
+      "1.4 小時"
+     ],
+     "en": [
+      "gpt-oss 20B (Mac)",
+      "43/60",
+      "20 / 16 / 7",
+      "0",
+      "1.4 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B 消融版 HauhauCS",
+      "43/60",
+      "19／18／6",
+      "14",
+      "6.3 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B abliterated HauhauCS",
+      "43/60",
+      "19 / 18 / 6",
+      "14",
+      "6.3 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B（關思考）",
+      "41/60",
+      "19／15／7",
+      "1",
+      "2.5 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B (thinking off)",
+      "41/60",
+      "19 / 15 / 7",
+      "1",
+      "2.5 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B（Mac）",
+      "40/60",
+      "20／15／5",
+      "12",
+      "5.6 小時"
+     ],
+     "en": [
+      "Gemma 4 12B (Mac)",
+      "40/60",
+      "20 / 15 / 5",
+      "12",
+      "5.6 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B",
+      "38/60",
+      "20／13／5",
+      "0",
+      "1.3 小時"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B",
+      "38/60",
+      "20 / 13 / 5",
+      "0",
+      "1.3 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B coding（關思考）",
+      "38/60",
+      "19／12／7",
+      "6",
+      "3.2 小時"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B coding (thinking off)",
+      "38/60",
+      "19 / 12 / 7",
+      "6",
+      "3.2 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B（Mac）",
+      "34/60",
+      "18／13／3",
+      "0",
+      "0.9 小時"
+     ],
+     "en": [
+      "Gemma 4 E4B (Mac)",
+      "34/60",
+      "18 / 13 / 3",
+      "0",
+      "0.9 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "33/60",
+      "20／12／1",
+      "21",
+      "3.5 小時"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "33/60",
+      "20 / 12 / 1",
+      "21",
+      "3.5 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B coding（coding agent 預設）",
+      "29/60",
+      "18／10／1",
+      "28",
+      "7.2 小時"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B coding (coding-agent default)",
+      "29/60",
+      "18 / 10 / 1",
+      "28",
+      "7.2 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash",
+      "26/60",
+      "18／7／1",
+      "16",
+      "7.7 小時"
+     ],
+     "en": [
+      "GLM-4.7-Flash",
+      "26/60",
+      "18 / 7 / 1",
+      "16",
+      "7.7 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3-Coder 30B-A3B（不會思考）",
+      "25/60",
+      "17／6／2",
+      "0",
+      "0.8 小時"
+     ],
+     "en": [
+      "Qwen3-Coder 30B-A3B (cannot think)",
+      "25/60",
+      "17 / 6 / 2",
+      "0",
+      "0.8 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B（Mac）",
+      "20/60",
+      "17／3／0",
+      "39",
+      "6.8 小時"
+     ],
+     "en": [
+      "Qwen3.5 9B (Mac)",
+      "20/60",
+      "17 / 3 / 0",
+      "39",
+      "6.8 h"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "aider",
+   "name": {
+    "zh": "寫程式：Aider Polyglot（初步）",
+    "en": "Coding: Aider Polyglot (preliminary)"
+   },
+   "measures": {
+    "zh": "模型能不能在既有的專案檔案裡把程式寫完、通過單元測試；第一次沒過，看到錯誤訊息後能不能改對。比競賽題更接近 coding agent 的實際工作。",
+    "en": "Can the model finish the code in existing project files so the unit tests pass, and fix it after seeing the test errors. Closer to a coding agent's work than contest problems."
+   },
+   "method": {
+    "zh": "Aider 的 Polyglot 題庫（Exercism 練習題）抽同一批 75 題（C++ 9、Go 13、Java 16、JavaScript 16、Python 11、Rust 10）。用 Aider 的整檔改寫格式，跑該語言的單元測試；沒過就把錯誤訊息給模型再改一次，最多 2 次。GPU 主機、Q4_K_M。Python 11 題第一次因為測試環境問題全部 0 分，重跑中，這張表先不含 Python（64 題）。",
+    "en": "Aider's Polyglot set (Exercism exercises), a fixed sample of 75 (C++ 9, Go 13, Java 16, JavaScript 16, Python 11, Rust 10). Aider's whole-file edit format; the language's unit tests are run, and on failure the model sees the errors and tries once more (2 tries). GPU machine, Q4_K_M. The 11 Python exercises scored 0 for every model because of a test-environment fault and are being rerun: this table leaves Python out (64 exercises)."
+   },
+   "example": {
+    "zh": "JavaScript「bottle-song」：專案裡有空的函式和測試檔，要寫出依數字產生《Ten Green Bottles》歌詞的函式，讓測試全部通過。",
+    "en": "JavaScript \"bottle-song\": the project has an empty function and a test file; write the function that produces the verses of Ten Green Bottles so that every test passes."
+   },
+   "limits": {
+    "zh": "初步結果：只有 4 個模型、不含 Python，64 題差 4–5 題在誤差邊緣。排名和 LiveCodeBench 不同，兩種都要看。",
+    "en": "Preliminary: 4 models, no Python; 4–5 of 64 is at the edge of noise. The ranking differs from LiveCodeBench's: read both."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑（要 Docker 與六種語言的環境）。",
+    "en": "Not runnable on the platform (needs Docker and six language toolchains)."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "2 次內通過",
+     "第 1 次就通過",
+     "C++",
+     "Go",
+     "Java",
+     "JavaScript",
+     "Rust",
+     "做題時間合計"
+    ],
+    "en": [
+     "Model",
+     "Passed within 2 tries",
+     "Passed first try",
+     "C++",
+     "Go",
+     "Java",
+     "JavaScript",
+     "Rust",
+     "Total time"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B coding（coding agent 預設）",
+      "41/64",
+      "20/64",
+      "6/9",
+      "9/13",
+      "6/16",
+      "14/16",
+      "6/10",
+      "9.8 小時"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B coding (coding-agent default)",
+      "41/64",
+      "20/64",
+      "6/9",
+      "9/13",
+      "6/16",
+      "14/16",
+      "6/10",
+      "9.8 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "40/64",
+      "15/64",
+      "4/9",
+      "7/13",
+      "9/16",
+      "14/16",
+      "6/10",
+      "2.3 小時"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "40/64",
+      "15/64",
+      "4/9",
+      "7/13",
+      "9/16",
+      "14/16",
+      "6/10",
+      "2.3 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "36/64",
+      "17/64",
+      "3/9",
+      "8/13",
+      "6/16",
+      "13/16",
+      "6/10",
+      "6.0 小時"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "36/64",
+      "17/64",
+      "3/9",
+      "8/13",
+      "6/16",
+      "13/16",
+      "6/10",
+      "6.0 h"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3-Coder 30B-A3B",
+      "17/64",
+      "5/64",
+      "3/9",
+      "4/13",
+      "4/16",
+      "3/16",
+      "3/10",
+      "0.3 小時"
+     ],
+     "en": [
+      "Qwen3-Coder 30B-A3B",
+      "17/64",
+      "5/64",
+      "3/9",
+      "4/13",
+      "4/16",
+      "3/16",
+      "3/10",
+      "0.3 h"
+     ]
+    }
+   ]
+  }
+ ],
+ "aa": {
+  "about": {
+   "zh": "Artificial Analysis（AA）是獨立評測機構，用同一套方法測所有模型，不採用廠商自己報的分數。下表是 AA 網站上我們測過的模型的分數。",
+   "en": "Artificial Analysis (AA) is an independent evaluator that tests every model the same way and does not use vendors' own numbers. The table shows AA's scores for the models we tested."
+  },
+  "method": {
+   "zh": "AA 透過雲端 API 測**完整精度**的模型，題目是**英文**，思考開到最高、輸出上限開到最大；很多評測是幾十到幾百步的完整工作。我們取 AA 每個模型最接近我們用法的版本：地端模型取「思考開」，雲端模型取 AA 列出的最高推理等級。",
+   "en": "AA tests **full-precision** models through cloud APIs, in **English**, with reasoning at the highest setting and the largest output cap; many evaluations are whole jobs of tens to hundreds of steps. We take the variant closest to how we run each model: thinking on for local models, the highest reasoning level AA lists for cloud models."
+  },
+  "limits": {
+   "zh": "和我們的實測不能直接比：我們跑 4-bit 量化、中文為主、任務是單次到十幾步。量化會掉多少分還沒量。AA 沒有台灣立場、繁體中文這類題目。",
+   "en": "Not directly comparable with our own tests: we run 4-bit builds, mostly in Chinese, on tasks of one to a dozen steps. How much quantization costs is not measured yet. AA has nothing on Taiwan stance or Traditional Chinese."
+  },
+  "url": "https://artificialanalysis.ai/leaderboards/models",
+  "methodology_url": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
+  "example_note": {
+   "zh": "例題是依 AA 官方說明寫的示意，不是原題。",
+   "en": "Examples are illustrations written from AA's descriptions, not actual questions."
+  },
+  "metrics": [
+   {
+    "field": "intelligenceIndex",
+    "unit": "index",
+    "default": true,
+    "name": {
+     "zh": "綜合指數",
+     "en": "Intelligence Index"
+    },
+    "measures": {
+     "zh": "Intelligence Index v5.0.1：9 項評測加權，知識工作、寫程式、科學、一般知識各 25%。新版指數，較早發布的模型多半沒有。",
+     "en": "Intelligence Index v5.0.1: 9 evaluations, weighted 25% each for knowledge work, coding, science and general knowledge. A new index: older models mostly lack it."
+    },
+    "example": {
+     "zh": "",
+     "en": ""
+    }
+   },
+   {
+    "field": "gdpval",
+    "unit": "elo",
+    "default": true,
+    "name": {
+     "zh": "知識工作 GDPval-AA（Elo）",
+     "en": "Knowledge work, GDPval-AA (Elo)"
+    },
+    "measures": {
+     "zh": "44 種職業的真實工作，模型要交出檔案，由評審兩兩比較算 Elo 分數；差 400 分表示十次約輸九次。",
+     "en": "Real work from 44 occupations; the model hands in files and judges compare them in pairs for an Elo score (400 points apart: loses about nine times in ten)."
+    },
+    "example": {
+     "zh": "給會計一批試算表，請編製月底對帳表並寫一頁說明。",
+     "en": "An accountant gets a set of spreadsheets: prepare the month-end reconciliation and a one-page note."
+    }
+   },
+   {
+    "field": "terminalBench21",
+    "unit": "pct",
+    "default": true,
+    "name": {
+     "zh": "終端機任務 Terminal-Bench 2.1",
+     "en": "Terminal-Bench 2.1"
+    },
+    "measures": {
+     "zh": "在終端機裡自己下指令完成工程任務，全部測試通過才算。",
+     "en": "Engineering tasks done by issuing commands in a terminal; all tests must pass."
+    },
+    "example": {
+     "zh": "把一個壞掉的建置環境修好，讓專案的測試全部通過。",
+     "en": "Repair a broken build environment so that the project's tests pass."
+    }
+   },
+   {
+    "field": "terminalBench40",
+    "unit": "pct",
+    "default": true,
+    "name": {
+     "zh": "終端機任務 Terminal-Bench 4.0",
+     "en": "Terminal-Bench 4.0"
+    },
+    "measures": {
+     "zh": "同上的新版，任務更長更難，目前雲端頂尖模型約 60–65%。",
+     "en": "The newer, longer and harder version; the best cloud models are at about 60–65%."
+    },
+    "example": {
+     "zh": "",
+     "en": ""
+    }
+   },
+   {
+    "field": "frontierCode20",
+    "unit": "pct",
+    "default": false,
+    "name": {
+     "zh": "真實專案改程式 FrontierCode-AA 2.0",
+     "en": "FrontierCode-AA 2.0"
+    },
+    "measures": {
+     "zh": "在真實開源專案裡改程式，要好到維護者願意合併。",
+     "en": "Changes to real open-source projects, good enough for a maintainer to merge."
+    },
+    "example": {
+     "zh": "替某個函式庫加上一個參數，並補上測試與文件。",
+     "en": "Add a parameter to a library function, with tests and documentation."
+    }
+   },
+   {
+    "field": "tauBanking",
+    "unit": "pct",
+    "default": false,
+    "name": {
+     "zh": "銀行客服 τ³-Banking",
+     "en": "τ³-Banking"
+    },
+    "measures": {
+     "zh": "銀行客服 agent：先在約 700 份規章裡找到規定，再做多步驟的帳戶操作。",
+     "en": "A bank service agent: find the rule among about 700 policy documents, then carry out multi-step account operations."
+    },
+    "example": {
+     "zh": "客戶要求提高轉帳額度，要找到對應規定並照程序處理。",
+     "en": "A customer asks for a higher transfer limit: find the rule and follow the procedure."
+    }
+   },
+   {
+    "field": "tau2",
+    "unit": "pct",
+    "default": false,
+    "name": {
+     "zh": "電信客服 τ²-Bench Telecom",
+     "en": "τ²-Bench Telecom"
+    },
+    "measures": {
+     "zh": "電信客服 agent：一邊用工具、一邊引導使用者操作手機。已接近滿分、分不出高下，AA 列為舊評測。",
+     "en": "A telecom service agent that uses tools while guiding the user through phone settings. Near the ceiling and no longer discriminating; AA lists it as a legacy evaluation."
+    },
+    "example": {
+     "zh": "使用者說行動上網不能用，要查帳號、請他開關設定，直到恢復。",
+     "en": "Mobile data does not work: check the account and walk the user through settings until it does."
+    }
+   },
+   {
+    "field": "lcr",
+    "unit": "pct",
+    "default": true,
+    "name": {
+     "zh": "長文推理 AA-LCR",
+     "en": "Long context, AA-LCR"
+    },
+    "measures": {
+     "zh": "讀約 10 萬 token 的多份長文件後，回答要推理的問題。",
+     "en": "Questions that need reasoning over several long documents, about 100,000 tokens."
+    },
+    "example": {
+     "zh": "給三年的公司年報，問哪一年某部門的毛利率下降、原因是什麼。",
+     "en": "Three years of annual reports: in which year did a division's gross margin fall, and why?"
+    }
+   },
+   {
+    "field": "ifbench",
+    "unit": "pct",
+    "default": true,
+    "name": {
+     "zh": "指令遵循 IFBench",
+     "en": "Instruction following, IFBench"
+    },
+    "measures": {
+     "zh": "能不能照精確的格式指示寫。",
+     "en": "Following exact formatting instructions."
+    },
+    "example": {
+     "zh": "用剛好三句話回答，每句都要包含一個數字。",
+     "en": "Answer in exactly three sentences, each containing a number."
+    }
+   },
+   {
+    "field": "omniscienceAccuracy",
+    "unit": "pct",
+    "default": true,
+    "name": {
+     "zh": "冷門知識正確率 AA-Omniscience",
+     "en": "Obscure knowledge accuracy, AA-Omniscience"
+    },
+    "measures": {
+     "zh": "冷門知識 3,000 題的正確率。",
+     "en": "Accuracy on 3,000 obscure-knowledge questions."
+    },
+    "example": {
+     "zh": "某個小眾函式庫的某個參數預設值是多少？",
+     "en": "What is the default value of a parameter in a niche library?"
+    }
+   },
+   {
+    "field": "omniscienceHallucinationRate",
+    "unit": "pct",
+    "default": true,
+    "lower_better": true,
+    "name": {
+     "zh": "幻覺率（越低越好）",
+     "en": "Hallucination rate (lower is better)"
+    },
+    "measures": {
+     "zh": "AA-Omniscience 裡答不對的題目中，硬給錯答案（而不是說不知道）的比例。",
+     "en": "Of the AA-Omniscience questions not answered correctly, the share where the model gave a wrong answer instead of saying it does not know."
+    },
+    "example": {
+     "zh": "",
+     "en": ""
+    }
+   },
+   {
+    "field": "hle",
+    "unit": "pct",
+    "default": false,
+    "name": {
+     "zh": "專家題 HLE",
+     "en": "Humanity's Last Exam"
+    },
+    "measures": {
+     "zh": "專家等級的知識與推理題。",
+     "en": "Expert-level knowledge and reasoning questions."
+    },
+    "example": {
+     "zh": "",
+     "en": ""
+    }
+   },
+   {
+    "field": "gpqa",
+    "unit": "pct",
+    "default": false,
+    "name": {
+     "zh": "科學選擇題 GPQA Diamond",
+     "en": "GPQA Diamond"
+    },
+    "measures": {
+     "zh": "研究所等級的物理、化學、生物選擇題。",
+     "en": "Graduate-level multiple-choice questions in physics, chemistry and biology."
+    },
+    "example": {
+     "zh": "",
+     "en": ""
+    }
+   },
+   {
+    "field": "scicode",
+    "unit": "pct",
+    "default": false,
+    "name": {
+     "zh": "科學程式 SciCode",
+     "en": "SciCode"
+    },
+    "measures": {
+     "zh": "把科學研究裡的計算問題寫成程式。",
+     "en": "Programs for computational problems from scientific research."
+    },
+    "example": {
+     "zh": "",
+     "en": ""
+    }
+   }
+  ]
+ }
+}
