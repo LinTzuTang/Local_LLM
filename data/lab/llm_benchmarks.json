@@ -2646,24 +2646,24 @@
   {
    "id": "aider",
    "name": {
-    "zh": "寫程式：Aider Polyglot（初步）",
-    "en": "Coding: Aider Polyglot (preliminary)"
+    "zh": "寫程式：Aider Polyglot",
+    "en": "Coding: Aider Polyglot"
    },
    "measures": {
     "zh": "模型能不能在既有的專案檔案裡把程式寫完、通過單元測試；第一次沒過，看到錯誤訊息後能不能改對。比競賽題更接近 coding agent 的實際工作。",
     "en": "Can the model finish the code in existing project files so the unit tests pass, and fix it after seeing the test errors. Closer to a coding agent's work than contest problems."
    },
    "method": {
-    "zh": "Aider 的 Polyglot 題庫（Exercism 練習題）抽同一批 75 題（C++ 9、Go 13、Java 16、JavaScript 16、Python 11、Rust 10）。用 Aider 的整檔改寫格式，跑該語言的單元測試；沒過就把錯誤訊息給模型再改一次，最多 2 次。GPU 主機、Q4_K_M。Python 11 題第一次因為測試環境問題全部 0 分，重跑中，這張表先不含 Python（64 題）。",
-    "en": "Aider's Polyglot set (Exercism exercises), a fixed sample of 75 (C++ 9, Go 13, Java 16, JavaScript 16, Python 11, Rust 10). Aider's whole-file edit format; the language's unit tests are run, and on failure the model sees the errors and tries once more (2 tries). GPU machine, Q4_K_M. The 11 Python exercises scored 0 for every model because of a test-environment fault and are being rerun: this table leaves Python out (64 exercises)."
+    "zh": "Aider 的 Polyglot 題庫（Exercism 練習題）抽同一批 75 題（C++ 9、Go 13、Java 16、JavaScript 16、Python 11、Rust 10）。用 Aider 的整檔改寫格式，跑該語言的單元測試；沒過就把錯誤訊息給模型再改一次，最多 2 次。GPU 主機、Q4_K_M。Python 11 題第一次因為測試環境問題全部 0 分，修好後重跑，這張表是重跑後的 75 題。",
+    "en": "Aider's Polyglot set (Exercism exercises), a fixed sample of 75 (C++ 9, Go 13, Java 16, JavaScript 16, Python 11, Rust 10). Aider's whole-file edit format; the language's unit tests are run, and on failure the model sees the errors and tries once more (2 tries). GPU machine, Q4_K_M. The 11 Python exercises first scored 0 for every model because of a test-environment fault; they were rerun after the fix, and this table is all 75 exercises."
    },
    "example": {
     "zh": "JavaScript「bottle-song」：專案裡有空的函式和測試檔，要寫出依數字產生《Ten Green Bottles》歌詞的函式，讓測試全部通過。",
     "en": "JavaScript \"bottle-song\": the project has an empty function and a test file; write the function that produces the verses of Ten Green Bottles so that every test passes."
    },
    "limits": {
-    "zh": "初步結果：只有 4 個模型、不含 Python，64 題差 4–5 題在誤差邊緣。排名和 LiveCodeBench 不同，兩種都要看。",
-    "en": "Preliminary: 4 models, no Python; 4–5 of 64 is at the edge of noise. The ranking differs from LiveCodeBench's: read both."
+    "zh": "只有 4 個模型、每題跑一次。做題時間是每題秒數加總，有的模型跑的時候旁邊還有別的測試，不能直接比速度。排名和 LiveCodeBench 不同，兩種都要看。",
+    "en": "Only 4 models, one run each. Total time is the sum of per-exercise seconds, and some models ran next to other tests, so it is not a speed comparison. The ranking differs from LiveCodeBench's: read both."
    },
    "platform": {
     "zh": "平台上不能現場跑（要 Docker 與六種語言的環境）。",
@@ -2678,6 +2678,7 @@
      "Go",
      "Java",
      "JavaScript",
+     "Python",
      "Rust",
      "做題時間合計"
     ],
@@ -2689,6 +2690,7 @@
      "Go",
      "Java",
      "JavaScript",
+     "Python",
      "Rust",
      "Total time"
     ]
@@ -2698,100 +2700,108 @@
      "where": "local",
      "zh": [
       "Qwen3.6 35B-A3B coding（coding agent 預設）",
-      "41/64",
-      "20/64",
+      "47/75",
+      "23/75",
       "6/9",
       "9/13",
       "6/16",
       "14/16",
+      "6/11",
       "6/10",
-      "9.8 小時"
+      "10.6 小時"
      ],
      "en": [
       "Qwen3.6 35B-A3B coding (coding-agent default)",
-      "41/64",
-      "20/64",
+      "47/75",
+      "23/75",
       "6/9",
       "9/13",
       "6/16",
       "14/16",
+      "6/11",
       "6/10",
-      "9.8 h"
+      "10.6 h"
      ]
     },
     {
      "where": "local",
      "zh": [
       "Qwen3.8 27B",
-      "40/64",
-      "15/64",
+      "47/75",
+      "17/75",
       "4/9",
       "7/13",
       "9/16",
       "14/16",
+      "7/11",
       "6/10",
-      "2.3 小時"
+      "2.4 小時"
      ],
      "en": [
       "Qwen3.8 27B",
-      "40/64",
-      "15/64",
+      "47/75",
+      "17/75",
       "4/9",
       "7/13",
       "9/16",
       "14/16",
+      "7/11",
       "6/10",
-      "2.3 h"
+      "2.4 h"
      ]
     },
     {
      "where": "local",
      "zh": [
       "Gemma 4 31B",
-      "36/64",
-      "17/64",
+      "41/75",
+      "18/75",
       "3/9",
       "8/13",
       "6/16",
       "13/16",
+      "5/11",
       "6/10",
-      "6.0 小時"
+      "6.4 小時"
      ],
      "en": [
       "Gemma 4 31B",
-      "36/64",
-      "17/64",
+      "41/75",
+      "18/75",
       "3/9",
       "8/13",
       "6/16",
       "13/16",
+      "5/11",
       "6/10",
-      "6.0 h"
+      "6.4 h"
      ]
     },
     {
      "where": "local",
      "zh": [
       "Qwen3-Coder 30B-A3B",
-      "17/64",
-      "5/64",
+      "19/75",
+      "6/75",
       "3/9",
       "4/13",
       "4/16",
       "3/16",
+      "2/11",
       "3/10",
-      "0.3 小時"
+      "0.4 小時"
      ],
      "en": [
       "Qwen3-Coder 30B-A3B",
-      "17/64",
-      "5/64",
+      "19/75",
+      "6/75",
       "3/9",
       "4/13",
       "4/16",
       "3/16",
+      "2/11",
       "3/10",
-      "0.3 h"
+      "0.4 h"
      ]
     }
    ]
