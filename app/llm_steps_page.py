@@ -138,6 +138,32 @@ reason = blocked(kind)
 if reason:
     st.warning(reason, icon=":material/lock:")
     st.stop()
+if kind == "company":
+    method = (step_bench.company() or {}).get("method")
+    if method and method.exists():
+        with st.expander(
+            tr("測試方法：怎麼出題、怎麼評分、已知限制", "Method: questions, grading, limits"),
+            icon=":material/menu_book:",
+        ):
+            text = method.read_text(encoding="utf-8")
+            text = text.split("\n", 1)[1] if text.startswith("# ") else text  # no page title
+            st.markdown(text.replace("\n## ", "\n#### "))  # smaller headings inside the panel
+    view = st.segmented_control(
+        tr("檢視", "View"),
+        ["run", "questions"],
+        format_func=lambda v: (
+            tr(":material/play_arrow: 現場測試", ":material/play_arrow: Run")
+            if v == "run"
+            else tr(":material/quiz: 題目與答案", ":material/quiz: Questions and answers")
+        ),
+        label_visibility="collapsed",
+        **kept("steps_company_tab"),
+    )
+    if view == "questions":
+        import company_questions
+
+        company_questions.render()
+        st.stop()
 
 
 @st.cache_data(ttl=600)

@@ -26,3 +26,14 @@ def test_question_lists_load():
     sets = sb.memory_sets("kv")
     assert set(sets) == {"finance", "healthcare", "notetaker"}
     assert all(s["prereqs"] and s["questions"] for s in sets.values())
+
+
+@pytest.mark.skipif(sb.missing("company") is not None, reason="company test not on this machine")
+def test_company_answers_load():
+    d = sb.company_answers()
+    assert len(d["questions"]) == len(sb.company_questions())
+    act = [q for q in d["questions"] if q["expect"] == "act"]
+    assert act and all(q["alternatives"] for q in act)
+    assert all(q["alternatives"] == [] for q in d["questions"] if q["expect"] != "act")
+    run = next(iter(d["runs"].values()))
+    assert {"model", "cond", "main", "grades"} <= set(run)

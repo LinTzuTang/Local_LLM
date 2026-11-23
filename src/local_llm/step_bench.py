@@ -7,7 +7,8 @@ The platform does not reimplement them: it runs the same batch scripts as the re
 their result and score files back. A server without those (the venv, the scripts, BFCL's data,
 the company tool definitions) simply does not offer the test: `missing()` says why. The company
 test is internal: where it lives comes from storage/llm_eval/company_test.json (not in git):
-{"script": ..., "questions": ..., "tools": ..., "results_env": ...}, paths relative to the project.
+{"script": ..., "questions": ..., "tools": ..., "results_env": ..., "method": ... (optional:
+the method write-up, Markdown)}, paths relative to the project.
 
 Local models run with their own sampling (model-card defaults); the report's batch runs used
 BFCL's 0.001 for most local models, so a live result can differ from the report.
@@ -173,6 +174,7 @@ def company() -> dict | None:
             "questions": ROOT / c["questions"],
             "tools": ROOT / c["tools"],
             "results_env": c.get("results_env", "COMPANY_RESULTS"),
+            "method": ROOT / c["method"] if c.get("method") else None,  # Markdown, optional
         }
     except (OSError, ValueError, KeyError, TypeError):
         return None
@@ -184,6 +186,24 @@ def company_questions() -> list[dict]:
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return [{"id": q[0], "category": q[0][0], "turns": [q[1]], "expect": q[2]} for q in mod.Q]
+
+
+def company_answers() -> dict:
+    """Every company question with its answer key in words, and every batch run's grade, from
+    the test's own script (`review` command): {"questions": [{"id", "group", "text", "expect",
+    "alternatives", "ask_ok", "check"}], "runs": {stem: {"model", "cond", "main", "grades":
+    {id: {"ok", "why", "calls"?, "final"?}}}}}. Takes a few seconds (it regrades every run)."""
+    c = company()
+    out = subprocess.run(
+        [str(BFCL_PY), str(c["script"]), "review"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "PYTHONWARNINGS": "ignore"},
+    )
+    if out.returncode:
+        raise RuntimeError(out.stderr.strip().splitlines()[-1] if out.stderr.strip() else "failed")
+    return json.loads(out.stdout)
 
 
 def estimate_seconds(kind: str, n: int, prereqs: int = 0) -> int:
