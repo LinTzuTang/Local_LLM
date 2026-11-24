@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-19",
+ "updated": "2026-11-24",
  "ours": [
   {
    "id": "bfcl_en",
@@ -265,6 +265,21 @@
       "59.2%",
       "49%",
       "2.55 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（11-23）",
+      "58.8%",
+      "39%",
+      "16.89 秒"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (11-23)",
+      "58.8%",
+      "39%",
+      "16.89 s"
      ]
     },
     {
@@ -593,6 +608,21 @@
       "77.1",
       "13.8",
       "50.2 (never stops thinking)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（11-23）",
+      "76.7",
+      "8.0",
+      "38.8（巢狀參數格式亂寫；救回其中一種寫法後 56.3）"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (11-23)",
+      "76.7",
+      "8.0",
+      "38.8 (made-up formats for nested arguments; 56.3 with one format recovered)"
      ]
     },
     {
@@ -1181,6 +1211,25 @@
     {
      "where": "local",
      "zh": [
+      "Muse Glimmer 30B（Mac，11-21）",
+      "99%",
+      "95%",
+      "90%",
+      "—",
+      "31.4 秒（Mac）"
+     ],
+     "en": [
+      "Muse Glimmer 30B (Mac, 11-21)",
+      "99%",
+      "95%",
+      "90%",
+      "—",
+      "31.4 s (Mac)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
       "Gemma 4 26B",
       "97%",
       "87%",
@@ -1214,6 +1263,25 @@
       "96%",
       "83%",
       "4.5 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（Mac，11-23）",
+      "94%",
+      "90%",
+      "93%",
+      "—",
+      "14.9 秒（Mac）"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (Mac, 11-23)",
+      "94%",
+      "90%",
+      "93%",
+      "—",
+      "14.9 s (Mac)"
      ]
     },
     {
@@ -2238,6 +2306,98 @@
       "12",
       "16/24"
      ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（Thinking Machines，Mac，11-23）",
+      "無",
+      "16",
+      "7",
+      "3",
+      "0",
+      "6",
+      "11/24"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (Thinking Machines, Mac, 11-23)",
+      "no",
+      "16",
+      "7",
+      "3",
+      "0",
+      "6",
+      "11/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Muse Glimmer 30B（Meta，Mac，11-20）",
+      "無",
+      "22",
+      "3",
+      "1",
+      "0",
+      "9",
+      "15/24"
+     ],
+     "en": [
+      "Muse Glimmer 30B (Meta, Mac, 11-20)",
+      "no",
+      "22",
+      "3",
+      "1",
+      "0",
+      "9",
+      "15/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nanbeige4.3 33B（BOSS 直聘，Mac，11-20）",
+      "無",
+      "13",
+      "3",
+      "10",
+      "0",
+      "23",
+      "18/24"
+     ],
+     "en": [
+      "Nanbeige4.3 33B (BOSS Zhipin, Mac, 11-20)",
+      "no",
+      "13",
+      "3",
+      "10",
+      "0",
+      "23",
+      "18/24"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nanbeige4.3 33B（BOSS 直聘，Mac，11-20）",
+      "有",
+      "23",
+      "2",
+      "1",
+      "0",
+      "23",
+      "24/24"
+     ],
+     "en": [
+      "Nanbeige4.3 33B (BOSS Zhipin, Mac, 11-20)",
+      "yes",
+      "23",
+      "2",
+      "1",
+      "0",
+      "23",
+      "24/24"
+     ]
     }
    ]
   },
@@ -2802,6 +2962,953 @@
       "2/11",
       "3/10",
       "0.4 h"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "zh_en_gap",
+   "name": {
+    "zh": "工具呼叫：用中文問差在哪（逐題分析）",
+    "en": "Tool calling: where Chinese questions go wrong (question by question)"
+   },
+   "measures": {
+    "zh": "同一批題目用英文和繁中各問一次，中文比較低的分數到底是不是中文能力差：把「英文答對、中文答錯」的題目逐題分類。",
+    "en": "The same questions asked in English and in Traditional Chinese: is the lower Chinese score really weaker Chinese? Every question right in English but wrong in Chinese is sorted by cause."
+   },
+   "method": {
+    "zh": "繁中 BFCL 是英文 BFCL 同一批 275 題的翻譯。比對兩邊的評分檔，只有繁中答錯的題目分成四類（題數）：英文同義詞＝模型把中文參數翻成英文時用了和標準答案不同的寫法；改寫成簡體＝題目是繁體、參數寫成簡體（用 OpenCC 判斷）；不該呼叫卻呼叫；平行呼叫的次數或函式不對。差距＝英文分數減繁中分數。",
+    "en": "zh-TW BFCL is the same 275 questions as English BFCL, translated. Comparing the two score files, questions wrong only in Chinese fall into four kinds (counts): English synonym = the model translated a Chinese argument into English with wording other than the answer key; rewritten in Simplified = Traditional question, Simplified argument (checked with OpenCC); called a tool when it should not; parallel calls with the wrong count or functions. Gap = English score minus Chinese score."
+   },
+   "example": {
+    "zh": "「細胞膜中發現的蛋白質有哪些？」模型填 cell membrane，標準答案是 plasma membrane → 判錯，但意思正確。Gemma 4 31B 這類 16 題逐題看過，15 題意思正確；扣掉這類後，它和雲端模型的中英文差距只剩 −0.4～1.5 分。\n\n「黃石國家公園」GLM-4.7-Flash 填成「黄石国家公园」→ 意思對，但寫進系統的資料變成簡體。",
+    "en": "\"Which proteins are found in the cell membrane?\" The model fills cell membrane, the key says plasma membrane → marked wrong, though correct in meaning. Of Gemma 4 31B's 16 such questions, 15 are correct in meaning; without them its gap, like the cloud models', is only −0.4 to 1.5 points.\n\nGLM-4.7-Flash writes 黃石國家公園 (Yellowstone) in Simplified characters: right meaning, but the data in our systems would turn Simplified."
+   },
+   "limits": {
+    "zh": "只逐題人工看過 Gemma 4 31B 的「英文同義詞」，其他模型這類是推估大多正確。題庫只有單次呼叫題。",
+    "en": "Only Gemma 4 31B's English-synonym cases were read by hand; for the other models these are assumed mostly correct. The set has single calls only."
+   },
+   "platform": {
+    "zh": "「工具呼叫測試」可以現場跑繁中 BFCL，看每題的答案。",
+    "en": "Tool calling mode runs zh-TW BFCL live and shows each answer."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "英文（同 275 題）",
+     "繁中",
+     "差距",
+     "英文同義詞",
+     "改寫成簡體",
+     "不該呼叫卻呼叫",
+     "平行呼叫出錯"
+    ],
+    "en": [
+     "Model",
+     "English (same 275)",
+     "zh-TW",
+     "Gap",
+     "English synonym",
+     "Rewritten in Simplified",
+     "Called when it should not",
+     "Parallel calls wrong"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 8B（GPU 主機）",
+      "53.8",
+      "61.1",
+      "-7.3",
+      "3",
+      "1",
+      "13",
+      "1"
+     ],
+     "en": [
+      "Breeze 2 8B (GPU machine)",
+      "53.8",
+      "61.1",
+      "-7.3",
+      "3",
+      "1",
+      "13",
+      "1"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "TAIDE LX 8B（GPU 主機）",
+      "42.9",
+      "48.7",
+      "-5.8",
+      "3",
+      "0",
+      "1",
+      "0"
+     ],
+     "en": [
+      "TAIDE LX 8B (GPU machine)",
+      "42.9",
+      "48.7",
+      "-5.8",
+      "3",
+      "0",
+      "1",
+      "0"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Breeze 2 3B（GPU 主機）",
+      "53.5",
+      "50.2",
+      "3.3",
+      "5",
+      "1",
+      "5",
+      "7"
+     ],
+     "en": [
+      "Breeze 2 3B (GPU machine)",
+      "53.5",
+      "50.2",
+      "3.3",
+      "5",
+      "1",
+      "5",
+      "7"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 12B",
+      "77.8",
+      "74.2",
+      "3.6",
+      "19",
+      "0",
+      "2",
+      "4"
+     ],
+     "en": [
+      "Gemma 4 12B",
+      "77.8",
+      "74.2",
+      "3.6",
+      "19",
+      "0",
+      "2",
+      "4"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "gpt-oss 20B",
+      "61.1",
+      "57.5",
+      "3.6",
+      "12",
+      "0",
+      "2",
+      "0"
+     ],
+     "en": [
+      "gpt-oss 20B",
+      "61.1",
+      "57.5",
+      "3.6",
+      "12",
+      "0",
+      "2",
+      "0"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Opus 5.5（雲端）",
+      "90.9",
+      "86.9",
+      "4.0",
+      "10",
+      "0",
+      "3",
+      "0"
+     ],
+     "en": [
+      "Claude Opus 5.5 (cloud)",
+      "90.9",
+      "86.9",
+      "4.0",
+      "10",
+      "0",
+      "3",
+      "0"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "90.5",
+      "85.8",
+      "4.7",
+      "12",
+      "1",
+      "2",
+      "0"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "90.5",
+      "85.8",
+      "4.7",
+      "12",
+      "1",
+      "2",
+      "0"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端）",
+      "88.4",
+      "83.3",
+      "5.1",
+      "13",
+      "2",
+      "2",
+      "2"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud)",
+      "88.4",
+      "83.3",
+      "5.1",
+      "13",
+      "2",
+      "2",
+      "2"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "88.7",
+      "83.3",
+      "5.4",
+      "16",
+      "0",
+      "2",
+      "0"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "88.7",
+      "83.3",
+      "5.4",
+      "16",
+      "0",
+      "2",
+      "0"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nemotron 3.5 Bolt E4B（GPU 主機）",
+      "89.1",
+      "83.6",
+      "5.5",
+      "14",
+      "1",
+      "1",
+      "1"
+     ],
+     "en": [
+      "Nemotron 3.5 Bolt E4B (GPU machine)",
+      "89.1",
+      "83.6",
+      "5.5",
+      "14",
+      "1",
+      "1",
+      "1"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "GPT-5.5（雲端）",
+      "89.8",
+      "84.0",
+      "5.8",
+      "13",
+      "0",
+      "2",
+      "0"
+     ],
+     "en": [
+      "GPT-5.5 (cloud)",
+      "89.8",
+      "84.0",
+      "5.8",
+      "13",
+      "0",
+      "2",
+      "0"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "88.4",
+      "81.1",
+      "7.3",
+      "15",
+      "0",
+      "6",
+      "2"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "88.4",
+      "81.1",
+      "7.3",
+      "15",
+      "0",
+      "6",
+      "2"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（11-23）",
+      "84.7",
+      "76.7",
+      "8.0",
+      "19",
+      "0",
+      "7",
+      "4"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (11-23)",
+      "84.7",
+      "76.7",
+      "8.0",
+      "19",
+      "0",
+      "7",
+      "4"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 E4B（GPU 主機）",
+      "91.3",
+      "82.9",
+      "8.4",
+      "21",
+      "1",
+      "1",
+      "2"
+     ],
+     "en": [
+      "Gemma 4 E4B (GPU machine)",
+      "91.3",
+      "82.9",
+      "8.4",
+      "21",
+      "1",
+      "1",
+      "2"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "91.3",
+      "82.2",
+      "9.1",
+      "14",
+      "5",
+      "6",
+      "2"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "91.3",
+      "82.2",
+      "9.1",
+      "14",
+      "5",
+      "6",
+      "2"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Gemini 3.8 Flash（雲端）",
+      "92.4",
+      "82.9",
+      "9.5",
+      "22",
+      "0",
+      "2",
+      "2"
+     ],
+     "en": [
+      "Gemini 3.8 Flash (cloud)",
+      "92.4",
+      "82.9",
+      "9.5",
+      "22",
+      "0",
+      "2",
+      "2"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B（原廠取樣）",
+      "91.6",
+      "81.8",
+      "9.8",
+      "16",
+      "2",
+      "3",
+      "5"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B (model-card sampling)",
+      "91.6",
+      "81.8",
+      "9.8",
+      "16",
+      "2",
+      "3",
+      "5"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3 30B-A3B（平台舊預設）",
+      "91.3",
+      "79.6",
+      "11.7",
+      "13",
+      "12",
+      "5",
+      "1"
+     ],
+     "en": [
+      "Qwen3 30B-A3B (old platform default)",
+      "91.3",
+      "79.6",
+      "11.7",
+      "13",
+      "12",
+      "5",
+      "1"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.5 9B",
+      "90.5",
+      "77.1",
+      "13.4",
+      "14",
+      "12",
+      "11",
+      "1"
+     ],
+     "en": [
+      "Qwen3.5 9B",
+      "90.5",
+      "77.1",
+      "13.4",
+      "14",
+      "12",
+      "11",
+      "1"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "90.9",
+      "77.1",
+      "13.8",
+      "14",
+      "0",
+      "3",
+      "23"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "90.9",
+      "77.1",
+      "13.8",
+      "14",
+      "0",
+      "3",
+      "23"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "GLM-4.7-Flash（GPU 主機）",
+      "86.2",
+      "69.5",
+      "16.7",
+      "13",
+      "30",
+      "7",
+      "5"
+     ],
+     "en": [
+      "GLM-4.7-Flash (GPU machine)",
+      "86.2",
+      "69.5",
+      "16.7",
+      "13",
+      "30",
+      "7",
+      "5"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "thinking",
+   "name": {
+    "zh": "思考開或關",
+    "en": "Thinking on or off"
+   },
+   "measures": {
+    "zh": "會思考的模型回答前會先寫一段推理。關掉比較快，但會不會變笨？",
+    "en": "Thinking models write out their reasoning before answering. Switching it off is faster; do they get worse?"
+   },
+   "method": {
+    "zh": "同一批題目各跑一次：開＝GPU 主機的原結果，關＝Mac 上另跑（Ollama 送 reasoning_effort none）。題目與設定同前面各個測試；公司工具 A／B／C 是三種工具數量。",
+    "en": "The same questions, once each: on = the original GPU-machine results, off = a Mac rerun (Ollama with reasoning_effort none). Questions and settings as in the other tests; company tools A/B/C are the three tool-set sizes."
+   },
+   "example": {
+    "zh": "Gemma 4 31B 單步的工具呼叫可以關（差不多，而且快），但記憶要開：關掉後鍵值記憶 15 題從 9 題掉到 3 題。Qwen3.8 27B 要開：關掉後繁中工具呼叫掉 6 分、寫程式少 5 題。",
+    "en": "Gemma 4 31B can switch thinking off for single tool calls (about the same, and faster) but needs it for memory: key-value memory drops from 9 to 3 of 15. Qwen3.8 27B needs it: zh-TW tool calling loses 6 points and coding 5 problems."
+   },
+   "limits": {
+    "zh": "開和關在不同機器上跑，秒數不能比；每項只跑一次。Ollama 的思考程度（low／high）對這兩個模型沒有作用，只能開或關。",
+    "en": "On and off ran on different machines, so seconds do not compare; one run each. Ollama's thinking levels (low/high) have no effect on these two models: only on or off."
+   },
+   "platform": {
+    "zh": "「工具呼叫測試」「多步驟測試」都可以切換思考開關現場比。",
+    "en": "Tool calling and Multi-step modes both have a thinking switch for comparing live."
+   },
+   "columns": {
+    "zh": [
+     "測試",
+     "Gemma 4 31B 開 → 關",
+     "Qwen3.8 27B 開 → 關"
+    ],
+    "en": [
+     "Test",
+     "Gemma 4 31B on → off",
+     "Qwen3.8 27B on → off"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "公司工具 A／B／C",
+      "98／94／96 → 94／94／92",
+      "94／90／96 → 93／89／86"
+     ],
+     "en": [
+      "company tools A / B / C",
+      "98 / 94 / 96 → 94 / 94 / 92",
+      "94 / 90 / 96 → 93 / 89 / 86"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "繁中 BFCL",
+      "85.1 → 82.5",
+      "82.5 → 76.4"
+     ],
+     "en": [
+      "zh-TW BFCL",
+      "85.1 → 82.5",
+      "82.5 → 76.4"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "ACEBench",
+      "76.2 → 78.2",
+      "73.6 → 74.6"
+     ],
+     "en": [
+      "ACEBench",
+      "76.2 → 78.2",
+      "73.6 → 74.6"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "LiveCodeBench（60 題）",
+      "51 → 52",
+      "46 → 41"
+     ],
+     "en": [
+      "LiveCodeBench (60 problems)",
+      "51 → 52",
+      "46 → 41"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "搜尋＋記憶（65 題答對題數）",
+      "50 → 40（鍵值記憶 9 → 3/15）",
+      "60 → 59"
+     ],
+     "en": [
+      "Search + memory (correct of 65)",
+      "50 → 40 (key-value memory 9 → 3/15)",
+      "60 → 59"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "無摘要搜尋（20 題）",
+      "12 → 10",
+      "13 → 13"
+     ],
+     "en": [
+      "Search without snippets (of 20)",
+      "12 → 10",
+      "13 → 13"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "capacity",
+   "name": {
+    "zh": "一張 RTX PRO 6000 能給幾人同時用",
+    "en": "How many people one RTX PRO 6000 serves at once"
+   },
+   "measures": {
+    "zh": "公司伺服器上很多人同時用時，一張顯示卡最多能讓幾個人同時在等回答、還覺得夠快。夠快＝95% 的請求 3 秒內出第一個字，而且 95% 每秒至少 20 token。",
+    "en": "With many people on the company server at once: how many can be waiting for an answer at the same time on one card and still find it fast. Fast = 95% of requests show the first token within 3 s and 95% get at least 20 tokens/s."
+   },
+   "method": {
+    "zh": "GPU 主機（RTX PRO 6000 Blackwell，96 GB）。模擬 1、2、4…64 人同時不停發問（一題答完馬上送下一題），每級送 max(8, 3 × 人數) 題，到撐不住為止。三種用法：一般聊天（短問題、寫約 600 字）、agent 工具呼叫（同一段約 1 萬 token 的系統提示與 74 個公司工具＋一題問題）、長文件（約 3 萬 token 的公司文件請它摘要）。vLLM 0.34 用 FP8；Ollama 0.40.13 用 4-bit，開到所有層都放得進顯示卡的最大路數。思考關閉、每次最多輸出 512 token。",
+    "en": "On the GPU machine (RTX PRO 6000 Blackwell, 96 GB). 1, 2, 4 … 64 users asking non-stop (the next question as soon as an answer ends), max(8, 3 × users) requests per level, until it breaks. Three uses: chat (a short question, about 600 characters back), agent tool calling (the same ~10k-token system prompt with 74 company tools, plus one question), long document (a ~30k-token company document to summarise). vLLM 0.34 with FP8; Ollama 0.40.13 with 4-bit, with as many parallel slots as fit fully on the card. Thinking off, at most 512 tokens per answer."
+   },
+   "example": {
+    "zh": "agent 用法：每個人的請求前面都是同一段 1 萬 token 的工具說明。vLLM 讀一次就給所有人共用，32 人時第一個字 0.8 秒；Ollama 每個人都要從頭重讀，2 人時就要 3.5 秒。\n\n換算公司人數（假設，不是量到的）：尖峰 20% 員工在用、其中 30% 時間在等回答時，vLLM agent 的 32 人約等於 530 名員工。",
+    "en": "Agent use: every request starts with the same 10k-token tool description. vLLM reads it once and shares it, first token 0.8 s at 32 users; Ollama reads it again for each user, 3.5 s at 2 users.\n\nIn staff (an assumption, not measured): if 20% of staff use it at peak and spend 30% of that time waiting, vLLM's 32 agent users are about 530 staff."
+   },
+   "limits": {
+    "zh": "進行中：開思考（輸出上限 4,096）、Qwen3.6 的 Ollama 還在跑。思考關閉、512 token、agent 只量第一輪，所以偏樂觀。vLLM 是 FP8、Ollama 是 4-bit，精度不同。換算公司人數的使用比例是假設的，平台還沒有請求紀錄。",
+    "en": "In progress: thinking on (4,096-token cap) and Qwen3.6 on Ollama are still running. Thinking off, 512 tokens and only the agent's first turn make these optimistic. vLLM is FP8 and Ollama 4-bit: different precision. The usage shares behind the staff estimate are assumptions; the platform does not log requests yet."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑（要獨佔整張顯示卡）。",
+    "en": "Not runnable on the platform (it needs the whole card)."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "用法",
+     "vLLM：最多幾人達標",
+     "Ollama：最多幾人達標"
+    ],
+    "en": [
+     "Model",
+     "Use",
+     "vLLM: most users meeting the bar",
+     "Ollama: most users meeting the bar"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "一般聊天",
+      "64 人以上（只測到 64）",
+      "16 人（最多只能開 16 路）"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "Chat",
+      "64+ users (tested up to 64)",
+      "16 users (16 slots at most)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "agent 工具呼叫",
+      "32 人",
+      "1 人"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "Agent tool calling",
+      "32 users",
+      "1 user"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "長文件（約 3 萬 token）",
+      "0 人（1 人就要等 7.4 秒）",
+      "0 人（1 人要等 20.6 秒）"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "Long document (~30k tokens)",
+      "0 users (one user already waits 7.4 s)",
+      "0 users (one user waits 20.6 s)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "一般聊天",
+      "64 人以上（64 人時每人仍有 48.3 token/秒）",
+      "測試中"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "Chat",
+      "64+ users (48.3 tokens/s each at 64 users)",
+      "running"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "agent 工具呼叫",
+      "32 人",
+      "測試中"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "Agent tool calling",
+      "32 users",
+      "running"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "capacity_levels",
+   "name": {
+    "zh": "一張 RTX PRO 6000：每一級人數的速度",
+    "en": "One RTX PRO 6000: speed at each number of users"
+   },
+   "measures": {
+    "zh": "上一個測試每一級人數的細節：聊天看每人每秒拿到幾個 token（最慢的 5%），agent 看第一個字要等多久（95% 的請求）。",
+    "en": "The levels behind the previous test: for chat, tokens per second each user gets (slowest 5%); for agent use, the wait for the first token (95% of requests)."
+   },
+   "method": {
+    "zh": "同上一個測試。agent 的回答常是一整段工具呼叫一次回來，算不出每秒 token，所以只看第一個字。撐不住（第一個字超過 60 秒、每秒不到 5 token 或出錯）就停，後面寫「—」。",
+    "en": "As in the previous test. Agent answers are often one tool call arriving at once, so only the first token counts there. A run stops when it breaks (first token over 60 s, under 5 tokens/s, or errors): \"—\" after that."
+   },
+   "example": {
+    "zh": "1 人時 Ollama 反而比較快（Gemma 4 31B 每秒 112 對 40 token：Ollama 附一個小模型先猜字，4-bit 也比較小）；但 Ollama 只能開 16 路，64 人時第一個字要等 48 秒，vLLM 0.3 秒。MoE 的 Qwen3.6 64 人時每人仍有 48 token/秒。",
+    "en": "With one user Ollama is faster (Gemma 4 31B 112 against 40 tokens/s: Ollama adds a small draft model, and 4-bit is smaller); but it only opens 16 slots, so at 64 users the first token takes 48 s against vLLM's 0.3 s. The MoE Qwen3.6 still gives each of 64 users 48 tokens/s."
+   },
+   "limits": {
+    "zh": "同上一個測試：思考關閉、512 token、vLLM FP8 對 Ollama 4-bit。",
+    "en": "As the previous test: thinking off, 512 tokens, vLLM FP8 against Ollama 4-bit."
+   },
+   "columns": {
+    "zh": [
+     "同時人數",
+     "Gemma 4 31B vLLM 聊天：最慢 5% 每秒 token",
+     "Gemma 4 31B Ollama 聊天：最慢 5% 每秒 token",
+     "Qwen3.6 vLLM 聊天：最慢 5% 每秒 token",
+     "Gemma 4 31B vLLM agent：第一個字（95%）",
+     "Gemma 4 31B Ollama agent：第一個字（95%）"
+    ],
+    "en": [
+     "Users at once",
+     "Gemma 4 31B vLLM chat: slowest 5% tokens/s",
+     "Gemma 4 31B Ollama chat: slowest 5% tokens/s",
+     "Qwen3.6 vLLM chat: slowest 5% tokens/s",
+     "Gemma 4 31B vLLM agent: first token (95%)",
+     "Gemma 4 31B Ollama agent: first token (95%)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "1",
+      "39.5",
+      "112.2",
+      "202.4",
+      "0.3 秒",
+      "0.6 秒"
+     ],
+     "en": [
+      "1",
+      "39.5",
+      "112.2",
+      "202.4",
+      "0.3 s",
+      "0.6 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "2",
+      "39.1",
+      "88.5",
+      "162.2",
+      "0.3 秒",
+      "3.5 秒"
+     ],
+     "en": [
+      "2",
+      "39.1",
+      "88.5",
+      "162.2",
+      "0.3 s",
+      "3.5 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "4",
+      "38.4",
+      "69.4",
+      "145.4",
+      "0.4 秒",
+      "4.9 秒"
+     ],
+     "en": [
+      "4",
+      "38.4",
+      "69.4",
+      "145.4",
+      "0.4 s",
+      "4.9 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "8",
+      "37.1",
+      "49.0",
+      "111.8",
+      "0.4 秒",
+      "27.9 秒"
+     ],
+     "en": [
+      "8",
+      "37.1",
+      "49.0",
+      "111.8",
+      "0.4 s",
+      "27.9 s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "16",
+      "35.3",
+      "30.9",
+      "87.4",
+      "0.6 秒",
+      "—"
+     ],
+     "en": [
+      "16",
+      "35.3",
+      "30.9",
+      "87.4",
+      "0.6 s",
+      "—"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "32",
+      "31.8",
+      "30.1（第一個字 17.3 秒，未達標）",
+      "67.2",
+      "0.8 秒",
+      "—"
+     ],
+     "en": [
+      "32",
+      "31.8",
+      "30.1 (first token 17.3 s: misses the bar)",
+      "67.2",
+      "0.8 s",
+      "—"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "64",
+      "26.6",
+      "29.6（第一個字 48.2 秒，未達標）",
+      "48.3",
+      "1.5 秒（速度 16.5，未達標）",
+      "—"
+     ],
+     "en": [
+      "64",
+      "26.6",
+      "29.6 (first token 48.2 s: misses the bar)",
+      "48.3",
+      "1.5 s (16.5 tokens/s: misses the bar)",
+      "—"
      ]
     }
    ]
