@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 
 import httpx
 
-from . import ollama_admin
+from . import ollama_admin, request_user
 
 
 @dataclass(frozen=True)
@@ -104,7 +104,9 @@ def _ollama(backend, model, messages, think, temperature, max_tokens, num_ctx, i
         body["think"] = think_value
     stats, started = Stats(), time.perf_counter()
     with httpx.Client(timeout=timeout, trust_env=False) as client:
-        with client.stream("POST", backend.base_url + "/api/chat", json=body) as response:
+        with client.stream(
+            "POST", backend.base_url + "/api/chat", json=body, headers=request_user.headers()
+        ) as response:
             _raise_with_body(response)
             for line in response.iter_lines():
                 if not line:
@@ -155,7 +157,10 @@ def _openai(backend, model, messages, think, temperature, max_tokens, num_ctx, i
     stats, started = Stats(), time.perf_counter()
     with httpx.Client(timeout=timeout, trust_env=False) as client:
         with client.stream(
-            "POST", backend.base_url + "/chat/completions", json=body, headers=_auth(backend)
+            "POST",
+            backend.base_url + "/chat/completions",
+            json=body,
+            headers=_auth(backend) | request_user.headers(),
         ) as response:
             _raise_with_body(response)
             for line in response.iter_lines():

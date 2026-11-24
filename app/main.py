@@ -12,6 +12,8 @@ import theme_switch
 import ui
 from i18n import tr
 
+from local_llm import request_user
+
 st.set_page_config(page_title="Local Agent Lab", page_icon=":material/science:", layout="wide")
 st.logo(str(Path(__file__).parent / "static" / f"logo_{ui.theme()}.svg"), size="large")
 ui.inject_css()
@@ -21,6 +23,7 @@ model_news.start_background()  # weekly look for models the catalog does not lis
 
 # Shared behind the login proxy (LOCAL_LLM_AUTH=1): only the admin sees the coding agent.
 who = access.viewer()
+request_user.set_user(who and who["user"])  # tags this run's model requests for the request log
 if who is None:
     st.error(
         tr(
@@ -49,8 +52,12 @@ pages = {
         # data stays in data/lab/moe_benchmark.json. Add this line back to show it again:
         # page("views/moe.py", "MoE vs Dense", "MoE vs dense", ":material/account_tree:"),
         page("views/media.py", "其他模型比較", "Other models", ":material/category:"),
-        page("views/elevenlabs.py", "ElevenLabs（雲端）", "ElevenLabs (cloud)",
-             ":material/record_voice_over:"),
+        page(
+            "views/elevenlabs.py",
+            "ElevenLabs（雲端）",
+            "ElevenLabs (cloud)",
+            ":material/record_voice_over:",
+        ),
         page("views/datasets.py", "測試資料集", "Test sets", ":material/dataset:"),
     ],
     "Agents": [

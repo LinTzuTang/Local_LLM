@@ -3,7 +3,7 @@ import os
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
-from . import ollama_admin
+from . import ollama_admin, request_user
 from .config import Settings
 
 
@@ -21,7 +21,7 @@ def build_model(config: Settings, think: bool | None = None, temperature: float 
             else None,
             num_predict=config.max_tokens,
             reasoning=ollama_admin.think_value(config.model, want_thinking, config.base_url),
-            client_kwargs={"timeout": config.timeout},
+            client_kwargs={"timeout": config.timeout, "headers": request_user.headers()},
         )
     extra = {}
     if "qwen3" in config.model.lower():
@@ -35,4 +35,5 @@ def build_model(config: Settings, think: bool | None = None, temperature: float 
         timeout=config.timeout,
         max_retries=0,
         extra_body=extra,
+        default_headers=request_user.headers() or None,
     )

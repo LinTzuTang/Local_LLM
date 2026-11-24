@@ -21,4 +21,11 @@ if curl -fsS http://127.0.0.1:11434/api/version >/dev/null 2>&1; then
   exit 0
 fi
 mkdir -p "$OLLAMA_MODELS"
+# Shared deployment (LOCAL_LLM_REQUEST_LOG=1 in .env): Ollama moves to 11433 and a pass-through proxy on 11434 logs
+# each model request (time, model, token counts, seconds; never the text) to storage/request_log/ for sizing the
+# servers. See src/local_llm/ollama_proxy.py.
+if grep -qE '^LOCAL_LLM_REQUEST_LOG=(1|true|yes)' "$PROJECT_DIR/.env" 2>/dev/null; then
+  export OLLAMA_HOST=127.0.0.1:11433
+  (cd "$PROJECT_DIR" && LOCAL_LLM_OLLAMA_UPSTREAM=http://127.0.0.1:11433 uv run python -m local_llm.ollama_proxy) &
+fi
 exec ollama serve

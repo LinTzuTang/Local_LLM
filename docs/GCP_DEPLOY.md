@@ -87,6 +87,8 @@ uv run local-agent users add <name>               # 新增同事（--admin 為�
 uv run local-agent users passwd|role|remove|list ...
 ```
 
+**記錄使用量（估要幾張卡用）**：`.env` 加 `LOCAL_LLM_REQUEST_LOG=1` 後重啟（`./scripts/tmux_down.sh && ./scripts/tmux_up.sh`），Ollama 改聽 11433，11434 換成一個只轉送、順便記錄的程式（`src/local_llm/ollama_proxy.py`）。每個模型請求記一行到 `storage/request_log/日期.jsonl`：開始時間、模型、輸入／輸出 token 數、第一個字等幾秒、總秒數、登入帳號（平台的聊天、agent 頁會帶 `X-Lab-User`），**不記問題和回答內容**。`uv run python -m local_llm.ollama_proxy report [--users-only]` 每天加總：請求數、幾個帳號、最忙的小時、最多同時幾個請求、第一個字等待時間。
+
 開放後要注意：
 - 機器是 spot，平日 19:00 自動關機，同事只能在開機時段使用；GPU 只有一張，多人同時跑大模型會互相排隊。
 - 「模型庫」頁的下載／刪除模型、Agent 定義的修改目前沒有限制角色，所有登入的人都能操作。
