@@ -8,21 +8,57 @@ from local_llm import aa_scores, code_bench
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def check_table(columns: dict, rows: list[dict], name: str) -> None:
+    width = len(columns["zh"])
+    assert len(columns["en"]) == width and rows, name
+    for r in rows:
+        assert r["where"] in ("local", "cloud") and len(r["zh"]) == len(r["en"]) == width, name
+
+
 def test_every_test_and_metric_states_its_method():
     cat = json.loads((ROOT / "data" / "lab" / "llm_benchmarks.json").read_text(encoding="utf-8"))
     assert cat["ours"]
     for t in cat["ours"]:
-        for part in ("name", "measures", "method", "example", "limits"):
+        status = t["status"]
+        assert status in ("done", "running", "planned"), t["id"]
+        assert t["date"] or status != "done", t["id"]  # a finished test says when it was run
+        parts = ("name", "measures", "method") + (("why",) if "rows" not in t and "tables" not in t
+                                                  else ("example", "limits"))  # fmt: skip
+        for part in parts:
             assert t[part]["zh"].strip() and t[part]["en"].strip(), (t["id"], part)
-        width = len(t["columns"]["zh"])
-        assert len(t["columns"]["en"]) == width and t["rows"], t["id"]
-        for r in t["rows"]:
-            assert r["where"] in ("local", "cloud") and len(r["zh"]) == len(r["en"]) == width
+        if status != "planned" and "rows" in t or "tables" in t:  # a conclusion comes first
+            assert t["headline"]["zh"].strip() and t["headline"]["en"].strip(), t["id"]
+        if "tables" in t:  # several tables under one test (capacity)
+            for part in t["tables"]:
+                assert part["title"]["zh"] and part["title"]["en"], t["id"]
+                check_table(part["columns"], part["rows"], t["id"])
+        elif "rows" in t:
+            check_table(t["columns"], t["rows"], t["id"])
+        else:  # no results yet: only a running or planned test
+            assert status in ("running", "planned"), t["id"]
+    uses = cat["uses"]
+    assert len(uses["columns"]["zh"]) == len(uses["columns"]["en"]) == 4 and uses["rows"]
+    for r in uses["rows"]:
+        assert len(r["zh"]) == len(r["en"]) == 4 and all(c.strip() for c in r["zh"] + r["en"])
     aa = cat["aa"]
     assert aa["method"]["zh"] and aa["limits"]["zh"] and aa["url"].startswith("https://")
     for m in aa["metrics"]:
         assert m["field"] in aa_scores.FIELDS and m["unit"] in ("pct", "elo", "index")
         assert m["measures"]["zh"].strip() and m["measures"]["en"].strip(), m["field"]
+
+
+def test_speech_and_ocr_tests_state_method_date_and_state():
+    data = json.loads((ROOT / "data" / "lab" / "scores_methods.json").read_text(encoding="utf-8"))
+    ids = {t["id"] for t in data["speech"]["tests"]}
+    assert ids == {"asr", "diar", "live", "simul", "tts", "voice"}  # the views on the Scores page
+    for t in data["speech"]["tests"] + data["ocr"]["tests"]:
+        assert t["status"] in ("done", "running", "planned") and t["date"], t["id"]
+        for part in ("name", "headline", "measures", "method", "limits"):
+            assert t[part]["zh"].strip() and t[part]["en"].strip(), (t["id"], part)
+    uses = data["ocr"]["uses"]
+    assert uses["date"] and uses["rows"]
+    for r in uses["rows"]:
+        assert len(r["zh"]) == len(r["en"]) == len(uses["columns"]["zh"]) == 4
 
 
 def test_aa_page_data_is_read_from_the_next_stream():

@@ -45,7 +45,7 @@ def frame(data: dict) -> pd.DataFrame:
             if key == "real_meeting" and r.get("invalid_real_meeting"):
                 value = tr("無效", "invalid")
             row[tr(*names)] = value
-        row[tr("處理秒數", "Seconds")] = r["seconds"]
+        row[tr("處理秒數", "Seconds")] = "—" if r["seconds"] is None else f"{r['seconds']:.1f}"
         row[tr("記憶體", "Memory")] = r["memory"] or "—"
         rows.append(row)
     return pd.DataFrame(rows)
@@ -58,14 +58,15 @@ def chart(data: dict, key: str) -> alt.Chart:
         alt.Chart(df)
         .mark_bar()
         .encode(
-            y=alt.Y("model:N", sort="x", title=None, axis=alt.Axis(labelLimit=260)),
+            y=alt.Y("model:N", sort="x", title=None,
+                    axis=alt.Axis(labelLimit=260, labelOverlap=False, labelFontSize=11)),
             x=alt.X("err:Q", title=tr("錯字率 %（越短越準）", "Error rate % (shorter = better)")),
             color=alt.Color(
                 "where:N", scale=ui.where_scale(), title=None, legend=alt.Legend(orient="bottom")
             ),  # fmt: skip
             tooltip=["model", "where", alt.Tooltip("err:Q", format=".1f")],
         )
-        .properties(height=alt.Step(18))
+        .properties(height=alt.Step(22))
     )
 
 
@@ -78,10 +79,10 @@ def benchmark_view() -> None:
     st.markdown(
         tr(
             f"**{len(data['rows'])} 個整段辨識模型、同一批錄音**（{data['date']}）：中文算字錯率（CER）、"
-            "英文算詞錯率（WER），越低越好。藍色＝本機，橘色＝雲端（錄音要上傳）。",
+            "英文算詞錯率（WER），越低越好。藍色＝地端，橘色＝雲端（錄音要上傳）。",
             f"**{len(data['rows'])} whole-clip ASR models on the same recordings** "
-            f"({data['date']}): CER for Chinese, WER for English, lower is better. Blue = this "
-            "machine, orange = cloud (the audio is uploaded).",
+            f"({data['date']}): CER for Chinese, WER for English, lower is better. Blue = local, "
+            "orange = cloud (the audio is uploaded).",
         )
     )
     pick = st.segmented_control(

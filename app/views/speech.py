@@ -2,13 +2,13 @@
 meeting diarization, simulated live captions and text to speech. The modes live in
 speech_compare, speech_translate, speech_meeting, speech_live and speech_tts; the voice chat
 moved to the live voice assistant (its cascade takes streaming or whole-clip ASR), speech_voice
-still draws the saved voice-chat runs. The language-model comparison is views/llm.py."""
+still draws the saved voice-chat runs. The language-model comparison is views/llm.py; measured
+results and "pick a model" are on the Scores page (views/scores.py)."""
 
 import speech_common as sc
 import speech_compare
 import speech_live
 import speech_meeting
-import speech_pick
 import speech_simul
 import speech_translate
 import speech_tts
@@ -39,28 +39,20 @@ MODES = {
     "live": (tr("串流（即時）", "Live"), "sensors"),
     "tts": (tr("文字轉語音", "Text to speech"), "text_to_speech"),
 }
-# "Pick a model" (the recommendations) sits above the tests on its own, not as one of them:
-# speech_mode is None while it shows, and choosing a test switches to that test.
-st.session_state.setdefault("speech_mode", None)
-if st.session_state.speech_mode not in (None, *MODES):  # "voice_chat" moved to the voice assistant
-    st.session_state.speech_mode = None
+# "Pick a model" and the measured results moved to the Scores page; this page only runs tests.
+if st.session_state.get("speech_mode") not in MODES:  # None ("pick a model") or "voice_chat"
+    st.session_state.speech_mode = "transcribe"
 st.session_state["_speech_mode"] = st.session_state.speech_mode
 
 
-def show_pick() -> None:
-    st.session_state.speech_mode = st.session_state["_speech_mode"] = None
-
-
 def show_test() -> None:
-    st.session_state.speech_mode = st.session_state["_speech_mode"]
+    st.session_state.speech_mode = st.session_state["_speech_mode"] or st.session_state.speech_mode
 
 
 top, right = st.columns([3, 1], vertical_alignment="center")
-top.button(
-    tr("依情境選模型（看建議，不用自己測）", "Pick a model (recommendations, no testing)"),
-    icon=":material/recommend:", on_click=show_pick,
-    type="primary" if st.session_state.speech_mode is None else "secondary",
-)  # fmt: skip
+top.page_link("views/scores.py", label=tr("評測結果與選模型建議 → 評測分數",
+              "Results and which model to pick → Scores"), icon=":material/leaderboard:",
+             query_params={"kind": "speech"})  # fmt: skip
 with right:
     sc.s2tw_toggle()
 st.segmented_control(
@@ -68,9 +60,6 @@ st.segmented_control(
     format_func=lambda m: f":material/{MODES[m][1]}: {MODES[m][0]}",
 )  # fmt: skip
 mode = st.session_state.speech_mode
-if mode is None:  # nothing runs: no gateway needed
-    speech_pick.pick_page()
-    st.stop()
 
 blurbs = {
     "transcribe": tr(
@@ -107,13 +96,12 @@ blurbs = {
     "live": tr(
         "即時字幕三種做法：切段模擬（錄音切成 1–5 秒依序送給整段辨識模型）、真串流（串流模型每 "
         "0.1–0.3 秒收一小段、邊收邊出字），以及麥克風即時（對著麥克風講，字幕當場出現）。看文字"
-        "晚多久出現、定稿要等多久、部分結果改了多少字，以及最後的錯誤率；「評測總表」列出本機與雲端串流模型的實測結果。",
+        "晚多久出現、定稿要等多久、部分結果改了多少字，以及最後的錯誤率。",
         "Live captions three ways: chunked simulation (the recording is cut into 1–5 s "
         "chunks for whole-clip models), true streaming (streaming models get 0.1–0.3 s at a "
         "time and write text as audio arrives) and live microphone (speak and watch the "
         "captions appear). See how soon text appears, how long until it is final, how much "
-        "partial text gets revised, and the final error rate; Benchmark lists the measured "
-        "results of local and cloud streaming models.",
+        "partial text gets revised, and the final error rate.",
     ),
     "tts": tr(
         "同一段文字用不同聲音念出來（macOS 內建或本機 AI 語音），像語音助理一樣一句一句合成："

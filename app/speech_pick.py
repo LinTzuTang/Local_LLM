@@ -41,9 +41,10 @@ def table(rows: list[dict]) -> str:
             + f'<td style="color:var(--lab-muted)">{html.escape(tr(*r["note"]))}</td></tr>'
         )  # fmt: skip
     return (
-        '<table style="width:100%;border-collapse:collapse;font-size:0.92rem">'
+        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;'
+        'font-size:0.92rem">'
         f'<thead><tr style="text-align:left">{head}</tr></thead>'
-        f"<tbody>{''.join(body)}</tbody></table>"
+        f"<tbody>{''.join(body)}</tbody></table></div>"
         "<style>table td,table th{border:1px solid var(--lab-border);padding:6px 8px;"
         "vertical-align:top}"
         "</style>"
@@ -60,11 +61,11 @@ def pick_page(url: str | None = None, status: dict | None = None) -> None:
         tr(
             f"**依情境選模型**（{data['date']} 的實測結果）。藍色＝本機（資料不出這台電腦），"
             "橘色＝雲端（錄音或文字要上傳、要付費）；結果差不多的模型一起列出。括號裡是錯字率、"
-            "開口時間或翻譯分數，細節在各模式的「評測總表」。",
+            "開口時間或翻譯分數，細節在下面的「細項測試」。",
             f"**Which model for which situation** (results of {data['date']}). Blue = on this "
             "machine (data stays here), orange = cloud (audio or text is uploaded, paid); models "
             "with similar results are listed together. In brackets: error rate, time to talk or "
-            "translation score; the details are in each mode's Benchmark.",
+            "translation score; the details are under Tests below.",
         )
     )
     st.markdown(table(data["rows"]), unsafe_allow_html=True)

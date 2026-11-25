@@ -1,5 +1,5 @@
 {
- "about": "DER（10 ms 逐格、邊界 0.25 秒不計、重疊語音要算）；known = 告訴模型人數，estimated = 模型自己判斷。腳本：scripts/speech_eval/run_diarization_compare.py。",
+ "about": "DER（10 ms 逐格、邊界 0.25 秒不計、重疊語音要算）；「告訴人數」＝先告訴模型有幾個人，「自己判斷」＝不告訴。",
  "items": {
   "meeting_zh": "合成會議 1.5 分（2 人）",
   "R8001_M8004_5min": "AliMeeting R8001 5 分（4 人）",

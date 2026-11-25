@@ -473,24 +473,21 @@ def listen_view() -> None:
 
 
 def tts_page(url: str, status: dict) -> None:
-    st.session_state.setdefault("tts_view", "try")
+    if st.session_state.get("tts_view") not in ("try", "listen"):  # "bench" moved to Scores
+        st.session_state.tts_view = "try"
     view = (
         st.segmented_control(
             tr("檢視", "View"),
-            ["try", "listen", "bench"],
+            ["try", "listen"],
             format_func=lambda v: {
                 "try": f":material/play_arrow: {tr('自己試', 'Try it')}",
                 "listen": f":material/headphones: {tr('快速試聽', 'Quick listen')}",
-                "bench": f":material/leaderboard: {tr('評測總表', 'Benchmark')}",
             }[v],
             required=True,
             **kept("tts_view"),
         )
         or "try"
     )
-    if view == "bench":
-        benchmark_view()
-        return
     if view == "listen":
         listen_view()
         return

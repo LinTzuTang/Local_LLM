@@ -89,10 +89,9 @@ def bench_view() -> None:
     )
     jev = data.get("jev")
     if jev:
-        st.subheader(
-            tr("MiniCPM-OCR Jev：自動判斷 OCR 對不對", "MiniCPM-OCR Jev: is the OCR right?")
-        )
-        st.markdown(
+        jev_box = st.expander(tr("延伸實驗：MiniCPM-OCR Jev 自動判斷 OCR 對不對",
+                                 "Side experiment: MiniCPM-OCR Jev, is the OCR right?"))  # fmt: skip
+        jev_box.markdown(
             tr(
                 f"從上面的乾淨頁面切出 {jev['regions']} 個文字區塊，各由 MiniCPM-OCR 與 macOS Vision 辨識一次"
                 f"（共 {jev['candidates']} 個結果，{jev['correct']} 個與標註完全相同）。Jev 的分數分辨對錯的能力 "
@@ -113,14 +112,14 @@ def bench_view() -> None:
             {tr("做法", "Method"): tr("上限：兩個有一個對", "Ceiling: either is right"),
              tr("完全正確", "Exact"): jev["oracle"]["exact"], tr("平均差距", "Mean distance"): None},
         ])  # fmt: skip
-        st.dataframe(pick, hide_index=True, width="stretch")
+        jev_box.dataframe(pick, hide_index=True, width="stretch")
         accept = pd.DataFrame([
             {tr("自動通過門檻", "Auto-accept above"): t, tr("通過比例", "Passed"): jev[f"accept_{t}"]["pass_rate"],
              tr("通過的有多少真的對", "Of those, right"): jev[f"accept_{t}"]["precision"]}
             for t in (0.5, 0.8, 0.9)
         ])  # fmt: skip
-        st.dataframe(accept, hide_index=True, width="stretch")
-        st.caption(
+        jev_box.dataframe(accept, hide_index=True, width="stretch")
+        jev_box.caption(
             tr(
                 "Jev 要一張「把候選文字畫出來的圖」；官方用 Linux 上的 Chromium 渲染，這裡用 Pillow 與系統中文字型，分數可能因此偏移。"
                 "只測文字區塊（不含公式、表格）。腳本：scripts/ocr_eval/run_jev.py。",
@@ -296,24 +295,4 @@ def view() -> None:
             "fair) and compare the text and speed; MiniCPM-OCR Jev can score each result from 0 to 1.",
         )
     )
-    MODES = {
-        "try": (tr("試跑", "Try it"), "play_arrow"),
-        "bench": (tr("評測總表", "Benchmark"), "leaderboard"),
-    }
-    st.session_state.setdefault("ocr_mode", "try")
-    mode = (
-        st.segmented_control(
-            tr("模式", "Mode"),
-            list(MODES),
-            format_func=lambda m: f":material/{MODES[m][1]}: {MODES[m][0]}",
-            label_visibility="collapsed",
-            **kept("ocr_mode"),
-        )
-        or "try"
-    )
-
-
-    if mode == "bench":
-        bench_view()
-    else:
-        try_view()
+    try_view()

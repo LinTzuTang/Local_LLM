@@ -44,7 +44,7 @@ def frame(data: dict) -> pd.DataFrame:
     for r in data["rows"]:
         rows.append({
             "system": tr(*r["label"]),
-            "where": tr("雲端", "Cloud") if r["where"] == "cloud" else tr("本機", "Local"),
+            "where": tr("雲端", "Cloud") if r["where"] == "cloud" else tr("地端", "Local"),
             "out": tr("英文語音＋字幕", "Speech + captions") if r.get("speech_out")
                    else tr("英文字幕", "Captions"),
             "first_s": r["first_s"], "lag_avg_s": r["lag_avg_s"], "lag_p90_s": r["lag_p90_s"],
@@ -86,6 +86,8 @@ def bench_view() -> None:
     )
     df = frame(data)
     st.altair_chart(chart(df), width="stretch")
+    df = df[["system", "where", "chrf", "bleu", "lag_avg_s", "first_s", "lag_p90_s", "tail_s",
+             "out", "note"]].round(2)  # the scores first, two decimals
     shown = df.rename(columns={
             "system": tr("做法", "System"), "where": tr("位置", "Where"),
             "out": tr("輸出", "Output"), "first_s": tr("第一句英文（秒）", "First English (s)"),
@@ -331,14 +333,4 @@ def try_view(url: str, status: dict) -> None:
 
 
 def simul_page(url: str | None = None, status: dict | None = None) -> None:
-    st.session_state.setdefault("si_view", "try")
-    view = st.segmented_control(
-        tr("檢視", "View"), ["try", "bench"], required=True,
-        format_func=lambda v: {"try": f":material/play_arrow: {tr('自己試', 'Try it')}",
-                               "bench": f":material/leaderboard: {tr('評測總表', 'Benchmark')}"}[v],
-        **kept("si_view"),
-    ) or "try"  # fmt: skip
-    if view == "bench":
-        bench_view()
-    else:
-        try_view(url, status or {})
+    try_view(url, status or {})

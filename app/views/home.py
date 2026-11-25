@@ -191,12 +191,12 @@ with st.container(key="lab_hero"):
         f'<div class="ttl">{html.escape(info["title"])}</div><dl>{facts}</dl></div>',
         unsafe_allow_html=True,
     )
-SHORTCUTS = [  # models first, then building and the demo; the scenarios have their own section below
+SHORTCUTS = [  # results first, then models and building; the scenarios have their own section below
+    ("views/scores.py", tr("看評測分數", "See the scores"), ":material/leaderboard:"),
     ("views/models.py", tr("瀏覽模型庫", "Browse models"), ":material/apps:"),
     ("views/llm.py", tr("比較語言模型", "Compare language models"), ":material/balance:"),
     ("views/speech.py", tr("比較語音模型", "Compare speech models"), ":material/graphic_eq:"),
     ("views/agent.py", tr("打造一個 Agent", "Build an agent"), ":material/smart_toy:"),
-    ("views/voice_assistant.py", tr("即時語音助理", "Live voice"), ":material/support_agent:"),
 ]
 links = st.container(key="lab_shortcuts").columns(len(SHORTCUTS))
 for col, (path, label, icon) in zip(links, SHORTCUTS, strict=True):

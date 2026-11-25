@@ -38,6 +38,9 @@ ui.page_header(
         "Models other than language and speech ones: images and scans to text (Compare OCR), PDF/Word to Markdown, reranking retrieval results. Document parsing and the reranker come from the local **model gateway**, the OCR models run in Ollama; nothing leaves this Mac and every result shows the API call behind it. Language models are on Language models, speech models on Compare speech models.",
     ),
 )
+st.page_link("views/scores.py", label=tr("OCR 評測結果與選模型建議 → 評測分數",
+             "OCR results and which model to pick → Scores"), icon=":material/leaderboard:",
+             query_params={"kind": "ocr"})  # fmt: skip
 
 version = gateway_client.version(URL)
 if version is None:

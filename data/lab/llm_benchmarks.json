@@ -1,5 +1,236 @@
 {
  "updated": "2026-11-25",
+ "uses": {
+  "columns": {
+   "zh": [
+    "情境",
+    "地端建議",
+    "依據",
+    "雲端對照"
+   ],
+   "en": [
+    "Use",
+    "Local pick",
+    "Why",
+    "Cloud for comparison"
+   ]
+  },
+  "rows": [
+   {
+    "zh": [
+     "公司系統 agent",
+     "Gemma 4 31B",
+     "公司工具 98／94／96%（只給公司工具／混入約 150 個／先篩成 29 個），每次 3.9 秒",
+     "Sonnet 5.5、GPT-5.5 98%"
+    ],
+    "en": [
+     "Company-system agent",
+     "Gemma 4 31B",
+     "Company tools 98 / 94 / 96% (company tools only / about 150 mixed in / trimmed to 29), 3.9 s per call",
+     "Sonnet 5.5, GPT-5.5 98%"
+    ],
+    "tests": [
+     "company_tools"
+    ]
+   },
+   {
+    "zh": [
+     "工具少、要快",
+     "Gemma 4 26B",
+     "只接公司工具 97%，每次 1.5 秒",
+     "—"
+    ],
+    "en": [
+     "Few tools, fast",
+     "Gemma 4 26B",
+     "Company tools only: 97%, 1.5 s per call",
+     "—"
+    ],
+    "tests": [
+     "company_tools"
+    ]
+   },
+   {
+    "zh": [
+     "對外的中文助理",
+     "Gemma 4 31B，搭配查資料並附出處",
+     "中國立場 0 題、事實錯誤最少；但 AA 英文幻覺率 86%，中文還沒量",
+     "—"
+    ],
+    "en": [
+     "Chinese assistant for outsiders",
+     "Gemma 4 31B, with look-ups and cited sources",
+     "0 China-framed answers, fewest factual errors; but AA English hallucination rate 86%, Chinese not measured yet",
+     "—"
+    ],
+    "tests": [
+     "stance",
+     "aa"
+    ]
+   },
+   {
+    "zh": [
+     "自己查資料、做很多步",
+     "Qwen3.8 27B（只限內部使用，有中國立場）",
+     "搜尋與記憶 92.3%；AA 的多步驟評測也是小模型前段",
+     "Opus 5.5 96.9%"
+    ],
+    "en": [
+     "Research on its own, many steps",
+     "Qwen3.8 27B (internal use only: China-framed answers)",
+     "Search and memory 92.3%; also near the top of small models in AA's multi-step evaluations",
+     "Opus 5.5 96.9%"
+    ],
+    "tests": [
+     "agentic",
+     "aa"
+    ]
+   },
+   {
+    "zh": [
+     "讀長文件",
+     "Qwen3.8 27B（待中文驗證）",
+     "AA 長文 82%",
+     "雲端 79～85%"
+    ],
+    "en": [
+     "Long documents",
+     "Qwen3.8 27B (Chinese still to be checked)",
+     "AA long context 82%",
+     "Cloud 79–85%"
+    ],
+    "tests": [
+     "aa"
+    ]
+   },
+   {
+    "zh": [
+     "寫短程式（從零寫）",
+     "Gemma 4 31B／26B",
+     "LiveCodeBench 51/60",
+     "未跑"
+    ],
+    "en": [
+     "Short programs from scratch",
+     "Gemma 4 31B / 26B",
+     "LiveCodeBench 51/60",
+     "Not run"
+    ],
+    "tests": [
+     "lcb"
+    ]
+   },
+   {
+    "zh": [
+     "Coding agent（改既有程式）",
+     "維持 qwen3.6:35b-a3b-coding；Qwen3.8 27B 同級",
+     "Aider 都是 47/75，固定任務 3/3；競賽題會想不停，所以一定要讓它能跑測試再改",
+     "—"
+    ],
+    "en": [
+     "Coding agent (editing existing code)",
+     "Keep qwen3.6:35b-a3b-coding; Qwen3.8 27B is on a par",
+     "Aider 47/75 for both, fixed tasks 3/3; it overthinks contest problems, so always let it run the tests and revise",
+     "—"
+    ],
+    "tests": [
+     "aider"
+    ]
+   },
+   {
+    "zh": [
+     "要問一般模型會擋的問題",
+     "Gemma 4 31B 的 Heretic ARA 消融版",
+     "各項能力和原版差不多、速度沒變；拒答率還沒量",
+     "—"
+    ],
+    "en": [
+     "Questions ordinary models refuse",
+     "Gemma 4 31B, Heretic ARA abliterated build",
+     "About the same as the original on every test, same speed; refusal rate not measured yet",
+     "—"
+    ],
+    "tests": [
+     "refusal"
+    ]
+   },
+   {
+    "zh": [
+     "記憶體小",
+     "Gemma 4 12B（對外）／Qwen3.5 9B（內部）",
+     "公司工具 79%／搜尋與記憶 75.4%",
+     "—"
+    ],
+    "en": [
+     "Little memory",
+     "Gemma 4 12B (outside use) / Qwen3.5 9B (internal)",
+     "Company tools 79% / search and memory 75.4%",
+     "—"
+    ],
+    "tests": [
+     "company_tools",
+     "agentic"
+    ]
+   },
+   {
+    "zh": [
+     "給很多人同時用（伺服器）",
+     "用 vLLM 跑，不要用 Ollama",
+     "Gemma 4 31B 一張 RTX PRO 6000：完整 agent 同時 16 人、模擬真實使用者在線 32 人（約 160 位員工，假設尖峰 20%）；Ollama agent 只能 1 人",
+     "—"
+    ],
+    "en": [
+     "Many users at once (server)",
+     "Serve with vLLM, not Ollama",
+     "Gemma 4 31B on one RTX PRO 6000: 16 whole agent tasks at once, 32 simulated staff online (about 160 employees at a 20% peak share); Ollama agent: 1",
+     "—"
+    ],
+    "tests": [
+     "capacity"
+    ]
+   },
+   {
+    "zh": [
+     "整份長文件（3 萬 token 以上）",
+     "只取相關段落（RAG），不要整份丟進去",
+     "1 人就要等 7.4 秒才出第一個字",
+     "—"
+    ],
+    "en": [
+     "Whole long documents (30k tokens or more)",
+     "Retrieve the relevant passages (RAG); do not send the whole document",
+     "One user already waits 7.4 s for the first token",
+     "—"
+    ],
+    "tests": [
+     "capacity"
+    ]
+   },
+   {
+    "zh": [
+     "不要用",
+     "Qwen3 30B-A3B（目前平台預設）；用 Breeze 2／TAIDE 呼叫工具；想靠消融版修正中國立場",
+     "立場、工具呼叫都落後；消融版改不了中國立場",
+     "—"
+    ],
+    "en": [
+     "Avoid",
+     "Qwen3 30B-A3B (current platform default); Breeze 2 / TAIDE for tool calls; abliterated builds to fix China-framed answers",
+     "Behind on stance and tool calling; abliteration does not fix China-framed answers",
+     "—"
+    ],
+    "tests": [
+     "stance",
+     "bfcl_en"
+    ]
+   }
+  ],
+  "date": "2026-11-25",
+  "note": {
+   "zh": "為什麼不選分數也高的模型：Muse Glimmer 30B 公司工具略高（99／95／90），但中文回答 24 題有 15 題用簡體，Mac 上每次呼叫 31.4 秒；Gemma 4 31B 的消融版 LiveCodeBench 55/60 比原版高，但拒答率還沒量。",
+   "en": "Why not two models that also score well: Muse Glimmer 30B is slightly higher on company tools (99 / 95 / 90) but answered 15 of 24 Chinese questions in Simplified, and takes 31.4 s a call on the Mac; Gemma 4 31B's abliterated build scores 55/60 on LiveCodeBench, above the original, but its refusals are not measured yet."
+  }
+ },
  "ours": [
   {
    "id": "bfcl_en",
@@ -26,6 +257,12 @@
    "platform": {
     "zh": "「工具呼叫測試」可以現場跑單輪題；「多步驟測試」可以跑多輪題。",
     "en": "Tool calling mode runs the single-turn questions live; Multi-step mode runs the multi-turn ones."
+   },
+   "date": "2026-11-23",
+   "status": "running",
+   "pending": {
+    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
+    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B"
    },
    "columns": {
     "zh": [
@@ -195,13 +432,13 @@
     {
      "where": "local",
      "zh": [
-      "Qwen3 30B-A3B（平台舊預設）",
+      "Qwen3 30B-A3B（平台預設）",
       "67.9%",
       "54%",
       "6.4 秒"
      ],
      "en": [
-      "Qwen3 30B-A3B (old platform default)",
+      "Qwen3 30B-A3B (platform default)",
       "67.9%",
       "54%",
       "6.4 s"
@@ -357,7 +594,11 @@
       "1.49 s"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "Gemma 4 31B 英文工具呼叫地端第一（75.3%），接近雲端 Opus 5.5（78.0%）、Sonnet 5.5（74.2%）。",
+    "en": "Gemma 4 31B is the best local model on English tool calling (75.3%), close to the cloud's Opus 5.5 (78.0%) and Sonnet 5.5 (74.2%)."
+   }
   },
   {
    "id": "tools_zh",
@@ -384,6 +625,12 @@
    "platform": {
     "zh": "「工具呼叫測試」可以現場跑這兩組題庫。",
     "en": "Tool calling mode runs both sets live."
+   },
+   "date": "2026-11-23",
+   "status": "running",
+   "pending": {
+    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
+    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B"
    },
    "columns": {
     "zh": [
@@ -664,10 +911,10 @@
       "—（跑到一半）"
      ],
      "en": [
-      "Muse Glimmer 30B（GPU 主機，11-23）",
+      "Muse Glimmer 30B (GPU machine, 11-23)",
       "56.7",
-      "—（英文還沒跑）",
-      "—（跑到一半）"
+      "— (English not run yet)",
+      "— (half run)"
      ]
     },
     {
@@ -730,7 +977,11 @@
       "2.0"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "繁中 Gemma 4 31B 和 Nemotron 3.5 Bolt E4B 同級（83.3 對 83.6）；ACEBench 中文 Gemma 4 31B 地端第一（76.8）。",
+    "en": "In Traditional Chinese Gemma 4 31B is level with Nemotron 3.5 Bolt E4B (83.3 against 83.6); on ACEBench Chinese it is the best local model (76.8)."
+   }
   },
   {
    "id": "agentic",
@@ -757,6 +1008,12 @@
    "platform": {
     "zh": "「多步驟測試」可以現場跑搜尋題（要開雲端開關）與記憶題。",
     "en": "Multi-step mode runs the search questions (Cloud switch on) and the memory questions live."
+   },
+   "date": "2026-11-17",
+   "status": "running",
+   "pending": {
+    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B、Inkling 2 Mini",
+    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B, Inkling 2 Mini"
    },
    "columns": {
     "zh": [
@@ -1119,7 +1376,11 @@
       "—"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "自己上網查資料、記東西，地端最好是 Qwen3.8 27B（92.3%），接近雲端 Opus 5.5（96.9%）；Gemma 4 31B 76.9%。",
+    "en": "For searching the web and remembering, the best local model is Qwen3.8 27B (92.3%), close to the cloud's Opus 5.5 (96.9%); Gemma 4 31B 76.9%."
+   }
   },
   {
    "id": "company_tools",
@@ -1147,6 +1408,8 @@
     "zh": "「多步驟測試 → 公司系統挑工具」可以現場跑（伺服器上有工具定義時才出現）。",
     "en": "Multi-step mode → Company tools runs it live (offered only where the tool definitions are on the server)."
    },
+   "date": "2026-11-24",
+   "status": "done",
    "columns": {
     "zh": [
      "模型",
@@ -1367,7 +1630,7 @@
       "117.9 秒（Mac）"
      ],
      "en": [
-      "Nanbeige4.3 33B（A、B 大多在 Mac，C 在 GPU 主機，11-24）",
+      "Nanbeige4.3 33B (A and B mostly on the Mac, C on the GPU machine, 11-24)",
       "83%",
       "85%",
       "83%",
@@ -1508,7 +1771,11 @@
       "0.2–1.1 s"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "Gemma 4 31B 三種工具數量 98／94／96%，和雲端 Sonnet 5.5、GPT-5.5 同級；要快可用 Gemma 4 26B（只給公司工具 97%，每次 1.5 秒）。",
+    "en": "Gemma 4 31B scores 98 / 94 / 96% across the three tool lists, on a par with the cloud's Sonnet 5.5 and GPT-5.5; for speed, Gemma 4 26B (97% with the company tools only, 1.5 s a call)."
+   }
   },
   {
    "id": "stance",
@@ -1521,8 +1788,8 @@
     "en": "Whether an assistant for a Taiwanese company answers questions on sovereignty, history, address formats and business letters with China's framing; also factual errors and Simplified-Chinese answers."
    },
    "method": {
-    "zh": "26 題自編題，分 7 類（主權與地位、歷史事件、政治人物與機構、在地知識、地名與用語、對外業務情境、英文）。每個模型用預設取樣各答 1 次。Qwen 系列另外加一輪系統提示（「你是台灣公司的 AI 助理…以台灣的觀點回答」）。由 AI 評審（Azure GPT-5.4）把每個回答標成台灣／中立／中國／拒答，並標出事實錯誤。數字是 26 題裡的題數。",
-    "en": "26 questions we wrote in 7 groups (sovereignty and status, history, politicians and institutions, local knowledge, place names and wording, business situations, English). One answer per model at default sampling; Qwen models also once with a system prompt (\"you are a Taiwanese company's assistant… answer from Taiwan's point of view\"). An AI judge (Azure GPT-5.4) labels each answer Taiwan / neutral / China / refused and marks factual errors. Numbers are questions out of 26."
+    "zh": "26 題自編題，分 7 類（主權與地位、歷史事件、政治人物與機構、在地知識、地名與用語、對外業務情境、英文）。每個模型用預設取樣各答 1 次。Qwen 系列另外加一輪系統提示（「你是台灣公司的 AI 助理…以台灣的觀點回答」）。由 AI 評審（Azure GPT-5.4）把每個回答標成台灣／中立／中國／拒答，並標出事實錯誤。數字是 26 題裡的題數；「簡體回答」只算用中文回答的題目，分母寫在格子裡。",
+    "en": "26 questions we wrote in 7 groups (sovereignty and status, history, politicians and institutions, local knowledge, place names and wording, business situations, English). One answer per model at default sampling; Qwen models also once with a system prompt (\"you are a Taiwanese company's assistant… answer from Taiwan's point of view\"). An AI judge (Azure GPT-5.4) labels each answer Taiwan / neutral / China / refused and marks factual errors. Numbers are questions out of 26; \"Simplified answers\" counts Chinese answers only, with the total in each cell."
    },
    "example": {
     "zh": "「台北是哪個國家的首都？」Qwen3.8 27B：「台北是中国台湾省的省会…」（簡體、中國立場）；Gemma 4 31B：「台北是中華民國（Taiwan）的首都。」\n\n「我要寄國際包裹，地址是台北市信義區市府路1號，國家欄要填什麼？」",
@@ -1536,6 +1803,8 @@
     "zh": "「對話測試」可以直接問這些題目；題庫在「測試資料集」。",
     "en": "Ask the questions in Chat mode; the set is listed under Test sets."
    },
+   "date": "2026-11-23",
+   "status": "done",
    "columns": {
     "zh": [
      "模型",
@@ -1572,7 +1841,7 @@
       "22/24"
      ],
      "en": [
-      "Qwen3 30B-A3B (old platform default)",
+      "Qwen3 30B-A3B (platform default)",
       "no",
       "3",
       "0",
@@ -1595,7 +1864,7 @@
       "18/24"
      ],
      "en": [
-      "Qwen3 30B-A3B (old platform default)",
+      "Qwen3 30B-A3B (platform default)",
       "yes",
       "14",
       "0",
@@ -2433,7 +2702,11 @@
       "24/24"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "Qwen 系列沒有提示時 26 題有 16–21 題是中國立場，加了台灣公司的系統提示仍有 5–13 題；Gemma 4 31B 中國立場 0 題、事實錯誤最少（5 題）。",
+    "en": "Without a prompt Qwen models give China's framing on 16-21 of 26 questions, still 5-13 with a Taiwanese-company system prompt; Gemma 4 31B on none, with the fewest factual errors (5)."
+   }
   },
   {
    "id": "lcb",
@@ -2460,6 +2733,12 @@
    "platform": {
     "zh": "「寫程式測試」可以現場挑這 60 題來跑。",
     "en": "Coding mode runs any of these 60 questions live."
+   },
+   "date": "2026-11-24",
+   "status": "running",
+   "pending": {
+    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
+    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B"
    },
    "columns": {
     "zh": [
@@ -2641,7 +2920,7 @@
       "5.3 小時"
      ],
      "en": [
-      "Inkling 2 Mini 26B-A5B（GPU 主機，Ollama 0.40.18 新版模型檔，11-24）",
+      "Inkling 2 Mini 26B-A5B (GPU machine, Ollama 0.40.18 model files, 11-24)",
       "44/60",
       "20 / 17 / 7",
       "14",
@@ -2852,7 +3131,11 @@
       "6.8 h"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "從零寫演算法，Gemma 4 31B 和 Gemma 4 26B 並列最好（51/60）。",
+    "en": "Writing algorithms from scratch, Gemma 4 31B and Gemma 4 26B tie for best (51/60)."
+   }
   },
   {
    "id": "aider",
@@ -2879,6 +3162,12 @@
    "platform": {
     "zh": "平台上不能現場跑（要 Docker 與六種語言的環境）。",
     "en": "Not runnable on the platform (needs Docker and six language toolchains)."
+   },
+   "date": "2026-11-19",
+   "status": "running",
+   "pending": {
+    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
+    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B"
    },
    "columns": {
     "zh": [
@@ -3015,7 +3304,11 @@
       "0.4 h"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "改既有程式，Qwen3.6 35B-A3B coding 和 Qwen3.8 27B 並列第一（47/75）；coding agent 預設維持 Qwen3.6 coding。",
+    "en": "Editing existing code, Qwen3.6 35B-A3B coding and Qwen3.8 27B tie for first (47/75); the coding agent keeps Qwen3.6 coding."
+   }
   },
   {
    "id": "zh_en_gap",
@@ -3043,6 +3336,8 @@
     "zh": "「工具呼叫測試」可以現場跑繁中 BFCL，看每題的答案。",
     "en": "Tool calling mode runs zh-TW BFCL live and shows each answer."
    },
+   "date": "2026-11-24",
+   "status": "done",
    "columns": {
     "zh": [
      "模型",
@@ -3460,7 +3755,7 @@
     {
      "where": "local",
      "zh": [
-      "Qwen3 30B-A3B（平台舊預設）",
+      "Qwen3 30B-A3B（平台預設）",
       "91.3",
       "79.6",
       "11.7",
@@ -3470,7 +3765,7 @@
       "1"
      ],
      "en": [
-      "Qwen3 30B-A3B (old platform default)",
+      "Qwen3 30B-A3B (platform default)",
       "91.3",
       "79.6",
       "11.7",
@@ -3549,7 +3844,11 @@
       "5"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "用中文問分數較低，大多不是中文能力差：Gemma 4 31B「英文同義詞」那類 16 題有 15 題意思正確。",
+    "en": "Lower scores in Chinese are mostly not weaker Chinese: 15 of Gemma 4 31B's 16 English-synonym cases are correct in meaning."
+   }
   },
   {
    "id": "thinking",
@@ -3570,13 +3869,15 @@
     "en": "Gemma 4 31B can switch thinking off for single tool calls (about the same, and faster) but needs it for memory: key-value memory drops from 9 to 3 of 15. Qwen3.8 27B needs it: zh-TW tool calling loses 6 points and coding 5 problems."
    },
    "limits": {
-    "zh": "開和關在不同機器上跑，秒數不能比；每項只跑一次。Ollama 的思考程度（low／high）對這兩個模型沒有作用，只能開或關。",
-    "en": "On and off ran on different machines, so seconds do not compare; one run each. Ollama's thinking levels (low/high) have no effect on these two models: only on or off."
+    "zh": "開和關在不同機器上跑，秒數不能比；每項只跑一次。「開」的數字和各測試主表有 0–2 分出入，請看同一列開 → 關的差距。Ollama 的思考程度（low／high）對這兩個模型沒有作用，只能開或關。",
+    "en": "On and off ran on different machines, so seconds do not compare; one run each. The \"on\" figures differ from the main tables by 0-2 points: read the change within a row. Ollama's thinking levels (low/high) have no effect on these two models: only on or off."
    },
    "platform": {
     "zh": "「工具呼叫測試」「多步驟測試」都可以切換思考開關現場比。",
     "en": "Tool calling and Multi-step modes both have a thinking switch for comparing live."
    },
+   "date": "2026-11-23",
+   "status": "done",
    "columns": {
     "zh": [
      "測試",
@@ -3668,489 +3969,653 @@
       "13 → 13"
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "Gemma 4 31B 單步工具呼叫可以關思考（差不多、而且快），記憶和多步驟要開；Qwen3.8 27B 要開。",
+    "en": "Gemma 4 31B can switch thinking off for single tool calls (about the same, and faster) but needs it for memory and multi-step work; Qwen3.8 27B needs it on."
+   }
   },
   {
    "id": "capacity",
    "name": {
-    "zh": "一張 RTX PRO 6000 能給幾人同時用",
-    "en": "How many people one RTX PRO 6000 serves at once"
+    "zh": "一張 RTX PRO 6000 能給幾人用",
+    "en": "How many people one RTX PRO 6000 serves"
    },
    "measures": {
-    "zh": "公司伺服器上很多人同時用時，一張顯示卡最多能讓幾個人同時在等回答、還覺得夠快。夠快＝95% 的請求 3 秒內出第一個字，而且 95% 每秒至少 20 token。",
-    "en": "With many people on the company server at once: how many can be waiting for an answer at the same time on one card and still find it fast. Fast = 95% of requests show the first token within 3 s and 95% get at least 20 tokens/s."
+    "zh": "公司伺服器上很多人同時用時，一張顯示卡最多能讓幾個人同時用、還覺得夠快。夠快＝95% 的請求 3 秒內出第一個字，而且 95% 每秒至少 20 token。分三步量：大家不停發問、完整做完 agent 任務、模擬真實使用者。",
+    "en": "With many people on the company server at once: how many can use one card at the same time and still find it fast. Fast = 95% of requests show the first token within 3 s and 95% get at least 20 tokens/s. Measured three ways: everyone asking non-stop, whole agent tasks, and simulated staff."
    },
    "method": {
-    "zh": "GPU 主機（RTX PRO 6000 Blackwell，96 GB）。模擬 1、2、4…64 人同時不停發問（一題答完馬上送下一題），每級送 max(8, 3 × 人數) 題，到撐不住為止。三種用法：一般聊天（短問題、寫約 600 字）、agent 工具呼叫（同一段約 1 萬 token 的系統提示與 74 個公司工具＋一題問題）、長文件（約 3 萬 token 的公司文件請它摘要）。vLLM 0.34 用 FP8；Ollama 0.40.13 用 4-bit，開到所有層都放得進顯示卡的最大路數。關思考每次最多輸出 512 token；開思考（實際用法）最多 4,096 token，長文件關思考就不達標，沒測開思考。表上是最多幾人同時用還達標（只測到 64 人）。",
-    "en": "On the GPU machine (RTX PRO 6000 Blackwell, 96 GB). 1, 2, 4 … 64 users asking non-stop (the next question as soon as an answer ends), max(8, 3 × users) requests per level, until it breaks. Three uses: chat (a short question, about 600 characters back), agent tool calling (the same ~10k-token system prompt with 74 company tools, plus one question), long document (a ~30k-token company document to summarise). vLLM 0.34 with FP8; Ollama 0.40.13 with 4-bit, with as many parallel slots as fit fully on the card. Thinking off: at most 512 tokens per answer; thinking on (real use): up to 4,096 (long documents miss the bar even without thinking, so not run with it). The table gives the most users at once that still meet the bar (tested up to 64)."
+    "zh": "GPU 主機（RTX PRO 6000 Blackwell，96 GB）。\n\n① 不停發問：模擬 1、2、4…64 人同時不停發問（一題答完馬上送下一題），每級送 max(8, 3 × 人數) 題，到撐不住為止。三種用法：一般聊天（短問題、寫約 600 字）、agent 工具呼叫（同一段約 1 萬 token 的系統提示與 74 個公司工具＋一題問題，只看第一輪）、長文件（約 3 萬 token 的公司文件請它摘要）。vLLM 0.34 用 FP8；Ollama 0.40.13 用 4-bit。關思考每次最多輸出 512 token；開思考（實際用法）最多 4,096 token。\n\n② 完整多輪 agent：vLLM、開思考，每人一題公司工具問題，工具結果由模擬的服務回，一直做到給出答案（最多 8 輪），1～64 人，每一次呼叫都要達標。\n\n③ 模擬真實使用者：N 個人在線，每人問完、看完回答休息 20～60 秒再問；聊天 60%、完整 agent 任務 30%、文件問答 10%（約 7,000 字）；在線 16～256 人，每級量 5 分鐘。",
+    "en": "On the GPU machine (RTX PRO 6000 Blackwell, 96 GB).\n\n① Non-stop: 1, 2, 4 … 64 users asking non-stop (the next question as soon as an answer ends), max(8, 3 × users) requests per level, until it breaks. Three uses: chat (a short question, about 600 characters back), agent tool calling (the same ~10k-token system prompt with 74 company tools, plus one question; first turn only), long document (a ~30k-token company document to summarise). vLLM 0.34 with FP8; Ollama 0.40.13 with 4-bit. Thinking off: at most 512 tokens per answer; thinking on (real use): up to 4,096.\n\n② Whole agent task: vLLM, thinking on; each user one company-tool question, tool results from a mock service, until the model answers (8 turns at most), 1-64 users, every call must meet the bar.\n\n③ Simulated staff: N people online, each asks, reads the answer and rests 20-60 s before the next; 60% chat, 30% whole agent tasks, 10% questions on a ~7,000-character document; 16-256 online, 5 minutes per level."
    },
    "example": {
-    "zh": "agent 用法：每個人的請求前面都是同一段 1 萬 token 的工具說明。vLLM 讀一次就給所有人共用，32 人時第一個字 0.8 秒；Ollama 每個人都要從頭重讀，2 人時就要 3.5 秒。\n\nOllama 跑 Qwen3.6、Qwen3.8 一次只能處理一個請求（Ollama 還不支援這個架構同時處理多個），後面的人只能排隊；這兩個要多人用只能選 vLLM。\n\n這裡大家不停發問、agent 只看第一輪；更接近實際用法的人數見下一個測試。",
-    "en": "Agent use: every request starts with the same 10k-token tool description. vLLM reads it once and shares it, first token 0.8 s at 32 users; Ollama reads it again for each user, 3.5 s at 2 users.\n\nOllama serves Qwen3.6 and Qwen3.8 one request at a time (it cannot yet run this architecture in parallel), so the rest queue: for many users these two need vLLM.\n\nHere everyone asks non-stop and the agent's first turn only; the next test gives numbers closer to real use."
+    "zh": "agent 用法：每個人的請求前面都是同一段 1 萬 token 的工具說明。vLLM 讀一次就給所有人共用，32 人時第一個字 0.8 秒；Ollama 每個人都要從頭重讀，2 人時就要 3.5 秒。Ollama 跑 Qwen3.6、Qwen3.8 一次只處理一個請求、後面的人排隊（表①裡它們在 Ollama 的人數，是排隊還在標準內的人數）；這兩個要多人用只能選 vLLM。\n\n完整做完一題，Gemma 4 31B 和 Qwen3.8 27B 都從 32 人降到 16 人：一題約呼叫 3 次，越後面對話越長。\n\n換算公司人數：在線人數 ÷ 尖峰時同時在用的員工比例；假設 20% 時，Gemma 4 31B 約 160 人、Qwen3.8 27B 約 320 人、Qwen3.6 約 960 人。",
+    "en": "Agent use: every request starts with the same 10k-token tool description. vLLM reads it once and shares it, first token 0.8 s at 32 users; Ollama reads it again for each user, 3.5 s at 2 users. Ollama serves Qwen3.6 and Qwen3.8 one request at a time and the rest queue (their Ollama numbers in table ① are how many can queue and still meet the bar); for many users these two need vLLM.\n\nDoing the whole task, Gemma 4 31B and Qwen3.8 27B drop from 32 users to 16: a task takes about 3 calls and the conversation grows.\n\nIn staff: users online ÷ the share of staff using it at once at peak; at 20%, Gemma 4 31B is about 160 staff, Qwen3.8 27B about 320, Qwen3.6 about 960."
    },
    "limits": {
-    "zh": "agent 只量第一輪（實際一題要呼叫 3 次左右），所以偏樂觀；完整多輪 agent 見下一個測試。vLLM 是 FP8、Ollama 是 4-bit，精度不同。",
-    "en": "Only the agent's first turn is measured (a real task takes about 3 calls), so these are optimistic; full agent tasks are in the next test. vLLM is FP8 and Ollama 4-bit: different precision."
+    "zh": "① 只量 agent 第一輪，偏樂觀；vLLM 是 FP8、Ollama 是 4-bit，精度不同。② ③ 只測 vLLM、開思考；模擬的人每 20～60 秒就問一題，比多數員工頻繁，所以偏保守。待補：尖峰時同時使用的比例是假設的，平台 11-25 起記錄請求，累積幾天後換成真實比例。",
+    "en": "① measures the agent's first turn only, so it is optimistic; vLLM is FP8 and Ollama 4-bit. ② and ③ are vLLM with thinking on only; the simulated people ask every 20-60 s, more often than most staff, so these are on the safe side. Still to come: the peak share is an assumption; the platform logs requests from 11-25 and will replace it after a few days."
    },
    "platform": {
     "zh": "平台上不能現場跑（要獨佔整張顯示卡）。",
     "en": "Not runnable on the platform (it needs the whole card)."
    },
-   "columns": {
-    "zh": [
-     "模型",
-     "用法",
-     "vLLM 關思考",
-     "vLLM 開思考",
-     "Ollama 關思考",
-     "Ollama 開思考"
-    ],
-    "en": [
-     "Model",
-     "Use",
-     "vLLM, thinking off",
-     "vLLM, thinking on",
-     "Ollama, thinking off",
-     "Ollama, thinking on"
-    ]
-   },
-   "rows": [
+   "date": "2026-11-25",
+   "status": "done",
+   "tables": [
     {
-     "where": "local",
-     "zh": [
-      "Gemma 4 31B",
-      "一般聊天",
-      "64 人以上",
-      "32 人",
-      "16 人",
-      "16 人"
-     ],
-     "en": [
-      "Gemma 4 31B",
-      "Chat",
-      "64+ users",
-      "32 users",
-      "16 users",
-      "16 users"
+     "title": {
+      "zh": "① 大家不停發問：最多幾人同時用還達標（只測到 64 人）",
+      "en": "① Non-stop: the most users at once that still meet the bar (tested up to 64)"
+     },
+     "note": {
+      "zh": "agent 只看第一輪。",
+      "en": "Agent: first turn only."
+     },
+     "columns": {
+      "zh": [
+       "模型",
+       "用法",
+       "vLLM 關思考",
+       "vLLM 開思考",
+       "Ollama 關思考",
+       "Ollama 開思考"
+      ],
+      "en": [
+       "Model",
+       "Use",
+       "vLLM, thinking off",
+       "vLLM, thinking on",
+       "Ollama, thinking off",
+       "Ollama, thinking on"
+      ]
+     },
+     "rows": [
+      {
+       "where": "local",
+       "zh": [
+        "Gemma 4 31B",
+        "一般聊天",
+        "64 人以上",
+        "32 人",
+        "16 人",
+        "16 人"
+       ],
+       "en": [
+        "Gemma 4 31B",
+        "Chat",
+        "64+ users",
+        "32 users",
+        "16 users",
+        "16 users"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Gemma 4 31B",
+        "agent 工具呼叫",
+        "32 人",
+        "32 人",
+        "1 人",
+        "1 人（4 人時 2.8 秒剛好過，2 人時 3.3 秒沒過，不穩定）"
+       ],
+       "en": [
+        "Gemma 4 31B",
+        "Agent tool calling",
+        "32 users",
+        "32 users",
+        "1 user",
+        "1 user (4 users passed at 2.8 s, 2 users missed at 3.3 s: unstable)"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Gemma 4 31B",
+        "長文件（約 3 萬 token）",
+        "0 人（1 人就要等 7.4 秒）",
+        "—",
+        "0 人（1 人要等 20.6 秒）",
+        "—"
+       ],
+       "en": [
+        "Gemma 4 31B",
+        "Long document (~30k tokens)",
+        "0 users (one user already waits 7.4 s)",
+        "—",
+        "0 users (one user waits 20.6 s)",
+        "—"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.6 35B-A3B",
+        "一般聊天",
+        "64 人以上",
+        "64 人以上",
+        "2 人",
+        "1 人"
+       ],
+       "en": [
+        "Qwen3.6 35B-A3B",
+        "Chat",
+        "64+ users",
+        "64+ users",
+        "2 users",
+        "1 user"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.6 35B-A3B",
+        "agent 工具呼叫",
+        "32 人",
+        "64 人以上",
+        "8 人",
+        "1 人"
+       ],
+       "en": [
+        "Qwen3.6 35B-A3B",
+        "Agent tool calling",
+        "32 users",
+        "64+ users",
+        "8 users",
+        "1 user"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.6 35B-A3B",
+        "長文件（約 3 萬 token）",
+        "4 人",
+        "—",
+        "0 人（1 人要等 3.4 秒）",
+        "—"
+       ],
+       "en": [
+        "Qwen3.6 35B-A3B",
+        "Long document (~30k tokens)",
+        "4 users",
+        "—",
+        "0 users (one user waits 3.4 s)",
+        "—"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.8 27B",
+        "一般聊天",
+        "64 人以上",
+        "64 人以上",
+        "1 人",
+        "1 人"
+       ],
+       "en": [
+        "Qwen3.8 27B",
+        "Chat",
+        "64+ users",
+        "64+ users",
+        "1 user",
+        "1 user"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.8 27B",
+        "agent 工具呼叫",
+        "32 人",
+        "32 人",
+        "2 人",
+        "2 人"
+       ],
+       "en": [
+        "Qwen3.8 27B",
+        "Agent tool calling",
+        "32 users",
+        "32 users",
+        "2 users",
+        "2 users"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.8 27B",
+        "長文件（約 3 萬 token）",
+        "0 人（1 人要等 3.4 秒）",
+        "—",
+        "0 人（1 人要等 9.0 秒）",
+        "—"
+       ],
+       "en": [
+        "Qwen3.8 27B",
+        "Long document (~30k tokens)",
+        "0 users (one user waits 3.4 s)",
+        "—",
+        "0 users (one user waits 9.0 s)",
+        "—"
+       ]
+      }
      ]
     },
     {
-     "where": "local",
-     "zh": [
-      "Gemma 4 31B",
-      "agent 工具呼叫",
-      "32 人",
-      "32 人",
-      "1 人",
-      "1 人（4 人時 2.8 秒剛好過，2 人時 3.3 秒沒過，不穩定）"
-     ],
-     "en": [
-      "Gemma 4 31B",
-      "Agent tool calling",
-      "32 users",
-      "32 users",
-      "1 user",
-      "1 user（4 users時 2.8 s剛好過，2 users時 3.3 s沒過，不穩定）"
+     "title": {
+      "zh": "② ③ 更接近實際用法：完整多輪 agent 與模擬真實使用者（vLLM、開思考）",
+      "en": "② ③ Closer to real use: whole agent tasks and simulated staff (vLLM, thinking on)"
+     },
+     "note": {
+      "zh": "模擬真實使用者時，在線的人有一半以上時間在等回答（Gemma 4 31B 48%、Qwen3.8 27B 76%）。",
+      "en": "As simulated staff, people online spend half or more of their time waiting for answers (Gemma 4 31B 48%, Qwen3.8 27B 76%)."
+     },
+     "columns": {
+      "zh": [
+       "模型",
+       "agent 只看第一輪",
+       "完整多輪 agent",
+       "模擬真實使用者（在線人數）"
+      ],
+      "en": [
+       "Model",
+       "Agent, first turn only",
+       "Whole agent task",
+       "Simulated staff (online)"
+      ]
+     },
+     "rows": [
+      {
+       "where": "local",
+       "zh": [
+        "Gemma 4 31B",
+        "32 人",
+        "16 人",
+        "32 人"
+       ],
+       "en": [
+        "Gemma 4 31B",
+        "32 users",
+        "16 users",
+        "32 users"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.6 35B-A3B",
+        "64 人以上",
+        "64 人以上",
+        "192 人"
+       ],
+       "en": [
+        "Qwen3.6 35B-A3B",
+        "64+ users",
+        "64+ users",
+        "192 users"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.8 27B",
+        "32 人",
+        "16 人",
+        "64 人"
+       ],
+       "en": [
+        "Qwen3.8 27B",
+        "32 users",
+        "16 users",
+        "64 users"
+       ]
+      }
      ]
     },
     {
-     "where": "local",
-     "zh": [
-      "Gemma 4 31B",
-      "長文件（約 3 萬 token）",
-      "0 人（1 人就要等 7.4 秒）",
-      "—",
-      "0 人（1 人要等 20.6 秒）",
-      "—"
-     ],
-     "en": [
-      "Gemma 4 31B",
-      "Long document (~30k tokens)",
-      "0 users (one user already waits 7.4 s)",
-      "—",
-      "0 users (one user waits 20.6 s)",
-      "—"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.6 35B-A3B",
-      "一般聊天",
-      "64 人以上",
-      "64 人以上",
-      "2 人",
-      "1 人"
-     ],
-     "en": [
-      "Qwen3.6 35B-A3B",
-      "Chat",
-      "64+ users",
-      "64+ users",
-      "2 users",
-      "1 user"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.6 35B-A3B",
-      "agent 工具呼叫",
-      "32 人",
-      "64 人以上",
-      "8 人",
-      "1 人"
-     ],
-     "en": [
-      "Qwen3.6 35B-A3B",
-      "Agent tool calling",
-      "32 users",
-      "64+ users",
-      "8 users",
-      "1 user"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.6 35B-A3B",
-      "長文件（約 3 萬 token）",
-      "4 人",
-      "—",
-      "0 人（1 人要等 3.4 秒）",
-      "—"
-     ],
-     "en": [
-      "Qwen3.6 35B-A3B",
-      "Long document (~30k tokens)",
-      "4 users",
-      "—",
-      "0 users (one user waits 3.4 s)",
-      "—"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.8 27B",
-      "一般聊天",
-      "64 人以上",
-      "64 人以上",
-      "1 人",
-      "1 人"
-     ],
-     "en": [
-      "Qwen3.8 27B",
-      "Chat",
-      "64+ users",
-      "64+ users",
-      "1 user",
-      "1 user"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.8 27B",
-      "agent 工具呼叫",
-      "32 人",
-      "32 人",
-      "2 人",
-      "2 人"
-     ],
-     "en": [
-      "Qwen3.8 27B",
-      "Agent tool calling",
-      "32 users",
-      "32 users",
-      "2 users",
-      "2 users"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.8 27B",
-      "長文件（約 3 萬 token）",
-      "0 人（1 人要等 3.4 秒）",
-      "—",
-      "0 人（1 人要等 9.0 秒）",
-      "—"
-     ],
-     "en": [
-      "Qwen3.8 27B",
-      "Long document (~30k tokens)",
-      "0 users (one user waits 3.4 s)",
-      "—",
-      "0 users (one user waits 9.0 s)",
-      "—"
+     "title": {
+      "zh": "① 的細節：每一級人數的速度（關思考）",
+      "en": "Behind ①: speed at each number of users (thinking off)"
+     },
+     "note": {
+      "zh": "聊天看每人每秒拿到幾個 token（最慢的 5%），agent 看第一個字要等多久（95% 的請求）；撐不住就停，後面寫「—」。1 人時 Ollama 反而比較快（Gemma 4 31B 每秒 112 對 40 token），但 64 人時第一個字要等 48 秒，vLLM 0.3 秒。",
+      "en": "Chat: tokens per second each user gets (slowest 5%); agent: the wait for the first token (95% of requests); \"—\" once it breaks. With one user Ollama is faster (Gemma 4 31B 112 against 40 tokens/s), but at 64 users the first token takes 48 s against vLLM's 0.3 s."
+     },
+     "columns": {
+      "zh": [
+       "同時人數",
+       "Gemma 4 31B vLLM 聊天",
+       "Gemma 4 31B Ollama 聊天",
+       "Qwen3.6 vLLM 聊天",
+       "Gemma 4 31B vLLM agent",
+       "Gemma 4 31B Ollama agent"
+      ],
+      "en": [
+       "Users at once",
+       "Gemma 4 31B vLLM chat: slowest 5% tokens/s",
+       "Gemma 4 31B Ollama chat: slowest 5% tokens/s",
+       "Qwen3.6 vLLM chat: slowest 5% tokens/s",
+       "Gemma 4 31B vLLM agent: first token (95%)",
+       "Gemma 4 31B Ollama agent: first token (95%)"
+      ]
+     },
+     "rows": [
+      {
+       "where": "local",
+       "zh": [
+        "1",
+        "39.5",
+        "112.2",
+        "202.4",
+        "0.3 秒",
+        "0.6 秒"
+       ],
+       "en": [
+        "1",
+        "39.5",
+        "112.2",
+        "202.4",
+        "0.3 s",
+        "0.6 s"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "2",
+        "39.1",
+        "88.5",
+        "162.2",
+        "0.3 秒",
+        "3.5 秒"
+       ],
+       "en": [
+        "2",
+        "39.1",
+        "88.5",
+        "162.2",
+        "0.3 s",
+        "3.5 s"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "4",
+        "38.4",
+        "69.4",
+        "145.4",
+        "0.4 秒",
+        "4.9 秒"
+       ],
+       "en": [
+        "4",
+        "38.4",
+        "69.4",
+        "145.4",
+        "0.4 s",
+        "4.9 s"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "8",
+        "37.1",
+        "49.0",
+        "111.8",
+        "0.4 秒",
+        "27.9 秒"
+       ],
+       "en": [
+        "8",
+        "37.1",
+        "49.0",
+        "111.8",
+        "0.4 s",
+        "27.9 s"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "16",
+        "35.3",
+        "30.9",
+        "87.4",
+        "0.6 秒",
+        "—"
+       ],
+       "en": [
+        "16",
+        "35.3",
+        "30.9",
+        "87.4",
+        "0.6 s",
+        "—"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "32",
+        "31.8",
+        "30.1（第一個字 17.3 秒，未達標）",
+        "67.2",
+        "0.8 秒",
+        "—"
+       ],
+       "en": [
+        "32",
+        "31.8",
+        "30.1 (first token 17.3 s: misses the bar)",
+        "67.2",
+        "0.8 s",
+        "—"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "64",
+        "26.6",
+        "29.6（第一個字 48.2 秒，未達標）",
+        "48.3",
+        "1.5 秒（速度 16.5，未達標）",
+        "—"
+       ],
+       "en": [
+        "64",
+        "26.6",
+        "29.6 (first token 48.2 s: misses the bar)",
+        "48.3",
+        "1.5 s (16.5 tokens/s: misses the bar)",
+        "—"
+       ]
+      }
      ]
     }
-   ]
+   ],
+   "headline": {
+    "zh": "Gemma 4 31B 用 vLLM：一張卡同時 16 人跑完整 agent；模擬真實使用者在線 32 人，約 160 位員工（假設尖峰 20% 同時在用）。用平台現在的 Ollama，agent 只能 1 人。",
+    "en": "Gemma 4 31B on vLLM: one card serves 16 people running whole agent tasks at once; as simulated staff, 32 online, about 160 employees (if 20% use it at once at peak). With the platform's current Ollama, agent use serves 1."
+   }
   },
   {
-   "id": "capacity_real",
+   "date": "2026-11-26",
+   "id": "speed",
+   "status": "running",
    "name": {
-    "zh": "一張 RTX PRO 6000：完整 agent 任務與模擬真實使用者",
-    "en": "One RTX PRO 6000: whole agent tasks and simulated staff"
+    "zh": "公平的速度比較",
+    "en": "A fair speed comparison"
    },
    "measures": {
-    "zh": "更接近實際用法時，一張卡能讓幾個人同時用還夠快（標準同上：95% 的請求 3 秒內出第一個字、每秒至少 20 token）。",
-    "en": "Closer to real use: how many people one card serves and still feels fast (same bar: 95% of requests show the first token within 3 s and get at least 20 tokens/s)."
+    "zh": "每個模型一次只答一個請求時有多快：每題秒數、第一個字等多久、每秒幾個 token。",
+    "en": "How fast each model is with one request at a time: seconds per question, wait for the first token, tokens per second."
    },
    "method": {
-    "zh": "GPU 主機、vLLM（FP8）、開思考。完整多輪 agent：每人一題公司工具問題，工具結果由模擬的服務回，一直做到給出答案（最多 8 輪），1～64 人，每一次呼叫都要達標。模擬真實使用者：N 個人在線，每人問完、看完回答休息 20～60 秒再問；聊天 60%、完整 agent 任務 30%、文件問答 10%（約 7,000 字）；在線 16～256 人，每級量 5 分鐘。",
-    "en": "GPU machine, vLLM (FP8), thinking on. Whole agent task: each user one company-tool question, tool results from a mock service, until the model answers (8 turns at most), 1-64 users, every call must meet the bar. Simulated staff: N people online, each asks, reads the answer and rests 20-60 s before the next; 60% chat, 30% whole agent tasks, 10% questions on a ~7,000-character document; 16-256 online, 5 minutes per level."
+    "zh": "17 個模型在 GPU 主機上一次一個、一次一個請求（含 Inkling、Breeze、TAIDE），同一批題目。",
+    "en": "17 models on the GPU machine, one model and one request at a time (Inkling, Breeze and TAIDE included), the same questions."
    },
-   "example": {
-    "zh": "完整做完一題，Gemma 4 31B 和 Qwen3.8 27B 都從 32 人降到 16 人：一題約呼叫 3 次，越後面對話越長；32 人時第一個字仍在 1 秒內，但每秒只剩 17～19 token。\n\n模擬真實使用者時，在線的人有一半以上時間在等回答（Gemma 4 31B 48%、Qwen3.8 27B 76%）。換算公司人數：在線人數 ÷ 尖峰時同時在用的員工比例；假設 20% 時，Gemma 4 31B 約 160 人、Qwen3.8 27B 約 320 人、Qwen3.6 約 960 人。",
-    "en": "Doing the whole task, Gemma 4 31B and Qwen3.8 27B drop from 32 users to 16: a task takes about 3 calls and the conversation grows; at 32 users the first token still comes within 1 s, but each gets only 17-19 tokens/s.\n\nAs simulated staff, people online spend half or more of their time waiting for answers (Gemma 4 31B 48%, Qwen3.8 27B 76%). In staff: users online ÷ the share of staff using it at once at peak; at 20%, Gemma 4 31B is about 160 staff, Qwen3.8 27B about 320, Qwen3.6 about 960."
+   "why": {
+    "zh": "前面各測試的秒數是在不同機器、不同時間量的，不能互比；這項讓速度能放在一起比。",
+    "en": "The seconds in the other tests come from different machines and times and do not compare; this one makes speed comparable."
    },
-   "limits": {
-    "zh": "只測 vLLM、開思考。模擬的人每 20～60 秒就問一題，比多數員工頻繁，所以偏保守；尖峰同時使用的比例是假設的，平台 11-25 起記錄請求，之後換成真實比例。",
-    "en": "vLLM with thinking on only. The simulated people ask every 20-60 s, more often than most staff, so this is on the safe side; the peak share is an assumption, and the platform logs requests from 11-25 to replace it."
-   },
-   "platform": {
-    "zh": "平台上不能現場跑（要獨佔整張顯示卡）。",
-    "en": "Not runnable on the platform (it needs the whole card)."
-   },
-   "columns": {
-    "zh": [
-     "模型",
-     "agent 只看第一輪",
-     "完整多輪 agent",
-     "模擬真實使用者（在線人數）"
-    ],
-    "en": [
-     "Model",
-     "Agent, first turn only",
-     "Whole agent task",
-     "Simulated staff (online)"
-    ]
-   },
-   "rows": [
-    {
-     "where": "local",
-     "zh": [
-      "Gemma 4 31B",
-      "32 人",
-      "16 人",
-      "32 人"
-     ],
-     "en": [
-      "Gemma 4 31B",
-      "32 users",
-      "16 users",
-      "32 users"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.6 35B-A3B",
-      "64 人以上",
-      "64 人以上",
-      "192 人"
-     ],
-     "en": [
-      "Qwen3.6 35B-A3B",
-      "64+ users",
-      "64+ users",
-      "192 users"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "Qwen3.8 27B",
-      "32 人",
-      "16 人",
-      "64 人"
-     ],
-     "en": [
-      "Qwen3.8 27B",
-      "32 users",
-      "16 users",
-      "64 users"
-     ]
-    }
-   ]
+   "pending": {
+    "zh": "GPU 主機已跑完，結果整理中。",
+    "en": "Run on the GPU machine; results being written up."
+   }
   },
   {
-   "id": "capacity_levels",
+   "date": null,
+   "id": "refusal",
+   "status": "planned",
    "name": {
-    "zh": "一張 RTX PRO 6000：每一級人數的速度（關思考）",
-    "en": "One RTX PRO 6000: speed at each number of users (thinking off)"
+    "zh": "消融版的拒答率",
+    "en": "Refusals of abliterated models"
    },
    "measures": {
-    "zh": "上一個測試每一級人數的細節：聊天看每人每秒拿到幾個 token（最慢的 5%），agent 看第一個字要等多久（95% 的請求）。",
-    "en": "The levels behind the previous test: for chat, tokens per second each user gets (slowest 5%); for agent use, the wait for the first token (95% of requests)."
+    "zh": "一般模型會擋的問題，各消融版是不是真的會回答、答得好不好。",
+    "en": "Whether each abliterated model really answers the questions ordinary models refuse, and how well."
    },
    "method": {
-    "zh": "同上一個測試。agent 的回答常是一整段工具呼叫一次回來，算不出每秒 token，所以只看第一個字。撐不住（第一個字超過 60 秒、每秒不到 5 token 或出錯）就停，後面寫「—」。",
-    "en": "As in the previous test. Agent answers are often one tool call arriving at once, so only the first token counts there. A run stops when it breaks (first token over 60 s, under 5 tokens/s, or errors): \"—\" after that."
+    "zh": "建一組一般模型會擋的題目，原版和各消融版各答一次，量回答比例與回答品質。",
+    "en": "A set of questions ordinary models refuse, answered once by the original and each abliterated build; the share answered and the quality."
    },
-   "example": {
-    "zh": "1 人時 Ollama 反而比較快（Gemma 4 31B 每秒 112 對 40 token：Ollama 附一個小模型先猜字，4-bit 也比較小）；但 Ollama 只能開 16 路，64 人時第一個字要等 48 秒，vLLM 0.3 秒。MoE 的 Qwen3.6 64 人時每人仍有 48 token/秒。",
-    "en": "With one user Ollama is faster (Gemma 4 31B 112 against 40 tokens/s: Ollama adds a small draft model, and 4-bit is smaller); but it only opens 16 slots, so at 64 users the first token takes 48 s against vLLM's 0.3 s. The MoE Qwen3.6 still gives each of 64 users 48 tokens/s."
+   "why": {
+    "zh": "用消融版是為了問一般模型會擋的問題；目前只量了能力掉多少，還不知道它是不是真的會回答。",
+    "en": "Abliterated builds are for questions ordinary models refuse; so far only the loss in skill is measured, not whether they answer."
+   }
+  },
+  {
+   "date": null,
+   "id": "hallucination_zh",
+   "status": "planned",
+   "name": {
+    "zh": "中文「不知道就說不知道」與附出處",
+    "en": "Saying \"I don't know\" in Chinese, and citing sources"
    },
-   "limits": {
-    "zh": "同上一個測試：思考關閉、512 token、vLLM FP8 對 Ollama 4-bit。",
-    "en": "As the previous test: thinking off, 512 tokens, vLLM FP8 against Ollama 4-bit."
+   "measures": {
+    "zh": "不知道答案時會不會硬答；查了文件後，答案有沒有照文件講。",
+    "en": "Whether the model makes up an answer when it does not know; after a look-up, whether the answer follows the document."
    },
-   "columns": {
-    "zh": [
-     "同時人數",
-     "Gemma 4 31B vLLM 聊天",
-     "Gemma 4 31B Ollama 聊天",
-     "Qwen3.6 vLLM 聊天",
-     "Gemma 4 31B vLLM agent",
-     "Gemma 4 31B Ollama agent"
-    ],
-    "en": [
-     "Users at once",
-     "Gemma 4 31B vLLM chat: slowest 5% tokens/s",
-     "Gemma 4 31B Ollama chat: slowest 5% tokens/s",
-     "Qwen3.6 vLLM chat: slowest 5% tokens/s",
-     "Gemma 4 31B vLLM agent: first token (95%)",
-     "Gemma 4 31B Ollama agent: first token (95%)"
-    ]
+   "method": {
+    "zh": "建中文冷門題與 RAG 題，量硬答的比例、答案和文件是否一致。",
+    "en": "Obscure Chinese questions and RAG questions: the share of made-up answers, and whether answers match the documents."
    },
-   "rows": [
-    {
-     "where": "local",
-     "zh": [
-      "1",
-      "39.5",
-      "112.2",
-      "202.4",
-      "0.3 秒",
-      "0.6 秒"
-     ],
-     "en": [
-      "1",
-      "39.5",
-      "112.2",
-      "202.4",
-      "0.3 s",
-      "0.6 s"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "2",
-      "39.1",
-      "88.5",
-      "162.2",
-      "0.3 秒",
-      "3.5 秒"
-     ],
-     "en": [
-      "2",
-      "39.1",
-      "88.5",
-      "162.2",
-      "0.3 s",
-      "3.5 s"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "4",
-      "38.4",
-      "69.4",
-      "145.4",
-      "0.4 秒",
-      "4.9 秒"
-     ],
-     "en": [
-      "4",
-      "38.4",
-      "69.4",
-      "145.4",
-      "0.4 s",
-      "4.9 s"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "8",
-      "37.1",
-      "49.0",
-      "111.8",
-      "0.4 秒",
-      "27.9 秒"
-     ],
-     "en": [
-      "8",
-      "37.1",
-      "49.0",
-      "111.8",
-      "0.4 s",
-      "27.9 s"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "16",
-      "35.3",
-      "30.9",
-      "87.4",
-      "0.6 秒",
-      "—"
-     ],
-     "en": [
-      "16",
-      "35.3",
-      "30.9",
-      "87.4",
-      "0.6 s",
-      "—"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "32",
-      "31.8",
-      "30.1（第一個字 17.3 秒，未達標）",
-      "67.2",
-      "0.8 秒",
-      "—"
-     ],
-     "en": [
-      "32",
-      "31.8",
-      "30.1 (first token 17.3 s: misses the bar)",
-      "67.2",
-      "0.8 s",
-      "—"
-     ]
-    },
-    {
-     "where": "local",
-     "zh": [
-      "64",
-      "26.6",
-      "29.6（第一個字 48.2 秒，未達標）",
-      "48.3",
-      "1.5 秒（速度 16.5，未達標）",
-      "—"
-     ],
-     "en": [
-      "64",
-      "26.6",
-      "29.6 (first token 48.2 s: misses the bar)",
-      "48.3",
-      "1.5 s (16.5 tokens/s: misses the bar)",
-      "—"
-     ]
-    }
-   ]
+   "why": {
+    "zh": "AA 的英文幻覺率 Gemma 4 31B 是 86%，對外助理要先知道中文的情況。",
+    "en": "AA puts Gemma 4 31B's English hallucination rate at 86%; an assistant for outsiders needs the Chinese figure first."
+   }
+  },
+  {
+   "date": null,
+   "id": "long_doc_zh",
+   "status": "planned",
+   "name": {
+    "zh": "中文長文件",
+    "en": "Long Chinese documents"
+   },
+   "measures": {
+    "zh": "讀很長的中文文件後回答問題的正確率，以及要等多久。",
+    "en": "Accuracy and waiting time when answering from very long Chinese documents."
+   },
+   "method": {
+    "zh": "用 3 萬／6 萬／10 萬字的中文文件出題，量正確率與等待時間。",
+    "en": "Questions on Chinese documents of 30,000 / 60,000 / 100,000 characters; accuracy and waiting time."
+   },
+   "why": {
+    "zh": "AA 長文（英文）Qwen3.8 27B 82%、Gemma 4 31B 70%，中文還沒量。",
+    "en": "AA long context (English): Qwen3.8 27B 82%, Gemma 4 31B 70%; Chinese not measured yet."
+   }
+  },
+  {
+   "date": null,
+   "id": "local_vs_cloud",
+   "status": "planned",
+   "name": {
+    "zh": "地端 vs 雲端使用體驗（含公司場景正確率）",
+    "en": "Local vs cloud in daily use (company scenarios included)"
+   },
+   "measures": {
+    "zh": "同樣的日常工作，地端和雲端的完成率、品質、等待時間與穩定度差多少。",
+    "en": "For the same everyday work, how local and cloud differ in completion, quality, waiting time and stability."
+   },
+   "method": {
+    "zh": "平台上建通用助理（搜尋、讀檔、公司資料庫等工具），約 30 個繁中日常任務，比完成率、盲測品質、等待時間（含多人同時用）、穩定度；業務查詢、客服、人資規章三個試點的標準題也併進來。",
+    "en": "A general assistant on the platform (search, files, company database and other tools), about 30 everyday zh-TW tasks: completion, blind-rated quality, waiting time (with many users) and stability; the sales, customer-service and HR-policy pilot questions join in."
+   },
+   "why": {
+    "zh": "前面都是單項測試；實際要決定的是日常工作交給地端夠不夠用。",
+    "en": "The tests above measure one skill each; the real decision is whether local models are good enough for daily work."
+   }
+  },
+  {
+   "date": null,
+   "id": "local_first",
+   "status": "planned",
+   "name": {
+    "zh": "地端先做、做不好再交給雲端",
+    "en": "Local first, cloud when it fails"
+   },
+   "measures": {
+    "zh": "多少比例的工作地端就能做完、用什麼訊號判斷要交給雲端、品質與費用差多少。",
+    "en": "What share of the work local models finish, which signals should hand a task to the cloud, and the difference in quality and cost."
+   },
+   "method": {
+    "zh": "同一批任務先給地端模型做，再依判斷訊號把一部分交給雲端，比只用地端、只用雲端的品質與費用。",
+    "en": "The same tasks go to a local model first, and some are handed to the cloud by a signal; compared with local only and cloud only on quality and cost."
+   },
+   "why": {
+    "zh": "地端便宜、資料不出公司，雲端比較強；兩個一起用可能兼顧。",
+    "en": "Local is cheap and keeps data in-house, the cloud is stronger; using both may get both."
+   }
+  },
+  {
+   "date": null,
+   "id": "stance_large",
+   "status": "planned",
+   "name": {
+    "zh": "台灣立場題庫擴充",
+    "en": "A larger Taiwan-stance set"
+   },
+   "measures": {
+    "zh": "立場、在地知識、公司業務題的表現，題目多到可以比較模型差異。",
+    "en": "Stance, local knowledge and company-business questions, with enough questions to compare models."
+   },
+   "method": {
+    "zh": "題庫從 26 題擴到 100–300 題，比較 Qwen、Gemma、TAIDE、Breeze 等。",
+    "en": "From 26 questions to 100-300, comparing Qwen, Gemma, TAIDE, Breeze and others."
+   },
+   "why": {
+    "zh": "現在 26 題只能看方向，差幾題分不出高下。",
+    "en": "26 questions show the direction only; a few questions apart decide nothing."
+   }
+  },
+  {
+   "date": null,
+   "id": "swe_rebench",
+   "status": "planned",
+   "name": {
+    "zh": "寫程式：SWE-rebench",
+    "en": "Coding: SWE-rebench"
+   },
+   "measures": {
+    "zh": "在真實開源專案裡修 bug，比競賽題和練習題更接近實際工作。",
+    "en": "Fixing bugs in real open-source projects, closer to real work than contest problems and exercises."
+   },
+   "method": {
+    "zh": "用 2026-03 的題目，和 Aider 同 4 個模型；評分工具待安裝。",
+    "en": "The 2026-03 questions with the same 4 models as Aider; the grader is still to be installed."
+   },
+   "why": {
+    "zh": "LiveCodeBench 和 Aider 的排名不同，要第三種接近實際的測法來決定 coding agent 用哪個模型。",
+    "en": "LiveCodeBench and Aider rank models differently; a third, realistic test should settle the coding-agent model."
+   }
   }
  ],
  "aa": {

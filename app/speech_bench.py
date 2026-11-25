@@ -98,7 +98,7 @@ def summary_frame(data: dict, labels: dict) -> pd.DataFrame:
                     else tr("雲端（Azure）", "Cloud (Azure)")
                 )
                 if cloud
-                else tr("本機", "Local")
+                else tr("地端", "Local")
             ),  # fmt: skip
         }
         for sample, title in samples.items():
@@ -223,13 +223,13 @@ def benchmark_page() -> None:
             f"（每 {data['local_frame_ms']} ms 一段，延遲依實測運算時間換算），雲端模型經 "
             f"{data['cloud']} 以說話速度每 {data['cloud_chunk_ms']} ms 送一段"
             "（延遲是實際量到的，含網路）。錯誤率：中文字錯率（CER）、英文詞錯率（WER），"
-            "評分前統一繁簡與數字寫法。本頁只顯示結果，不會執行。",
+            "評分前統一繁簡與數字寫法。",
             f"Streaming recognition of the same four recordings: local models run through the "
             f"model gateway on {data['hardware']} ({data['local_frame_ms']} ms frames, latency "
             f"simulated from the measured compute); cloud models through {data['cloud']}, sent "
             f"at speaking pace in {data['cloud_chunk_ms']} ms pieces (latency measured, network "
             "included). Error rate: CER for Chinese, WER for English, after unifying script and "
-            "number forms. This page only shows results; it runs nothing.",
+            "number forms.",
         )
     )
     frame = summary_frame(data, labels)

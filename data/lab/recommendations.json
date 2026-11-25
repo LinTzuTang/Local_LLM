@@ -1,6 +1,6 @@
 {
  "_about": "Which model for which situation, from the measured results (docs/SPEECH_EVALUATION.md, data/lab/*_benchmark.json). Models within about one percentage point (ASR) or a few points (other scores) are recommended together. Shown on Compare speech models -> Pick a model.",
- "date": "2026-11-03",
+ "date": "2026-11-05",
  "rows": [
   {
    "task": [
@@ -232,16 +232,38 @@
     "Any language"
    ],
    "local": [
-    "pyannote＋3D-Speaker（先告知人數：4 人會議 8.8%；34 MB、CPU）",
-    "pyannote + 3D-Speaker (with the head count: 8.8% on a 4-person meeting; 34 MB, CPU)"
+    "Nemotron 3 Diarization（平台可選；不用告訴人數，4 人會議整場 15.4%、2 人 1.5%）；最準是 Streaming Sortformer v2（9.6%、0.7%，最多 4 人，平台未接上）",
+    "Nemotron 3 Diarization (selectable on the platform; no head count needed, 15.4% on the whole 4-person meeting, 1.5% on the 2-person one); most accurate: Streaming Sortformer v2 (9.6%, 0.7%; 4 speakers at most; not on the platform yet)"
    ],
    "cloud": [
-    "不建議（gpt-4o-transcribe-diarize 慢，還把中文轉成英文）",
-    "Not recommended (gpt-4o-transcribe-diarize is slow and turned Chinese into English)"
+    "Azure AI Speech（4 人會議整場 28.2%）；ElevenLabs Scribe v2 4 人會議很差（42.7%）",
+    "Azure AI Speech (28.2% on the whole 4-person meeting); ElevenLabs Scribe v2 is poor with 4 people (42.7%)"
    ],
    "note": [
-    "講者錯誤率 DER",
-    "Diarization error rate"
+    "真實會議整場（26 分 4 人、32 分 2 人）；講者錯誤率 DER",
+    "Whole real meetings (26 min, 4 people; 32 min, 2 people); diarization error rate"
+   ]
+  },
+  {
+   "task": [
+    "會議記錄（誰說了什麼）",
+    "Meeting minutes (who said what)"
+   ],
+   "lang": [
+    "中文多人會議",
+    "Chinese meeting"
+   ],
+   "local": [
+    "先分講者（Nemotron 3）→ 再逐段轉文字（Qwen3-ASR-1.7B）→ 語言模型寫摘要與待辦",
+    "Split by speaker first (Nemotron 3) → transcribe each part (Qwen3-ASR-1.7B) → a language model writes the summary and action items"
+   ],
+   "cloud": [
+    "—",
+    "—"
+   ],
+   "note": [
+    "先切講者再逐段轉文字，比整段轉完再分配講者準；平台的「會議錄音 → 會議紀錄」場景就是這樣做",
+    "Splitting by speaker before transcribing beats transcribing first and assigning speakers after; the platform's meeting-minutes scenario works this way"
    ]
   },
   {

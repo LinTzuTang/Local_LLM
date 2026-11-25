@@ -529,7 +529,10 @@ def panel(page: str = va.PAGE) -> None:
         st.subheader(tr("上一段對話", "Last session"))
         va.history_view(last)
         sc.saved_caption(last)
-    voice_bench.section()
+    voice_bench.runs_section()
+    st.page_link("views/scores.py", label=tr("語音助理的評測結果 → 評測分數",
+                 "Voice-assistant results → Scores"), icon=":material/leaderboard:",
+             query_params={"kind": "speech"})  # fmt: skip
 
 
 def test_script(voice_names: list[str], short) -> tuple[dict | None, str]:

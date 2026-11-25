@@ -60,7 +60,7 @@ LOCAL_TINT, CLOUD_TINT = "rgba(37, 99, 235, .16)", "rgba(234, 88, 12, .16)"
 def where_names() -> tuple[str, str]:
     from i18n import tr
 
-    return tr("本機", "Local"), tr("雲端", "Cloud")
+    return tr("地端", "Local"), tr("雲端", "Cloud")  # our own machines (Mac or GPU machine)
 
 
 def where_scale():

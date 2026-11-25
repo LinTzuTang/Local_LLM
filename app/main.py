@@ -45,6 +45,7 @@ pages = {
         page("views/history.py", "執行紀錄", "Run history", ":material/history:"),
     ],
     tr("模型", "Models"): [
+        page("views/scores.py", "評測分數", "Scores", ":material/leaderboard:"),
         page("views/models.py", "模型庫", "Model library", ":material/apps:"),
         page("views/llm.py", "語言模型比較", "Language models", ":material/balance:"),
         page("views/speech.py", "語音模型比較", "Compare speech models", ":material/graphic_eq:"),

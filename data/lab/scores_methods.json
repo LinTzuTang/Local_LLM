@@ -1,0 +1,277 @@
+{
+ "_about": "The Scores page (app/views/scores.py): what each speech and OCR test measures and how, its last test date and state. The results themselves are in data/lab/*_benchmark.json; these texts come from docs/SPEECH_EVALUATION.md and the status document. Language models are in llm_benchmarks.json.",
+ "speech": {
+  "tests": [
+   {
+    "id": "asr",
+    "date": "2026-10-30",
+    "status": "done",
+    "name": {
+     "zh": "語音辨識（錄音轉文字）",
+     "en": "Speech recognition (recordings to text)"
+    },
+    "measures": {
+     "zh": "把整段錄音轉成文字，錯字越少越好。會議記錄、客服錄音、訪談都要先把聲音變成文字；錯字太多，後面的摘要和搜尋就會錯。",
+     "en": "Turning a whole recording into text, with as few errors as possible. Minutes, call recordings and interviews all start here; too many errors spoil the summaries and searches after."
+    },
+    "method": {
+     "zh": "錄音有國語演講、台灣口音英語、真實 4 人會議、台語，以及加噪音的版本。每個模型把整段錄音轉成文字，和人工逐字稿比對算字錯率（CER，越低越好）。",
+     "en": "Recordings: a Mandarin speech, Taiwanese-accented English, a real four-person meeting, Taiwanese Hokkien, and noisy versions. Each model transcribes the whole recording, compared with a human transcript for the character error rate (CER, lower is better)."
+    },
+    "limits": {
+     "zh": "多人搶話的真實會議是所有模型的弱點：最好的 Qwen3-ASR 也有 18.7% 錯字。台語 20 句沒有一句完全正確，目前沒有模型能做台語逐字稿。Gemma 4 這類多模態模型會意譯，不適合需要逐字稿的場合。",
+     "en": "Real meetings with people talking over each other are every model's weak spot: even the best, Qwen3-ASR, has 18.7% errors. Not one of 20 Taiwanese Hokkien sentences came out fully right: no model can transcribe it yet. Multimodal models such as Gemma 4 paraphrase, so they do not suit verbatim transcripts."
+    },
+    "headline": {
+     "zh": "國語、會議、噪音都選 Qwen3-ASR-1.7B（演講錯字 1.4%）；英語選 Whisper large-v3（0.7%）。台語目前沒有模型能用。",
+     "en": "For Mandarin, meetings and noise pick Qwen3-ASR-1.7B (1.4% errors on the speech); for English, Whisper large-v3 (0.7%). No model handles Taiwanese Hokkien yet."
+    }
+   },
+   {
+    "id": "diar",
+    "date": "2026-11-04",
+    "status": "done",
+    "name": {
+     "zh": "會議講者辨識（誰在說話）",
+     "en": "Speaker diarization (who spoke when)"
+    },
+    "measures": {
+     "zh": "分出會議錄音裡每一段是誰在說話。會議紀錄要寫出「誰說了什麼、誰提的待辦」，先要分得出講者。",
+     "en": "Telling who is speaking in each part of a meeting recording. Minutes that say who said what, and whose action item it is, need this first."
+    },
+    "method": {
+     "zh": "會議錄音有合成 2 人、真實會議 5 分鐘與整場約 30 分鐘（2 人、4 人）。兩種都測：先告訴模型有幾個人，或讓它自己判斷；和人工標記比對算 DER（漏掉、誤判、認錯人的時間比例，越低越好）。",
+     "en": "Recordings: a synthetic two-person dialogue, 5 minutes and about 30 minutes of real meetings (2 and 4 people). Both ways: the model is told how many people there are, or works it out itself; compared with human labels for the DER (share of time missed, falsely detected or given to the wrong person; lower is better)."
+    },
+    "limits": {
+     "zh": "Sortformer v2 最多只能分 4 個人，平台還沒接上。「先切講者、再逐段轉文字」比「整段轉完再分配講者」準。",
+     "en": "Sortformer v2 handles at most 4 speakers and is not on the platform yet. Splitting by speaker first and then transcribing each part is more accurate than transcribing first and assigning speakers after."
+    },
+    "todo": {
+     "zh": "還沒測：pyannote community-1、DiariZen。",
+     "en": "Not tested yet: pyannote community-1, DiariZen."
+    },
+    "headline": {
+     "zh": "最準的是 NVIDIA Streaming Sortformer v2（整場 26 分鐘 4 人會議 9.6%，平台還沒接上）；平台可選的 Nemotron 3 人數都猜對、幾乎不認錯人。平台現用的 sherpa-onnx 不告訴人數時會切出幾十個人。",
+     "en": "Most accurate: NVIDIA Streaming Sortformer v2 (9.6% on the whole 26-minute four-person meeting; not on the platform yet); Nemotron 3, selectable on the platform, gets every head count right and hardly confuses speakers. The platform's current sherpa-onnx finds dozens of speakers when not told the count."
+    }
+   },
+   {
+    "id": "live",
+    "date": "2026-11-04",
+    "status": "done",
+    "name": {
+     "zh": "即時字幕（邊說邊出字）",
+     "en": "Live captions (text while speaking)"
+    },
+    "measures": {
+     "zh": "人一邊說，字幕一邊出來。線上會議、活動直播、語音助理的「耳朵」都需要。",
+     "en": "Captions appearing while the person speaks: needed for online meetings, live events and a voice assistant's ears."
+    },
+    "method": {
+     "zh": "同樣的錄音照真實速度一小段一小段送進去，記錄從開始說話到出現第一個字的時間、定稿要等多久，最後和人工逐字稿比對算字錯率；另外加人聲噪音、辦公室噪音、電話音質再測一次。",
+     "en": "The same recordings are fed in small pieces at real speed: time from speech to the first text, time until the text is final, and finally the error rate against a human transcript; again with background voices, office noise and telephone quality."
+    },
+    "limits": {
+     "zh": "Voxtral 完整版在 Mac 跟不上即時，必須用 4-bit 版；Voxtral 對細節很敏感，單一數字約有 ±1 個百分點的不確定性。",
+     "en": "Full Voxtral cannot keep up in real time on the Mac, so the 4-bit build is used; Voxtral is sensitive to details, so a single figure carries about ±1 point of uncertainty."
+    },
+    "headline": {
+     "zh": "地端用 Voxtral 4-bit：國語錯字 3.0%、1 秒出字；修好人聲噪音會卡住的問題後，吵雜環境也比 Zipformer 準。雲端最準是 Azure gpt-live-transcribe（1.2%）。",
+     "en": "Locally, Voxtral 4-bit: 3.0% errors in Mandarin, text within 1 s; after fixing the stall on background voices it beats Zipformer in noise too. Most accurate in the cloud: Azure gpt-live-transcribe (1.2%)."
+    }
+   },
+   {
+    "id": "simul",
+    "date": "2026-10-30",
+    "status": "done",
+    "name": {
+     "zh": "同步口譯（邊聽邊翻）",
+     "en": "Simultaneous interpreting (translate while listening)"
+    },
+    "measures": {
+     "zh": "講者還在說，英文翻譯就跟著出來。國際會議、外賓參訪需要即時翻譯；準確和不落後兩件事要一起看。",
+     "en": "English following while the speaker is still talking, for international meetings and visitors; accuracy and lag count together."
+    },
+    "method": {
+     "zh": "照真實速度播放一段 92 秒的中文演講，記錄每句英文出現時落後講者幾秒，最後和標準譯文比對算 chrF（越高越好）。",
+     "en": "A 92-second Chinese speech played at real speed: how many seconds each English sentence trails the speaker, and chrF against a reference translation (higher is better)."
+    },
+    "limits": {
+     "zh": "只測了一段 92 秒的演講；Hy-SimulMT 只能在 NVIDIA 顯示卡跑。",
+     "en": "One 92-second speech only; Hy-SimulMT runs on NVIDIA cards only."
+    },
+    "todo": {
+     "zh": "OpenAI、阿里雲、字節的同步口譯服務要另外申請帳號，未測。",
+     "en": "OpenAI's, Alibaba Cloud's and ByteDance's interpreting services need separate accounts; not tested."
+    },
+    "headline": {
+     "zh": "地端串接最準（chrF 55.2）但平均落後 5.7 秒；GPU 主機上的同步口譯專用模型 Hy-SimulMT 只落後 0.54 秒。雲端 Gemini Live Translate 落後 1.9 秒。",
+     "en": "The local cascade is most accurate (chrF 55.2) but trails by 5.7 s on average; Hy-SimulMT, an interpreting model on the GPU machine, trails by only 0.54 s. In the cloud, Gemini Live Translate trails by 1.9 s."
+    }
+   },
+   {
+    "id": "tts",
+    "date": "2026-10-30",
+    "status": "done",
+    "name": {
+     "zh": "文字轉語音（TTS）",
+     "en": "Text to speech (TTS)"
+    },
+    "measures": {
+     "zh": "把文字念出來，念得清楚、開口要快。語音助理、有聲公告需要自然、清楚、台灣口音的聲音。",
+     "en": "Reading text aloud clearly and starting quickly: a voice assistant and spoken announcements need a natural, clear voice with a Taiwanese accent."
+    },
+    "method": {
+     "zh": "每個聲音念同一份會議稿，用語音辨識把念出來的聲音轉回文字，和原稿比對算錯字率（越低代表念得越清楚），同時記錄每句要等多久才開口。",
+     "en": "Every voice reads the same meeting script; speech recognition turns the audio back into text, compared with the script for an error rate (lower means clearer), with the wait before each sentence starts."
+    },
+    "limits": {
+     "zh": "錯字率包含「念錯」和「聽回的辨識模型聽錯」，1–2% 的差距算在誤差內。Breeze-TTS-2 限研究、不可商用。",
+     "en": "The error rate mixes misreadings with mistakes of the recognizer that listens back; 1–2% apart is noise. Breeze-TTS-2 is for research only, not commercial use."
+    },
+    "headline": {
+     "zh": "語音助理預設 Qwen3-TTS 台灣腔：錯字 1.6%、邊合成邊播 0.16 秒就開口。只要中文、要最快用 Kokoro。雲端最清楚是 Azure 曉雨。",
+     "en": "The voice assistant uses Qwen3-TTS with a Taiwanese accent: 1.6% errors, speaking 0.16 s after it starts synthesising. For Chinese only and fastest, Kokoro. Clearest in the cloud: Azure Xiaoyu."
+    }
+   },
+   {
+    "id": "voice",
+    "date": "2026-11-04",
+    "status": "done",
+    "name": {
+     "zh": "語音助理（對話＋查資料）",
+     "en": "Voice assistant (talk and look things up)"
+    },
+    "measures": {
+     "zh": "像 ChatGPT 語音模式：用講的問天氣、找店家。要知道語音助理能不能完全在公司內部做，不用把聲音送到國外。",
+     "en": "Like ChatGPT's voice mode: ask for the weather or a shop by speaking. Can a voice assistant run entirely in-house, without sending audio abroad?"
+    },
+    "method": {
+     "zh": "7 段對話腳本、23 句台詞（中英文問天氣、找店家、追問、插話），每套系統照真實速度聽、回答；AI 評審判斷該查、該問、該答有沒有做對、有沒有編造，並記錄說完到開口的時間。",
+     "en": "7 scripted conversations, 23 lines (weather and shops in Chinese and English, follow-ups, interruptions), heard and answered at real speed by each system; an AI judge checks whether it looked up, asked or answered when it should and whether it made things up, with the time from the end of speech to the reply."
+    },
+    "limits": {
+     "zh": "很多語音對話模型標「未接工具」是我們沒接上，不代表模型不會查資料。表上「說完到開口」只算語言模型的部分；在平台上實際說完到回話是 1.5–2.8 秒。",
+     "en": "Many speech-to-speech models marked \"no tools\" were not connected by us; it does not mean they cannot look things up. \"End of speech to reply\" counts the language model only; on the platform the full wait is 1.5–2.8 s."
+    },
+    "todo": {
+     "zh": "OpenAI GPT-Live 1.1 API 尚未開放，未測。",
+     "en": "OpenAI GPT-Live 1.1's API is not open yet; not tested."
+    },
+    "headline": {
+     "zh": "地端串接（串流辨識 → Gemma 4 12B → 語音）46/46 判斷全對、不編造，說完 1.0 秒開口，和雲端同級，而且最耐噪音。",
+     "en": "The local cascade (streaming recognition → Gemma 4 12B → speech) got all 46 decisions right without making things up, replies 1.0 s after you stop, on a par with the cloud, and copes best with noise."
+    }
+   }
+  ]
+ },
+ "ocr": {
+  "uses": {
+   "date": "2026-10-30",
+   "columns": {
+    "zh": [
+     "情境",
+     "地端建議",
+     "依據",
+     "雲端對照"
+    ],
+    "en": [
+     "Use",
+     "Local pick",
+     "Why",
+     "Cloud for comparison"
+    ]
+   },
+   "rows": [
+    {
+     "zh": [
+      "一般文件",
+      "MiniCPM-OCR 1.0",
+      "準確度居次（乾淨頁面 0.222），每頁 3.0 秒，比 GLM-OCR 快 4 倍",
+      "未測"
+     ],
+     "en": [
+      "Ordinary documents",
+      "MiniCPM-OCR 1.0",
+      "Second most accurate (clean pages 0.222), 3.0 s a page, 4x faster than GLM-OCR",
+      "Not tested"
+     ]
+    },
+    {
+     "zh": [
+      "要最準、繁中、直排古籍",
+      "GLM-OCR",
+      "最準（乾淨頁面 0.162、繁中 0.089），但每頁 11.9 秒",
+      "未測"
+     ],
+     "en": [
+      "Most accurate, Traditional Chinese, vertical classical pages",
+      "GLM-OCR",
+      "Most accurate (clean pages 0.162, Traditional Chinese 0.089), but 11.9 s a page",
+      "Not tested"
+     ]
+    },
+    {
+     "zh": [
+      "大量、只要大概內容",
+      "macOS Vision",
+      "最快（每頁 0.4 秒），但表格多的頁面閱讀順序會亂",
+      "未測"
+     ],
+     "en": [
+      "Large volumes, rough content is enough",
+      "macOS Vision",
+      "Fastest (0.4 s a page), but scrambles the reading order of table-heavy pages",
+      "Not tested"
+     ]
+    },
+    {
+     "zh": [
+      "有公式的考卷",
+      "Docling＋macOS Vision",
+      "有公式的考卷最好",
+      "未測"
+     ],
+     "en": [
+      "Exam papers with formulas",
+      "Docling + macOS Vision",
+      "Best on exam papers with formulas",
+      "Not tested"
+     ]
+    }
+   ]
+  },
+  "tests": [
+   {
+    "id": "ocr",
+    "date": "2026-10-30",
+    "status": "done",
+    "name": {
+     "zh": "OCR（圖片、文件轉文字）",
+     "en": "OCR (images and documents to text)"
+    },
+    "measures": {
+     "zh": "把掃描檔、照片裡的字讀出來。合約、報表、舊檔案要數位化，或要讓 AI 讀掃描檔，第一步是 OCR。",
+     "en": "Reading the text in scans and photos: the first step in digitising contracts, reports and old files, or in letting AI read a scan."
+    },
+    "method": {
+     "zh": "OmniDocBench 40 頁（繁中 13、簡中 12、英文 10、中英混合 5），加上其中 27 頁的翻拍版（光照、掃描、螢幕翻拍、歪斜、彎曲）；每個引擎整頁讀一次，和人工標註比對（正規化編輯距離，0＝完全一樣，越低越好），並記錄每頁秒數。",
+     "en": "40 OmniDocBench pages (13 Traditional Chinese, 12 Simplified, 10 English, 5 mixed) plus photographed copies of 27 of them (lighting, scanning, screen photos, skew, curl); each engine reads each whole page once, compared with human labels (normalised edit distance, 0 = identical, lower is better), with seconds per page."
+    },
+    "limits": {
+     "zh": "計分是自製的簡化版（官方評測工具沒裝），只能互相比較，不能和官方公布的分數直接比。",
+     "en": "A simplified scorer of our own (the official tool is not installed): compare engines with each other, not with official published scores."
+    },
+    "todo": {
+     "zh": "還沒測：PaddleOCR-VL；用官方版面切塊流程重測 MiniCPM-OCR、GLM-OCR。",
+     "en": "Not tested yet: PaddleOCR-VL; rerunning MiniCPM-OCR and GLM-OCR with the official layout pipeline."
+    },
+    "headline": {
+     "zh": "GLM-OCR 最準（繁中、直排古籍、翻拍都最好），但每頁約 12 秒；MiniCPM-OCR 快 4 倍、準確度居次。一般文件用 MiniCPM-OCR，要最準用 GLM-OCR。",
+     "en": "GLM-OCR is the most accurate (Traditional Chinese, vertical classical pages and photographed pages) at about 12 s a page; MiniCPM-OCR is 4x faster and second. Ordinary documents: MiniCPM-OCR; most accurate: GLM-OCR."
+    }
+   }
+  ]
+ }
+}

@@ -224,11 +224,10 @@ def noise_view(data: dict | None) -> None:
 
 
 def section() -> None:
-    st.subheader(tr("評測總表", "Evaluation"))
+    """The measured results (Scores page): ways of talking, front LLMs, noise and phone."""
     data = load()
-    a, b, n, c = st.tabs([tr("各種做法", "Ways of talking"), tr("前台 LLM", "Front LLMs"),
-                          tr("噪音與電話音質", "Noise & phone"),
-                          tr("你在平台上跑過的配置", "Your runs")])  # fmt: skip
+    a, b, n = st.tabs([tr("各種做法", "Ways of talking"), tr("前台 LLM", "Front LLMs"),
+                       tr("噪音與電話音質", "Noise & phone")])  # fmt: skip
     with n:
         noise_view(data)
     with a:
@@ -238,10 +237,10 @@ def section() -> None:
         else:
             st.caption(
                 tr(
-                    "7 段測試對話、23 句台詞（就是上面的測試腳本），以說話速度送入；說完到開口、說出答案取中位數。"
+                    "7 段測試對話、23 句台詞（語音助理頁上的測試腳本），以說話速度送入；說完到開口、說出答案取中位數。"
                     "判斷正確只算能查資料的系統；不亂編、自然度由 AI 評審（Azure gpt-5.4）逐句評。"
                     f"（{data.get('date', '')}，這台 Mac；雲端各跑 1 次）",
-                    "7 test conversations, 23 lines (the test scripts above), fed at speaking pace; "
+                    "7 test conversations, 23 lines (the voice assistant's test scripts), fed at speaking pace; "
                     "medians of the start and answer times. Decisions count for systems with "
                     "lookups only; grounded and natural come from an AI judge (Azure gpt-5.4). "
                     f"({data.get('date', '')}, this Mac; each cloud system run once)",
@@ -290,21 +289,25 @@ def section() -> None:
                 )
             )
             st.dataframe(front_frame(data), hide_index=True, width="stretch")
-    with c:
-        df = runs_frame(st.session_state.get("lang", "zh"))
-        if df.empty:
-            st.info(tr("還沒有儲存的對話。", "No saved sessions yet."))
-        else:
-            st.caption(
-                tr(
-                    "這台電腦上存下來的對話（執行紀錄），依設定分組，每輪的延遲取中位數：辨識＝說完到定稿文字；"
-                    "說完到開口＝說完到助理第一個聲音；說出答案＝說完到念出查詢結果。串流與非串流辨識、"
-                    "不同 LLM 和聲音可以直接對照。測試腳本與麥克風的對話都算在內。",
-                    "Sessions saved on this machine (run history), grouped by settings, medians "
-                    "per turn: ASR = end of speech to the final text; starts talking = to the "
-                    "assistant's first sound; says the answer = to the spoken lookup result. "
-                    "Compare streaming and whole-clip recognition, LLMs and voices directly. "
-                    "Test-script and microphone sessions both count.",
-                )
+
+
+def runs_section() -> None:
+    """Sessions saved on this machine, grouped by settings (the voice assistant's own page)."""
+    st.subheader(tr("你在平台上跑過的配置", "Your runs"))
+    df = runs_frame(st.session_state.get("lang", "zh"))
+    if df.empty:
+        st.info(tr("還沒有儲存的對話。", "No saved sessions yet."))
+    else:
+        st.caption(
+            tr(
+                "這台電腦上存下來的對話（執行紀錄），依設定分組，每輪的延遲取中位數：辨識＝說完到定稿文字；"
+                "說完到開口＝說完到助理第一個聲音；說出答案＝說完到念出查詢結果。串流與非串流辨識、"
+                "不同 LLM 和聲音可以直接對照。測試腳本與麥克風的對話都算在內。",
+                "Sessions saved on this machine (run history), grouped by settings, medians "
+                "per turn: ASR = end of speech to the final text; starts talking = to the "
+                "assistant's first sound; says the answer = to the spoken lookup result. "
+                "Compare streaming and whole-clip recognition, LLMs and voices directly. "
+                "Test-script and microphone sessions both count.",
             )
-            st.dataframe(df, hide_index=True, width="stretch")
+        )
+        st.dataframe(df, hide_index=True, width="stretch")
