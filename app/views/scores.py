@@ -111,8 +111,45 @@ def method_card(t: dict) -> None:
 
 TABLE_CSS = (
     "<style>.lab-uses td,.lab-uses th{border:1px solid var(--lab-border);padding:6px 8px;"
-    "vertical-align:top}.lab-uses td small{color:var(--lab-muted)}</style>"
+    "vertical-align:top}.lab-uses td small{color:var(--lab-muted)}"
+    ".lab-uses td:first-child{min-width:6.5em}</style>"
 )
+GIST = {  # one line above the closed recommendations (the same picks as inside)
+    "llm": ("公司系統 agent：Gemma 4 31B（平台預設）｜寫程式：改既有程式 Qwen3.6 coding、從零寫 Gemma 4 31B｜"
+            "很多人同時用：vLLM，一張 RTX PRO 6000 約 160 位員工｜不要用：Qwen3 30B-A3B",
+            "Company-system agent: Gemma 4 31B (platform default) | Coding: Qwen3.6 coding to edit "
+            "code, Gemma 4 31B from scratch | Many users: vLLM, one RTX PRO 6000 for about 160 "
+            "staff | Avoid: Qwen3 30B-A3B"),
+    "speech": ("錄音轉文字：Qwen3-ASR-1.7B｜會議講者：Nemotron 3｜即時字幕：Voxtral 4-bit｜"
+               "語音合成：Qwen3-TTS 台灣腔｜中翻英：Qwen3-ASR → TranslateGemma 12B",
+               "Transcripts: Qwen3-ASR-1.7B | Speakers: Nemotron 3 | Live captions: Voxtral 4-bit | "
+               "Voice: Qwen3-TTS (Taiwanese accent) | Chinese to English: Qwen3-ASR → TranslateGemma 12B"),
+    "ocr": ("一般文件：MiniCPM-OCR｜要最準或直排古籍：GLM-OCR｜大量只要大概：macOS Vision",
+            "Ordinary documents: MiniCPM-OCR | Most accurate or vertical classical text: GLM-OCR | "
+            "Large volumes, rough content: macOS Vision"),
+}  # fmt: skip
+ELSEWHERE = {  # tested, written up in the status document and HackMD, not drawn on this page
+    "llm": ("MoE 與 dense 的速度與記憶體、公司資料 agent 與多 agent 場景（功能驗證）、coding agent 三個固定任務、"
+            "用中文問程式題（NaturalCodeBench）、GPU 主機模型的顯示卡記憶體",
+            "MoE against dense (speed, memory), company-data agents and scenarios (functional "
+            "checks), three fixed coding-agent tasks, coding questions in Chinese "
+            "(NaturalCodeBench), GPU memory of NVIDIA-only models"),
+    "speech": ("語音翻譯（中文錄音 → 英文，8 種做法）", "Speech translation (Chinese to English, 8 ways)"),
+}  # fmt: skip
+
+
+def gist(kind: str) -> None:
+    if kind in GIST:
+        st.markdown(f":material/recommend: **{tr('重點', 'In short')}**　{tr(*GIST[kind])}")
+
+
+def elsewhere(kind: str) -> None:
+    if kind in ELSEWHERE:
+        st.caption(
+            ":material/description: "
+            + tr("另外也測了（結果在測試進度文件與 HackMD 報告）：", "Also tested (in the status document and HackMD reports): ")
+            + tr(*ELSEWHERE[kind])
+        )  # fmt: skip
 
 
 def html_table(head: str, body: list[str]) -> None:
@@ -156,14 +193,20 @@ def overview(tests: list[dict]) -> None:
     newest = max((t["date"] for t in tests if t.get("date")), default=None)
     st.markdown(f"### {tr('做了哪些測試', 'What we tested')}")
     counts = {s: sum(state(t) == s for t in tests) for s in STATES}
-    st.caption(
-        tr(
-            f"共 {len(tests)} 項：完成 {counts['done'] + counts['adding']}（其中 {counts['adding']} 項還在補測新模型）、"
-            f"整理中 {counts['writing']}、待測 {counts['planned']}。這一類最近一次測試：{newest or '—'}。",
-            f"{len(tests)} tests: {counts['done'] + counts['adding']} done ({counts['adding']} "
-            f"still adding models), {counts['writing']} being written up, {counts['planned']} "
-            f"planned. Latest run in this group: {newest or '—'}.",
+    done = counts["done"] + counts["adding"]
+    parts = [tr(f"完成 {done}", f"{done} done")]
+    if counts["adding"]:
+        parts[0] += tr(
+            f"（其中 {counts['adding']} 項還在補測新模型）",
+            f" ({counts['adding']} still adding models)",
         )
+    if counts["writing"]:
+        parts.append(tr(f"整理中 {counts['writing']}", f"{counts['writing']} being written up"))
+    if counts["planned"]:
+        parts.append(tr(f"待測 {counts['planned']}", f"{counts['planned']} planned"))
+    st.caption(
+        tr(f"共 {len(tests)} 項：" + "、".join(parts) + f"。這一類最近一次測試：{newest or '—'}。",
+           f"{len(tests)} tests: " + ", ".join(parts) + f". Latest run in this group: {newest or '—'}.")
     )  # fmt: skip
     head = "".join(
         f"<th>{h}</th>"
@@ -243,6 +286,7 @@ KINDS = {
     "llm": (tr("語言模型", "Language models"), "chat"),
     "speech": (tr("語音模型", "Speech models"), "graphic_eq"),
     "ocr": (tr("文件 OCR", "Document OCR"), "document_scanner"),
+    "external": (tr("外部評測（AA）", "External (AA)"), "public"),
 }
 if st.query_params.get("kind") in KINDS:  # a link from a test page (?kind=speech)
     st.session_state.scores_kind = st.query_params["kind"]
@@ -256,7 +300,14 @@ kind = (
     )
     or "llm"
 )  # fmt: skip
-st.markdown(f"### {tr('依情境選模型', 'Which model for what')}")
+
+
+def advice(label_zh: str = "依情境選模型", label_en: str = "Which model for what"):
+    """The recommendations, closed until clicked."""
+    return st.expander(
+        tr(f"{label_zh}（點開看建議）", f"{label_en} (click to open)"), icon=":material/recommend:"
+    )
+
 
 # ---------------------------------------------------------------- language models
 if kind == "llm":
@@ -267,31 +318,54 @@ if kind == "llm":
         )
         st.stop()
     uses = cat["uses"]
-    aa = {"id": "aa", "name": {"zh": "外部評測：Artificial Analysis", "en": "External: Artificial Analysis"},
-          "status": "done", "date": None,
-          "headline": {"zh": "AA 用英文、完整精度測各家模型；短任務地端追上了，長時間自主工作還差很遠。",
-                       "en": "AA tests full-precision models in English; local models have caught up on short tasks, not on long autonomous work."}}  # fmt: skip
     with_results = [t for t in cat["ours"] if t.get("rows") or t.get("tables")]
     later = [t for t in cat["ours"] if not (t.get("rows") or t.get("tables"))]
-    tests = [*with_results, aa, *later]
-    st.caption(
-        tr(
-            f"取自語言模型總報告（{uses.get('date') or cat['updated']} 更新）。地端建議是 4-bit 量化、"
-            "在我們自己的機器上跑；「見：」是依據來自哪一項測試。",
-            f"From the language-model report (updated {uses.get('date') or cat['updated']}). "
-            'Local picks are 4-bit builds on our own machines; "See" names the tests behind each.',
+    tests = [*with_results, *later]
+    names = {t["id"]: pick(t["name"]) for t in tests} | {
+        "aa": tr("外部評測（AA）", "External (AA)")
+    }
+    gist("llm")
+    with advice():
+        st.markdown(f"**{tr('地端怎麼選', 'Choosing a local model')}**")
+        st.caption(
+            tr(
+                f"取自語言模型總報告（{uses.get('date') or cat['updated']} 更新）。地端建議是 4-bit 量化、"
+                "在我們自己的機器上跑；「見：」是依據來自哪一項測試。",
+                f"From the language-model report (updated {uses.get('date') or cat['updated']}). "
+                'Local picks are 4-bit builds on our own machines; "See" names the tests behind each.',
+            )
         )
-    )
-    uses_table(uses["columns"], uses["rows"], {t["id"]: pick(t["name"]) for t in tests})
-    if pick(uses.get("note")):
-        st.caption(f":material/help: {pick(uses['note'])}")
+        uses_table(uses["columns"], uses["rows"], names)
+        if pick(uses.get("note")):
+            st.caption(f":material/help: {pick(uses['note'])}")
+        gap = cat.get("gap")
+        if gap:
+            st.markdown(f"**{tr('地端和雲端差多少', 'How far local is from cloud')}**")
+            st.caption(
+                tr(
+                    "短任務（挑工具、查資料）地端已經接近雲端；長時間自主工作、冷門知識、不知道就說不知道，"
+                    "雲端強很多。各取地端最好與雲端最好的模型；AA 的分數是英文、完整精度。"
+                    "差多少：差距在 3% 內算同級、12% 內算接近（Elo 以 400 分為基準）。",
+                    "On short tasks (picking tools, looking things up) local models are close to the "
+                    "cloud; on long autonomous work, obscure knowledge and admitting what they do "
+                    "not know, the cloud is far stronger. Best local against best cloud; AA's "
+                    "scores are English, full precision. Gap: within 3% is level, within 12% close "
+                    "(Elo: against 400 points).",
+                )
+            )
+            body = [
+                "<tr>"
+                + "".join(f"<td>{html.escape(c)}</td>" for c in tr(r["zh"], r["en"]))
+                + "</tr>"
+                for r in gap["rows"]
+            ]
+            head = "".join(f"<th>{html.escape(c)}</th>" for c in tr(*gap["columns"].values()))
+            html_table(head, body)
     overview(tests)
+    elsewhere("llm")
     t = pick_test("llm", tests, first="company_tools")
-    if t["id"] == "aa":
-        scores_llm.aa_section(cat)
-    else:
-        method_card(t)
-        scores_llm.test_results(t)
+    method_card(t)
+    scores_llm.test_results(t)
     glossary()
     st.stop()
 
@@ -299,17 +373,19 @@ info = methods()
 # ---------------------------------------------------------------- speech models
 if kind == "speech":
     rec = speech_pick.load()
+    gist("speech")
     if rec:
-        st.caption(
-            tr(
-                f"{rec['date']} 的實測結果。藍色＝地端（資料不出公司），橘色＝雲端（錄音要上傳、要付費）；"
-                "結果差不多的模型一起列出。括號裡是錯字率、開口時間或翻譯分數。",
-                f"Results of {rec['date']}. Blue = local (data stays in-house), orange = cloud "
-                "(audio is uploaded, paid); models with similar results are listed together. In "
-                "brackets: error rate, time to talk or translation score.",
+        with advice():
+            st.caption(
+                tr(
+                    f"{rec['date']} 的實測結果。藍色＝地端（資料不出公司），橘色＝雲端（錄音要上傳、要付費）；"
+                    "結果差不多的模型一起列出。括號裡是錯字率、開口時間或翻譯分數。",
+                    f"Results of {rec['date']}. Blue = local (data stays in-house), orange = cloud "
+                    "(audio is uploaded, paid); models with similar results are listed together. "
+                    "In brackets: error rate, time to talk or translation score.",
+                )
             )
-        )
-        st.markdown(speech_pick.table(rec["rows"]), unsafe_allow_html=True)
+            st.markdown(speech_pick.table(rec["rows"]), unsafe_allow_html=True)
     views = {
         "asr": asr_bench.benchmark_view,
         "diar": speech_meeting.benchmark_view,
@@ -320,7 +396,12 @@ if kind == "speech":
     }
     tests = (info.get("speech") or {}).get("tests") or []
     overview(tests)
-    todo = [f"{pick(t['name'])}：{pick(t['todo'])}" for t in tests if pick(t.get("todo"))]
+    elsewhere("speech")
+    todo = [
+        f"{pick(t['name'])}：{pick(t['todo']).removeprefix('還沒測：').removeprefix('Not tested yet: ')}"
+        for t in tests
+        if pick(t.get("todo"))
+    ]
     if todo:
         st.caption(":material/pending: " + tr("還沒測：", "Not tested yet: ") + "　".join(todo))
     t = pick_test("speech", tests)
@@ -329,17 +410,63 @@ if kind == "speech":
     glossary()
     st.stop()
 
-# ---------------------------------------------------------------- document OCR
-ocr = info.get("ocr") or {}
-if ocr.get("uses"):
-    st.caption(
+# ---------------------------------------------------------------- external evaluations (AA)
+if kind == "external":
+    st.markdown(
         tr(
-            f"{ocr['uses']['date']} 的實測結果（Apple M5 Pro）。數字是和人工標註的差異（0＝完全一樣，越低越好）與每頁秒數。",
-            f"Results of {ocr['uses']['date']} (Apple M5 Pro). Figures: difference from the human "
-            "labels (0 = identical, lower is better) and seconds per page.",
+            "**Artificial Analysis（AA）** 是獨立評測機構，用同一套方法測各家模型，不採用廠商自己報的分數。"
+            "AA 透過雲端 API 測完整精度的模型，題目多半是英文；我們自己的測試是 4-bit、中文為主，兩邊不能直接比。"
+            "這裡的資料每週自動更新一次。",
+            "**Artificial Analysis (AA)** is an independent evaluator that tests every model the "
+            "same way, without vendors' own numbers. It tests full-precision models through cloud "
+            "APIs, mostly in English; our own tests are 4-bit and mostly Chinese, so the two do not "
+            "compare directly. This data refreshes itself once a week.",
         )
     )
-    uses_table(ocr["uses"]["columns"], ocr["uses"]["rows"])
+    cat = scores_llm.catalog()
+    try:
+        from local_llm import aa_media
+
+        media = aa_media.load()
+    except ImportError:
+        media = None
+    cats = (media or {}).get("categories") or {}
+    sections = {"llm": tr("語言模型", "Language models")}
+    sections |= {cid: pick(c["name"]) for cid, c in cats.items() if cid != "llm"}
+    sections["ours"] = tr("我們測過的語言模型在 AA 的分數", "AA scores of the models we tested")
+    st.session_state.setdefault("scores_aa_kind", "llm")
+    which = (
+        st.segmented_control(
+            tr("AA 的哪一類", "Which AA leaderboard"), list(sections), format_func=sections.get,
+            **kept("scores_aa_kind"),
+        )
+        or "llm"
+    )  # fmt: skip
+    if which == "ours":
+        if cat:
+            scores_llm.aa_section(cat)
+    else:
+        scores_llm.aa_media_section(media, which)
+    if not media:
+        st.caption(tr("語音、圖片、影片的 AA 排行榜還沒抓到這台伺服器。",
+                      "AA's speech, image and video leaderboards are not on this server yet."))  # fmt: skip
+    glossary()
+    st.stop()
+
+# ---------------------------------------------------------------- document OCR
+ocr = info.get("ocr") or {}
+gist("ocr")
+if ocr.get("uses"):
+    with advice():
+        st.caption(
+            tr(
+                f"{ocr['uses']['date']} 的實測結果（Apple M5 Pro）。數字是和人工標註的差異"
+                "（0＝完全一樣，越低越好）與每頁秒數。",
+                f"Results of {ocr['uses']['date']} (Apple M5 Pro). Figures: difference from the "
+                "human labels (0 = identical, lower is better) and seconds per page.",
+            )
+        )
+        uses_table(ocr["uses"]["columns"], ocr["uses"]["rows"])
 tests = ocr.get("tests") or []
 overview(tests)
 st.markdown(f"### {tr('測試內容與結果', 'The test and its results')}")

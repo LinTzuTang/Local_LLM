@@ -56,14 +56,13 @@
       ],
       "license": "apache-2.0",
       "fit": "ok",
-      "note": "平台預設。MoE 每 token 只啟用 3B，速度接近 8B 模型；此 tag 現為 Thinking-2507，一定會先思考，適合 agent 與推理。",
-      "note_en": "Platform default. MoE with only 3B active per token, so it runs about as fast as an 8B model; this tag is now Thinking-2507 and always thinks first — good for agents and reasoning.",
+      "note": "平台舊預設（到 11-26）。MoE 每 token 只啟用 3B，速度接近 8B 模型；此 tag 現為 Thinking-2507，一定會先思考。評測：台灣立場 26 題有 21 題是中國立場、工具呼叫落後，不建議用。",
+      "note_en": "The old platform default (until 11-26). MoE with only 3B active per token, about as fast as an 8B model; this tag is now Thinking-2507 and always thinks first. Tests: China's framing on 21 of 26 Taiwan questions and behind on tool calling, so not recommended.",
       "tasks": [
         "chat",
         "reasoning"
       ],
-      "recommended": true,
-      "default": true
+      "recommended": false
     },
     {
       "tag": "qwen3:30b-a3b-instruct-2507-q4_K_M",
@@ -832,14 +831,15 @@
       ],
       "license": "apache-2.0",
       "fit": "ok",
-      "note": "Gemma 4 最大的 dense 版，家族中品質最好，但比 26B MoE 慢。",
-      "note_en": "The largest dense Gemma 4: best quality in the family, slower than the 26B MoE.",
+      "note": "平台預設（11-26 起）。Gemma 4 最大的 dense 版：工具呼叫、台灣立場、事實錯誤都是地端最好，但比 26B MoE 慢。",
+      "note_en": "Platform default (from 11-26). The largest dense Gemma 4: the best local model on tool calling, Taiwan stance and factual errors, slower than the 26B MoE.",
       "tasks": [
         "chat",
         "vision"
       ],
       "audio_note": "Ollama 不接受這個模型的音訊輸入（回 400：this model does not support audio input）；Gemma 4 只有 E2B／E4B 有音訊編碼器可用。",
-      "audio_note_en": "Ollama does not accept audio input for this model (HTTP 400: this model does not support audio input); among Gemma 4 only E2B and E4B have a usable audio encoder."
+      "audio_note_en": "Ollama does not accept audio input for this model (HTTP 400: this model does not support audio input); among Gemma 4 only E2B and E4B have a usable audio encoder.",
+      "default": true
     },
     {
       "tag": "gemma4:12b",

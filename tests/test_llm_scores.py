@@ -36,6 +36,13 @@ def test_every_test_and_metric_states_its_method():
             check_table(t["columns"], t["rows"], t["id"])
         else:  # no results yet: only a running or planned test
             assert status in ("running", "planned"), t["id"]
+    gap = cat["gap"]  # local against cloud, ability by ability
+    assert gap["rows"] and all(len(r["zh"]) == len(r["en"]) == 5 for r in gap["rows"])
+    assert all(r["zh"][3] in ("同級", "接近", "差很遠") for r in gap["rows"])
+    ours = [t for t in cat["ours"] if t["id"] != "abliterated"]  # abliterated builds: own test
+    for t in ours:
+        for r in t.get("rows", []) + [x for p in t.get("tables", []) for x in p["rows"]]:
+            assert "消融" not in r["zh"][0], (t["id"], r["zh"][0])
     uses = cat["uses"]
     assert len(uses["columns"]["zh"]) == len(uses["columns"]["en"]) == 4 and uses["rows"]
     for r in uses["rows"]:

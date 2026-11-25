@@ -7,6 +7,7 @@ import json
 import jobs
 import pandas as pd
 import streamlit as st
+import ui
 from common import PROJECT_DIR, gateway_url, installed_names, kept, ollama_url
 from i18n import tr
 
@@ -112,13 +113,13 @@ def bench_view() -> None:
             {tr("做法", "Method"): tr("上限：兩個有一個對", "Ceiling: either is right"),
              tr("完全正確", "Exact"): jev["oracle"]["exact"], tr("平均差距", "Mean distance"): None},
         ])  # fmt: skip
-        jev_box.dataframe(pick, hide_index=True, width="stretch")
+        jev_box.dataframe(pick.map(ui.trim_number), hide_index=True, width="stretch")
         accept = pd.DataFrame([
             {tr("自動通過門檻", "Auto-accept above"): t, tr("通過比例", "Passed"): jev[f"accept_{t}"]["pass_rate"],
              tr("通過的有多少真的對", "Of those, right"): jev[f"accept_{t}"]["precision"]}
             for t in (0.5, 0.8, 0.9)
         ])  # fmt: skip
-        jev_box.dataframe(accept, hide_index=True, width="stretch")
+        jev_box.dataframe(accept.map(ui.trim_number), hide_index=True, width="stretch")
         jev_box.caption(
             tr(
                 "Jev 要一張「把候選文字畫出來的圖」；官方用 Linux 上的 Chromium 渲染，這裡用 Pillow 與系統中文字型，分數可能因此偏移。"

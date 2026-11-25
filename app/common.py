@@ -297,11 +297,11 @@ def warn_if_no_tools(model: str | None, needs_tools: bool, container=st) -> None
             tr(
                 f"{model} 不支援工具呼叫（例如 TAIDE、Breeze 的 GGUF 版本），"
                 "這個 agent 需要查資料庫或呼叫工具，會無法運作。"
-                "請改用 qwen3:30b-a3b 等標示 tools 的模型；"
+                "請改用 gemma4:31b 等標示 tools 的模型；"
                 "這個模型可以在「對話測試」或「模型比較」使用。",
                 f"{model} does not support tool calling (e.g. the GGUF builds of TAIDE and "
                 "Breeze), so this agent cannot query the database or call tools. Use a model "
-                "with tools such as qwen3:30b-a3b; this one works in Chat and Compare.",
+                "with tools such as gemma4:31b; this one works in Chat and Compare.",
             )
         )
 

@@ -4,7 +4,7 @@
   "tests": [
    {
     "id": "asr",
-    "date": "2026-10-30",
+    "date": "2026-11-05",
     "status": "done",
     "name": {
      "zh": "語音辨識（錄音轉文字）",
@@ -30,7 +30,7 @@
    {
     "id": "diar",
     "date": "2026-11-04",
-    "status": "done",
+    "status": "running",
     "name": {
      "zh": "會議講者辨識（誰在說話）",
      "en": "Speaker diarization (who spoke when)"
@@ -54,11 +54,15 @@
     "headline": {
      "zh": "最準的是 NVIDIA Streaming Sortformer v2（整場 26 分鐘 4 人會議 9.6%，平台還沒接上）；平台可選的 Nemotron 3 人數都猜對、幾乎不認錯人。平台現用的 sherpa-onnx 不告訴人數時會切出幾十個人。",
      "en": "Most accurate: NVIDIA Streaming Sortformer v2 (9.6% on the whole 26-minute four-person meeting; not on the platform yet); Nemotron 3, selectable on the platform, gets every head count right and hardly confuses speakers. The platform's current sherpa-onnx finds dozens of speakers when not told the count."
+    },
+    "pending": {
+     "zh": "補測中：pyannote community-1、DiariZen 還沒測",
+     "en": "Still being added: pyannote community-1 and DiariZen not tested yet"
     }
    },
    {
     "id": "live",
-    "date": "2026-11-04",
+    "date": "2026-11-05",
     "status": "done",
     "name": {
      "zh": "即時字幕（邊說邊出字）",
@@ -112,7 +116,7 @@
    },
    {
     "id": "tts",
-    "date": "2026-10-30",
+    "date": "2026-11-05",
     "status": "done",
     "name": {
      "zh": "文字轉語音（TTS）",

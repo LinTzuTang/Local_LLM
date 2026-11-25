@@ -17,11 +17,22 @@ runpy.run_path({str(APP / "views" / "scores.py")!r}, run_name="__main__")
 def test_every_kind_and_test_draws():
     at = AppTest.from_string(SCRIPT, default_timeout=180)
     at.run()
-    for kind in ("llm", "speech", "ocr"):
+    for kind in ("llm", "speech", "ocr", "external"):
         at.segmented_control[0].set_value(kind).run()
         assert not at.exception, (kind, at.exception[0].value)
         if kind == "ocr":  # one test: no picker
-            assert not at.selectbox, kind
+            assert len(at.selectbox) == 0, kind
+            continue
+        if kind == "external":  # AA's leaderboards: a second switch
+            try:
+                from local_llm import aa_media
+
+                boards = ["ours", "llm", *((aa_media.load() or {}).get("categories") or {})]
+            except ImportError:
+                boards = ["ours", "llm"]
+            for board in boards:  # the values (options are the shown labels)
+                at.segmented_control[1].set_value(board).run()
+                assert not at.exception, (kind, board, at.exception[0].value)
             continue
         options = at.selectbox[0].options
         assert options, kind

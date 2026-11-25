@@ -780,7 +780,8 @@ def benchmark_view() -> None:
             "rms_db": tr("音量 dBFS", "Level dBFS"), "size_gb": tr("大小 GB", "Size GB"),
             "licence": tr("授權", "Licence"), "verdict": tr("即時對話", "Live use"),
             "limits": tr("限制", "Limits"),
-        }), tr("位置", "Where")),
+        }), tr("位置", "Where"), keep=(tr("會議稿 CER", "Meeting CER"),
+                                      tr("測試腳本串流 CER", "Script streaming CER"))),
         hide_index=True,
         width="stretch",
         column_config={

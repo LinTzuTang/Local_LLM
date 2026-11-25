@@ -75,15 +75,30 @@ def is_cloud(where) -> bool:
     return str(where).strip().lower().startswith(("雲端", "cloud"))
 
 
-def where_rows(df, column: str):
+def trim_number(x, digits: int = 3):
+    """0.420000 -> 0.42, 11.900 -> 11.9, NaN or None -> —; anything else unchanged (a Styler
+    would otherwise show every float with six decimals)."""
+    if x is None:
+        return "—"
+    if isinstance(x, float):
+        if x != x:
+            return "—"
+        return f"{x:.{digits}f}".rstrip("0").rstrip(".")
+    return x
+
+
+def where_rows(df, column: str, keep: tuple = ()):
     """A dataframe Styler tinting each row by its `column` (local blue, cloud orange; values
-    such as 「雲端（Azure）」 count as cloud)."""
+    such as 「雲端（Azure）」 count as cloud). Floats lose trailing zeros, except in the `keep`
+    columns (those formatted by a column_config, e.g. as percent)."""
 
     def tint(row):
         colour = CLOUD_TINT if is_cloud(row[column]) else LOCAL_TINT
         return [f"background-color: {colour}"] * len(row)
 
-    return df.style.apply(tint, axis=1)
+    styled = df.style.apply(tint, axis=1)
+    cols = [c for c in df.columns if c not in keep]
+    return styled.format(trim_number, subset=cols) if cols else styled
 
 
 _NAME = re.compile(r"[a-z0-9_]+")

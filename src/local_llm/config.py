@@ -35,7 +35,7 @@ def settings(provider=None, model=None, base_url=None):
     # No LangSmith account is required; tracing is opt-in through user configuration.
     os.environ.setdefault("LANGSMITH_TRACING", "false")
     selected = provider or os.getenv("LOCAL_LLM_PROVIDER", "ollama")
-    fallback_model = "qwen3:30b-a3b" if selected == "ollama" else "Qwen/Qwen3-8B"
+    fallback_model = "gemma4:31b" if selected == "ollama" else "Qwen/Qwen3-8B"
     fallback_url = "http://127.0.0.1:11434" if selected == "ollama" else "http://127.0.0.1:8000/v1"
     # Explicit provider override does not inherit a different provider's endpoint/model.
     same_provider = selected == os.getenv("LOCAL_LLM_PROVIDER", "ollama")

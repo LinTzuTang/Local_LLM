@@ -9,8 +9,8 @@ from local_llm.streaming import Backend
 
 def test_catalog_entries_are_complete():
     data = catalog.load_catalog()
-    assert catalog.default_model() == "qwen3:30b-a3b"
-    assert [m["tag"] for m in data["models"] if m.get("default")] == ["qwen3:30b-a3b"]
+    assert catalog.default_model() == "gemma4:31b"
+    assert [m["tag"] for m in data["models"] if m.get("default")] == ["gemma4:31b"]
     required = {"tag", "family", "description", "params", "context", "size_gb", "updated"}
     required |= {"caps", "tags", "license", "fit", "note", "note_en", "tasks"}
     for m in data["models"]:

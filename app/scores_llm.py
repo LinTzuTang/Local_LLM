@@ -71,9 +71,9 @@ def test_results(t: dict) -> None:
         else:
             zh, en = "；這項沒有測雲端模型。", "; no cloud models in this test."
         st.caption(
-            tr("地端模型是 4-bit 量化，在 Mac 或 GPU 主機（模型名後標「GPU 主機」）上跑" + zh,
-               "Local models are 4-bit builds on the Mac or the GPU machine (marked after the "
-               "name)" + en)
+            tr("由最好排到最差。地端模型是 4-bit 量化；秒數後面括號是在哪台機器量的" + zh,
+               "Best first. Local models are 4-bit builds; the machine a time was measured on is "
+               "in brackets after it" + en)
         )  # fmt: skip
     elif t.get("status") == "running":
         st.info(tr("已經在測或測完了，結果整理好就會放上來。",
@@ -159,7 +159,7 @@ def aa_section(cat: dict) -> None:
         if shown and not df.empty:
             first = df.columns[2]
             df = df.sort_values(first, ascending=False, na_position="last")
-        st.dataframe(ui.where_rows(df, where_col()).format(precision=1, na_rep="—"),
+        st.dataframe(ui.where_rows(df, where_col()).format(lambda x: ui.trim_number(x, 1)),
                      hide_index=True, width="stretch", height=height(len(df)))  # fmt: skip
         st.caption(
             tr(
@@ -176,3 +176,70 @@ def aa_section(cat: dict) -> None:
             st.markdown(f"**{pick(m['name'])}**　{pick(m['measures'])}")
             if pick(m["example"]):
                 st.caption(f"{tr('例', 'Example')}：{pick(m['example'])}")
+
+
+def _board(c: dict, rows: list[dict]) -> None:
+    """One AA list as a table: model, creator, local/cloud (when AA says), then its measures."""
+    if not rows:
+        st.caption(tr("這一類沒有開源權重的模型。", "No open-weight models on this board."))
+        return
+    local_name, cloud_name = ui.where_names()
+    out = []
+    for r in rows:
+        row = {tr("模型", "Model"): r.get("model"), tr("開發商", "Creator"): r.get("creator")}
+        if r.get("parameters") is not None:
+            row[tr("參數（B）", "Parameters (B)")] = r.get("parameters")
+        if any(x.get("open_weights") is not None for x in rows):
+            row[where_col()] = local_name if r.get("open_weights") else cloud_name
+        for m in c.get("metrics", []):
+            v = r.get(m["field"])
+            if isinstance(v, (int, float)) and m.get("unit") == "pct" and abs(v) <= 1:
+                v = round(v * 100, 1)
+            elif isinstance(v, float):
+                v = round(v, 0 if m.get("unit") in ("elo", "usd") and abs(v) >= 100 else 1)
+            label = pick(m["name"]) + (" %" if m.get("unit") == "pct" else "")
+            label += tr("（越低越好）", " (lower is better)") if m.get("lower_better") else ""
+            row[label] = v
+        out.append(row)
+    df = pd.DataFrame(out)
+    shown = (ui.where_rows(df, where_col()) if where_col() in df.columns
+             else df.style.format(ui.trim_number, na_rep="—"))  # fmt: skip
+    st.dataframe(shown, hide_index=True, width="stretch", height=height(len(df)))
+
+
+def aa_media_section(media: dict | None, category: str) -> None:
+    """One of AA's leaderboards from local_llm.aa_media (language models, speech, image, video,
+    music): how AA tests it, the top of the board, the top open-weight models, and for language
+    models the top small open models (4B-40B, the size we run)."""
+    if not media or category not in (media.get("categories") or {}):
+        st.info(tr("這一類的 AA 資料還沒抓到。", "This AA leaderboard has not been fetched yet."))
+        return
+    c = media["categories"][category]
+    if pick(c.get("about")):
+        st.markdown(f"**{tr('AA 怎麼測', 'How AA tests it')}**　{pick(c['about'])}")
+    total = f"　·　{tr('榜上共', 'On the board:')} {c['total']}" if c.get("total") else ""
+    st.caption(
+        tr(f"資料日期：{c.get('fetched') or media.get('fetched', '—')}",
+           f"Fetched: {c.get('fetched') or media.get('fetched', '—')}")
+        + total + (f"　·　[{tr('AA 原始頁面', 'AA page')}]({c['url']})" if c.get("url") else "")
+    )  # fmt: skip
+    lists = [(tr(f"總排名前 {len(c.get('rows', []))}", f"Top {len(c.get('rows', []))} overall"),
+              c.get("rows", []))]  # fmt: skip
+    if "open_rows" in c:
+        lists.append((tr("開源權重（可以自己架）", "Open weights (we could host)"), c["open_rows"]))
+    if "small_rows" in c:
+        lists.append((tr("小模型 4B–40B（我們主要測的大小）", "Small, 4B-40B (the size we run)"),
+                      c["small_rows"]))  # fmt: skip
+    if len(lists) == 1:
+        _board(c, lists[0][1])
+    else:
+        for tab, (_, rows) in zip(st.tabs([name for name, _ in lists]), lists, strict=True):
+            with tab:
+                _board(c, rows)
+    st.caption(
+        tr(
+            "依 AA 的主要指標排序。開源權重的模型標成地端（可以自己架），其餘是雲端服務。",
+            "In AA's order by its main measure. Open-weight models are marked local (we could "
+            "host them), the rest are cloud services.",
+        )
+    )

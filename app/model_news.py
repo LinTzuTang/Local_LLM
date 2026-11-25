@@ -1,4 +1,5 @@
-"""New models the catalog does not list yet: a weekly background check and the home page notice.
+"""New models the catalog does not list yet: a weekly background check and the home page notice;
+the same loop refreshes the Artificial Analysis copies once a week (local_llm.aa_refresh).
 
 The check itself is local_llm.model_watch; this file only schedules it while the platform runs
 and shows what it found.
@@ -12,7 +13,7 @@ import streamlit as st
 import ui
 from i18n import tr
 
-from local_llm import model_watch
+from local_llm import aa_refresh, model_watch
 
 WAKE_EVERY = 6 * 3600  # seconds; the check runs only when the last one is a week old
 
@@ -25,6 +26,7 @@ def start_background() -> threading.Thread:
         time.sleep(60)  # let the platform finish starting first
         while True:
             model_watch.check_if_due()
+            aa_refresh.refresh_if_due()  # Artificial Analysis copies, once a week (Scores page)
             time.sleep(WAKE_EVERY)
 
     thread = threading.Thread(target=loop, name="model-watch", daemon=True)
