@@ -3685,12 +3685,12 @@
     "en": "On the GPU machine (RTX PRO 6000 Blackwell, 96 GB). 1, 2, 4 … 64 users asking non-stop (the next question as soon as an answer ends), max(8, 3 × users) requests per level, until it breaks. Three uses: chat (a short question, about 600 characters back), agent tool calling (the same ~10k-token system prompt with 74 company tools, plus one question), long document (a ~30k-token company document to summarise). vLLM 0.34 with FP8; Ollama 0.40.13 with 4-bit, with as many parallel slots as fit fully on the card. Thinking off: at most 512 tokens per answer; thinking on (real use): up to 4,096 (long documents miss the bar even without thinking, so not run with it). The table gives the most users at once that still meet the bar (tested up to 64)."
    },
    "example": {
-    "zh": "agent 用法：每個人的請求前面都是同一段 1 萬 token 的工具說明。vLLM 讀一次就給所有人共用，32 人時第一個字 0.8 秒；Ollama 每個人都要從頭重讀，2 人時就要 3.5 秒。\n\nOllama 跑 Qwen3.6、Qwen3.8 一次只能處理一個請求（Ollama 還不支援這個架構同時處理多個），後面的人只能排隊；這兩個要多人用只能選 vLLM。\n\n換算公司人數（假設，不是量到的）：尖峰 20% 員工在用、其中 30% 時間在等回答時，開思考的 Gemma 4 31B（vLLM 32 人）約等於 530 名員工，agent 為主（30% 在用、50% 在等）約 210 名。",
-    "en": "Agent use: every request starts with the same 10k-token tool description. vLLM reads it once and shares it, first token 0.8 s at 32 users; Ollama reads it again for each user, 3.5 s at 2 users.\n\nOllama serves Qwen3.6 and Qwen3.8 one request at a time (it cannot yet run this architecture in parallel), so the rest queue: for many users these two need vLLM.\n\nIn staff (an assumption, not measured): if 20% of staff use it at peak and spend 30% of that time waiting, Gemma 4 31B with thinking on (32 users on vLLM) is about 530 staff; mostly agent work (30% in use, 50% waiting) about 210."
+    "zh": "agent 用法：每個人的請求前面都是同一段 1 萬 token 的工具說明。vLLM 讀一次就給所有人共用，32 人時第一個字 0.8 秒；Ollama 每個人都要從頭重讀，2 人時就要 3.5 秒。\n\nOllama 跑 Qwen3.6、Qwen3.8 一次只能處理一個請求（Ollama 還不支援這個架構同時處理多個），後面的人只能排隊；這兩個要多人用只能選 vLLM。\n\n這裡大家不停發問、agent 只看第一輪；更接近實際用法的人數見下一個測試。",
+    "en": "Agent use: every request starts with the same 10k-token tool description. vLLM reads it once and shares it, first token 0.8 s at 32 users; Ollama reads it again for each user, 3.5 s at 2 users.\n\nOllama serves Qwen3.6 and Qwen3.8 one request at a time (it cannot yet run this architecture in parallel), so the rest queue: for many users these two need vLLM.\n\nHere everyone asks non-stop and the agent's first turn only; the next test gives numbers closer to real use."
    },
    "limits": {
-    "zh": "agent 只量第一輪（實際一題要呼叫 3～4 次），所以偏樂觀；完整多輪 agent 與模擬真實使用者正在加測。vLLM 是 FP8、Ollama 是 4-bit，精度不同。換算公司人數的使用比例是假設的；平台 11-25 起開始記錄請求，之後換成真實比例。",
-    "en": "Only the agent's first turn is measured (a real task takes 3-4 calls), so these are optimistic; full multi-turn agent tasks and simulated users are being added. vLLM is FP8 and Ollama 4-bit: different precision. The usage shares behind the staff estimate are assumptions; the platform logs requests from 11-25, to replace them with real shares."
+    "zh": "agent 只量第一輪（實際一題要呼叫 3 次左右），所以偏樂觀；完整多輪 agent 見下一個測試。vLLM 是 FP8、Ollama 是 4-bit，精度不同。",
+    "en": "Only the agent's first turn is measured (a real task takes about 3 calls), so these are optimistic; full agent tasks are in the next test. vLLM is FP8 and Ollama 4-bit: different precision."
    },
    "platform": {
     "zh": "平台上不能現場跑（要獨佔整張顯示卡）。",
@@ -3884,6 +3884,94 @@
       "—",
       "0 users (one user waits 9.0 s)",
       "—"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "capacity_real",
+   "name": {
+    "zh": "一張 RTX PRO 6000：完整 agent 任務與模擬真實使用者",
+    "en": "One RTX PRO 6000: whole agent tasks and simulated staff"
+   },
+   "measures": {
+    "zh": "更接近實際用法時，一張卡能讓幾個人同時用還夠快（標準同上：95% 的請求 3 秒內出第一個字、每秒至少 20 token）。",
+    "en": "Closer to real use: how many people one card serves and still feels fast (same bar: 95% of requests show the first token within 3 s and get at least 20 tokens/s)."
+   },
+   "method": {
+    "zh": "GPU 主機、vLLM（FP8）、開思考。完整多輪 agent：每人一題公司工具問題，工具結果由模擬的服務回，一直做到給出答案（最多 8 輪），1～64 人，每一次呼叫都要達標。模擬真實使用者：N 個人在線，每人問完、看完回答休息 20～60 秒再問；聊天 60%、完整 agent 任務 30%、文件問答 10%（約 7,000 字）；在線 16～256 人，每級量 5 分鐘。",
+    "en": "GPU machine, vLLM (FP8), thinking on. Whole agent task: each user one company-tool question, tool results from a mock service, until the model answers (8 turns at most), 1-64 users, every call must meet the bar. Simulated staff: N people online, each asks, reads the answer and rests 20-60 s before the next; 60% chat, 30% whole agent tasks, 10% questions on a ~7,000-character document; 16-256 online, 5 minutes per level."
+   },
+   "example": {
+    "zh": "完整做完一題，Gemma 4 31B 和 Qwen3.8 27B 都從 32 人降到 16 人：一題約呼叫 3 次，越後面對話越長；32 人時第一個字仍在 1 秒內，但每秒只剩 17～19 token。\n\n模擬真實使用者時，在線的人有一半以上時間在等回答（Gemma 4 31B 48%、Qwen3.8 27B 76%）。換算公司人數：在線人數 ÷ 尖峰時同時在用的員工比例；假設 20% 時，Gemma 4 31B 約 160 人、Qwen3.8 27B 約 320 人、Qwen3.6 約 960 人。",
+    "en": "Doing the whole task, Gemma 4 31B and Qwen3.8 27B drop from 32 users to 16: a task takes about 3 calls and the conversation grows; at 32 users the first token still comes within 1 s, but each gets only 17-19 tokens/s.\n\nAs simulated staff, people online spend half or more of their time waiting for answers (Gemma 4 31B 48%, Qwen3.8 27B 76%). In staff: users online ÷ the share of staff using it at once at peak; at 20%, Gemma 4 31B is about 160 staff, Qwen3.8 27B about 320, Qwen3.6 about 960."
+   },
+   "limits": {
+    "zh": "只測 vLLM、開思考。模擬的人每 20～60 秒就問一題，比多數員工頻繁，所以偏保守；尖峰同時使用的比例是假設的，平台 11-25 起記錄請求，之後換成真實比例。",
+    "en": "vLLM with thinking on only. The simulated people ask every 20-60 s, more often than most staff, so this is on the safe side; the peak share is an assumption, and the platform logs requests from 11-25 to replace it."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑（要獨佔整張顯示卡）。",
+    "en": "Not runnable on the platform (it needs the whole card)."
+   },
+   "columns": {
+    "zh": [
+     "模型",
+     "agent 只看第一輪",
+     "完整多輪 agent",
+     "模擬真實使用者（在線人數）"
+    ],
+    "en": [
+     "Model",
+     "Agent, first turn only",
+     "Whole agent task",
+     "Simulated staff (online)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B",
+      "32 人",
+      "16 人",
+      "32 人"
+     ],
+     "en": [
+      "Gemma 4 31B",
+      "32 users",
+      "16 users",
+      "32 users"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B",
+      "64 人以上",
+      "64 人以上",
+      "192 人"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B",
+      "64+ users",
+      "64+ users",
+      "192 users"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "32 人",
+      "16 人",
+      "64 人"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "32 users",
+      "16 users",
+      "64 users"
      ]
     }
    ]
