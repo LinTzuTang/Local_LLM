@@ -3853,6 +3853,102 @@
    "tables": [
     {
      "title": {
+      "zh": "建議：一張卡給多少人用",
+      "en": "Recommendation: how many people per card"
+     },
+     "note": {
+      "zh": "依「模擬真實使用者」（表③）的結果；最多人數那一級如果只是剛好過標準（每秒不到 22 token），就退一級留餘裕。大家多半同時跑 agent 任務時，Gemma 4 31B、Qwen3.8 27B 要降到 16 人。員工數的尖峰比例還是假設。要給全公司用，引擎要換成 vLLM。",
+      "en": "From the simulated-staff results (table ③); when the top level only just meets the bar (under 22 tokens/s) we step down one level for headroom. If most people run agent tasks at once, Gemma 4 31B and Qwen3.8 27B drop to 16. The peak share of staff is still an assumption. To serve the whole company the engine must be vLLM."
+     },
+     "columns": {
+      "zh": [
+       "模型",
+       "引擎",
+       "建議在線人數",
+       "約可給多少員工（尖峰 10%／20%／30% 同時在用）",
+       "依據"
+      ],
+      "en": [
+       "Model",
+       "Engine",
+       "Recommended users online",
+       "Staff it can serve (10% / 20% / 30% using it at peak)",
+       "Basis"
+      ]
+     },
+     "rows": [
+      {
+       "where": "local",
+       "zh": [
+        "Gemma 4 31B（聊天預設）",
+        "vLLM",
+        "32 人",
+        "約 320／160／110 人",
+        "32 人時第一個字 0.88 秒、每秒 26.6 token；64 人每秒 17.5，不達標"
+       ],
+       "en": [
+        "Gemma 4 31B (chat default)",
+        "vLLM",
+        "32 users",
+        "about 320 / 160 / 110",
+        "32 users: first token 0.88 s, 26.6 tokens/s; 64 users: 17.5 tokens/s, below the bar"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.8 27B",
+        "vLLM",
+        "32 人",
+        "約 320／160／110 人",
+        "64 人每秒 21.3，剛好過標準，退一級：32 人時 0.51 秒、每秒 29.4"
+       ],
+       "en": [
+        "Qwen3.8 27B",
+        "vLLM",
+        "32 users",
+        "about 320 / 160 / 110",
+        "64 users: 21.3 tokens/s, only just over the bar, so one level down: 32 users at 0.51 s, 29.4 tokens/s"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Qwen3.6 35B-A3B",
+        "vLLM",
+        "128 人",
+        "約 1,280／640／430 人",
+        "192 人每秒 20.7，剛好過標準，退一級：128 人時 0.20 秒、每秒 27.7"
+       ],
+       "en": [
+        "Qwen3.6 35B-A3B",
+        "vLLM",
+        "128 users",
+        "about 1,280 / 640 / 430",
+        "192 users: 20.7 tokens/s, only just over the bar, so one level down: 128 users at 0.20 s, 27.7 tokens/s"
+       ]
+      },
+      {
+       "where": "local",
+       "zh": [
+        "Gemma 4 31B",
+        "Ollama（平台現在）",
+        "agent 1 人、聊天 16 人",
+        "不建議多人共用",
+        "agent 2 人同時用，第一個字就要 3.5 秒"
+       ],
+       "en": [
+        "Gemma 4 31B",
+        "Ollama (platform today)",
+        "agent 1, chat 16",
+        "not for sharing",
+        "with 2 agent users at once the first token already takes 3.5 s"
+       ]
+      }
+     ]
+    },
+    {
+     "title": {
       "zh": "① 大家不停發問：最多幾人同時用還達標（只測到 64 人）",
       "en": "① Non-stop: the most users at once that still meet the bar (tested up to 64)"
      },
@@ -4288,8 +4384,8 @@
     }
    ],
    "headline": {
-    "zh": "Gemma 4 31B 用 vLLM：一張卡同時 16 人跑完整 agent；模擬真實使用者在線 32 人，約 160 位員工（假設尖峰 20% 同時在用）。用平台現在的 Ollama，agent 只能 1 人。",
-    "en": "Gemma 4 31B on vLLM: one card serves 16 people running whole agent tasks at once; as simulated staff, 32 online, about 160 employees (if 20% use it at once at peak). With the platform's current Ollama, agent use serves 1."
+    "zh": "建議一張卡：Gemma 4 31B 用 vLLM 在線 32 人，約 160 位員工（假設尖峰 20% 同時在用）；Qwen3.6 35B-A3B 128 人（約 640 位）。平台現在的 Ollama agent 只能 1 人，要多人用得換 vLLM。",
+    "en": "Recommended per card: Gemma 4 31B on vLLM, 32 online, about 160 staff (if 20% use it at once at peak); Qwen3.6 35B-A3B 128 (about 640). The platform's current Ollama serves 1 for agent use; many users need vLLM."
    }
   },
   {
