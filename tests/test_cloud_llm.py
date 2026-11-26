@@ -7,7 +7,9 @@ from local_llm.streaming import Backend, collect
 def test_cloud_ids_never_look_like_ollama_tags():
     assert all(cloud_llm.is_cloud(m) for m in cloud_llm.MODELS)
     assert not cloud_llm.is_cloud("gemma4:31b")
-    assert cloud_llm.label("cloud/claude-haiku-5-5").startswith("☁ Claude Haiku 5.5")
+    assert cloud_llm.label("cloud/bedrock/global.anthropic.claude-haiku-5-5").startswith(
+        "☁ Claude Haiku 5.5"
+    )
 
 
 def test_no_keys_no_models(monkeypatch):
@@ -21,7 +23,9 @@ def test_keys_pick_the_models(monkeypatch):
         cloud_llm, "_env", lambda: {"AWS_ACCESS_KEY_ID": "a", "AWS_SECRET_ACCESS_KEY": "b"}
     )
     monkeypatch.setattr("local_llm.gcp_auth.available", lambda path=None: False)
-    assert cloud_llm.models() == ["cloud/claude-sonnet-5-5", "cloud/claude-haiku-5-5"]
+    picked = cloud_llm.models()
+    assert picked and all(cloud_llm.MODELS[m]["provider"] == "AWS" for m in picked)
+    assert picked[0] == "cloud/bedrock/global.anthropic.claude-sonnet-5-5"  # the featured first
 
 
 def test_stream_chat_sends_cloud_models_to_the_cloud_and_logs_use(monkeypatch, tmp_path):
@@ -37,14 +41,14 @@ def test_stream_chat_sends_cloud_models_to_the_cloud_and_logs_use(monkeypatch, t
     monkeypatch.setattr(streaming, "_ollama", lambda *a: (_ for _ in ()).throw(AssertionError))
     backend = Backend("local", "ollama", "http://127.0.0.1:11434")
     _, answer, stats = collect(
-        streaming.stream_chat(backend, "cloud/gpt-5.5", [{"role": "user", "content": "hi"}])
+        streaming.stream_chat(backend, "cloud/azure/gpt-5.5", [{"role": "user", "content": "hi"}])
     )
     assert answer == "你好" and stats.output_tokens == 2
     rows = [
         json.loads(line) for f in tmp_path.glob("*.jsonl") for line in f.read_text().splitlines()
     ]
     assert (
-        rows[0]["model"] == "cloud/gpt-5.5"
+        rows[0]["model"] == "cloud/azure/gpt-5.5"
         and rows[0]["output_tokens"] == 2
         and "failed" not in rows[0]
     )

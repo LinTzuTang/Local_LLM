@@ -1,0 +1,805 @@
+{
+ "checked": "2026-11-26",
+ "models": [
+  {
+   "id": "cloud/bedrock/global.amazon.nova-2-lite-v1:0",
+   "call": "global.amazon.nova-2-lite-v1:0",
+   "provider": "AWS",
+   "vendor": "Amazon",
+   "label": "Nova 2 Lite",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.amazon.nova-lite-v1:0",
+   "call": "us.amazon.nova-lite-v1:0",
+   "provider": "AWS",
+   "vendor": "Amazon",
+   "label": "Nova Lite",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.amazon.nova-micro-v1:0",
+   "call": "us.amazon.nova-micro-v1:0",
+   "provider": "AWS",
+   "vendor": "Amazon",
+   "label": "Nova Micro",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.amazon.nova-pro-v1:0",
+   "call": "us.amazon.nova-pro-v1:0",
+   "provider": "AWS",
+   "vendor": "Amazon",
+   "label": "Nova Pro",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-fable-5",
+   "call": "global.anthropic.claude-fable-5",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Fable 5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-fable-5-1",
+   "call": "global.anthropic.claude-fable-5-1",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Fable 5.1",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-fable-5-2",
+   "call": "global.anthropic.claude-fable-5-2",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Fable 5.2",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-haiku-4-5-20251001-v1:0",
+   "call": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Haiku 4.5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-haiku-5-5",
+   "call": "global.anthropic.claude-haiku-5-5",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Haiku 5.5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/us.anthropic.claude-opus-4-1-20250805-v1:0",
+   "call": "us.anthropic.claude-opus-4-1-20250805-v1:0",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 4.1",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0",
+   "call": "global.anthropic.claude-opus-4-5-20251101-v1:0",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 4.5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-opus-4-6-v1",
+   "call": "global.anthropic.claude-opus-4-6-v1",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 4.6",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-opus-4-7",
+   "call": "global.anthropic.claude-opus-4-7",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 4.7",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-opus-4-8",
+   "call": "global.anthropic.claude-opus-4-8",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 4.8",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-opus-5",
+   "call": "global.anthropic.claude-opus-5",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-opus-5-5",
+   "call": "global.anthropic.claude-opus-5-5",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Opus 5.5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+   "call": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Sonnet 4.5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-sonnet-4-6",
+   "call": "global.anthropic.claude-sonnet-4-6",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Sonnet 4.6",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-sonnet-5",
+   "call": "global.anthropic.claude-sonnet-5",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Sonnet 5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/global.anthropic.claude-sonnet-5-5",
+   "call": "global.anthropic.claude-sonnet-5-5",
+   "provider": "AWS",
+   "vendor": "Anthropic",
+   "label": "Claude Sonnet 5.5",
+   "api": "anthropic"
+  },
+  {
+   "id": "cloud/bedrock/deepseek.v3.2",
+   "call": "deepseek.v3.2",
+   "provider": "AWS",
+   "vendor": "DeepSeek",
+   "label": "DeepSeek V3.2",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.deepseek.r1-v1:0",
+   "call": "us.deepseek.r1-v1:0",
+   "provider": "AWS",
+   "vendor": "DeepSeek",
+   "label": "DeepSeek-R1",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/google.gemma-3-12b-it",
+   "call": "google.gemma-3-12b-it",
+   "provider": "AWS",
+   "vendor": "Google",
+   "label": "Gemma 3 12B IT",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/google.gemma-3-27b-it",
+   "call": "google.gemma-3-27b-it",
+   "provider": "AWS",
+   "vendor": "Google",
+   "label": "Gemma 3 27B PT",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/google.gemma-3-4b-it",
+   "call": "google.gemma-3-4b-it",
+   "provider": "AWS",
+   "vendor": "Google",
+   "label": "Gemma 3 4B IT",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/meta.llama3-70b-instruct-v1:0",
+   "call": "meta.llama3-70b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 3 70B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/meta.llama3-8b-instruct-v1:0",
+   "call": "meta.llama3-8b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 3 8B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.meta.llama3-1-70b-instruct-v1:0",
+   "call": "us.meta.llama3-1-70b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 3.1 70B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.meta.llama3-1-8b-instruct-v1:0",
+   "call": "us.meta.llama3-1-8b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 3.1 8B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.meta.llama3-3-70b-instruct-v1:0",
+   "call": "us.meta.llama3-3-70b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 3.3 70B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.meta.llama4-maverick-17b-instruct-v1:0",
+   "call": "us.meta.llama4-maverick-17b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 4 Maverick 17B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.meta.llama4-scout-17b-instruct-v1:0",
+   "call": "us.meta.llama4-scout-17b-instruct-v1:0",
+   "provider": "AWS",
+   "vendor": "Meta",
+   "label": "Llama 4 Scout 17B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/minimax.minimax-m2",
+   "call": "minimax.minimax-m2",
+   "provider": "AWS",
+   "vendor": "MiniMax",
+   "label": "MiniMax M2",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/minimax.minimax-m2.1",
+   "call": "minimax.minimax-m2.1",
+   "provider": "AWS",
+   "vendor": "MiniMax",
+   "label": "MiniMax M2.1",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.devstral-2-123b",
+   "call": "mistral.devstral-2-123b",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Devstral 2 123B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.magistral-small-2509",
+   "call": "mistral.magistral-small-2509",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Magistral Small 2509",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.ministral-3-14b-instruct",
+   "call": "mistral.ministral-3-14b-instruct",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Ministral 14B 3.0",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.ministral-3-8b-instruct",
+   "call": "mistral.ministral-3-8b-instruct",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Ministral 3 8B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.ministral-3-3b-instruct",
+   "call": "mistral.ministral-3-3b-instruct",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Ministral 3B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.mistral-7b-instruct-v0:2",
+   "call": "mistral.mistral-7b-instruct-v0:2",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Mistral 7B Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.mistral-large-2402-v1:0",
+   "call": "mistral.mistral-large-2402-v1:0",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Mistral Large (24.02)",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.mistral-large-3-675b-instruct",
+   "call": "mistral.mistral-large-3-675b-instruct",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Mistral Large 3",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/mistral.mistral-small-2402-v1:0",
+   "call": "mistral.mistral-small-2402-v1:0",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Mistral Small (24.02)",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.mistral.pixtral-large-2502-v1:0",
+   "call": "us.mistral.pixtral-large-2502-v1:0",
+   "provider": "AWS",
+   "vendor": "Mistral AI",
+   "label": "Pixtral Large (25.02)",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/moonshot.kimi-k2-thinking",
+   "call": "moonshot.kimi-k2-thinking",
+   "provider": "AWS",
+   "vendor": "Moonshot AI",
+   "label": "Kimi K2 Thinking",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/moonshotai.kimi-k2.5",
+   "call": "moonshotai.kimi-k2.5",
+   "provider": "AWS",
+   "vendor": "Moonshot AI",
+   "label": "Kimi K2.5",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.moonshotai.kimi-k3",
+   "call": "global.moonshotai.kimi-k3",
+   "provider": "AWS",
+   "vendor": "Moonshot AI",
+   "label": "Kimi K3",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.moonshotai.kimi-k3.1",
+   "call": "global.moonshotai.kimi-k3.1",
+   "provider": "AWS",
+   "vendor": "Moonshot AI",
+   "label": "Kimi K3.1",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/nvidia.nemotron-super-3-120b",
+   "call": "nvidia.nemotron-super-3-120b",
+   "provider": "AWS",
+   "vendor": "NVIDIA",
+   "label": "NVIDIA Nemotron 3 Super 120B A12B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/nvidia.nemotron-nano-12b-v2",
+   "call": "nvidia.nemotron-nano-12b-v2",
+   "provider": "AWS",
+   "vendor": "NVIDIA",
+   "label": "NVIDIA Nemotron Nano 12B v2 VL BF16",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/nvidia.nemotron-nano-9b-v2",
+   "call": "nvidia.nemotron-nano-9b-v2",
+   "provider": "AWS",
+   "vendor": "NVIDIA",
+   "label": "NVIDIA Nemotron Nano 9B v2",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/nvidia.nemotron-nano-3-30b",
+   "call": "nvidia.nemotron-nano-3-30b",
+   "provider": "AWS",
+   "vendor": "NVIDIA",
+   "label": "Nemotron Nano 3 30B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-5.4",
+   "call": "global.openai.gpt-5.4",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT 5.4",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-5.5",
+   "call": "global.openai.gpt-5.5",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT 5.5",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-5.6-luna",
+   "call": "global.openai.gpt-5.6-luna",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-5.6 Luna",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-5.6-sol",
+   "call": "global.openai.gpt-5.6-sol",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-5.6 Sol",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-5.6-terra",
+   "call": "global.openai.gpt-5.6-terra",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-5.6 Terra",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6-astra",
+   "call": "global.openai.gpt-6-astra",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6 Astra",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6-luna",
+   "call": "global.openai.gpt-6-luna",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6 Luna",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6-sol",
+   "call": "global.openai.gpt-6-sol",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6 Sol",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6.1-sol",
+   "call": "global.openai.gpt-6.1-sol",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6.1 Sol",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6.1-terra",
+   "call": "global.openai.gpt-6.1-terra",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6.1 Terra",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6.2-astra",
+   "call": "global.openai.gpt-6.2-astra",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6.2 Astra",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.openai.gpt-6.2-sol",
+   "call": "global.openai.gpt-6.2-sol",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "GPT-6.2 Sol",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/openai.gpt-oss-120b-1:0",
+   "call": "openai.gpt-oss-120b-1:0",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "gpt-oss-120b",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/openai.gpt-oss-20b-1:0",
+   "call": "openai.gpt-oss-20b-1:0",
+   "provider": "AWS",
+   "vendor": "OpenAI",
+   "label": "gpt-oss-20b",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/qwen.qwen3-32b-v1:0",
+   "call": "qwen.qwen3-32b-v1:0",
+   "provider": "AWS",
+   "vendor": "Qwen",
+   "label": "Qwen3 32B (dense)",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/qwen.qwen3-coder-next",
+   "call": "qwen.qwen3-coder-next",
+   "provider": "AWS",
+   "vendor": "Qwen",
+   "label": "Qwen3 Coder Next",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/qwen.qwen3-next-80b-a3b",
+   "call": "qwen.qwen3-next-80b-a3b",
+   "provider": "AWS",
+   "vendor": "Qwen",
+   "label": "Qwen3 Next 80B A3B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/qwen.qwen3-vl-235b-a22b",
+   "call": "qwen.qwen3-vl-235b-a22b",
+   "provider": "AWS",
+   "vendor": "Qwen",
+   "label": "Qwen3 VL 235B A22B",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/qwen.qwen3-coder-30b-a3b-v1:0",
+   "call": "qwen.qwen3-coder-30b-a3b-v1:0",
+   "provider": "AWS",
+   "vendor": "Qwen",
+   "label": "Qwen3-Coder-30B-A3B-Instruct",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.writer.palmyra-x4-v1:0",
+   "call": "us.writer.palmyra-x4-v1:0",
+   "provider": "AWS",
+   "vendor": "Writer",
+   "label": "Palmyra X4",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/us.writer.palmyra-x5-v1:0",
+   "call": "us.writer.palmyra-x5-v1:0",
+   "provider": "AWS",
+   "vendor": "Writer",
+   "label": "Palmyra X5",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/zai.glm-4.7",
+   "call": "zai.glm-4.7",
+   "provider": "AWS",
+   "vendor": "Z.AI",
+   "label": "GLM 4.7",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/zai.glm-4.7-flash",
+   "call": "zai.glm-4.7-flash",
+   "provider": "AWS",
+   "vendor": "Z.AI",
+   "label": "GLM 4.7 Flash",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/zai.glm-5",
+   "call": "zai.glm-5",
+   "provider": "AWS",
+   "vendor": "Z.AI",
+   "label": "GLM 5",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.xai.grok-4.6",
+   "call": "global.xai.grok-4.6",
+   "provider": "AWS",
+   "vendor": "xAI",
+   "label": "Grok 4.6",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/bedrock/global.xai.grok-4.7",
+   "call": "global.xai.grok-4.7",
+   "provider": "AWS",
+   "vendor": "xAI",
+   "label": "Grok 4.7",
+   "api": "converse"
+  },
+  {
+   "id": "cloud/azure/gpt-4.1",
+   "call": "gpt-4.1",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "gpt-4.1",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/azure/gpt-5",
+   "call": "gpt-5",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "gpt-5",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/azure/gpt-5.2",
+   "call": "gpt-5.2",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "gpt-5.2",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/azure/gpt-5.4",
+   "call": "gpt-5.4",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "gpt-5.4",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/azure/gpt-5.5",
+   "call": "gpt-5.5",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "gpt-5.5",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/azure/gpt-5.6-terra",
+   "call": "gpt-5.6-terra",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "gpt-5.6-terra",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/azure/o4-mini",
+   "call": "o4-mini",
+   "provider": "Azure",
+   "vendor": "OpenAI",
+   "label": "o4-mini",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-2.5-flash",
+   "call": "google/gemini-2.5-flash",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-2.5-flash",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-2.5-flash-lite",
+   "call": "google/gemini-2.5-flash-lite",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-2.5-flash-lite",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-2.5-pro",
+   "call": "google/gemini-2.5-pro",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-2.5-pro",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3-flash-preview",
+   "call": "google/gemini-3-flash-preview",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3-flash-preview",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.1-flash-lite",
+   "call": "google/gemini-3.1-flash-lite",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.1-flash-lite",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.1-pro-preview",
+   "call": "google/gemini-3.1-pro-preview",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.1-pro-preview",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.5-flash",
+   "call": "google/gemini-3.5-flash",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.5-flash",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.5-flash-lite",
+   "call": "google/gemini-3.5-flash-lite",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.5-flash-lite",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.6-flash",
+   "call": "google/gemini-3.6-flash",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.6-flash",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.7-flash",
+   "call": "google/gemini-3.7-flash",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.7-flash",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-3.8-flash",
+   "call": "google/gemini-3.8-flash",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-3.8-flash",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-4-argon",
+   "call": "google/gemini-4-argon",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-4-argon",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-4-carbon",
+   "call": "google/gemini-4-carbon",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-4-carbon",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-4-hydrogen",
+   "call": "google/gemini-4-hydrogen",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-4-hydrogen",
+   "api": "openai"
+  },
+  {
+   "id": "cloud/vertex/gemini-4-neon",
+   "call": "google/gemini-4-neon",
+   "provider": "Google",
+   "vendor": "Google",
+   "label": "gemini-4-neon",
+   "api": "openai"
+  }
+ ]
+}
