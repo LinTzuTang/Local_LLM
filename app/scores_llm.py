@@ -243,3 +243,161 @@ def aa_media_section(media: dict | None, category: str) -> None:
             "host them), the rest are cloud services.",
         )
     )
+
+
+# ---------------------------------------------------------------- compare chosen models
+# The headline figure of each test for the side-by-side summary:
+# (test id, table index, columns joined with ／, label).
+SUMMARY = [
+    ("bfcl_en", 0, [1], ("英文工具呼叫 BFCL（官方權重）",
+                         "English tool calling, BFCL (official weighting)")),
+    ("tools_zh", 0, [1], ("繁中工具呼叫 BFCL", "Traditional Chinese tool calling, BFCL")),
+    ("tools_zh", 0, [3], ("ACEBench 中文", "ACEBench Chinese")),
+    ("company_tools", 0, [1, 2, 3], ("公司工具 A／B／C", "Company tools A / B / C")),
+    ("agentic", 0, [1], ("網路搜尋＋記憶（65 題）", "Web search + memory (65)")),
+    ("stance", 0, [4], ("台灣立場：照中國說法的題數（沒加提示，越少越好）",
+                        "Taiwan stance: China-line answers (no prompt, fewer is better)")),
+    ("lcb", 0, [1], ("寫程式：LiveCodeBench（60 題）", "Coding: LiveCodeBench (60)")),
+    ("aider", 0, [1], ("寫程式：Aider（75 題）", "Coding: Aider (75)")),
+    ("speed", 0, [1], ("速度：公司工具每題秒數（GPU 主機，越低越好）",
+                       "Speed: seconds per company-tool task (GPU machine, lower is better)")),
+    ("capacity", 1, [3], ("一張 RTX PRO 6000：模擬真實使用者在線人數",
+                          "One RTX PRO 6000: simulated users online")),
+]  # fmt: skip
+# Rows that are another setting of the same model, not its usual one.
+_OTHER_SETTING = ("關思考", "原廠取樣", "溫度", "只跑", "turned off", "vendor sampling")
+# Rows that are tests (thinking), abliterated builds, or a re-cut of tools_zh (zh_en_gap).
+_SKIP_TESTS = {"thinking", "abliterated", "zh_en_gap"}
+
+
+def model_key(name: str) -> str | None:
+    """The model a row is about: its name without the bracketed setting or machine. None for rows
+    that are not one model (several models in one row, numbers of users)."""
+    base = name.replace("*", "")
+    base = base.split("（")[0].split(" (")[0].strip()
+    base = {"Llama-Breeze2 8B": "Breeze 2 8B", "Gemma 4 31B 原版": "Gemma 4 31B",
+            "Qwen3.8 27B 原版": "Qwen3.8 27B"}.get(base, base)  # fmt: skip
+    if not base or "／" in base or "、" in base or base[0].isdigit():
+        return None
+    return base
+
+
+def _parts(t: dict) -> list[dict]:
+    if t.get("tables"):
+        return t["tables"]
+    return [{"columns": t["columns"], "rows": t["rows"]}] if t.get("rows") else []
+
+
+def model_index(cat: dict) -> tuple[dict, dict]:
+    """{model: {(test id, table index): [rows]}} over every test whose rows are models, and
+    {model: its English name}, models in the order they first appear (best of English BFCL
+    first)."""
+    found: dict[str, dict] = {}
+    english: dict[str, str] = {}
+    for t in cat["ours"]:
+        if t["id"] in _SKIP_TESTS:
+            continue
+        for i, part in enumerate(_parts(t)):
+            if part["columns"]["zh"][0] != "模型":
+                continue
+            for r in part["rows"]:
+                key = model_key(r["zh"][0])
+                if not key:
+                    continue
+                found.setdefault(key, {}).setdefault((t["id"], i), []).append(r)
+                english.setdefault(key, model_key(r["en"][0]) or key)
+    return found, english
+
+
+def _usual(rows: list[dict]) -> dict:
+    """The row with the model's usual setting: not a thinking-off / other-sampling run, and for
+    the stance test the one without the Taiwan prompt."""
+    for r in rows:
+        note = r["zh"][0] + " " + r["en"][0]
+        if any(w in note for w in _OTHER_SETTING):
+            continue
+        if len(r["zh"]) > 1 and r["zh"][1] == "有":  # stance: system prompt on
+            continue
+        return r
+    return rows[0]
+
+
+def compare_section(cat: dict) -> None:
+    """Pick several models; one summary table of each test's headline figure, then every test's
+    full rows for just those models."""
+    found, english = model_index(cat)
+    name = (lambda k: k) if current() == "zh" else english.get
+    st.session_state.setdefault(
+        "scores_compare",
+        [m for m in ("Gemma 4 31B", "Qwen3.8 27B", "Qwen3.6 35B-A3B coding", "Claude Opus 5.5")
+         if m in found],
+    )  # fmt: skip
+    chosen = st.multiselect(
+        tr("勾選要比較的模型（可以多選）", "Models to compare (choose several)"),
+        list(found), format_func=name, **kept("scores_compare"),
+        placeholder=tr("選模型…", "Choose models…"),
+    )  # fmt: skip
+    if not chosen:
+        st.info(tr("先勾選至少一個模型。", "Choose at least one model."),
+                icon=":material/checklist:")  # fmt: skip
+        return
+    by_id = {t["id"]: t for t in cat["ours"]}
+    local_name, cloud_name = ui.where_names()
+
+    def head(m: str) -> str:
+        rows = [r for rs in found[m].values() for r in rs]
+        return name(m) + ("（" + cloud_name + "）" if rows and rows[0]["where"] == "cloud" else "")
+
+    lang = current() if current() in ("zh", "en") else "zh"
+    table, more = [], False
+    for test_id, part, cols, label in SUMMARY:
+        if test_id not in by_id:
+            continue
+        row = {tr("測試", "Test"): tr(*label)}
+        for m in chosen:
+            rows = found[m].get((test_id, part))
+            if not rows:
+                row[head(m)] = "—"
+                continue
+            r = _usual(rows)
+            cell = "／".join(str(r[lang][c]) for c in cols if c < len(r[lang]))
+            if "待重跑" in r["zh"][0]:  # a partly failed run (Inkling's search)
+                cell += tr("（部分待重跑）", " (partly to rerun)")
+            if len(rows) > 1:
+                cell += " ＊"
+                more = True
+            row[head(m)] = cell
+        table.append(row)
+    st.markdown(f"**{tr('總覽：各測試的主要分數', 'Summary: the main figure of each test')}**")
+    st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch", height=height(len(table)))
+    notes = [tr("「—」是這個模型沒有測這一項。", '"—" means the model was not in that test.')]
+    if more:
+        notes.append(tr("＊ 這個模型在這一項有不只一種設定（例如關思考、加提示），"
+                        "這裡放平常的設定，"
+                        "下面的完整結果全部列出。",
+                        "* More than one setting of this model in that test (e.g. thinking off, "
+                        "a prompt); the usual one is shown here, all of them below."))  # fmt: skip
+    notes.append(tr("消融版請看「消融版 vs 原版」那一項。",
+                    'Abliterated builds: see the "abliterated vs original" test.'))  # fmt: skip
+    st.caption(" ".join(notes))
+
+    full = tr("各測試的完整結果（只留勾選的模型）", "Each test in full (chosen models only)")
+    st.markdown(f"**{full}**")
+    for t in cat["ours"]:
+        if t["id"] in _SKIP_TESTS:
+            continue
+        shown = []
+        for i, part in enumerate(_parts(t)):
+            rows = [r for m in chosen for r in found[m].get((t["id"], i), [])]
+            keep = [r for r in part["rows"] if any(r is x for x in rows)]  # the test's own order
+            if keep:
+                shown.append((part, keep))
+        if not shown:
+            continue
+        with st.expander(f"{pick(t['name'])}　·　{t.get('date') or '—'}"):
+            if pick(t.get("headline")):
+                st.caption(pick(t["headline"]))
+            for part, keep in shown:
+                if pick(part.get("title")):
+                    st.markdown(f"**{pick(part['title'])}**")
+                results_table(part["columns"], keep)

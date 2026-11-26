@@ -363,9 +363,24 @@ if kind == "llm":
             html_table(head, body)
     overview(tests)
     elsewhere("llm")
-    t = pick_test("llm", tests, first="company_tools")
-    method_card(t)
-    scores_llm.test_results(t)
+    st.session_state.setdefault("scores_llm_view", "test")
+    view = (
+        st.segmented_control(
+            tr("怎麼看結果", "How to look at the results"), ["test", "compare"],
+            format_func={"test": tr(":material/article: 看一項測試", ":material/article: One test"),
+                         "compare": tr(":material/compare: 勾選模型比較",
+                                       ":material/compare: Compare models")}.get,
+            **kept("scores_llm_view"),
+        )
+        or "test"
+    )  # fmt: skip
+    if view == "compare":
+        st.markdown(f"### {tr('勾選模型比較', 'Compare models')}")
+        scores_llm.compare_section(cat)
+    else:
+        t = pick_test("llm", tests, first="company_tools")
+        method_card(t)
+        scores_llm.test_results(t)
     glossary()
     st.stop()
 

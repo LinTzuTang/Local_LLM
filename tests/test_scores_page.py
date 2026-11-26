@@ -39,3 +39,31 @@ def test_every_kind_and_test_draws():
         for option in options:
             at.selectbox[0].set_value(option).run()
             assert not at.exception, (kind, option, at.exception[0].value)
+
+
+def test_compare_models():
+    """Language models, "compare models": a summary row per headline test and a column per chosen
+    model; a model's own name is the key across tests, whatever setting or machine it ran on."""
+    import sys
+
+    sys.path.insert(0, str(APP))
+    import scores_llm
+
+    assert scores_llm.model_key("**Gemma 4 31B**（GPU 主機）") == "Gemma 4 31B"
+    assert scores_llm.model_key("Claude Opus 5.5 (cloud)") == "Claude Opus 5.5"
+    assert scores_llm.model_key("Breeze 2 8B／TAIDE LX 8B") is None
+    found, _ = scores_llm.model_index(scores_llm.catalog())
+    assert not [m for m in found if "消融" in m or "abliterated" in m]  # abliterated: own test
+
+    at = AppTest.from_string(SCRIPT, default_timeout=180)
+    at.run()
+    at.segmented_control[1].set_value("compare").run()
+    assert not at.exception, at.exception[0].value
+    chosen = ["Gemma 4 31B", "Qwen3.8 27B", "Inkling 2 Mini 26B-A5B"]
+    at.multiselect[0].set_value(chosen).run()
+    assert not at.exception, at.exception[0].value
+    summary = at.dataframe[0].value
+    assert list(summary.columns)[1:] == chosen
+    assert len(summary) == len(scores_llm.SUMMARY)
+    at.multiselect[0].set_value([]).run()
+    assert not at.exception and at.info
