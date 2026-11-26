@@ -384,7 +384,10 @@ def render(job: jobs.Job) -> None:
             for r in done
         ]
     )
-    st.subheader(tr("比較結果", "Results"))
+    n = len(state.get("turns", [])) + 1
+    st.subheader(
+        tr(f"第 {n} 問的比較結果", f"Results for Q{n}") if n > 1 else tr("比較結果", "Results")
+    )
     if table["tokens/s"].isna().all():  # cloud models only: no generation speed to show
         table = table.drop(columns="tokens/s")
     st.dataframe(table.round(2), hide_index=True, width="stretch")

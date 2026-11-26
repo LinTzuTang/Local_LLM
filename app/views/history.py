@@ -957,8 +957,13 @@ def max_parallel(steps: list[dict]) -> int:
 def compare_view(data: dict, run: dict) -> None:
     results = [r for r in data.get("results") or [] if isinstance(r, dict)]
     stats = [r.get("stats") or {} for r in results]
-    fastest = min((s["first_answer_s"] for s in stats if s.get("first_answer_s")), default=None)
-    best_tps = max((s["decode_tps"] for s in stats if s.get("decode_tps")), default=None)
+    turns = [t for t in data.get("turns") or [] if isinstance(t, dict)]
+    # a conversation: every question's answers count (each row says which question)
+    asked = [(n, r) for n, t in enumerate(turns, start=1) for r in t.get("results") or []
+             if isinstance(r, dict)] if len(turns) > 1 else [(None, r) for r in results]  # fmt: skip
+    all_stats = [r.get("stats") or {} for _, r in asked]
+    fastest = min((s["first_answer_s"] for s in all_stats if s.get("first_answer_s")), default=None)
+    best_tps = max((s["decode_tps"] for s in all_stats if s.get("decode_tps")), default=None)
     top = run["facts"].get("top")
     metrics(
         [
@@ -989,10 +994,11 @@ def compare_view(data: dict, run: dict) -> None:
         return
 
     rows = []
-    for r, s in zip(results, stats, strict=True):
+    for (n, r), s in zip(asked, all_stats, strict=True):
         judge = r.get("judge") if isinstance(r.get("judge"), dict) else {}
         rows.append(
-            {
+            ({tr("第幾問", "Question"): n} if n else {})
+            | {
                 tr("模型", "Model"): cloud_llm.label(r.get("model") or "?"),
                 tr("裁判分數", "Judge score"): judge.get("score"),
                 tr("首字（秒）", "First token (s)"): s.get("first_answer_s"),
@@ -1003,6 +1009,9 @@ def compare_view(data: dict, run: dict) -> None:
             }
         )
     df = pd.DataFrame(rows)
+    for col in ("tokens/s", tr("載入（秒）", "Load (s)")):  # cloud models only: no speed, no load
+        if col in df and df[col].isna().all():
+            df = df.drop(columns=col)
     top_tps = df["tokens/s"].max() if "tokens/s" in df else None
     max_tps = float(top_tps) if pd.notna(top_tps) else 0.0  # cloud models only: no tokens/s
     with st.container(border=True):
