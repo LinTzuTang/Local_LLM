@@ -129,11 +129,9 @@ GIST = {  # one line above the closed recommendations (the same picks as inside)
             "Large volumes, rough content: macOS Vision"),
 }  # fmt: skip
 ELSEWHERE = {  # tested, written up in the status document and HackMD, not drawn on this page
-    "llm": ("MoE 與 dense 的速度與記憶體、公司資料 agent 與多 agent 場景（功能驗證）、coding agent 三個固定任務、"
-            "用中文問程式題（NaturalCodeBench）、GPU 主機模型的顯示卡記憶體",
-            "MoE against dense (speed, memory), company-data agents and scenarios (functional "
-            "checks), three fixed coding-agent tasks, coding questions in Chinese "
-            "(NaturalCodeBench), GPU memory of NVIDIA-only models"),
+    "llm": ("公司資料 agent 與多 agent 場景（功能驗證：6 個場景都能跑通，沒有比較模型）",
+            "Company-data agents and multi-agent scenarios (functional checks: all 6 scenarios work; "
+            "no model comparison)"),
     "speech": ("語音翻譯（中文錄音 → 英文，8 種做法）", "Speech translation (Chinese to English, 8 ways)"),
 }  # fmt: skip
 
@@ -150,6 +148,14 @@ def elsewhere(kind: str) -> None:
             + tr("另外也測了（結果在測試進度文件與 HackMD 報告）：", "Also tested (in the status document and HackMD reports): ")
             + tr(*ELSEWHERE[kind])
         )  # fmt: skip
+
+
+def vram_table(t: dict) -> None:
+    """A test whose whole result is one small table kept with its description (scores_methods.json)."""
+    tab = t["table"]
+    head = "".join(f"<th>{html.escape(h)}</th>" for h in pick(tab["columns"]))
+    body = ["<tr>" + "".join(f"<td>{html.escape(c)}</td>" for c in pick(r)) + "</tr>" for r in tab["rows"]]
+    html_table(head, body)
 
 
 def html_table(head: str, body: list[str]) -> None:
@@ -413,6 +419,7 @@ if kind == "speech":
         "simul": speech_simul.bench_view,
         "tts": speech_tts.benchmark_view,
         "voice": voice_bench.section,
+        "vram": lambda: vram_table(t),
     }
     tests = (info.get("speech") or {}).get("tests") or []
     overview(tests)

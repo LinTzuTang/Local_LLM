@@ -167,6 +167,179 @@
      "zh": "地端串接（串流辨識 → Gemma 4 12B → 語音）46/46 判斷全對、不編造，說完 1.0 秒開口，和雲端同級，而且最耐噪音。",
      "en": "The local cascade (streaming recognition → Gemma 4 12B → speech) got all 46 decisions right without making things up, replies 1.0 s after you stop, on a par with the cloud, and copes best with noise."
     }
+   },
+   {
+    "id": "vram",
+    "date": "2026-10-30",
+    "status": "done",
+    "name": {
+     "zh": "GPU 主機模型的顯示卡記憶體",
+     "en": "GPU memory of the GPU-machine models"
+    },
+    "headline": {
+     "zh": "語音對話模型多半要 24 GB 以上的顯示卡；Kimi-Audio、Step-Audio 2、同步口譯模型要 48 GB 等級。",
+     "en": "Most voice-chat models need a GPU with more than 24 GB; Kimi-Audio, Step-Audio 2 and the interpreting models need the 48 GB class."
+    },
+    "measures": {
+     "zh": "只支援 NVIDIA 的語音模型要多大的顯示卡才跑得動，決定要買哪一級的卡。",
+     "en": "How big a GPU the NVIDIA-only speech models need to run: which class of card to buy."
+    },
+    "method": {
+     "zh": "在 GCP 的 RTX PRO 6000（96 GB）上跑每個模型，每秒記一次顯示卡記憶體，取最大值。",
+     "en": "Each model ran on GCP's RTX PRO 6000 (96 GB); GPU memory was logged every second and the peak taken."
+    },
+    "limits": {
+     "zh": "vLLM 會先把一定比例的顯示卡記憶體佔下來當快取（Hy-SimulMT 佔到 80.7 GB），所以寫實際用量；Confucius4 寫預留量。只量了峰值，沒有量多人同時用。",
+     "en": "vLLM claims a share of GPU memory up front as cache (Hy-SimulMT took 80.7 GB), so the actual use is given; Confucius4 shows what it reserved. Peaks only; several users at once were not measured."
+    },
+    "table": {
+     "columns": {
+      "zh": [
+       "模型",
+       "用途",
+       "模型檔大小",
+       "顯示卡記憶體峰值",
+       "執行方式"
+      ],
+      "en": [
+       "Model",
+       "Use",
+       "Model files",
+       "Peak GPU memory",
+       "Runs on"
+      ]
+     },
+     "rows": [
+      {
+       "zh": [
+        "Kimi-Audio 7B",
+        "語音對話（只做辨識 24.4 GB）",
+        "40 GB",
+        "36.1 GB",
+        "PyTorch"
+       ],
+       "en": [
+        "Kimi-Audio 7B",
+        "Voice chat (24.4 GB for recognition only)",
+        "40 GB",
+        "36.1 GB",
+        "PyTorch"
+       ]
+      },
+      {
+       "zh": [
+        "Step-Audio 2 mini",
+        "語音對話",
+        "17 GB",
+        "34.4 GB",
+        "transformers"
+       ],
+       "en": [
+        "Step-Audio 2 mini",
+        "Voice chat",
+        "17 GB",
+        "34.4 GB",
+        "transformers"
+       ]
+      },
+      {
+       "zh": [
+        "Hy-SimulMT 30B-A3B FP8",
+        "同步口譯",
+        "30 GB",
+        "30.8 GB（實際用量）",
+        "vLLM"
+       ],
+       "en": [
+        "Hy-SimulMT 30B-A3B FP8",
+        "Simultaneous interpreting",
+        "30 GB",
+        "30.8 GB (actually used)",
+        "vLLM"
+       ]
+      },
+      {
+       "zh": [
+        "Confucius4 R2T2＋T3PO 14B",
+        "同步口譯",
+        "32 GB",
+        "預留 40 GB",
+        "vLLM"
+       ],
+       "en": [
+        "Confucius4 R2T2 + T3PO 14B",
+        "Simultaneous interpreting",
+        "32 GB",
+        "40 GB reserved",
+        "vLLM"
+       ]
+      },
+      {
+       "zh": [
+        "Fun-Audio-Chat 8B",
+        "語音對話",
+        "28 GB",
+        "22.7 GB",
+        "transformers"
+       ],
+       "en": [
+        "Fun-Audio-Chat 8B",
+        "Voice chat",
+        "28 GB",
+        "22.7 GB",
+        "transformers"
+       ]
+      },
+      {
+       "zh": [
+        "LLaMA-Omni2 7B",
+        "語音對話",
+        "20 GB",
+        "21.9 GB",
+        "transformers"
+       ],
+       "en": [
+        "LLaMA-Omni2 7B",
+        "Voice chat",
+        "20 GB",
+        "21.9 GB",
+        "transformers"
+       ]
+      },
+      {
+       "zh": [
+        "GLM-4-Voice 9B",
+        "語音對話",
+        "20 GB",
+        "21.8 GB",
+        "transformers"
+       ],
+       "en": [
+        "GLM-4-Voice 9B",
+        "Voice chat",
+        "20 GB",
+        "21.8 GB",
+        "transformers"
+       ]
+      },
+      {
+       "zh": [
+        "GLM-TTS",
+        "文字轉語音",
+        "8.3 GB",
+        "10.1 GB",
+        "PyTorch"
+       ],
+       "en": [
+        "GLM-TTS",
+        "Text to speech",
+        "8.3 GB",
+        "10.1 GB",
+        "PyTorch"
+       ]
+      }
+     ]
+    }
    }
   ]
  },

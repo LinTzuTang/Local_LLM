@@ -259,15 +259,16 @@ SUMMARY = [
                         "Taiwan stance: China-line answers (no prompt, fewer is better)")),
     ("lcb", 0, [1], ("寫程式：LiveCodeBench（60 題）", "Coding: LiveCodeBench (60)")),
     ("aider", 0, [1], ("寫程式：Aider（75 題）", "Coding: Aider (75)")),
+    ("ncb", 0, [2], ("寫程式：用中文問（NaturalCodeBench 58 題）", "Coding asked in Chinese (NaturalCodeBench, 58)")),
     ("speed", 0, [1], ("速度：公司工具每題秒數（GPU 主機，越低越好）",
                        "Speed: seconds per company-tool task (GPU machine, lower is better)")),
-    ("capacity", 1, [3], ("一張 RTX PRO 6000：模擬真實使用者在線人數",
+    ("capacity", 2, [3], ("一張 RTX PRO 6000：模擬真實使用者在線人數",
                           "One RTX PRO 6000: simulated users online")),
 ]  # fmt: skip
 # Rows that are another setting of the same model, not its usual one.
 _OTHER_SETTING = ("關思考", "原廠取樣", "溫度", "只跑", "turned off", "vendor sampling")
 # Rows that are tests (thinking), abliterated builds, or a re-cut of tools_zh (zh_en_gap).
-_SKIP_TESTS = {"thinking", "abliterated", "zh_en_gap"}
+_SKIP_TESTS = {"thinking", "abliterated", "zh_en_gap", "moe", "coding_fixed"}  # moe: rows are groups; coding_fixed: Ollama tags
 
 
 def model_key(name: str) -> str | None:

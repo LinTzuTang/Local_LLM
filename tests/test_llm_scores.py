@@ -57,7 +57,7 @@ def test_every_test_and_metric_states_its_method():
 def test_speech_and_ocr_tests_state_method_date_and_state():
     data = json.loads((ROOT / "data" / "lab" / "scores_methods.json").read_text(encoding="utf-8"))
     ids = {t["id"] for t in data["speech"]["tests"]}
-    assert ids == {"asr", "diar", "live", "simul", "tts", "voice"}  # the views on the Scores page
+    assert ids == {"asr", "diar", "live", "simul", "tts", "voice", "vram"}  # the views on the Scores page
     for t in data["speech"]["tests"] + data["ocr"]["tests"]:
         assert t["status"] in ("done", "running", "planned") and t["date"], t["id"]
         for part in ("name", "headline", "measures", "method", "limits"):

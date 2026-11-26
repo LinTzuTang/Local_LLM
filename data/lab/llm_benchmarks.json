@@ -20,14 +20,14 @@
     "zh": [
      "公司系統 agent",
      "Gemma 4 31B",
-     "公司工具 98／94／96%（只給公司工具／混入約 150 個／先篩成 29 個），每次 3.9 秒",
-     "Sonnet 5.5、GPT-5.5 98%"
+     "公司工具 98／97／97%（只給公司工具／混入約 150 個／先篩成 29 個），每次 3.9 秒",
+     "Sonnet 5.5 100%、GPT-5.5 98%、Haiku 5.5 98%"
     ],
     "en": [
      "Company-system agent",
      "Gemma 4 31B",
-     "Company tools 98 / 94 / 96% (company tools only / about 150 mixed in / trimmed to 29), 3.9 s per call",
-     "Sonnet 5.5, GPT-5.5 98%"
+     "Company tools 98 / 97 / 97% (company tools only / about 150 mixed in / trimmed to 29), 3.9 s per call",
+     "Sonnet 5.5 100%, GPT-5.5 98%, Haiku 5.5 98%"
     ],
     "tests": [
      "company_tools"
@@ -253,15 +253,15 @@
    {
     "zh": [
      "挑公司系統的工具（短任務）",
-     "Gemma 4 31B 98%／94%／96%",
-     "Claude Sonnet 5.5 98%／94%／95%",
+     "Gemma 4 31B 98%／97%／97%",
+     "Claude Sonnet 5.5 100%／99%／98%",
      "同級",
      "公司系統挑工具"
     ],
     "en": [
      "Picking company-system tools (short tasks)",
-     "Gemma 4 31B 98% / 94% / 96%",
-     "Claude Sonnet 5.5 98% / 94% / 95%",
+     "Gemma 4 31B 98% / 97% / 97%",
+     "Claude Sonnet 5.5 100% / 99% / 98%",
      "level",
      "Company tools"
     ]
@@ -554,7 +554,7 @@
       "7.27 秒（GPU 主機）"
      ],
      "en": [
-      "Nanbeige4.3 33B（GPU 主機，11-26）",
+      "Nanbeige4.3 33B (GPU machine, 11-26)",
       "70.8%",
       "64%",
       "7.27 s (GPU machine)"
@@ -1648,7 +1648,7 @@
     "zh": "「多步驟測試 → 公司系統挑工具」可以現場跑（伺服器上有工具定義時才出現）。",
     "en": "Multi-step mode → Company tools runs it live (offered only where the tool definitions are on the server)."
    },
-   "date": "2026-11-25",
+   "date": "2026-11-26",
    "status": "done",
    "columns": {
     "zh": [
@@ -1670,13 +1670,32 @@
    },
    "rows": [
     {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "100%",
+      "99%",
+      "98%",
+      "100%",
+      "1.9 秒（雲端）"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "100%",
+      "99%",
+      "98%",
+      "100%",
+      "1.9 s (cloud)"
+     ]
+    },
+    {
      "where": "local",
      "zh": [
       "Muse Glimmer 30B（Mac，11-21）",
       "99%",
       "95%",
       "90%",
-      "—",
+      "67%",
       "31.4 秒（Mac）"
      ],
      "en": [
@@ -1684,7 +1703,7 @@
       "99%",
       "95%",
       "90%",
-      "—",
+      "67%",
       "31.4 s (Mac)"
      ]
     },
@@ -1694,7 +1713,7 @@
       "GPT-5.5（雲端，最多 128 個工具，沒跑 B）",
       "98%",
       "—",
-      "97%",
+      "99%",
       "100%",
       "3.2 秒（雲端）"
      ],
@@ -1702,7 +1721,7 @@
       "GPT-5.5 (cloud; 128 tools at most, no B)",
       "98%",
       "—",
-      "97%",
+      "99%",
       "100%",
       "3.2 s (cloud)"
      ]
@@ -1712,16 +1731,16 @@
      "zh": [
       "Gemma 4 31B",
       "98%",
-      "94%",
-      "96%",
+      "97%",
+      "97%",
       "100%",
       "3.9 秒（GPU 主機）"
      ],
      "en": [
       "Gemma 4 31B",
       "98%",
-      "94%",
-      "96%",
+      "97%",
+      "97%",
       "100%",
       "3.9 s (GPU machine)"
      ]
@@ -1729,20 +1748,20 @@
     {
      "where": "cloud",
      "zh": [
-      "Claude Sonnet 5.5（雲端）",
+      "Claude Haiku 5.5（雲端，最便宜，11-26）",
       "98%",
-      "94%",
+      "98%",
       "95%",
-      "100%",
-      "1.9 秒（雲端）"
+      "92%",
+      "1.4 秒（雲端）"
      ],
      "en": [
-      "Claude Sonnet 5.5 (cloud)",
+      "Claude Haiku 5.5 (cloud, cheapest, 11-26)",
       "98%",
-      "94%",
+      "98%",
       "95%",
-      "100%",
-      "1.9 s (cloud)"
+      "92%",
+      "1.4 s (cloud)"
      ]
     },
     {
@@ -1750,16 +1769,16 @@
      "zh": [
       "Gemma 4 26B",
       "97%",
-      "87%",
-      "86%",
+      "96%",
+      "89%",
       "83%",
       "1.5 秒（GPU 主機）"
      ],
      "en": [
       "Gemma 4 26B",
       "97%",
-      "87%",
-      "86%",
+      "96%",
+      "89%",
       "83%",
       "1.5 s (GPU machine)"
      ]
@@ -1769,17 +1788,17 @@
      "zh": [
       "Qwen3.8 27B",
       "94%",
-      "90%",
-      "96%",
-      "83%",
+      "94%",
+      "97%",
+      "92%",
       "4.5 秒（GPU 主機）"
      ],
      "en": [
       "Qwen3.8 27B",
       "94%",
-      "90%",
-      "96%",
-      "83%",
+      "94%",
+      "97%",
+      "92%",
       "4.5 s (GPU machine)"
      ]
     },
@@ -1845,16 +1864,16 @@
      "zh": [
       "Nemotron 3.5 Bolt E4B",
       "87%",
-      "82%",
-      "67%",
+      "83%",
+      "68%",
       "17%",
       "4.0 秒（GPU 主機）"
      ],
      "en": [
       "Nemotron 3.5 Bolt E4B",
       "87%",
-      "82%",
-      "67%",
+      "83%",
+      "68%",
       "17%",
       "4.0 s (GPU machine)"
      ]
@@ -1866,7 +1885,7 @@
       "83%",
       "85%",
       "83%",
-      "—",
+      "67%",
       "117.9 秒（Mac）"
      ],
      "en": [
@@ -1874,7 +1893,7 @@
       "83%",
       "85%",
       "83%",
-      "—",
+      "67%",
       "117.9 s (Mac)"
      ]
     },
@@ -1882,16 +1901,16 @@
      "where": "local",
      "zh": [
       "Gemma 4 12B",
-      "79%",
-      "79%",
+      "80%",
+      "83%",
       "75%",
       "17%",
       "1.2 秒（GPU 主機）"
      ],
      "en": [
       "Gemma 4 12B",
-      "79%",
-      "79%",
+      "80%",
+      "83%",
       "75%",
       "17%",
       "1.2 s (GPU machine)"
@@ -1921,7 +1940,7 @@
      "zh": [
       "Qwen3.5 9B",
       "73%",
-      "74%",
+      "76%",
       "64%",
       "17%",
       "2.5 秒（GPU 主機）"
@@ -1929,7 +1948,7 @@
      "en": [
       "Qwen3.5 9B",
       "73%",
-      "74%",
+      "76%",
       "64%",
       "17%",
       "2.5 s (GPU machine)"
@@ -1940,7 +1959,7 @@
      "zh": [
       "GLM-4.7-Flash",
       "73%",
-      "76%",
+      "77%",
       "61%",
       "8%",
       "1.4 秒（GPU 主機）"
@@ -1948,7 +1967,7 @@
      "en": [
       "GLM-4.7-Flash",
       "73%",
-      "76%",
+      "77%",
       "61%",
       "8%",
       "1.4 s (GPU machine)"
@@ -1959,7 +1978,7 @@
      "zh": [
       "Gemma 4 E4B",
       "68%",
-      "63%",
+      "64%",
       "60%",
       "33%",
       "2.6 秒（GPU 主機）"
@@ -1967,7 +1986,7 @@
      "en": [
       "Gemma 4 E4B",
       "68%",
-      "63%",
+      "64%",
       "60%",
       "33%",
       "2.6 s (GPU machine)"
@@ -2013,8 +2032,8 @@
     }
    ],
    "headline": {
-    "zh": "Gemma 4 31B 三種工具數量 98／94／96%，和雲端 Sonnet 5.5、GPT-5.5 同級；要快可用 Gemma 4 26B（只給公司工具 97%，每次 1.5 秒）。",
-    "en": "Gemma 4 31B scores 98 / 94 / 96% across the three tool lists, on a par with the cloud's Sonnet 5.5 and GPT-5.5; for speed, Gemma 4 26B (97% with the company tools only, 1.5 s a call)."
+    "zh": "Gemma 4 31B 三種工具數量 98／97／97%，和雲端同級（Sonnet 5.5 100／99／98、最便宜的 Haiku 5.5 98／98／95）；要快可用 Gemma 4 26B（只給公司工具 97%，每次 1.5 秒）。",
+    "en": "Gemma 4 31B scores 98 / 97 / 97% across the three tool lists, on a par with the cloud (Sonnet 5.5 100 / 99 / 98, the cheapest Haiku 5.5 98 / 98 / 95); for speed, Gemma 4 26B (97% with the company tools only, 1.5 s a call)."
    }
   },
   {
@@ -2068,6 +2087,29 @@
     ]
    },
    "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端，11-26）",
+      "有",
+      "25",
+      "1",
+      "0",
+      "0",
+      "2",
+      "15/24"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud, 11-26)",
+      "yes",
+      "25",
+      "1",
+      "0",
+      "0",
+      "2",
+      "15/24"
+     ]
+    },
     {
      "where": "local",
      "zh": [
@@ -2203,6 +2245,29 @@
       "1",
       "0",
       "9",
+      "15/24"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端，11-26）",
+      "無",
+      "21",
+      "5",
+      "0",
+      "0",
+      "5",
+      "15/24"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud, 11-26)",
+      "no",
+      "21",
+      "5",
+      "0",
+      "0",
+      "5",
       "15/24"
      ]
     },
@@ -3158,6 +3223,551 @@
    }
   },
   {
+   "id": "ncb",
+   "name": {
+    "zh": "寫程式：用中文問（NaturalCodeBench）",
+    "en": "Coding asked in Chinese (NaturalCodeBench)"
+   },
+   "measures": {
+    "zh": "同事實際會用中文問程式問題：同一批題目用中文問，會不會比用英文問差？",
+    "en": "Colleagues ask coding questions in Chinese: does asking in Chinese do worse than asking the same questions in English?"
+   },
+   "method": {
+    "zh": "清華、智譜的 NaturalCodeBench：題目來自線上程式服務裡真實使用者的提問（多半原本就是中文），每題附自動測試。用公開的 Python 題，中文版用 OpenCC 從簡體轉成台灣用語，提示裡的測試程式碼保持原樣。官方缺部分題目的測試檔，參考解答在我們的環境只通過 58 題，所以只用這 58 題。每題測試全部通過才算對。和 LiveCodeBench 同設定：模型自己的取樣與思考、輸出上限 32,768 token；雲端用各家預設。",
+    "en": "NaturalCodeBench from Tsinghua and Zhipu: real users' questions from an online coding service (mostly asked in Chinese), each with automatic tests. The public Python set; the Chinese version converted from Simplified to Taiwanese usage with OpenCC, test code in the prompt left as is. Test files for some problems were never published, and the reference solutions pass only 58 here, so we use those 58. A problem counts only if every test passes. Settings as LiveCodeBench: the model's own sampling and thinking, output up to 32,768 tokens; cloud models with their defaults."
+   },
+   "example": {
+    "zh": "「編寫一個程式，給定兩個用連結串列表示的整數……將這兩個整數相加，並以連結串列形式返回和。」（附測試：函式名 add_two_numbers、節點的值要叫 value）",
+    "en": "\"Write a program that, given two integers stored as linked lists ... adds them and returns the sum as a linked list.\" (With tests: the function is add_two_numbers, a node's value is called value.)"
+   },
+   "limits": {
+    "zh": "58 題，差 3 題以內看成同級。排除的 12 題多是 AI、資料科學類。標 Mac 的是 MLX 版，秒數不能和 GPU 主機或雲端互比。",
+    "en": "58 problems: within 3 counts as level. The 12 left out are mostly AI and data-science problems. Mac rows are MLX builds; their seconds do not compare with the GPU machine or the cloud."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑這份題庫（評分要另外的測試環境）。",
+    "en": "Not runnable on the platform (scoring needs its own test environment)."
+   },
+   "date": "2026-11-26",
+   "status": "done",
+   "columns": {
+    "zh": [
+     "模型",
+     "英文（58 題答對）",
+     "繁中（58 題答對）",
+     "撞上限（英文／繁中）",
+     "每題秒數中位數（英文／繁中）"
+    ],
+    "en": [
+     "Model",
+     "English (of 58)",
+     "Traditional Chinese (of 58)",
+     "Hit the cap (en / zh)",
+     "Median seconds (en / zh)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B（Mac）",
+      "34（58.6%）",
+      "35（60.3%）",
+      "1／2",
+      "42.1／43.9 秒（Mac）"
+     ],
+     "en": [
+      "Qwen3.8 27B (Mac)",
+      "34（58.6%）",
+      "35（60.3%）",
+      "1 / 2",
+      "42.1 / 43.9 s (Mac)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（GPU 主機，11-25）",
+      "34（58.6%）",
+      "35（60.3%）",
+      "1／1",
+      "66.9／46.4 秒（GPU 主機）"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (GPU machine, 11-25)",
+      "34（58.6%）",
+      "35（60.3%）",
+      "1 / 1",
+      "66.9 / 46.4 s (GPU machine)"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端，11-26）",
+      "33（56.9%）",
+      "35（60.3%）",
+      "0／0",
+      "4.2／5.3 秒（雲端）"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud, 11-26)",
+      "33（56.9%）",
+      "35（60.3%）",
+      "0 / 0",
+      "4.2 / 5.3 s (cloud)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B（Mac）",
+      "31（53.4%）",
+      "33（56.9%）",
+      "0／0",
+      "83.0／63.4 秒（Mac）"
+     ],
+     "en": [
+      "Gemma 4 31B (Mac)",
+      "31（53.4%）",
+      "33（56.9%）",
+      "0 / 0",
+      "83.0 / 63.4 s (Mac)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.6 35B-A3B coding（Mac，coding agent 預設）",
+      "23（39.7%）",
+      "29（50.0%）",
+      "13／0",
+      "102.3／71.3 秒（Mac）"
+     ],
+     "en": [
+      "Qwen3.6 35B-A3B coding (Mac, coding-agent default)",
+      "23（39.7%）",
+      "29（50.0%）",
+      "13 / 0",
+      "102.3 / 71.3 s (Mac)"
+     ]
+    }
+   ],
+   "headline": {
+    "zh": "用中文問程式題沒有變差：每個模型繁中都比英文多對 1～6 題；Qwen3.8 27B、Inkling 2 Mini 最好（繁中 35/58）。",
+    "en": "Asking coding questions in Chinese does no harm: every model solved 1-6 more in Traditional Chinese than in English; Qwen3.8 27B and Inkling 2 Mini lead (35/58 in Chinese)."
+   }
+  },
+  {
+   "id": "coding_fixed",
+   "name": {
+    "zh": "寫程式：coding agent 三個固定任務",
+    "en": "Coding agent: three fixed tasks"
+   },
+   "measures": {
+    "zh": "地端 coding agent 在真的專案裡，能不能把範圍明確的小修改做完、而且不改壞別的地方。",
+    "en": "Whether a local coding agent can finish small, well-defined changes in a real project without breaking anything else."
+   },
+   "method": {
+    "zh": "在本專案的副本裡跑平台的 coding agent（自動核准寫入），事後用獨立腳本驗證。T1：把一個場景節點的模型換掉，其他都不能動。T2：新增一個單位換算工具、註冊給 agent、寫測試，ruff 與 pytest 都要過。T3：修一個故意改壞的函式，而且不能改測試。Mac（M5 Pro）、Ollama。",
+    "en": "The platform's coding agent on a copy of this project (writes auto-approved), checked afterwards by separate scripts. T1: change one scenario node's model and nothing else. T2: add a unit-conversion tool, register it with an agent, write tests; ruff and pytest must pass. T3: fix a deliberately broken function without touching the tests. Mac (M5 Pro), Ollama."
+   },
+   "example": {
+    "zh": "T3：把 format_value 裡的 enumerate(value, start=1) 故意改成 enumerate(value)，請 agent 修好；測試檔的雜湊不能變。",
+    "en": "T3: format_value's enumerate(value, start=1) is deliberately changed to enumerate(value); the agent must fix it, and the test files' hash must not change."
+   },
+   "limits": {
+    "zh": "只有 3 個任務、3 個模型，10 月做的小測試，用來確認方向；比較完整的是 Aider（75 題）。開源工具 OpenCode 用同一個模型 5 分鐘內沒完成，還改到工作目錄外的檔案。",
+    "en": "Only 3 tasks and 3 models, a small check from October; the fuller test is Aider (75 exercises). The open-source OpenCode with the same model did not finish in 5 minutes and edited files outside the working folder."
+   },
+   "platform": {
+    "zh": "「總控 Coding Agent」頁就是這個 agent，可以自己出任務試。",
+    "en": "The Coding Agent page runs this agent; try your own tasks there."
+   },
+   "date": "2026-10-13",
+   "status": "done",
+   "columns": {
+    "zh": [
+     "模型",
+     "T1",
+     "T2",
+     "T3",
+     "速度"
+    ],
+    "en": [
+     "Model",
+     "T1",
+     "T2",
+     "T3",
+     "Speed"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "qwen3.6:35b-a3b-coding",
+      "✅ 14 秒",
+      "✅ 113–156 秒",
+      "✅ 23 秒",
+      "74–90 tokens/秒"
+     ],
+     "en": [
+      "qwen3.6:35b-a3b-coding",
+      "✅ 14 s",
+      "✅ 113–156 s",
+      "✅ 23 s",
+      "74–90 tokens/s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "qwen3.8:27b",
+      "✅ 59 秒",
+      "✅ 346–439 秒",
+      "✅ 67 秒",
+      "27–31 tokens/秒"
+     ],
+     "en": [
+      "qwen3.8:27b",
+      "✅ 59 s",
+      "✅ 346–439 s",
+      "✅ 67 s",
+      "27–31 tokens/s"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "qwen3:30b-a3b（非 coding 版）",
+      "–",
+      "❌ 32 分鐘後失敗",
+      "–",
+      "25 tokens/秒"
+     ],
+     "en": [
+      "qwen3:30b-a3b (not the coding build)",
+      "–",
+      "❌ failed after 32 min",
+      "–",
+      "25 tokens/s"
+     ]
+    }
+   ],
+   "headline": {
+    "zh": "qwen3.6:35b-a3b-coding 三個任務全過而且最快（每秒 74–90 token）；非 coding 版的 qwen3:30b-a3b 在 T2 失敗：coding agent 一定要用 coding 模型。",
+    "en": "qwen3.6:35b-a3b-coding passed all three tasks and was fastest (74-90 tokens/s); the non-coding qwen3:30b-a3b failed T2: a coding agent needs a coding model."
+   }
+  },
+  {
+   "id": "moe",
+   "name": {
+    "zh": "MoE 與 dense：速度、記憶體、正確率",
+    "en": "MoE against dense: speed, memory, accuracy"
+   },
+   "measures": {
+    "zh": "MoE（每次只用一部分參數）是不是真的比一般（dense）模型快、會不會比較不準、記憶體有沒有比較省。",
+    "en": "Whether MoE models (using only part of their parameters per token) really are faster than dense ones, less accurate, or lighter on memory."
+   },
+   "method": {
+    "zh": "同一台 Mac，同家族、參數量相近的 MoE 和 dense 各自單獨載入，量記憶體、生成速度、讀 16K 長文到第一個字，再答 TMMLU+（台灣各類考試選擇題）同一批 200 題；思考一律關閉。A、D、E、F 組同家族同一代、同量化，最公平；B 組 MoE 是 coding 版；C 組不同家族，只當參考；F 組是 E 組的 GGUF 版，用來比 MLX 和 GGUF。",
+    "en": "One Mac; MoE and dense models of the same family and similar size, loaded alone: memory, generation speed, time to first token on a 16K document, then the same 200 TMMLU+ questions (Taiwanese exams); thinking off. Groups A, D, E, F are the same family, generation and quantization, the fairest; B's MoE is a coding build; C is different families, for reference; F is E as GGUF, to compare MLX with GGUF."
+   },
+   "example": {
+    "zh": "D 組：gemma4:26b（MoE）每秒 75.7 token、讀 16K 長文 6.0 秒；gemma4:31b（dense）每秒 26.1 token、40.6 秒，但 TMMLU+ 76.5% 對 68.5%。",
+    "en": "Group D: gemma4:26b (MoE) 75.7 tokens/s, 6.0 s on a 16K document; gemma4:31b (dense) 26.1 tokens/s and 40.6 s, but 76.5% against 68.5% on TMMLU+."
+   },
+   "limits": {
+    "zh": "200 題，差 3 個百分點內看成持平。記憶體照總參數算（所有專家都要載入），含 20K context 的 KV 快取。A～C 組在 Ollama 0.40.3、D～F 組在 0.40.13。",
+    "en": "200 questions: within 3 points counts as level. Memory follows the total parameters (all experts are loaded), including a 20K-context KV cache. Groups A-C on Ollama 0.40.3, D-F on 0.40.13."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑（要獨佔整台機器量記憶體與速度）。",
+    "en": "Not runnable on the platform (it needs the whole machine to measure memory and speed)."
+   },
+   "date": "2026-11-03",
+   "status": "done",
+   "columns": {
+    "zh": [
+     "組",
+     "模型",
+     "類型",
+     "記憶體",
+     "生成速度",
+     "讀 16K 長文到第一個字",
+     "TMMLU+"
+    ],
+    "en": [
+     "Group",
+     "Model",
+     "Type",
+     "Memory",
+     "Generation speed",
+     "16K document to first token",
+     "TMMLU+"
+    ]
+   },
+   "rows": [
+    {
+     "where": "local",
+     "zh": [
+      "A",
+      "qwen3:30b-a3b",
+      "MoE（128 個專家用 8 個）",
+      "24.8 GB",
+      "97.6 tok/s",
+      "17.0 秒",
+      "65.0%"
+     ],
+     "en": [
+      "A",
+      "qwen3:30b-a3b",
+      "MoE (8 of 128 experts)",
+      "24.8 GB",
+      "97.6 tok/s",
+      "17.0 s",
+      "65.0%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "A",
+      "qwen3:32b",
+      "dense",
+      "36.8 GB",
+      "13.6 tok/s",
+      "71.4 秒",
+      "68.0%"
+     ],
+     "en": [
+      "A",
+      "qwen3:32b",
+      "dense",
+      "36.8 GB",
+      "13.6 tok/s",
+      "71.4 s",
+      "68.0%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "B",
+      "qwen3.6:35b-a3b-coding",
+      "MoE",
+      "23.7 GB",
+      "81.5 tok/s",
+      "5.7 秒",
+      "74.5%"
+     ],
+     "en": [
+      "B",
+      "qwen3.6:35b-a3b-coding",
+      "MoE",
+      "23.7 GB",
+      "81.5 tok/s",
+      "5.7 s",
+      "74.5%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "B",
+      "qwen3.8:27b",
+      "dense",
+      "18.5 GB",
+      "30.1 tok/s",
+      "34.4 秒",
+      "72.5%"
+     ],
+     "en": [
+      "B",
+      "qwen3.8:27b",
+      "dense",
+      "18.5 GB",
+      "30.1 tok/s",
+      "34.4 s",
+      "72.5%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "C",
+      "gpt-oss:20b",
+      "MoE（32 個專家用 4 個）",
+      "13.2 GB",
+      "66.7 tok/s",
+      "8.5 秒",
+      "64.0%"
+     ],
+     "en": [
+      "C",
+      "gpt-oss:20b",
+      "MoE (4 of 32 experts)",
+      "13.2 GB",
+      "66.7 tok/s",
+      "8.5 s",
+      "64.0%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "C",
+      "mistral-small3.2:24b",
+      "dense",
+      "25.2 GB",
+      "18.5 tok/s",
+      "54.0 秒",
+      "64.0%"
+     ],
+     "en": [
+      "C",
+      "mistral-small3.2:24b",
+      "dense",
+      "25.2 GB",
+      "18.5 tok/s",
+      "54.0 s",
+      "64.0%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "D",
+      "gemma4:26b",
+      "MoE（128 個專家用 8 個）",
+      "16.1 GB",
+      "75.7 tok/s",
+      "6.0 秒",
+      "68.5%"
+     ],
+     "en": [
+      "D",
+      "gemma4:26b",
+      "MoE (8 of 128 experts)",
+      "16.1 GB",
+      "75.7 tok/s",
+      "6.0 s",
+      "68.5%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "D",
+      "gemma4:31b",
+      "dense",
+      "19.6 GB",
+      "26.1 tok/s",
+      "40.6 秒",
+      "76.5%"
+     ],
+     "en": [
+      "D",
+      "gemma4:31b",
+      "dense",
+      "19.6 GB",
+      "26.1 tok/s",
+      "40.6 s",
+      "76.5%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "E",
+      "qwen3.6:35b-a3b（nvfp4）",
+      "MoE",
+      "23.2 GB",
+      "104.9 tok/s",
+      "5.2 秒",
+      "73.5%"
+     ],
+     "en": [
+      "E",
+      "qwen3.6:35b-a3b（nvfp4）",
+      "MoE",
+      "23.2 GB",
+      "104.9 tok/s",
+      "5.2 s",
+      "73.5%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "E",
+      "qwen3.6:27b（nvfp4）",
+      "dense",
+      "19.1 GB",
+      "28.9 tok/s",
+      "31.2 秒",
+      "75.0%"
+     ],
+     "en": [
+      "E",
+      "qwen3.6:27b（nvfp4）",
+      "dense",
+      "19.1 GB",
+      "28.9 tok/s",
+      "31.2 s",
+      "75.0%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "F",
+      "qwen3.6:35b-a3b（GGUF Q4_K_M）",
+      "MoE",
+      "23.2 GB",
+      "73.2 tok/s",
+      "7.9 秒",
+      "73.5%"
+     ],
+     "en": [
+      "F",
+      "qwen3.6:35b-a3b (GGUF Q4_K_M)",
+      "MoE",
+      "23.2 GB",
+      "73.2 tok/s",
+      "7.9 s",
+      "73.5%"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "F",
+      "qwen3.6:27b（GGUF Q4_K_M）",
+      "dense",
+      "17.6 GB",
+      "15.5 tok/s",
+      "40.5 秒",
+      "77.5%"
+     ],
+     "en": [
+      "F",
+      "qwen3.6:27b (GGUF Q4_K_M)",
+      "dense",
+      "17.6 GB",
+      "15.5 tok/s",
+      "40.5 s",
+      "77.5%"
+     ]
+    }
+   ],
+   "headline": {
+    "zh": "MoE 生成快 2.7–7 倍、讀長文快 4–7 倍；記憶體不會比較省。Qwen 的 MoE 正確率和 dense 持平，Gemma 4 的 MoE（26B）比 dense（31B）少 8 個百分點。",
+    "en": "MoE generates 2.7-7 times faster and reads long documents 4-7 times faster, but needs no less memory. Qwen's MoE models are as accurate as the dense ones; Gemma 4's MoE (26B) is 8 points below the dense 31B."
+   }
+  },
+  {
    "id": "zh_en_gap",
    "name": {
     "zh": "工具呼叫：用中文問差在哪（逐題分析）",
@@ -3742,13 +4352,13 @@
      "where": "local",
      "zh": [
       "公司工具 A／B／C",
-      "98／94／96 → 94／94／92",
-      "94／90／96 → 93／89／86"
+      "98／97／97 → 94／95／94",
+      "94／94／97 → 93／93／87"
      ],
      "en": [
       "company tools A / B / C",
-      "98 / 94 / 96 → 94 / 94 / 92",
-      "94 / 90 / 96 → 93 / 89 / 86"
+      "98 / 97 / 97 → 94 / 95 / 94",
+      "94 / 94 / 97 → 93 / 93 / 87"
      ]
     },
     {
@@ -4870,7 +5480,7 @@
         "85.1",
         "76.2",
         "76.9%",
-        "98／94／96",
+        "98／97／97",
         "3.9 秒（GPU 主機）"
        ],
        "en": [
@@ -4880,7 +5490,7 @@
         "85.1",
         "76.2",
         "76.9%",
-        "98 / 94 / 96",
+        "98 / 97 / 97",
         "3.9 s (GPU machine)"
        ]
       },
@@ -4893,7 +5503,7 @@
         "82.9",
         "77.9",
         "75.4%",
-        "96／93／95",
+        "96／95／96",
         "7.5 秒（GPU 主機）"
        ],
        "en": [
@@ -4903,7 +5513,7 @@
         "82.9",
         "77.9",
         "75.4%",
-        "96 / 93 / 95",
+        "96 / 95 / 96",
         "7.5 s (GPU machine)"
        ]
       },
@@ -4916,7 +5526,7 @@
         "83.6",
         "75.5",
         "80.0%",
-        "98／94／97",
+        "98／97／98",
         "4.1 秒（GPU 主機）"
        ],
        "en": [
@@ -4926,7 +5536,7 @@
         "83.6",
         "75.5",
         "80.0%",
-        "98 / 94 / 97",
+        "98 / 97 / 98",
         "4.1 s (GPU machine)"
        ]
       },
@@ -4939,7 +5549,7 @@
         "81.1",
         "73.5",
         "69.2%",
-        "95／93／95",
+        "95／95／95",
         "6.9 秒（GPU 主機）"
        ],
        "en": [
@@ -4949,7 +5559,7 @@
         "81.1",
         "73.5",
         "69.2%",
-        "95 / 93 / 95",
+        "95 / 95 / 95",
         "6.9 s (GPU machine)"
        ]
       },
@@ -4962,7 +5572,7 @@
         "82.5",
         "73.6",
         "92.3%",
-        "94／90／96",
+        "94／94／97",
         "4.5 秒（GPU 主機）"
        ],
        "en": [
@@ -4972,7 +5582,7 @@
         "82.5",
         "73.6",
         "92.3%",
-        "94 / 90 / 96",
+        "94 / 94 / 97",
         "4.5 s (GPU machine)"
        ]
       },
@@ -4985,7 +5595,7 @@
         "76.7",
         "75.1",
         "89.2%",
-        "95／95／93",
+        "96／98／94",
         "6.1 秒（GPU 主機）"
        ],
        "en": [
@@ -4995,7 +5605,7 @@
         "76.7",
         "75.1",
         "89.2%",
-        "95 / 95 / 93",
+        "96 / 98 / 94",
         "6.1 s (GPU machine)"
        ]
       },
@@ -5008,7 +5618,7 @@
         "79.6",
         "72.5",
         "87.7%",
-        "97／89／92",
+        "97／94／94",
         "2.7 秒（GPU 主機）"
        ],
        "en": [
@@ -5018,7 +5628,7 @@
         "79.6",
         "72.5",
         "87.7%",
-        "97 / 89 / 92",
+        "97 / 94 / 94",
         "2.7 s (GPU machine)"
        ]
       },
@@ -5031,7 +5641,7 @@
         "80.0",
         "75.3",
         "90.8%",
-        "98／92／91",
+        "98／99／93",
         "5.1 秒（GPU 主機）"
        ],
        "en": [
@@ -5041,7 +5651,7 @@
         "80.0",
         "75.3",
         "90.8%",
-        "98 / 92 / 91",
+        "98 / 99 / 93",
         "5.1 s (GPU machine)"
        ]
       },
@@ -5054,7 +5664,7 @@
         "82.2",
         "73.6",
         "92.3%",
-        "96／94／96",
+        "98／96／97",
         "4.8 秒（GPU 主機）"
        ],
        "en": [
@@ -5064,7 +5674,7 @@
         "82.2",
         "73.6",
         "92.3%",
-        "96 / 94 / 96",
+        "98 / 96 / 97",
         "4.8 s (GPU machine)"
        ]
       }
