@@ -17,6 +17,7 @@ transcriptions); `history_view` and `history_summary` draw them on the History p
 import html
 from pathlib import Path
 
+import access
 import altair as alt
 import jobs
 import pandas as pd
@@ -645,7 +646,7 @@ def transcribe_page(url: str, status: dict) -> None:
     if robust:
         with st.container(border=True):
             conds, kind, snr = conditions_form()
-    unload = st.toggle(
+    unload = access.is_admin() and st.toggle(  # a loaded model may be someone else's run
         tr(
             "每個模型用完就卸載（省記憶體；下次會重新載入）",
             "Unload each model after use (saves memory; it loads again next time)",

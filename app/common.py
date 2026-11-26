@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import access
 import httpx
 import jobs
 import streamlit as st
@@ -324,7 +325,7 @@ def memory_guard(models: list[str], container=st) -> None:
                 f"~{GPU_BUDGET_GB:.0f} GB budget and the Mac may start swapping.",
             )
         )
-        if container.button(
+        if access.is_admin() and container.button(
             tr("先卸載目前載入的模型", "Unload the loaded models first"),
             key=f"unload_{'_'.join(models)}",
         ):

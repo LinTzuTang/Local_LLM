@@ -13,6 +13,7 @@ Run as a script by views/llm.py (runpy), like a page of its own.
 
 import json
 
+import access
 import i18n
 import jobs
 import streamlit as st
@@ -584,7 +585,8 @@ if st.button(
             "think": think,
             "temp_mode": temp_mode,
             "max_tokens": max_tokens,
-            "unload": sum((catalog.find(m) or {}).get("size_gb", 0) for m in selected) > 40,
+            "unload": access.is_admin()  # a loaded model may be someone else's run
+            and sum((catalog.find(m) or {}).get("size_gb", 0) for m in selected) > 40,
             "results": [{"model": m, "status": "waiting"} for m in selected],
         },
     )

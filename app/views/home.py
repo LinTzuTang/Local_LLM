@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import access
 import flow_ui
 import jobs
 import lottie
@@ -411,7 +412,7 @@ def live_status() -> None:
                 + ui.badges([model_kind(m["name"])], ["Ollama"]),
                 unsafe_allow_html=True,
             )
-            if y.button(tr("卸載", "Unload"), key=f"unload_{m['name']}"):
+            if access.is_admin() and y.button(tr("卸載", "Unload"), key=f"unload_{m['name']}"):
                 ollama_admin.unload(m["name"], url)
                 st.rerun(scope="fragment")
         for m in gw_loaded:
@@ -422,7 +423,7 @@ def live_status() -> None:
                 + ui.badges([kind], [tr("模型閘道", "gateway")]),
                 unsafe_allow_html=True,
             )
-            if y.button(tr("卸載", "Unload"), key=f"gw_unload_{m['id']}"):
+            if access.is_admin() and y.button(tr("卸載", "Unload"), key=f"gw_unload_{m['id']}"):
                 gateway_client.unload(m["id"])
                 st.rerun(scope="fragment")
     with right.container(border=True):

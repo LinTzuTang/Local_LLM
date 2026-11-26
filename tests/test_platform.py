@@ -304,3 +304,15 @@ def test_catalog_is_read_again_when_the_file_changes(tmp_path, monkeypatch):
     path.write_text('{"models": [1, 2]}')
     os.utime(path, ns=(path.stat().st_atime_ns, path.stat().st_mtime_ns + 1_000_000))
     assert catalog.load_catalog()["models"] == [1, 2]
+
+
+def test_only_the_admin_unloads_models():
+    """A loaded model may be someone else's run (an evaluation on the shared server), so every
+    page that can unload a model checks for the admin (access.is_admin) first."""
+    from pathlib import Path
+
+    app = Path(__file__).resolve().parents[1] / "app"
+    for path in app.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if re.search(r"\b(ollama_admin|gateway_client)\.unload\(|keep_alive=0 if", text):
+            assert "access.is_admin()" in text, path.relative_to(app)

@@ -5,6 +5,7 @@ side by side. Run as a script by views/llm.py (runpy), like a page of its own.
 import json
 import re
 
+import access
 import i18n
 import jobs
 import pandas as pd
@@ -100,7 +101,9 @@ options = chat_models + [
     and m["fit"] != "no"
     and catalog.normalize(m["tag"]) not in installed
 ]
-st.session_state.setdefault("compare_models", [m for m in [catalog.default_model()] if m in options])
+st.session_state.setdefault(
+    "compare_models", [m for m in [catalog.default_model()] if m in options]
+)
 st.session_state.compare_models = [m for m in st.session_state.compare_models if m in options]
 selected = st.multiselect(
     tr(
@@ -149,7 +152,8 @@ think = c2.toggle(
 max_tokens = c3.select_slider(
     tr("最大輸出 tokens", "Max output tokens"), [512, 1024, 2048, 4096, 8192], value=4096
 )
-unload_between = st.toggle(
+# Only the admin unloads: a loaded model may be someone else's run (an evaluation on the server).
+unload_between = access.is_admin() and st.toggle(
     tr(
         "每個模型跑完就卸載（大模型比較時避免記憶體不足）",
         "Unload each model when it finishes (avoids running out of memory with large models)",

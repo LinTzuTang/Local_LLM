@@ -7,6 +7,7 @@ visible). Long calls run as background jobs, so switching pages does not stop th
 
 import json
 
+import access
 import jobs
 import ocr_compare
 import pandas as pd
@@ -86,7 +87,7 @@ def status_panel() -> None:
                 }
             )
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
-        for model_id in loaded:
+        for model_id in loaded if access.is_admin() else ():  # a loaded model may be another's run
             if st.button(tr(f"卸載 {model_id}", f"Unload {model_id}"), key=f"unload_{model_id}"):
                 gateway_client.unload(model_id, URL)
                 st.rerun()

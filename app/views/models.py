@@ -8,6 +8,7 @@ The "non-Ollama" view lists the speech, document and reranker models served by t
 
 import html
 
+import access
 import jobs
 import pandas as pd
 import streamlit as st
@@ -349,7 +350,9 @@ def gateway_row(m: dict, status: dict | None, loaded: dict | None, up: bool) -> 
             row.button(DOWNLOAD, key=f"gw_pull_{m['id']}", disabled=True,
                        help=tr("模型閘道沒有在執行", "The model gateway is not running"))  # fmt: skip
         elif have:
-            if loaded and row.button("", key=f"gw_unload_{m['id']}", icon=":material/eject:",
+            # Only the admin unloads: a loaded model may be someone else's run.
+            if loaded and access.is_admin() and row.button(
+                "", key=f"gw_unload_{m['id']}", icon=":material/eject:",
                                      help=tr("卸載", "Unload")):  # fmt: skip
                 gateway_client.unload(m["id"], gateway_url())
                 st.rerun()
