@@ -42,6 +42,10 @@ MODELS = {
     "GLM-4.7-Flash": ("glm-4-7-flash", "glm-4-7-flash"),
     "gpt-oss 20B": ("gpt-oss-20b", "gpt-oss-20b"),
     "Nemotron 3.5 Bolt E4B": ("nemotron-3-5-bolt-e4b-4gb", "nemotron-3-5-bolt-e4b-4gb"),
+    # added 11-20 to 11-23 (AA lists each with thinking on only)
+    "Nanbeige4.3 33B": ("nanbeige4-3-33b", "nanbeige4-3-33b"),
+    "Inkling 2 Mini 26B-A5B": ("inkling-2-mini", "inkling-2-mini"),
+    "Muse Glimmer 30B": ("muse-glimmer", "muse-glimmer"),
     "Claude Fable 5.2": ("claude-fable-5-2", "claude-fable-5-2"),
     "GPT-6.2 Astra": ("gpt-6-2-astra", "gpt-6-2-astra"),
     "Gemini 4 Carbon": ("gemini-4-carbon", "gemini-4-carbon"),

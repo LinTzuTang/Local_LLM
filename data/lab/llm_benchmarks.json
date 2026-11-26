@@ -226,7 +226,7 @@
     ]
    }
   ],
-  "date": "2026-11-25",
+  "date": "2026-11-26",
   "note": {
    "zh": "為什麼不選分數也高的模型：Muse Glimmer 30B 公司工具略高（99／95／90），但中文回答 24 題有 15 題用簡體，Mac 上每次呼叫 31.4 秒；Gemma 4 31B 的消融版 LiveCodeBench 55/60 比原版高，但拒答率還沒量。",
    "en": "Why not two models that also score well: Muse Glimmer 30B is slightly higher on company tools (99 / 95 / 90) but answered 15 of 24 Chinese questions in Simplified, and takes 31.4 s a call on the Mac; Gemma 4 31B's abliterated build scores 55/60 on LiveCodeBench, above the original, but its refusals are not measured yet."
@@ -301,16 +301,16 @@
    {
     "zh": [
      "長文件推理（AA-LCR，英文）",
-     "Qwen3.8 27B 82%",
+     "Muse Glimmer 30B 83%",
      "Claude Opus 5.5 85%",
-     "接近",
+     "同級",
      "AA（2026-11-26）"
     ],
     "en": [
      "Reasoning over long documents (AA-LCR, English)",
-     "Qwen3.8 27B 82%",
+     "Muse Glimmer 30B 83%",
      "Claude Opus 5.5 85%",
-     "close",
+     "level",
      "AA (2026-11-26)"
     ]
    },
@@ -349,14 +349,14 @@
    {
     "zh": [
      "長時間自主工作與知識（AA 綜合指數）",
-     "Qwen3.8 27B 20",
+     "Nanbeige4.3 33B 20",
      "Claude Fable 5.2 65",
      "差很遠",
      "AA（2026-11-26）"
     ],
     "en": [
      "Long autonomous work and knowledge (AA Intelligence Index)",
-     "Qwen3.8 27B 20",
+     "Nanbeige4.3 33B 20",
      "Claude Fable 5.2 65",
      "far behind",
      "AA (2026-11-26)"
@@ -365,14 +365,14 @@
    {
     "zh": [
      "冷門知識答對（AA-Omniscience）",
-     "Gemma 4 31B 20%",
+     "Muse Glimmer 30B 28%",
      "Claude Fable 5.2 79%",
      "差很遠",
      "AA（2026-11-26）"
     ],
     "en": [
      "Obscure knowledge answered right (AA-Omniscience)",
-     "Gemma 4 31B 20%",
+     "Muse Glimmer 30B 28%",
      "Claude Fable 5.2 79%",
      "far behind",
      "AA (2026-11-26)"
@@ -381,14 +381,14 @@
    {
     "zh": [
      "不知道還硬答（AA 幻覺率，越低越好）",
-     "Qwen3.8 27B 29%",
+     "Nanbeige4.3 33B 18%",
      "Gemini 4 Carbon 11%",
      "差很遠",
      "AA（2026-11-26）"
     ],
     "en": [
      "Making up answers (AA hallucination rate, lower is better)",
-     "Qwen3.8 27B 29%",
+     "Nanbeige4.3 33B 18%",
      "Gemini 4 Carbon 11%",
      "far behind",
      "AA (2026-11-26)"
@@ -1214,8 +1214,8 @@
    "date": "2026-11-25",
    "status": "running",
    "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B；Inkling 2 Mini 的搜尋 13 題要重跑（context 設定太小）",
-    "en": "Still being added: Nanbeige4.3 33B; 13 of Inkling 2 Mini's search questions to rerun (context set too small)"
+    "zh": "還在補測：Nanbeige4.3 33B；Inkling 2 Mini 的搜尋 13 題正在重跑（context 設定太小）",
+    "en": "Still being added: Nanbeige4.3 33B; 13 of Inkling 2 Mini's search questions being rerun (context set too small)"
    },
    "columns": {
     "zh": [
@@ -2666,7 +2666,7 @@
       "51/60",
       "20 / 18 / 13",
       "0",
-      "1.8  h (GPU machine)"
+      "1.8 h (GPU machine)"
      ]
     },
     {
@@ -2683,7 +2683,7 @@
       "51/60",
       "20 / 19 / 12",
       "2",
-      "2.4  h (GPU machine)"
+      "2.4 h (GPU machine)"
      ]
     },
     {
@@ -2700,7 +2700,7 @@
       "46/60",
       "20 / 18 / 8",
       "12",
-      "5.2  h (GPU machine)"
+      "5.2 h (GPU machine)"
      ]
     },
     {
@@ -2717,7 +2717,7 @@
       "44/60",
       "20 / 17 / 7",
       "14",
-      "5.3  h (GPU machine)"
+      "5.3 h (GPU machine)"
      ]
     },
     {
@@ -2734,7 +2734,7 @@
       "43/60",
       "20 / 17 / 6",
       "2",
-      "15.6  h (Mac)"
+      "15.6 h (Mac)"
      ]
     },
     {
@@ -2751,7 +2751,7 @@
       "43/60",
       "20 / 16 / 7",
       "0",
-      "1.4  h (Mac)"
+      "1.4 h (Mac)"
      ]
     },
     {
@@ -2768,7 +2768,7 @@
       "41/60",
       "19 / 15 / 7",
       "1",
-      "2.5  h (GPU machine)"
+      "2.5 h (GPU machine)"
      ]
     },
     {
@@ -2785,7 +2785,7 @@
       "40/60",
       "20 / 15 / 5",
       "12",
-      "5.6  h (Mac)"
+      "5.6 h (Mac)"
      ]
     },
     {
@@ -2802,7 +2802,7 @@
       "38/60",
       "20 / 13 / 5",
       "0",
-      "1.3  h (GPU machine)"
+      "1.3 h (GPU machine)"
      ]
     },
     {
@@ -2819,7 +2819,7 @@
       "38/60",
       "19 / 12 / 7",
       "6",
-      "3.2  h (GPU machine)"
+      "3.2 h (GPU machine)"
      ]
     },
     {
@@ -2836,7 +2836,7 @@
       "34/60",
       "18 / 13 / 3",
       "0",
-      "0.9  h (Mac)"
+      "0.9 h (Mac)"
      ]
     },
     {
@@ -2853,7 +2853,7 @@
       "33/60",
       "20 / 12 / 1",
       "21",
-      "3.5  h (GPU machine)"
+      "3.5 h (GPU machine)"
      ]
     },
     {
@@ -2870,7 +2870,7 @@
       "29/60",
       "18 / 10 / 1",
       "28",
-      "7.2  h (GPU machine)"
+      "7.2 h (GPU machine)"
      ]
     },
     {
@@ -2887,7 +2887,7 @@
       "26/60",
       "18 / 7 / 1",
       "16",
-      "7.7  h (GPU machine)"
+      "7.7 h (GPU machine)"
      ]
     },
     {
@@ -2904,7 +2904,7 @@
       "25/60",
       "17 / 6 / 2",
       "0",
-      "0.8  h (GPU machine)"
+      "0.8 h (GPU machine)"
      ]
     },
     {
@@ -2921,7 +2921,7 @@
       "20/60",
       "17 / 3 / 0",
       "39",
-      "6.8  h (Mac)"
+      "6.8 h (Mac)"
      ]
     }
    ],
@@ -2956,11 +2956,11 @@
     "zh": "平台上不能現場跑（要 Docker 與六種語言的環境）。",
     "en": "Not runnable on the platform (needs Docker and six language toolchains)."
    },
-   "date": "2026-11-24",
+   "date": "2026-11-26",
    "status": "running",
    "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
-    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B"
+    "zh": "還在補測：Nanbeige4.3 33B",
+    "en": "Still being added: Nanbeige4.3 33B"
    },
    "columns": {
     "zh": [
@@ -3013,7 +3013,7 @@
       "14/16",
       "6/11",
       "6/10",
-      "10.6  h (GPU machine)"
+      "10.6 h (GPU machine)"
      ]
     },
     {
@@ -3040,7 +3040,7 @@
       "14/16",
       "7/11",
       "6/10",
-      "2.4  h (GPU machine)"
+      "2.4 h (GPU machine)"
      ]
     },
     {
@@ -3067,7 +3067,34 @@
       "13/16",
       "5/11",
       "6/10",
-      "6.4  h (GPU machine)"
+      "6.4 h (GPU machine)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Muse Glimmer 30B（11-26）",
+      "37/75",
+      "13/75",
+      "5/9",
+      "9/13",
+      "4/16",
+      "10/16",
+      "5/11",
+      "4/10",
+      "26.8 小時（GPU 主機）"
+     ],
+     "en": [
+      "Muse Glimmer 30B（11-26）",
+      "37/75",
+      "13/75",
+      "5/9",
+      "9/13",
+      "4/16",
+      "10/16",
+      "5/11",
+      "4/10",
+      "26.8 h (GPU machine)"
      ]
     },
     {
@@ -3094,7 +3121,7 @@
       "6/16",
       "3/11",
       "4/10",
-      "18.4  h (GPU machine)"
+      "18.4 h (GPU machine)"
      ]
     },
     {
@@ -3121,7 +3148,7 @@
       "3/16",
       "2/11",
       "3/10",
-      "0.4  h (GPU machine)"
+      "0.4 h (GPU machine)"
      ]
     }
    ],
@@ -4987,7 +5014,7 @@
         "55/60",
         "20 / 19 / 16",
         "0",
-        "1.1  h (GPU machine)"
+        "1.1 h (GPU machine)"
        ]
       },
       {
@@ -5004,7 +5031,7 @@
         "51/60",
         "20 / 18 / 13",
         "0",
-        "1.8  h (GPU machine)"
+        "1.8 h (GPU machine)"
        ]
       },
       {
@@ -5021,7 +5048,7 @@
         "51/60",
         "20 / 18 / 13",
         "0",
-        "4.4  h (GPU machine)"
+        "4.4 h (GPU machine)"
        ]
       },
       {
@@ -5038,7 +5065,7 @@
         "51/60",
         "20 / 18 / 13",
         "0",
-        "5.1  h (GPU machine)"
+        "5.1 h (GPU machine)"
        ]
       },
       {
@@ -5055,7 +5082,7 @@
         "47/60",
         "20 / 19 / 8",
         "11",
-        "6.6  h (GPU machine)"
+        "6.6 h (GPU machine)"
        ]
       },
       {
@@ -5072,7 +5099,7 @@
         "46/60",
         "20 / 18 / 8",
         "12",
-        "5.2  h (GPU machine)"
+        "5.2 h (GPU machine)"
        ]
       },
       {
@@ -5089,7 +5116,7 @@
         "45/60",
         "19 / 16 / 10",
         "8",
-        "2.6  h (GPU machine)"
+        "2.6 h (GPU machine)"
        ]
       },
       {
@@ -5106,7 +5133,7 @@
         "45/60",
         "20 / 18 / 7",
         "9",
-        "4.8  h (GPU machine)"
+        "4.8 h (GPU machine)"
        ]
       },
       {
@@ -5123,7 +5150,7 @@
         "43/60",
         "19 / 18 / 6",
         "14",
-        "6.3  h (GPU machine)"
+        "6.3 h (GPU machine)"
        ]
       },
       {
@@ -5140,7 +5167,7 @@
         "41/60",
         "19 / 15 / 7",
         "1",
-        "2.5  h (GPU machine)"
+        "2.5 h (GPU machine)"
        ]
       }
      ]
