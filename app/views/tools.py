@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import streamlit as st
 import ui
+from common import this_machine
 from i18n import current, pick, tr
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
@@ -22,7 +23,7 @@ ui.page_header(
         "in the Agent Skills format), and which parts of the wider ecosystem are integrated, "
         "which are not, and why.",
     ),
-    eyebrow=tr("全部在這台 Mac 上執行", "Everything runs on this Mac"),
+    eyebrow=tr(f"全部在{this_machine()}上執行", f"Everything runs on {this_machine()}"),
 )
 
 tools = dict(all_tools())
@@ -596,7 +597,7 @@ with eco_tab:
             "MCP · filesystem",
             tr("官方參考伺服器（TypeScript）", "Official reference server (TypeScript)"),
             tr(
-                "需要 Node.js／npx，這台 Mac 沒有安裝 → 改用本專案的 Python 檔案沙盒伺服器（同名工具的子集）。",
+                "需要 Node.js／npx，平台的機器沒有安裝 → 改用本專案的 Python 檔案沙盒伺服器（同名工具的子集）。",
                 "Needs Node.js / npx, not installed here → replaced by this project's Python "
                 "file-sandbox server (a subset with the same tool names).",
             ),

@@ -100,7 +100,7 @@ options = chat_models + [
     m["tag"]
     for m in catalog.models()
     if catalog.is_chat(m["tag"])
-    and m["fit"] != "no"
+    and catalog.fit(m) != "no"
     and catalog.normalize(m["tag"]) not in installed
 ]
 cloud_models = cloud_llm.models() if cloud_enabled() else []  # the top bar's cloud switch

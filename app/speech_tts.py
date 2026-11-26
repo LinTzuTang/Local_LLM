@@ -759,9 +759,9 @@ def benchmark_view() -> None:
     st.markdown(
         tr(
             f"**{n} 個聲音念同一份虛構產銷會議（20 句、約 88 秒）**，像串接式助理一樣一句一句合成"
-            f"（{date}，這台 Mac）。看三件事：多久開口、跟不跟得上、聽不聽得清楚。",
+            f"（{date}，在 Mac 上測）。看三件事：多久開口、跟不跟得上、聽不聽得清楚。",
             f"**{n} voices read the same fictional production meeting (20 sentences, about 88 s)** "
-            f"one sentence at a time, as the cascade assistant speaks ({date}, this Mac): how "
+            f"one sentence at a time, as the cascade assistant speaks ({date}, on the Mac): how "
             "soon it talks, whether it keeps up, whether it is clear.",
         )
     )

@@ -13,7 +13,14 @@ import jobs
 import pandas as pd
 import streamlit as st
 import ui
-from common import download_control, gateway_url, ollama_url, pull_progress, require_ollama
+from common import (
+    download_control,
+    gateway_url,
+    ollama_url,
+    pull_progress,
+    require_ollama,
+    this_machine,
+)
 from i18n import current, tr
 
 from local_llm import catalog, gateway_client, model_watch, ollama_admin
@@ -42,7 +49,8 @@ def plain(label: str) -> str:
 
 fit_labels = {k: plain(v) for k, v in (catalog.FIT_LABELS_EN if lang == "en"
                                        else catalog.FIT_LABELS).items()}  # fmt: skip
-mac_labels = {k: plain(v) for k, v in loc(data, "mac_labels").items()}
+mac_labels = {k: plain(v) for k, v in catalog.runs_labels(lang).items()}  # on this machine
+HERE, HERE_CAP = this_machine(), this_machine(capital=True)
 # status -> (icon, colour) for "fits on this Mac" and "runs on" marks
 FIT_ICONS = {
     "ok": ("check", "#15803D"),
@@ -52,6 +60,9 @@ FIT_ICONS = {
 MAC_ICONS = {"mlx": ("bolt", "#15803D"), "mps": ("speed", "#B45309"), "cpu": ("warning", "#B91C1C"),
              "onnx": ("memory", "#15803D"), "cuda": ("block", "#B91C1C"),
              "native": ("laptop_mac", "#15803D")}  # fmt: skip
+if not catalog.IS_MAC:  # the GPU machine: CUDA and PyTorch run, MLX and macOS voices do not
+    MAC_ICONS |= {"mlx": ("block", "#B91C1C"), "mps": ("bolt", "#15803D"),
+                  "cuda": ("bolt", "#15803D"), "native": ("block", "#B91C1C")}  # fmt: skip
 lang_labels: dict[str, str] = loc(data, "lang_labels")
 
 
@@ -137,8 +148,8 @@ ui.page_header(
     "apps",
     tr("模型庫", "Model library"),
     tr(
-        "這台 Mac 跑得動的地端模型一覽：用能力、任務、大小與授權篩選，一鍵在背景下載。徽章同時列出 Ollama 標示的能力（工具、思考、看圖、音訊、向量、決策）與平台整理的標籤（程式、長上下文、MoE、可否商用）。",
-        "Every local model this Mac can run, at a glance: filter by capability, task, size and licence, and download in the background with one click. Badges show Ollama's capability labels (tools, thinking, vision, audio, embedding, decision) plus our own (code, long context, MoE, commercial use).",
+        f"{HERE}跑得動的地端模型一覽：用能力、任務、大小與授權篩選，一鍵在背景下載。徽章同時列出 Ollama 標示的能力（工具、思考、看圖、音訊、向量、決策）與平台整理的標籤（程式、長上下文、MoE、可否商用）。",
+        f"Every local model {HERE} can run, at a glance: filter by capability, task, size and licence, and download in the background with one click. Badges show Ollama's capability labels (tools, thinking, vision, audio, embedding, decision) plus our own (code, long context, MoE, commercial use).",
     ),
     eyebrow=tr("模型", "Models"),
 )
@@ -263,7 +274,18 @@ def source_note() -> str:
     return tr("；", "; ").join(parts) + tr("。", ".")
 
 
-st.caption(f"{loc(data, 'memory_note')} " + source_note())
+if catalog.IS_MAC:
+    memory_note = loc(data, "memory_note")
+else:  # the catalogue's note describes the Mac
+    mem = round(catalog.memory_gb())
+    memory_note = tr(
+        f"{HERE}的 NVIDIA 顯示卡共 {mem} GB 記憶體；「可跑」＝約一半以內，可和 embedding 等小模型同時載入，"
+        "「吃緊」＝要先卸載其他模型，「放不下」＝超過。大小是 Ollama 的下載量（GGUF）。",
+        f"{HERE_CAP} has {mem} GB of NVIDIA GPU memory; fits = about half or less, so it loads "
+        "next to small models such as embeddings; tight = unload others first; too big = over. "
+        "Sizes are Ollama's download (GGUF).",
+    )
+st.caption(f"{memory_note} " + source_note())
 
 if pulls := [j for j in jobs.active() if j.kind == "pull"]:
     with st.container(border=True):
@@ -396,8 +418,8 @@ CATALOG_TIP = tr(
     "one-click download (install it yourself)",
 )
 CLOUD_TIP = tr(
-    "雲端付費服務：錄音或文字會上傳到服務商，不在這台 Mac 執行",
-    "Paid cloud service: the audio or text is uploaded; it does not run on this Mac",
+    f"雲端付費服務：錄音或文字會上傳到服務商，不在{HERE}執行",
+    f"Paid cloud service: the audio or text is uploaded; it does not run on {HERE}",
 )
 
 
@@ -413,8 +435,10 @@ def catalog_row(m: dict, index: int) -> None:
     sub = sep.join(x for x in (lang_text(m), loc(m, "license")) if x)
     flags = ""
     via = m.get("served_by")
-    if m.get("mac") == "native":
+    if m.get("mac") == "native" and catalog.IS_MAC:
         state = chip(tr("內建，免下載", "Built in"), "builtin", "laptop_mac")
+    elif m.get("mac") == "native":
+        state = chip(tr("只有 Mac 能用", "Macs only"), "catalog", "block")
     elif via:  # a mode of a model the platform already serves
         state = chip(tr(f"經 {via} 可用", f"Via {via}"), "builtin", "link", served_tip(via))
     else:
@@ -446,6 +470,8 @@ def catalog_row(m: dict, index: int) -> None:
             if m.get("mac") == "native":
                 st.caption(
                     tr("macOS 內建，在這台 Mac 直接可用", "Built into macOS; ready on this Mac")
+                    if catalog.IS_MAC
+                    else tr("macOS 內建，只有 Mac 能用", "Built into macOS; Macs only")
                 )
             else:
                 st.caption(served_tip(via) if via else CATALOG_TIP)
@@ -456,7 +482,7 @@ def catalog_row(m: dict, index: int) -> None:
                 tr("參數量", "Parameters"): loc(m, "params"),
                 tr("下載大小", "Download size"): size_text,
                 tr("語言", "Languages"): lang_text(m) or "—",
-                tr("在這台 Mac", "On this Mac"): mac_labels.get(m.get("mac"), "—"),
+                tr(f"在{HERE}", f"On {HERE}"): mac_labels.get(m.get("mac"), "—"),
                 tr("執行方式", "Runtime"): loc(m, "runtime"),
                 tr("安裝", "Install"): loc(m, "install"),
                 tr("授權", "Licence"): loc(m, "license"),
@@ -532,7 +558,7 @@ def candidates_table(members: list[dict]) -> None:
                     tr("用途", "Use"): loc(m, "use"),
                     tr("語言", "Languages"): lang_text(m),
                     tr("參數", "Params"): loc(m, "params"),
-                    tr("在這台 Mac", "On this Mac"): mac_labels[m["mac"]],
+                    tr(f"在{HERE}", f"On {HERE}"): mac_labels[m["mac"]],
                     tr("執行方式", "Runtime"): loc(m, "runtime"),
                     tr("授權", "License"): loc(m, "license"),
                     tr("模型頁", "Model page"): catalog.other_url(m),
@@ -581,6 +607,25 @@ RUNTIME_ROWS = [
      ["Pages", "Language models, Agent", "Compare speech models and Other models pages, agent tools",
       "Listed in the library only", "Listed in the library only"]),
 ]  # fmt: skip
+
+
+if not catalog.IS_MAC:  # the GPU machine: NVIDIA memory and CUDA instead of the Mac's
+    _mem = round(catalog.memory_gb())
+    RUNTIME_ROWS = [
+        (["記憶體", "自動載入／卸載", "第一次使用時載入，閒置 5 分鐘自動卸載",
+          f"自己管理，與 Ollama 共用 {_mem}GB 顯示卡記憶體", "不佔本機"],
+         ["Memory", "Loaded / unloaded automatically",
+          "Loaded on first use, unloaded after 5 idle minutes",
+          f"Your job; shares the {_mem}GB of GPU memory with Ollama", f"None on {HERE}"])
+        if row[0][0] == "記憶體" else
+        (["GPU", "NVIDIA CUDA", "PyTorch（CUDA）；只有 MLX 版的模型不能跑",
+          "看框架：PyTorch／CUDA 可用，MLX 專用的不能跑", "—"],
+         ["GPU", "NVIDIA CUDA", "PyTorch (CUDA); MLX-only models do not run",
+          "Depends: PyTorch / CUDA yes, MLX-only no", "—"])
+        if row[0][0] == "Mac GPU" else
+        (row[0], [x.replace("this Mac", HERE) for x in row[1]])
+        for row in RUNTIME_ROWS
+    ]  # fmt: skip
 
 
 def runtime_table() -> str:
@@ -667,7 +712,7 @@ def other_models_view() -> None:
         shown += 1
         section(tr("雲端語音模型（付費）", "Cloud speech models (paid)"), "",
                 len(clouds), "cloud")  # fmt: skip
-        st.caption(loc(data, "cloud_note"))
+        st.caption(loc(data, "cloud_note").replace("這台 Mac", HERE).replace("this Mac", HERE))
         with st.container(border=True, gap="xsmall"):
             list_head([tr("服務商與 API", "Provider & API"), tr("任務", "Task"),
                        tr("位置", "Where"), tr("用途", "Use"), tr("狀態", "Status")],
@@ -751,7 +796,7 @@ def model_row(m: dict, group: str) -> None:
     if have:
         state = f'<span class="ml-state have">{ui.icon("check_circle")}{tr("已下載", "Installed")}</span>'
     else:
-        state = mark(fit_labels[m["fit"]], FIT_ICONS[m["fit"]])
+        state = mark(fit_labels[catalog.fit(m)], FIT_ICONS[catalog.fit(m)])
     caps = catalog.all_capabilities(m)
     facts, actions = st.container(key=f"mrow_{group}_{tag}").columns(
         ROW_COLS, gap="small", vertical_alignment="center"
@@ -785,10 +830,10 @@ def model_row(m: dict, group: str) -> None:
                     if st.button(tr("確定刪除", "Delete"), key=f"del_{group}_{tag}", type="primary"):
                         ollama_admin.delete(tag, ollama_url())
                         st.rerun()
-        elif m["fit"] == "no":
+        elif catalog.fit(m) == "no":
             row.button(DOWNLOAD, key=f"pull_{group}_{tag}", disabled=True,
-                       help=tr("超過這台 Mac 的記憶體，建議放在 DGX Spark。",
-                               "Too big for this Mac's memory; use a DGX Spark."))  # fmt: skip
+                       help=tr(f"超過{HERE}的記憶體，放不下。",
+                               f"Too big for {HERE}'s memory."))  # fmt: skip
         else:
             download_control(tag, key=f"pull_{group}_{tag}", container=row, label=DOWNLOAD)
         with row.popover("", icon=":material/info:", help=tr("詳細", "Details")):
@@ -809,9 +854,8 @@ def details(m: dict, tier: dict) -> None:
         tr("參數量", "Parameters"): m.get("params", ""),
         tr("Context 長度", "Context window"): context,
         tr("下載大小", "Download size"): f"{m['size_gb']} GB · {loc(tier, 'name')}",
-        tr(
-            "在這台 Mac", "On this Mac"
-        ): f":material/{FIT_ICONS[m['fit']][0]}: {fit_labels[m['fit']]}",
+        tr(f"在{HERE}", f"On {HERE}"): f":material/{FIT_ICONS[catalog.fit(m)][0]}: "
+        f"{fit_labels[catalog.fit(m)]}",
         tr("適合任務", "Good for"): sep.join(tasks[t] for t in m["tasks"]),
         tr("Ollama 能力", "Ollama capabilities"): ollama_caps or tr("純文字", "text only"),
         tr("平台標籤", "Our labels"): our_tags or "—",
@@ -1016,7 +1060,7 @@ c3.button(tr("清除篩選", "Clear filters"), type="tertiary", icon=":material/
           on_click=clear_filters, width="stretch")  # fmt: skip
 
 HEAD = [tr("模型", "Model"), tr("參數", "Params"), tr("大小", "Size"), "Context",
-        tr("能力", "Capabilities"), tr("這台 Mac", "This Mac")]  # fmt: skip
+        tr("能力", "Capabilities"), HERE_CAP]  # fmt: skip
 if not rows:
     st.info(
         tr(

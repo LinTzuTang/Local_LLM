@@ -12,6 +12,53 @@ CAPABILITY_KEYS = ("tools", "thinking", "vision", "audio", "embedding", "decisio
 TAG_KEYS = ("code", "translate", "ocr", "taiwan", "multilingual", "long_context", "moe",
             "commercial_ok", "non_commercial")  # fmt: skip
 LONG_CONTEXT = 128_000  # tokens; Ollama shows 128000 as "125K"
+# The catalogue's `fit`, memory note and "runs on" labels describe the Mac (64 GB unified memory,
+# Metal / MLX). On another machine (the GPU machine: NVIDIA, CUDA) they are worked out here instead.
+IS_MAC = sys.platform == "darwin"
+GPU_RUNS = {  # the catalogue's Mac runtime keys, as they work out on an NVIDIA machine
+    "mlx": ("❌ MLX 只能在 Apple 晶片上跑", "❌ MLX runs only on Apple silicon"),
+    "mps": ("✅ PyTorch：NVIDIA GPU（CUDA）", "✅ PyTorch on the NVIDIA GPU (CUDA)"),
+    "onnx": ("✅ CPU 即時（ONNX 小模型）", "✅ Real time on CPU (small ONNX model)"),
+    "cpu": ("⚠️ 只能 CPU（較慢）", "⚠️ CPU only (slower)"),
+    "cuda": ("✅ NVIDIA GPU（CUDA）", "✅ NVIDIA GPU (CUDA)"),
+    "native": ("❌ macOS 內建（這台是 Linux）", "❌ Built into macOS (this machine runs Linux)"),
+}
+
+
+@cache
+def memory_gb() -> float:
+    """Memory models load into: the Mac's unified memory, else the NVIDIA cards' total, else RAM."""
+    import subprocess
+
+    try:
+        if IS_MAC:
+            out = subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True, text=True)
+            return int(out.stdout) / 2**30
+        query = ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"]
+        out = subprocess.run(query, capture_output=True, text=True, timeout=10)
+        if out.returncode == 0 and out.stdout.strip():
+            return sum(int(x) for x in out.stdout.split()) / 1024
+        with open("/proc/meminfo") as f:
+            return int(f.readline().split()[1]) / 2**20
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return 64.0
+
+
+def fit(model: dict) -> str:
+    """ok / tight / no for this machine: the catalogue's value on the Mac; elsewhere from the size
+    with the same cut-offs the Mac values follow (about half the memory, then 85%)."""
+    size = model.get("size_gb")
+    if IS_MAC or not size:
+        return model.get("fit", "ok")
+    mem = memory_gb()
+    return "ok" if size <= 0.53 * mem else "tight" if size <= 0.85 * mem else "no"
+
+
+def runs_labels(lang: str) -> dict[str, str]:
+    """The "runs on this machine" label of each runtime key."""
+    if IS_MAC:
+        return localized(load_catalog(), "mac_labels", lang)
+    return {k: v[1] if lang == "en" else v[0] for k, v in GPU_RUNS.items()}
 
 
 @cache

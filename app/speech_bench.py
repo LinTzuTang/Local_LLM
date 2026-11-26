@@ -146,7 +146,7 @@ def notes(model: str, info: dict, runs: list[dict], samples: dict) -> str:
     if info.get("delay"):
         out.append(f"delay={info['delay']}")
     if model == "voxtral-mini-4b-realtime":
-        out.append(tr("這台 Mac 跟不上即時", "too slow for real time here"))
+        out.append(tr("在 Mac 上跟不上即時", "too slow for real time on the Mac"))
     return tr("；", "; ").join(out)
 
 

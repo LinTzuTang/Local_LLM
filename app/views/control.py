@@ -40,7 +40,7 @@ ui.page_header(
         "切到「設定＋程式碼」還能新增工具、修改程式並跑測試。它會先讀取現有內容再提出修改；"
         "每次寫入都會顯示 diff 與驗證結果，經你核准才會存檔，所有版本與程式備份都能一鍵復原。"
         "也可以在 terminal 用 <code>uv run local-agent code</code>。",
-        "A coding agent that runs entirely on this Mac: change agent and scenario settings in "
+        "A coding agent that runs entirely on this machine: change agent and scenario settings in "
         "plain language, or switch to “settings + code” to add tools, edit code and run tests. "
         "It reads first, then proposes changes; every write shows a diff and validation result "
         "and is saved only after you approve it. Every version and code backup can be restored. "
@@ -218,7 +218,7 @@ with st.sidebar:
         tr(
             f"專案：`{PROJECT_ROOT.name}` · 模型、程式與資料都不離開這台電腦。"
             "不能讀寫 .env、models/、storage/pgdata、.venv。",
-            f"Project: `{PROJECT_ROOT.name}` · models, code and data never leave this Mac. "
+            f"Project: `{PROJECT_ROOT.name}` · models, code and data never leave this machine. "
             ".env, models/, storage/pgdata and .venv are off limits.",
         )
     )

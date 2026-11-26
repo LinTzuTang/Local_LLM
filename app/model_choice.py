@@ -85,7 +85,7 @@ def choices(node: dict, url: str) -> tuple[list[str], dict[str, bool]]:
         more = [
             m["tag"]
             for m in catalog.models()
-            if m.get("fit") != "no"
+            if catalog.fit(m) != "no"
             and (m.get("recommended") or want == "decision")
             and not any(catalog.same_model(m["tag"], h) for h in have)
             and fits(m["tag"])

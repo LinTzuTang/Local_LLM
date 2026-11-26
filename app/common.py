@@ -38,6 +38,13 @@ def ollama_backend() -> Backend:
     return Backend("Ollama", "ollama", ollama_url())
 
 
+def this_machine(capital: bool = False) -> str:
+    """How pages name the machine the platform runs on: the Mac, or the shared GPU machine."""
+    if catalog.IS_MAC:
+        return tr("這台 Mac", "This Mac" if capital else "this Mac")
+    return tr("這台 GPU 主機", "This GPU machine" if capital else "this GPU machine")
+
+
 def require_ollama() -> str:
     """Stop the page with instructions when the Ollama server is down."""
     ver = ollama_admin.version(ollama_url())
@@ -236,11 +243,11 @@ def model_picker(
         container.warning(
             tr(f"{choice} 尚未下載（約 {size}GB）。", f"{choice} is not downloaded (~{size} GB).")
         )
-        if info.get("fit") == "no":
+        if catalog.fit(info) == "no":
             container.error(
                 tr(
-                    "這個模型超過本機記憶體，建議放在 DGX Spark。",
-                    "This model does not fit in this Mac's memory; use a DGX Spark.",
+                    f"這個模型超過{this_machine()}的記憶體，放不下。",
+                    f"This model does not fit in {this_machine()}'s memory.",
                 )
             )
         download_control(choice, key=f"{key}_pull", container=container)

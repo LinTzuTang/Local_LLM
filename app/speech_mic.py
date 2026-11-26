@@ -155,10 +155,10 @@ def mic_page(url: str, status: dict) -> None:
         installed,
         format_func=lambda m: names.get(m, m),
         help=tr(
-            "只列出跟得上即時的模型：全精度 Voxtral 在這台 Mac 上處理比說話慢（RTF 約 2.3），"
+            "只列出跟得上即時的模型：全精度 Voxtral 在 Mac 上處理比說話慢（RTF 約 2.3），"
             "所以不列出，請用 4-bit 版；sherpa-onnx 模型在 CPU 上就很快。",
             "Only models that keep up with real time are listed: full-precision Voxtral is "
-            "slower than speech on this Mac (RTF about 2.3), so use the 4-bit build; the "
+            "slower than speech on the Mac (RTF about 2.3), so use the 4-bit build; the "
             "sherpa-onnx models are fast on the CPU.",
         ),
         **kept("lm_model"),

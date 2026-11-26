@@ -239,11 +239,11 @@ def section() -> None:
                 tr(
                     "7 段測試對話、23 句台詞（語音助理頁上的測試腳本），以說話速度送入；說完到開口、說出答案取中位數。"
                     "判斷正確只算能查資料的系統；不亂編、自然度由 AI 評審（Azure gpt-5.4）逐句評。"
-                    f"（{data.get('date', '')}，這台 Mac；雲端各跑 1 次）",
+                    f"（{data.get('date', '')}，在 Mac 上測；雲端各跑 1 次）",
                     "7 test conversations, 23 lines (the voice assistant's test scripts), fed at speaking pace; "
                     "medians of the start and answer times. Decisions count for systems with "
                     "lookups only; grounded and natural come from an AI judge (Azure gpt-5.4). "
-                    f"({data.get('date', '')}, this Mac; each cloud system run once)",
+                    f"({data.get('date', '')}, measured on the Mac; each cloud system run once)",
                 )
             )
             st.altair_chart(systems_chart(data), width="stretch")

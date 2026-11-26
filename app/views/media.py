@@ -36,7 +36,7 @@ ui.page_header(
     tr("其他模型比較", "Other models"),
     tr(
         "語言與語音以外的模型：圖片與掃描文件轉文字（OCR 比較）、PDF／Word 解析成 Markdown、檢索結果重新排序（Rerank）。文件解析與 reranker 由本機的**模型閘道**提供，OCR 模型在 Ollama；資料不會離開這台電腦，每個結果下方都列出實際呼叫的 API。語言模型請到「語言模型比較」，語音模型請到「語音模型比較」。",
-        "Models other than language and speech ones: images and scans to text (Compare OCR), PDF/Word to Markdown, reranking retrieval results. Document parsing and the reranker come from the local **model gateway**, the OCR models run in Ollama; nothing leaves this Mac and every result shows the API call behind it. Language models are on Language models, speech models on Compare speech models.",
+        "Models other than language and speech ones: images and scans to text (Compare OCR), PDF/Word to Markdown, reranking retrieval results. Document parsing and the reranker come from the local **model gateway**, the OCR models run in Ollama; nothing leaves this machine and every result shows the API call behind it. Language models are on Language models, speech models on Compare speech models.",
     ),
 )
 st.page_link("views/scores.py", label=tr("OCR 評測結果與選模型建議 → 評測分數",

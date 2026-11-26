@@ -23,10 +23,10 @@ ui.page_header(
     tr("MoE vs Dense", "MoE vs dense"),
     tr(
         "MoE（混合專家）模型每個字只動用一小部分參數：記憶體照總參數算，速度卻接近小模型。"
-        "這裡比較同家族、參數量相近的 MoE 與一般（dense）模型，在這台 Mac 上的記憶體、速度與答題正確率。",
+        "這裡比較同家族、參數量相近的 MoE 與一般（dense）模型，在同一台 Mac 上的記憶體、速度與答題正確率。",
         "A mixture-of-experts model uses only a small part of its parameters for each token: "
         "memory follows the total, speed is close to a small model. Same-family MoE and dense "
-        "models of similar size, compared on this Mac for memory, speed and accuracy.",
+        "models of similar size, compared on one Mac for memory, speed and accuracy.",
     ),
 )
 require_ollama()
