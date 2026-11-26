@@ -19,3 +19,40 @@ def headers() -> dict[str, str]:
     signed-in page run."""
     name = _user.get()
     return {"X-Lab-User": quote(name, safe="")} if name else {}
+
+
+_installed: set[tuple[str, int]] = set()
+
+
+def install(*ollama_urls: str) -> None:
+    """Tag every request this process sends to Ollama with the account, whichever library sends
+    it (httpx directly, the ollama and openai clients, LangChain: all go through httpx). Only
+    requests to Ollama's address get the header, never those to cloud services."""
+    import httpx
+
+    first = not _installed
+    for url in ollama_urls:
+        u = httpx.URL(url)
+        loopback = {"127.0.0.1", "localhost"}
+        for host in loopback if u.host in loopback else {u.host}:
+            _installed.add((host, u.port or 80))
+    if not first:
+        return
+
+    def tag(request: httpx.Request) -> None:
+        if (request.url.host, request.url.port or 80) in _installed and (
+            "x-lab-user" not in request.headers
+        ):
+            request.headers.update(headers())
+
+    send, asend = httpx.Client.send, httpx.AsyncClient.send
+
+    def client_send(self, request, *args, **kwargs):
+        tag(request)
+        return send(self, request, *args, **kwargs)
+
+    async def async_send(self, request, *args, **kwargs):
+        tag(request)
+        return await asend(self, request, *args, **kwargs)
+
+    httpx.Client.send, httpx.AsyncClient.send = client_send, async_send

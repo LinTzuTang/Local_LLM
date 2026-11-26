@@ -412,7 +412,9 @@ def live_status() -> None:
                 + ui.badges([model_kind(m["name"])], ["Ollama"]),
                 unsafe_allow_html=True,
             )
-            if access.is_admin() and y.button(tr("卸載", "Unload"), key=f"unload_{m['name']}"):
+            if access.may_unload(m["name"]) and y.button(
+                tr("卸載", "Unload"), key=f"unload_{m['name']}"
+            ):
                 ollama_admin.unload(m["name"], url)
                 st.rerun(scope="fragment")
         for m in gw_loaded:

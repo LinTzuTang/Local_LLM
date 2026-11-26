@@ -306,13 +306,25 @@ def test_catalog_is_read_again_when_the_file_changes(tmp_path, monkeypatch):
     assert catalog.load_catalog()["models"] == [1, 2]
 
 
-def test_only_the_admin_unloads_models():
+def test_unloading_is_checked():
     """A loaded model may be someone else's run (an evaluation on the shared server), so every
-    page that can unload a model checks for the admin (access.is_admin) first."""
+    page that can unload a model checks first: the admin (access.is_admin), or, for Ollama
+    models, whether only this user has used it since it was loaded (access.may_unload)."""
     from pathlib import Path
 
     app = Path(__file__).resolve().parents[1] / "app"
     for path in app.rglob("*.py"):
         text = path.read_text(encoding="utf-8")
         if re.search(r"\b(ollama_admin|gateway_client)\.unload\(|keep_alive=0 if", text):
-            assert "access.is_admin()" in text, path.relative_to(app)
+            assert "access.is_admin()" in text or "access.may_unload(" in text, path.name
+
+
+def test_only_the_admin_deletes_models():
+    """Downloading a model is open to everyone; deleting one (it may be in use) is the admin's."""
+    from pathlib import Path
+
+    app = Path(__file__).resolve().parents[1] / "app"
+    for path in app.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if re.search(r"\b(ollama_admin|gateway_client)\.delete\(", text):
+            assert "access.is_admin()" in text, path.name

@@ -356,12 +356,13 @@ def gateway_row(m: dict, status: dict | None, loaded: dict | None, up: bool) -> 
                                      help=tr("卸載", "Unload")):  # fmt: skip
                 gateway_client.unload(m["id"], gateway_url())
                 st.rerun()
-            with row.popover("", icon=":material/delete:", help=tr("刪除", "Delete")):
-                st.caption(tr(f"刪除 {m['id']} 的權重？之後可以再下載。",
-                              f"Delete the weights of {m['id']}? You can download them again later."))  # fmt: skip
-                if st.button(tr("確定刪除", "Delete"), key=f"gw_del_{m['id']}", type="primary"):
-                    gateway_client.delete(m["id"], gateway_url())
-                    st.rerun()
+            if access.is_admin():  # deleting is the admin's (downloading is open to everyone)
+                with row.popover("", icon=":material/delete:", help=tr("刪除", "Delete")):
+                    st.caption(tr(f"刪除 {m['id']} 的權重？之後可以再下載。",
+                                  f"Delete the weights of {m['id']}? You can download them again later."))  # fmt: skip
+                    if st.button(tr("確定刪除", "Delete"), key=f"gw_del_{m['id']}", type="primary"):
+                        gateway_client.delete(m["id"], gateway_url())
+                        st.rerun()
         else:
             download_control(m["id"], key=f"gw_pull_{m['id']}", container=row,
                              label=DOWNLOAD, source="gateway")  # fmt: skip
@@ -773,16 +774,17 @@ def model_row(m: dict, group: str) -> None:
             return
         row = st.container(horizontal=True, gap="small", horizontal_alignment="right")
         if have:
-            with row.popover(
-                "", icon=":material/delete:", disabled=bool(m.get("default")),
-                help=tr("平台預設模型不能刪除", "The platform default cannot be deleted")
-                if m.get("default") else tr("刪除", "Delete"),
-            ):  # fmt: skip
-                st.caption(tr(f"從 Ollama 刪除 {tag}？之後可以再下載。",
-                              f"Delete {tag} from Ollama? You can download it again later."))  # fmt: skip
-                if st.button(tr("確定刪除", "Delete"), key=f"del_{group}_{tag}", type="primary"):
-                    ollama_admin.delete(tag, ollama_url())
-                    st.rerun()
+            if access.is_admin():  # deleting is the admin's (downloading is open to everyone)
+                with row.popover(
+                    "", icon=":material/delete:", disabled=bool(m.get("default")),
+                    help=tr("平台預設模型不能刪除", "The platform default cannot be deleted")
+                    if m.get("default") else tr("刪除", "Delete"),
+                ):  # fmt: skip
+                    st.caption(tr(f"從 Ollama 刪除 {tag}？之後可以再下載。",
+                                  f"Delete {tag} from Ollama? You can download it again later."))  # fmt: skip
+                    if st.button(tr("確定刪除", "Delete"), key=f"del_{group}_{tag}", type="primary"):
+                        ollama_admin.delete(tag, ollama_url())
+                        st.rerun()
         elif m["fit"] == "no":
             row.button(DOWNLOAD, key=f"pull_{group}_{tag}", disabled=True,
                        help=tr("超過這台 Mac 的記憶體，建議放在 DGX Spark。",

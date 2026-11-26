@@ -24,6 +24,7 @@ model_news.start_background()  # weekly look for models the catalog does not lis
 # Shared behind the login proxy (LOCAL_LLM_AUTH=1): only the admin sees the coding agent.
 who = access.viewer()
 request_user.set_user(who and who["user"])  # tags this run's model requests for the request log
+request_user.install(common.ollama_url())  # every library's requests to Ollama, not only chat's
 if who is None:
     st.error(
         tr(

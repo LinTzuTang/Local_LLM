@@ -325,11 +325,15 @@ def memory_guard(models: list[str], container=st) -> None:
                 f"~{GPU_BUDGET_GB:.0f} GB budget and the Mac may start swapping.",
             )
         )
-        if access.is_admin() and container.button(
-            tr("先卸載目前載入的模型", "Unload the loaded models first"),
+        # Only models this viewer may unload (the admin: all; a user: those only they use).
+        mine = [name for name in loaded if access.may_unload(name)]
+        if mine and container.button(
+            tr("先卸載目前載入的模型", "Unload the loaded models first")
+            if len(mine) == len(loaded)
+            else tr(f"先卸載你載入的模型（{len(mine)} 個）", f"Unload yours first ({len(mine)})"),
             key=f"unload_{'_'.join(models)}",
         ):
-            for name in loaded:
+            for name in mine:
                 ollama_admin.unload(name, ollama_url())
             st.rerun()
 

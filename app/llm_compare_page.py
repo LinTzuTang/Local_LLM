@@ -152,8 +152,7 @@ think = c2.toggle(
 max_tokens = c3.select_slider(
     tr("最大輸出 tokens", "Max output tokens"), [512, 1024, 2048, 4096, 8192], value=4096
 )
-# Only the admin unloads: a loaded model may be someone else's run (an evaluation on the server).
-unload_between = access.is_admin() and st.toggle(
+unload_between = st.toggle(
     tr(
         "每個模型跑完就卸載（大模型比較時避免記憶體不足）",
         "Unload each model when it finishes (avoids running out of memory with large models)",
@@ -220,7 +219,8 @@ def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
         except Exception as exc:
             r["answer"] = text["failed"].format(error=exc)
         r["status"] = "done"
-        if state["unload_between"]:
+        # Not a model someone else (an evaluation, another account) is also using.
+        if state["unload_between"] and access.may_unload(r["model"], state.get("who")):
             ollama_admin.unload(r["model"], base_url)
 
     judge = state["judge"]
@@ -365,6 +365,7 @@ if st.button(label, type="primary", disabled=busy or not (selected and prompt)):
             "think": think,
             "max_tokens": max_tokens,
             "unload_between": unload_between,
+            "who": access.viewer(),  # the job thread cannot read the page's headers
             "judge": judge,
             "results": [
                 {

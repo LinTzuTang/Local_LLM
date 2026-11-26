@@ -487,7 +487,8 @@ def work(job: jobs.Job, base_url: str) -> None:
         except Exception as exc:  # noqa: BLE001 - shown to the user
             r["error"] = str(exc)
         r["status"] = "done"
-        if s["unload"]:
+        # Not a model someone else (an evaluation, another account) is also using.
+        if s["unload"] and access.may_unload(r["model"], s.get("who")):
             ollama_admin.unload(r["model"], base_url)
     path = save_run(
         "toolcall",
@@ -585,8 +586,8 @@ if st.button(
             "think": think,
             "temp_mode": temp_mode,
             "max_tokens": max_tokens,
-            "unload": access.is_admin()  # a loaded model may be someone else's run
-            and sum((catalog.find(m) or {}).get("size_gb", 0) for m in selected) > 40,
+            "unload": sum((catalog.find(m) or {}).get("size_gb", 0) for m in selected) > 40,
+            "who": access.viewer(),  # the job thread cannot read the page's headers
             "results": [{"model": m, "status": "waiting"} for m in selected],
         },
     )

@@ -13,6 +13,7 @@ one line to storage/request_log/YYYY-MM-DD.jsonl:
     prompt_tokens / completion_tokens      from Ollama's own counts (eval counts, or "usage")
     user     the X-Lab-User header when the caller passes it (the signed-in account), else null
     agent    the caller's User-Agent, cut short
+    unload   true for an unload request (keep_alive 0)
 
 Never the prompt or the answer. `python -m local_llm.ollama_proxy report` sums the log per day:
 requests, accounts, the most requests running at the same time, and waiting times.
@@ -23,12 +24,15 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime as dt
+import functools
 import json
 import os
 import statistics
+import subprocess
 import time
 from collections import defaultdict
 from pathlib import Path
+from urllib.parse import unquote
 
 import httpx
 from starlette.applications import Starlette
@@ -95,6 +99,134 @@ def write_line(row: dict, log_dir: Path = LOG_DIR) -> None:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+# ---------------------------------------------------------------- keep the admin's models loaded
+# A model that does not fit next to the loaded ones makes Ollama unload one of them, possibly an
+# evaluation the admin is running. Before a signed-in user's request loads a model, the proxy
+# frees room by unloading only models that just non-admin accounts are using; if that is not
+# enough, the request is turned down instead. Off with LOCAL_LLM_PROTECT_MODELS=0, and when the
+# GPU's memory cannot be read (the Mac: everyone is the admin there anyway).
+PROTECT = os.getenv("LOCAL_LLM_PROTECT_MODELS", "1") != "0"
+GIB = 1024**3
+
+
+@functools.cache
+def gpu_memory() -> tuple[int, int] | None:
+    """(total bytes of all NVIDIA GPUs, number of GPUs), or None without nvidia-smi."""
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=10, check=True,
+        ).stdout.split()  # fmt: skip
+        return sum(int(x) for x in out) * 1024**2, len(out)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+
+
+def role_of(user: str | None) -> str | None:
+    """The account's role ("admin" / "user"); None for a request without an account."""
+    if not user:
+        return None
+    from . import auth
+
+    found = auth.Users().get(unquote(user))
+    return found["role"] if found else "user"
+
+
+def _sizes_file(log_dir: Path) -> Path:
+    return log_dir / "model_sizes.json"
+
+
+def _sizes(log_dir: Path) -> dict:
+    try:
+        return json.loads(_sizes_file(log_dir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+async def make_room(
+    client: httpx.AsyncClient, model: str | None, user: str | None, log_dir: Path,
+    gpu: tuple[int, int] | None = None, rows: list[dict] | None = None,
+) -> str | None:  # fmt: skip
+    """Before a non-admin account's request loads `model`: None when it fits (after unloading
+    models only non-admin accounts use, if needed), else why it was turned down."""
+    gpu = gpu or gpu_memory()
+    if not (PROTECT and model and gpu) or role_of(user) in (None, "admin"):
+        return None
+    try:
+        loaded = (await client.get("/api/ps")).json().get("models") or []
+    except (httpx.HTTPError, ValueError):
+        return None
+    name = _model_name(model)
+    sizes = _sizes(log_dir)
+    for m in loaded:  # remember how big each model is once loaded (weights + context)
+        sizes[_model_name(m["name"])] = m.get("size_vram") or m.get("size") or 0
+    with contextlib.suppress(OSError):
+        _sizes_file(log_dir).write_text(json.dumps(sizes), encoding="utf-8")
+    if any(_model_name(m["name"]) == name for m in loaded):
+        return None
+    need = sizes.get(name)
+    if not need:  # never loaded here: the file, plus room for the context
+        try:
+            tags = (await client.get("/api/tags")).json().get("models") or []
+        except (httpx.HTTPError, ValueError):
+            tags = []
+        file = next((t.get("size", 0) for t in tags if _model_name(t.get("name")) == name), 0)
+        need = int(file * 1.15) + 3 * GIB
+    total, gpus = gpu
+    free = int(total * 0.95) - sum(m.get("size_vram") or m.get("size") or 0 for m in loaded)
+    slots = int(os.getenv("OLLAMA_MAX_LOADED_MODELS") or 3 * gpus) - len(loaded)
+    if need <= free and slots > 0:
+        return None
+    rows = rows if rows is not None else load(log_dir, days=2)
+
+    def users_only(m: dict) -> bool:  # only non-admin accounts have used it since it loaded
+        who = users_since_load(m["name"], rows)
+        return bool(who) and all(u is not None and role_of(u) != "admin" for u in who)
+
+    spare = sorted((m for m in loaded if users_only(m)), key=lambda m: m.get("expires_at") or "")
+    for m in spare:
+        with contextlib.suppress(httpx.HTTPError):
+            await client.post("/api/generate", json={"model": m["name"], "keep_alive": 0})
+            free += m.get("size_vram") or m.get("size") or 0
+            slots += 1
+            if need <= free and slots > 0:
+                await _wait_unloaded(client, {x["name"] for x in spare})
+                return None
+    busy = "、".join(m["name"] for m in loaded if m not in spare) or "—"
+    return (
+        f"伺服器的顯示卡記憶體不夠載入 {model}：其他模型（{busy}）正由管理者使用中，不能先卸載。"
+        f"請改用已經載入的模型，或稍後再試。"
+        f" Not enough GPU memory to load {model}: the loaded models ({busy}) are in use by the "
+        "administrator and cannot be unloaded. Use a model that is already loaded, or try later."
+    )
+
+
+async def _wait_unloaded(client: httpx.AsyncClient, names: set[str], seconds: float = 15) -> None:
+    """Ollama answers an unload at once and frees the memory just after."""
+    import asyncio
+
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        try:
+            now = {m["name"] for m in (await client.get("/api/ps")).json().get("models") or []}
+        except (httpx.HTTPError, ValueError):
+            return
+        if not (now & names):
+            return
+        await asyncio.sleep(0.5)
+
+
+def refusal(path: str, message: str) -> Response:
+    """Turned down in the shape the caller understands (Ollama's or OpenAI's error)."""
+    if path.startswith("/v1/"):
+        body = {"error": {"message": message, "type": "server_busy"}}
+    else:
+        body = {"error": message}
+    return Response(
+        json.dumps(body, ensure_ascii=False), status_code=503, media_type="application/json"
+    )
+
+
 def create_app(
     upstream: str = UPSTREAM,
     log_dir: Path = LOG_DIR,
@@ -124,6 +256,14 @@ def create_app(
                 "user": request.headers.get("x-lab-user"),
                 "agent": (request.headers.get("user-agent") or "")[:40],
             }
+            if isinstance(req, dict) and req.get("keep_alive") in (0, "0", "0s", "0m"):
+                row["unload"] = True  # an unload request (a new load starts after it)
+        if row and row["model"] and not row.get("unload"):
+            why = await make_room(client, row["model"], row["user"], log_dir)
+            if why:
+                none = {"ttfb_s": None, "prompt_tokens": None, "completion_tokens": None}
+                write_line(row | none | {"status": 503, "seconds": 0.0}, log_dir)
+                return refusal(path, why)
         headers = {k: v for k, v in request.headers.items() if k.lower() not in HOP}
         t0 = time.perf_counter()
         try:
@@ -199,6 +339,51 @@ def load(log_dir: Path = LOG_DIR, days: int = 30) -> list[dict]:
             except ValueError:
                 pass
     return rows
+
+
+def _model_name(model: str | None) -> str:
+    name = (model or "").strip()
+    return name if ":" in name else name + ":latest"
+
+
+def _keep_alive_s() -> float:
+    """Ollama's keep-alive (OLLAMA_KEEP_ALIVE: "5m", "24h", "300", "-1" = forever)."""
+    raw = os.getenv("OLLAMA_KEEP_ALIVE", "5m").strip()
+    try:
+        unit = {"s": 1, "m": 60, "h": 3600}.get(raw[-1])
+        value = float(raw[:-1]) * unit if unit else float(raw)
+    except (ValueError, IndexError, KeyError):
+        return 300.0
+    return float("inf") if value < 0 else value
+
+
+def users_since_load(
+    model: str, rows: list[dict], now: dt.datetime | None = None, gap_s: float | None = None
+) -> set[str | None]:
+    """Who has used `model` since it was last loaded, from the request log: the accounts, and None
+    for a request without one (a script or an evaluation on the machine). Going back from now, a
+    pause longer than the keep-alive (at least 30 minutes, to be safe) or an unload request means
+    the model was loaded again after it, so earlier requests do not count. Empty when the log
+    cannot tell (nothing logged since the model was loaded)."""
+    gap = gap_s if gap_s is not None else max(1800.0, _keep_alive_s())
+    name, ref = _model_name(model), now or dt.datetime.now()
+    mine = sorted((r for r in rows if _model_name(r.get("model")) == name), key=lambda r: r["t"])
+    users: set[str | None] = set()
+    for r in reversed(mine):
+        try:
+            start = dt.datetime.fromisoformat(r["t"])
+        except (KeyError, ValueError):
+            continue
+        unload = r.get("unload") or (  # rows logged before "unload" was: a bare /api/generate
+            r.get("path") == "/api/generate" and r.get("prompt_tokens") is None
+            and r.get("completion_tokens") is None and not r.get("user")
+        )  # fmt: skip
+        end = start + dt.timedelta(seconds=r.get("seconds") or 0)
+        if unload or (ref - end).total_seconds() > gap:
+            break
+        users.add(unquote(r["user"]) if r.get("user") else None)
+        ref = min(ref, start)
+    return users
 
 
 def peak_in_flight(rows: list[dict]) -> tuple[int, str | None]:

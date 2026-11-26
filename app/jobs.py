@@ -9,6 +9,7 @@ Worker functions must not call Streamlit: they receive the Job and write to `job
 is read on the page and passed in.
 """
 
+import contextvars
 import threading
 import time
 import traceback
@@ -92,7 +93,12 @@ def _spawn(job: Job, work: Callable[[Job], None]) -> None:
         if job.status != "paused":
             job.finished = time.time()
 
-    threading.Thread(target=target, name=f"job-{job.kind}-{job.id}", daemon=True).start()
+    # The copied context carries the signed-in account (local_llm.request_user) into the thread,
+    # so the job's model requests are tagged with it in the request log.
+    ctx = contextvars.copy_context()
+    threading.Thread(
+        target=ctx.run, args=(target,), name=f"job-{job.kind}-{job.id}", daemon=True
+    ).start()
 
 
 def get(job_id: str | None) -> Job | None:

@@ -42,3 +42,31 @@ def browser_gateway(url: str) -> str:
         return f"{scheme}://{host}/gateway"
     base = url.rstrip("/")
     return "wss://" + base[8:] if base.startswith("https://") else "ws://" + base.split("://")[-1]
+
+
+@st.cache_data(ttl=15, show_spinner=False)
+def _request_log() -> list[dict]:
+    from local_llm import ollama_proxy
+
+    return ollama_proxy.load(days=2)
+
+
+def may_unload(model: str, who: dict | None = None) -> bool:
+    """The admin may unload any Ollama model. A signed-in user only one that, since it was
+    loaded, only they have used (the request log in front of Ollama says who sent each request);
+    a model a script, an evaluation or another account is using is left alone, and so is any
+    model when the log cannot tell. `who` is the viewer, passed in by background jobs (which
+    cannot read the page's headers)."""
+    who = who if who is not None else viewer()
+    if not who:
+        return False
+    if who["role"] == "admin":
+        return True
+    if not who.get("user"):
+        return False
+    from local_llm import ollama_proxy
+
+    try:
+        return ollama_proxy.users_since_load(model, _request_log()) == {who["user"]}
+    except Exception:  # noqa: BLE001  (no log, unreadable log: leave the model alone)
+        return False
