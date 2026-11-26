@@ -11,6 +11,8 @@ import jobs
 import pandas as pd
 import streamlit as st
 from common import (
+    cloud_enabled,
+    cloud_hint,
     installed_names,
     kept,
     memory_guard,
@@ -22,7 +24,7 @@ from common import (
 )
 from i18n import tr
 
-from local_llm import catalog, ollama_admin
+from local_llm import catalog, cloud_llm, ollama_admin
 from local_llm.streaming import collect, stream_chat
 
 st.caption(tr(
@@ -101,6 +103,8 @@ options = chat_models + [
     and m["fit"] != "no"
     and catalog.normalize(m["tag"]) not in installed
 ]
+cloud_models = cloud_llm.models() if cloud_enabled() else []  # the top bar's cloud switch
+options += cloud_models
 st.session_state.setdefault(
     "compare_models", [m for m in [catalog.default_model()] if m in options]
 )
@@ -112,11 +116,24 @@ selected = st.multiselect(
         "comparison starts)",
     ),
     options,
-    format_func=lambda t: model_label(t, installed),
+    format_func=lambda t: cloud_llm.label(t) if cloud_llm.is_cloud(t) else model_label(t, installed),
     max_selections=MAX_MODELS,
     **kept("compare_models"),
 )
-missing = [m for m in selected if catalog.normalize(m) not in installed]
+cloud_hint("語言模型（Claude、GPT、Gemini）", "language models (Claude, GPT, Gemini)")
+if picked_cloud := [m for m in selected if cloud_llm.is_cloud(m)]:
+    st.warning(
+        tr(
+            f"{'、'.join(cloud_llm.label(m) for m in picked_cloud)} 是雲端模型：問題與系統提示會送到"
+            "該服務（AWS、Azure、Google），請不要貼公司機密或個資。用量會依帳號記錄。",
+            f"{', '.join(cloud_llm.label(m) for m in picked_cloud)}: cloud models; the prompt and "
+            "system prompt go to that service (AWS, Azure, Google), so no confidential data or "
+            "personal data. Use is logged per account.",
+        ),
+        icon=":material/cloud_upload:",
+    )
+local_selected = [m for m in selected if not cloud_llm.is_cloud(m)]
+missing = [m for m in local_selected if catalog.normalize(m) not in installed]
 if missing:
     size = sum((catalog.find(m) or {}).get("size_gb", 0) for m in missing)
     st.info(
@@ -157,18 +174,18 @@ unload_between = st.toggle(
         "每個模型跑完就卸載（大模型比較時避免記憶體不足）",
         "Unload each model when it finishes (avoids running out of memory with large models)",
     ),
-    value=sum((catalog.find(m) or {}).get("size_gb", 0) for m in selected) > 40,
+    value=sum((catalog.find(m) or {}).get("size_gb", 0) for m in local_selected) > 40,
 )
 judge = st.selectbox(
     tr(
         "裁判模型（選填，替答案評 1–10 分；需已下載）",
         "Judge model (optional; scores each answer 1–10; must be downloaded)",
     ),
-    ["", *chat_models],
-    format_func=lambda m: m or tr("不評分", "No judge"),
+    ["", *chat_models, *cloud_models],
+    format_func=lambda m: (cloud_llm.label(m) if cloud_llm.is_cloud(m) else m) or tr("不評分", "No judge"),
 )
 
-memory_guard(selected)
+memory_guard(local_selected)
 
 
 def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
@@ -220,7 +237,8 @@ def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
             r["answer"] = text["failed"].format(error=exc)
         r["status"] = "done"
         # Not a model someone else (an evaluation, another account) is also using.
-        if state["unload_between"] and access.may_unload(r["model"], state.get("who")):
+        if (state["unload_between"] and not cloud_llm.is_cloud(r["model"])
+                and access.may_unload(r["model"], state.get("who"))):  # fmt: skip
             ollama_admin.unload(r["model"], base_url)
 
     judge = state["judge"]
@@ -268,7 +286,7 @@ def render(job: jobs.Job) -> None:
     cols = [c for i in range(0, len(results), 3) for c in st.columns(3)][: len(results)]
     for col, r in zip(cols, results, strict=True):
         with col:
-            st.subheader(r["model"])
+            st.subheader(cloud_llm.label(r["model"]))
             thought = len(r["thinking"])
             if r["status"] == "waiting":
                 st.info(tr("等待中…", "Waiting…"))
@@ -310,7 +328,7 @@ def render(job: jobs.Job) -> None:
     table = pd.DataFrame(
         [
             {
-                model_col: r["model"],
+                model_col: cloud_llm.label(r["model"]),
                 tr("首字 (s)", "First token (s)"): r["stats"].first_answer_s,
                 "tokens/s": r["stats"].decode_tps,
                 tr("輸出 tokens", "Output tokens"): r["stats"].output_tokens,

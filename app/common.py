@@ -79,8 +79,25 @@ def model_options(task: str | None = None, include_catalog: bool = True) -> list
     return ordered
 
 
+@st.cache_data(ttl=60, show_spinner=False)
+def cloud_keys() -> dict[str, bool]:
+    """Which cloud services this server has keys for (.env / key files): a server without them
+    (the shared GCP platform) must not offer cloud models that would only fail when picked."""
+    from local_llm import elevenlabs, gcp_auth, neural_tts, voice_cloud
+
+    return {
+        "Azure": neural_tts.azure_speech() is not None,
+        "Google": gcp_auth.available() or gcp_auth.available(gcp_auth.tts_key_path()),
+        "AWS": voice_cloud.aws_credentials() is not None,
+        "ElevenLabs": elevenlabs.available(),
+    }
+
+
 def cloud_enabled() -> bool:
-    """The top bar's cloud switch (main.py): off unless turned on, kept in the URL (?cloud=1)."""
+    """The top bar's cloud switch (main.py): off unless turned on, kept in the URL (?cloud=1);
+    always off on a server with no cloud keys."""
+    if not any(cloud_keys().values()):
+        return False
     if "cloud_on" not in st.session_state:
         st.session_state.cloud_on = st.query_params.get("cloud") == "1"
     return bool(st.session_state.cloud_on)
@@ -88,7 +105,22 @@ def cloud_enabled() -> bool:
 
 def cloud_switch() -> None:
     """Cloud models (Azure, Google, AWS) can be picked only while this is on; everything else
-    on the platform runs on this machine."""
+    on the platform runs on this machine. Greyed out on a server with no cloud keys."""
+    keys = cloud_keys()
+    have = [k for k, ok in keys.items() if ok]
+    if not have:
+        st.toggle(
+            ":material/cloud_off: " + tr("雲端模型", "Cloud"),
+            value=False,
+            disabled=True,
+            key="_cloud_switch_off",
+            help=tr(
+                "這台平台沒有設定雲端金鑰，所以不能用雲端模型；所有功能都在本機執行。",
+                "This server has no cloud keys, so cloud models are not available; everything "
+                "runs on this machine.",
+            ),
+        )
+        return
     cloud_enabled()
 
     def changed() -> None:
@@ -98,6 +130,7 @@ def cloud_switch() -> None:
         else:
             st.query_params.pop("cloud", None)
 
+    missing = [k for k, ok in keys.items() if not ok]
     st.session_state._cloud_switch = st.session_state.cloud_on
     st.toggle(
         ":material/cloud: " + tr("雲端模型", "Cloud"),
@@ -106,23 +139,44 @@ def cloud_switch() -> None:
         help=tr(
             "打開後才能選雲端模型（Azure、Google、AWS、ElevenLabs 的語音對話、語音合成、"
             "同步口譯）。"
-            "選了雲端模型，錄音或文字會上傳到該服務；關閉時平台全部在本機執行。",
+            "選了雲端模型，錄音或文字會上傳到該服務；關閉時平台全部在本機執行。"
+            f"這台平台有 {'、'.join(have)} 的金鑰"
+            + (f"；沒有 {'、'.join(missing)} 的，那些模型不會列出。" if missing else "。"),
             "Turn on to pick cloud models (Azure, Google, AWS, ElevenLabs voice chat, speech "
             "synthesis, "
             "interpreting). With a cloud model the audio or text goes to that service; off, "
-            "everything runs on this machine.",
+            f"everything runs on this machine. This server has keys for {', '.join(have)}"
+            + (f"; not for {', '.join(missing)}, whose models are not listed." if missing else "."),
         ),
     )
 
 
 def local_or_allowed(v: dict) -> bool:
-    """A voice or model dict may be offered: it runs here, or the cloud switch is on."""
-    return cloud_enabled() or not v.get("cloud")
+    """A voice or model dict may be offered: it runs here, or the cloud switch is on and this
+    server has the key its service needs."""
+    if not v.get("cloud"):
+        return True
+    if not cloud_enabled():
+        return False
+    from local_llm import neural_tts
+
+    n = neural_tts
+    if any(v.get("name") in d for d in (n.GOOGLE_TTS, n.AZURE_TTS, n.GEMINI_TTS, n.ELEVENLABS_TTS)):
+        return n.available(v["name"])
+    return True
 
 
 def cloud_hint(what: str, what_en: str) -> None:
-    """A caption where cloud options are hidden by the switch."""
-    if not cloud_enabled():
+    """A caption where cloud options are hidden by the switch (or by a server without keys)."""
+    if not any(cloud_keys().values()):
+        st.caption(
+            tr(
+                f":material/cloud_off: 這台平台沒有設定雲端金鑰，雲端{what}無法使用。",
+                f":material/cloud_off: This server has no cloud keys, so cloud {what_en} are "
+                "not available.",
+            )  # fmt: skip
+        )
+    elif not cloud_enabled():
         st.caption(
             tr(
                 f":material/cloud_off: 雲端{what}已隱藏；要比較請打開右上角的「雲端模型」。",
@@ -148,20 +202,34 @@ def _mirror(widget_key: str, key: str) -> None:
     st.session_state[key] = st.session_state[widget_key]
 
 
-def model_picker(label: str, key: str, task: str | None = None, container=st) -> str | None:
+def model_picker(
+    label: str, key: str, task: str | None = None, container=st, cloud: bool = False
+) -> str | None:
     """Select box over installed + downloadable models; offers a download for the latter.
+    cloud: also the cloud language models (cloud_llm.py) while the cloud switch is on.
 
-    Returns the model name only when it is installed and ready.
+    Returns the model name only when it is installed and ready (a cloud model always is).
     """
+    from local_llm import cloud_llm
+
     options = model_options(task)
+    if cloud and cloud_enabled():
+        options += cloud_llm.models()
     installed = {catalog.normalize(n) for n in installed_names()}
     default = catalog.default_model()
     index = next((i for i, o in enumerate(options) if catalog.same_model(o, default)), 0)
     if st.session_state.get(key) not in options:
         st.session_state[key] = options[index] if options else None
     choice = container.selectbox(
-        label, options, format_func=lambda t: model_label(t, installed), **kept(key)
+        label,
+        options,
+        format_func=lambda t: (
+            cloud_llm.label(t) if cloud_llm.is_cloud(t) else model_label(t, installed)
+        ),
+        **kept(key),
     )
+    if choice and cloud_llm.is_cloud(choice):
+        return choice
     if choice and catalog.normalize(choice) not in installed:
         info = catalog.find(choice) or {}
         size = info.get("size_gb", "?")
@@ -267,7 +335,12 @@ def think_control(model: str | None, key: str, container=st, compact: bool = Fal
 
     compact: explain an always-on toggle in its tooltip instead of a caption (for toolbars).
     """
-    mode = ollama_admin.thinking_mode(model, ollama_url()) if model else "none"
+    from local_llm import cloud_llm
+
+    if model and cloud_llm.is_cloud(model):
+        mode = "optional"  # every cloud model here can think or not
+    else:
+        mode = ollama_admin.thinking_mode(model, ollama_url()) if model else "none"
     # Separate widget state per mode, so a forced-on toggle does not carry over to other models.
     key = f"{key}_{mode}"
     label = tr("思考模式", "Thinking")

@@ -12,7 +12,7 @@ import jobs
 import pandas as pd
 import speech_common as sc
 import streamlit as st
-from common import cloud_enabled, kept, save_run
+from common import cloud_enabled, cloud_keys, kept, save_run
 from i18n import tr
 
 from local_llm import catalog, elevenlabs, gateway_client
@@ -35,7 +35,7 @@ def takes_count(model: str) -> bool:
 
 def model_names() -> dict[str, str]:
     names = sc.names("diarize")
-    if cloud_enabled():
+    if cloud_enabled() and cloud_keys()["Azure"]:
         names[AZURE] = tr("Azure AI Speech 講者分離（雲端）", "Azure AI Speech diarization (cloud)")
         if elevenlabs.available():
             names[ELEVEN] = tr("ElevenLabs Scribe v2 講者分離（雲端）",

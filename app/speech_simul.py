@@ -24,7 +24,7 @@ import speech_common as sc
 import speech_translate
 import streamlit as st
 import ui
-from common import PROJECT_DIR, cloud_enabled, cloud_hint, kept, ollama_url
+from common import PROJECT_DIR, cloud_enabled, cloud_hint, cloud_keys, kept, ollama_url
 from i18n import tr
 
 from local_llm import asr_metrics, audio_aug, gateway_client, simul
@@ -283,7 +283,7 @@ def try_view(url: str, status: dict) -> None:
     mt_options = [m for m in TRANSLATORS if m in ollama] + [m for m in ollama
                                                             if m not in TRANSLATORS]  # fmt: skip
     systems = {"cascade": tr("地端：停頓切段 → 辨識 → 翻譯", "Local: cut at pauses → ASR → MT")}
-    if cloud_enabled():
+    if cloud_enabled() and cloud_keys()["Google"]:
         systems["gemini"] = tr("雲端：Gemini 3.5 Live Translate（錄音會上傳）",
                                "Cloud: Gemini 3.5 Live Translate (audio is uploaded)")  # fmt: skip
     st.session_state.setdefault("si_systems", ["cascade"])

@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 
 import httpx
 
-from . import ollama_admin, request_user
+from . import cloud_llm, ollama_admin, request_user
 
 
 @dataclass(frozen=True)
@@ -83,6 +83,12 @@ def stream_chat(
 
     `images` are base64 strings attached to the last user message.
     """
+    if cloud_llm.is_cloud(model):  # the cloud switch's reference models (cloud_llm.py)
+        yield from cloud_llm.stream(
+            model, messages, think=think, temperature=temperature, max_tokens=max_tokens,
+            images=images, timeout=timeout,
+        )  # fmt: skip
+        return
     stream = _ollama if backend.kind == "ollama" else _openai
     yield from stream(
         backend, model, messages, think, temperature, max_tokens, num_ctx, images or [], timeout

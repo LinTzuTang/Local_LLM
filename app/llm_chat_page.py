@@ -7,6 +7,7 @@ import base64
 import jobs
 import streamlit as st
 from common import (
+    cloud_hint,
     kept,
     model_picker,
     ollama_backend,
@@ -15,7 +16,7 @@ from common import (
 )
 from i18n import current, tr
 
-from local_llm import catalog
+from local_llm import catalog, cloud_llm
 from local_llm.streaming import stream_chat
 
 st.caption(tr(
@@ -35,10 +36,11 @@ def setting(key: str, default) -> dict:
 # --- settings bar (main area, no sidebar) ---------------------------------------------------
 with st.container(border=True):
     bar = st.columns([3.2, 1.3, 1.2, 1.2, 1.1], vertical_alignment="bottom", gap="small")
-    model = model_picker(tr("模型", "Model"), key="chat_model", container=bar[0])
+    model = model_picker(tr("模型", "Model"), key="chat_model", container=bar[0], cloud=True)
     with bar[1]:
         think = think_control(model, key="chat_think", compact=True)
-    is_vision = bool(model and "vision" in ((catalog.find(model) or {}).get("caps") or []))
+    is_vision = bool(model and (cloud_llm.is_cloud(model)
+                                or "vision" in ((catalog.find(model) or {}).get("caps") or [])))  # fmt: skip
     with bar[2].popover(tr("進階設定", "Settings"), icon=":material/tune:", width="stretch"):
         system = st.text_area(
             "System prompt",
@@ -81,6 +83,17 @@ with st.container(border=True):
             tr(f"下一則訊息會附上圖片：{image.name}", f"The next message includes {image.name}")
         )
 
+cloud_hint("語言模型（Claude、GPT、Gemini）", "language models (Claude, GPT, Gemini)")
+if model and cloud_llm.is_cloud(model):
+    st.warning(
+        tr(
+            f"{cloud_llm.label(model)} 是雲端模型：對話內容會送到該服務，請不要貼公司機密或個資。"
+            "用量會依帳號記錄。",
+            f"{cloud_llm.label(model)} is a cloud model: the conversation goes to that service, so "
+            "no confidential or personal data. Use is logged per account.",
+        ),
+        icon=":material/cloud_upload:",
+    )
 if not model:
     st.info(
         tr(
@@ -97,7 +110,8 @@ def reply_stats(msg: dict) -> str:
     stats = msg.get("stats")
     if isinstance(stats, str):  # replies kept from before this format
         return stats
-    return f"{msg.get('model', '')} · {stats_caption(stats)}" if msg.get("model") else ""
+    name = cloud_llm.label(msg["model"]) if msg.get("model") else ""
+    return f"{name} · {stats_caption(stats)}" if name else ""
 
 
 history = st.session_state.setdefault("chat_history", [])
