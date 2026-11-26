@@ -423,12 +423,8 @@
     "zh": "「工具呼叫測試」可以現場跑單輪題；「多步驟測試」可以跑多輪題。",
     "en": "Tool calling mode runs the single-turn questions live; Multi-step mode runs the multi-turn ones."
    },
-   "date": "2026-11-25",
-   "status": "running",
-   "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B",
-    "en": "Still being added: Nanbeige4.3 33B"
-   },
+   "date": "2026-11-26",
+   "status": "done",
    "columns": {
     "zh": [
      "模型",
@@ -547,6 +543,21 @@
       "71.4%",
       "57%",
       "3.75 s (cloud)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nanbeige4.3 33B（GPU 主機，11-26）",
+      "70.8%",
+      "64%",
+      "7.27 秒（GPU 主機）"
+     ],
+     "en": [
+      "Nanbeige4.3 33B（GPU 主機，11-26）",
+      "70.8%",
+      "64%",
+      "7.27 s (GPU machine)"
      ]
     },
     {
@@ -1053,13 +1064,13 @@
      "zh": [
       "Nanbeige4.3 33B（GPU 主機，11-25）",
       "75.3",
-      "—（英文還沒跑完）",
+      "9.4",
       "43.8（25 題想不停撞上限）"
      ],
      "en": [
       "Nanbeige4.3 33B (GPU machine, 11-25)",
       "75.3",
-      "— (English not finished)",
+      "9.4",
       "43.8 (25 never stop thinking)"
      ]
     },
@@ -2618,11 +2629,11 @@
     "zh": "「寫程式測試」可以現場挑這 60 題來跑。",
     "en": "Coding mode runs any of these 60 questions live."
    },
-   "date": "2026-11-24",
+   "date": "2026-11-26",
    "status": "running",
    "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
-    "en": "Still being added: Nanbeige4.3 33B, Muse Glimmer 30B"
+    "zh": "還在補測：Nanbeige4.3 33B",
+    "en": "Still being added: Nanbeige4.3 33B"
    },
    "columns": {
     "zh": [
@@ -2707,6 +2718,23 @@
       "20 / 17 / 7",
       "14",
       "5.3  h (GPU machine)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Muse Glimmer 30B（Mac，11-26）",
+      "43/60",
+      "20／17／6",
+      "2",
+      "15.6 小時（Mac）"
+     ],
+     "en": [
+      "Muse Glimmer 30B（Mac，11-26）",
+      "43/60",
+      "20 / 17 / 6",
+      "2",
+      "15.6  h (Mac)"
      ]
     },
     {
@@ -2928,7 +2956,7 @@
     "zh": "平台上不能現場跑（要 Docker 與六種語言的環境）。",
     "en": "Not runnable on the platform (needs Docker and six language toolchains)."
    },
-   "date": "2026-11-19",
+   "date": "2026-11-24",
    "status": "running",
    "pending": {
     "zh": "還在補測：Nanbeige4.3 33B、Muse Glimmer 30B",
@@ -3040,6 +3068,33 @@
       "5/11",
       "6/10",
       "6.4  h (GPU machine)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（11-24）",
+      "23/75",
+      "6/75",
+      "3/9",
+      "4/13",
+      "3/16",
+      "6/16",
+      "3/11",
+      "4/10",
+      "18.4 小時（GPU 主機）"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B（11-24）",
+      "23/75",
+      "6/75",
+      "3/9",
+      "4/13",
+      "3/16",
+      "6/16",
+      "3/11",
+      "4/10",
+      "18.4  h (GPU machine)"
      ]
     },
     {
