@@ -9,6 +9,7 @@ status document). AA's numbers are read from the copy this server fetched
 """
 
 import json
+import re
 from pathlib import Path
 
 import access
@@ -46,14 +47,17 @@ def results_table(columns: dict, rows: list[dict]) -> None:
     local_name, cloud_name = ui.where_names()
     lang = current() if current() in columns else "zh"
     df = pd.DataFrame([r[lang] for r in rows], columns=columns[lang])
+    # the first column carries the model with its machine and notes: wide, so they are not cut off
+    wide = {columns[lang][0]: st.column_config.TextColumn(width="large")}
     if any(r["where"] == "cloud" for r in rows):
         df.insert(
             1, where_col(), [cloud_name if r["where"] == "cloud" else local_name for r in rows]
         )
         st.dataframe(ui.where_rows(df, where_col()), hide_index=True, width="stretch",
-                     height=height(len(df)))  # fmt: skip
+                     height=height(len(df)), column_config=wide)  # fmt: skip
     else:
-        st.dataframe(df, hide_index=True, width="stretch", height=height(len(df)))
+        st.dataframe(df, hide_index=True, width="stretch", height=height(len(df)),
+                     column_config=wide)  # fmt: skip
 
 
 def test_results(t: dict) -> None:
@@ -70,10 +74,11 @@ def test_results(t: dict) -> None:
             zh, en = "；雲端模型（橘色）是對照組。", "; cloud models (orange) are the reference."
         else:
             zh, en = "；這項沒有測雲端模型。", "; no cloud models in this test."
+        first = tr("由最好排到最差。", "Best first. ") if t.get("sorted") else ""
         st.caption(
-            tr("由最好排到最差。地端模型是 4-bit 量化；秒數後面括號是在哪台機器量的" + zh,
-               "Best first. Local models are 4-bit builds; the machine a time was measured on is "
-               "in brackets after it" + en)
+            first + tr("地端模型是 4-bit 量化；秒數後面括號是在哪台機器量的" + zh,
+                       "Local models are 4-bit builds; the machine a time was measured on is "
+                       "in brackets after it" + en)
         )  # fmt: skip
     elif t.get("status") == "running":
         st.info(tr("已經在測或測完了，結果整理好就會放上來。",
@@ -87,7 +92,6 @@ def test_results(t: dict) -> None:
 def aa_section(cat: dict) -> None:
     """Artificial Analysis: what it is, its scores for the models we tested, and each metric."""
     aa = cat["aa"]
-    st.markdown(pick(aa["about"]))
     with st.container(border=True):
         st.markdown(f"**{tr('怎麼測', 'Method')}**　{pick(aa['method'])}")
         st.markdown(f"**{tr('限制', 'Limits')}**　{pick(aa['limits'])}")
@@ -159,12 +163,19 @@ def aa_section(cat: dict) -> None:
         if shown and not df.empty:
             first = df.columns[2]
             df = df.sort_values(first, ascending=False, na_position="last")
-        st.dataframe(ui.where_rows(df, where_col()).format(lambda x: ui.trim_number(x, 1)),
-                     hide_index=True, width="stretch", height=height(len(df)))  # fmt: skip
+        # Streamlit shows a missing number as "None" whatever the Styler says: write the dash in
+        scores = list(df.columns[2:])
+        df[scores] = df[scores].astype(object).where(df[scores].notna(), "—")
+        styled = ui.where_rows(df, where_col()).format(lambda x: ui.trim_number(x, 1), na_rep="—")
+        st.dataframe(styled, hide_index=True, width="stretch", height=height(len(df)),
+                     column_config={tr("模型", "Model"): st.column_config.TextColumn(
+                         width="medium")})  # fmt: skip
         st.caption(
             tr(
-                "百分比欄位是 0–100；Elo 與綜合指數是分數。點欄位標題可以排序。「—」是 AA 沒有測。",
-                "Percent columns are 0–100; Elo and the index are scores. Click a header to sort. "
+                "百分比欄位是 0–100；Elo 與綜合指數是分數。"
+                "依第一個評測由高到低排。「—」是 AA 沒有測。",
+                "Percent columns are 0–100; Elo and the index are scores. "
+                "Sorted by the first evaluation. "
                 '"—" means AA has not tested it.',
             )
         )
@@ -259,7 +270,8 @@ SUMMARY = [
                         "Taiwan stance: China-line answers (no prompt, fewer is better)")),
     ("lcb", 0, [1], ("寫程式：LiveCodeBench（60 題）", "Coding: LiveCodeBench (60)")),
     ("aider", 0, [1], ("寫程式：Aider（75 題）", "Coding: Aider (75)")),
-    ("ncb", 0, [2], ("寫程式：用中文問（NaturalCodeBench 58 題）", "Coding asked in Chinese (NaturalCodeBench, 58)")),
+    ("ncb", 0, [2], ("寫程式：用中文問（NaturalCodeBench 58 題）",
+                     "Coding asked in Chinese (NaturalCodeBench, 58)")),
     ("speed", 0, [1], ("速度：公司工具每題秒數（GPU 主機，越低越好）",
                        "Speed: seconds per company-tool task (GPU machine, lower is better)")),
     ("capacity", 2, [3], ("一張 RTX PRO 6000：模擬真實使用者在線人數",
@@ -268,7 +280,8 @@ SUMMARY = [
 # Rows that are another setting of the same model, not its usual one.
 _OTHER_SETTING = ("關思考", "原廠取樣", "溫度", "只跑", "turned off", "vendor sampling")
 # Rows that are tests (thinking), abliterated builds, or a re-cut of tools_zh (zh_en_gap).
-_SKIP_TESTS = {"thinking", "abliterated", "zh_en_gap", "moe", "coding_fixed"}  # moe: rows are groups; coding_fixed: Ollama tags
+# moe: its rows are groups; coding_fixed: its rows are Ollama tags, not the names used elsewhere
+_SKIP_TESTS = {"thinking", "abliterated", "zh_en_gap", "moe", "coding_fixed"}
 
 
 def model_key(name: str) -> str | None:
@@ -330,7 +343,7 @@ def compare_section(cat: dict) -> None:
     name = (lambda k: k) if current() == "zh" else english.get
     st.session_state.setdefault(
         "scores_compare",
-        [m for m in ("Gemma 4 31B", "Qwen3.8 27B", "Qwen3.6 35B-A3B coding", "Claude Opus 5.5")
+        [m for m in ("Gemma 4 31B", "Qwen3.8 27B", "Qwen3.6 35B-A3B coding", "Claude Sonnet 5.5")
          if m in found],
     )  # fmt: skip
     chosen = st.multiselect(
@@ -362,8 +375,9 @@ def compare_section(cat: dict) -> None:
                 continue
             r = _usual(rows)
             cell = "／".join(str(r[lang][c]) for c in cols if c < len(r[lang]))
-            if "待重跑" in r["zh"][0]:  # a partly failed run (Inkling's search)
-                cell += tr("（部分待重跑）", " (partly to rerun)")
+            cell = re.sub(r"（[^）]*）| \([^)]*\)", "", cell)  # notes are in the full table below
+            if "重跑" in r["zh"][0]:  # a partly failed run (Inkling's search)
+                cell += tr("（部分重跑中）", " (partly being rerun)")
             if len(rows) > 1:
                 cell += " ＊"
                 more = True

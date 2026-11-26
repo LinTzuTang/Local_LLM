@@ -46,8 +46,8 @@ ui.page_header(
 def state(t: dict) -> str:
     """done; more models being added to a finished test; run, being written up; or planned."""
     s = t.get("status", "done")
-    if s == "running":
-        return "adding" if (t.get("rows") or t.get("tables")) else "writing"
+    if s == "running":  # results already shown (rows, tables, or a speech test's headline)?
+        return "adding" if (t.get("rows") or t.get("tables") or t.get("headline")) else "writing"
     return s
 
 
@@ -112,7 +112,8 @@ def method_card(t: dict) -> None:
 TABLE_CSS = (
     "<style>.lab-uses td,.lab-uses th{border:1px solid var(--lab-border);padding:6px 8px;"
     "vertical-align:top}.lab-uses td small{color:var(--lab-muted)}"
-    ".lab-uses td:first-child{min-width:6.5em}</style>"
+    ".lab-uses td:first-child{min-width:6.5em}.lab-uses td:nth-child(4),.lab-uses th:nth-child(4)"
+    "{white-space:nowrap}</style>"
 )
 GIST = {  # one line above the closed recommendations (the same picks as inside)
     "llm": ("公司系統 agent：Gemma 4 31B（平台預設）｜寫程式：改既有程式 Qwen3.6 coding、從零寫 Gemma 4 31B｜"
@@ -154,7 +155,10 @@ def vram_table(t: dict) -> None:
     """A test whose whole result is one small table kept with its description (scores_methods.json)."""
     tab = t["table"]
     head = "".join(f"<th>{html.escape(h)}</th>" for h in pick(tab["columns"]))
-    body = ["<tr>" + "".join(f"<td>{html.escape(c)}</td>" for c in pick(r)) + "</tr>" for r in tab["rows"]]
+    body = [
+        "<tr>" + "".join(f"<td>{html.escape(c)}</td>" for c in pick(r)) + "</tr>"
+        for r in tab["rows"]
+    ]
     html_table(head, body)
 
 
@@ -228,7 +232,13 @@ def overview(tests: list[dict]) -> None:
         said = pick(t.get("headline")) or pick(t.get("measures")) or ""
         body.append(
             f"<tr><td><b>{html.escape(pick(t['name']))}</b></td>"
-            f"<td style='white-space:nowrap'>{html.escape(state_name(t))}</td>"
+            f"<td style='white-space:nowrap'>{html.escape(state_name(t))}"
+            + (
+                f"<br><small>{html.escape(pick(t['pending']))}</small>"
+                if pick(t.get("pending"))
+                else ""
+            )
+            + "</td>"
             f"<td style='white-space:nowrap'>{html.escape(t.get('date') or '—')}</td>"
             f"<td>{html.escape(said)}</td></tr>"
         )
@@ -275,6 +285,20 @@ GLOSSARY = [
      "Diarization error rate: share of time missed, falsely detected or given to the wrong speaker."),
     ("chrF", "翻譯和標準譯文的相似度，越高越好。",
      "Similarity of a translation to the reference translation; higher is better."),
+    ("官方權重", "BFCL 官方算總分的方式：單次呼叫、即時題、不該呼叫、多輪對話四類照固定比例加權（多輪佔一半）。",
+     "BFCL's official total: single calls, live questions, irrelevance and multi-turn weighted in fixed shares (multi-turn half)."),
+    ("多輪", "同一段對話裡連續好幾輪，模型要記得前面查到的結果再做下一步。",
+     "Several turns in one conversation; the model must use what earlier turns found."),
+    ("A／B／C（公司工具）", "A 只給公司系統的 74 個工具；B 再混入其他系統約 75 個；C 平台先篩成 29 個，模型可以自己搜尋工具。",
+     "A: only the company system's 74 tools; B: about 75 other systems' tools mixed in; C: trimmed to 29 by the platform, plus a tool search."),
+    ("鍵值／向量／摘要記憶", "三種讓模型記東西的方式：存成「名稱→內容」、存成可用意思搜尋的片段、或存一段持續更新的摘要。",
+     "Three memory kinds: name-to-content entries, passages found by meaning, or a running summary."),
+    ("Q4_K_M／nvfp4", "兩種 4-bit 量化格式：Q4_K_M 是 GGUF（Ollama、GPU 主機），nvfp4 是 Mac 的 MLX 版。",
+     "Two 4-bit formats: Q4_K_M is GGUF (Ollama, GPU machine); nvfp4 is the Mac's MLX build."),
+    ("tok/s", "每秒產生幾個 token（約略等於字數），越高越快。",
+     "Tokens generated per second; higher is faster."),
+    ("原廠取樣", "照模型官方建議的溫度等設定來產生回答（我們的 BFCL 主要結果是用溫度 0.001，近似每次選最可能的字）。",
+     "The model maker's recommended sampling settings (our main BFCL runs use temperature 0.001, near-greedy)."),
     ("Elo", "兩兩比較算出的分數，差 400 分表示十次約輸九次。",
      "A score from pairwise comparisons; 400 points apart means losing about nine times in ten."),
 ]  # fmt: skip
@@ -356,12 +380,14 @@ if kind == "llm":
                 tr(
                     "短任務（挑工具、查資料）地端已經接近雲端；長時間自主工作、冷門知識、不知道就說不知道，"
                     "雲端強很多。各取地端最好與雲端最好的模型；AA 的分數是英文、完整精度。"
-                    "差多少：差距在 3% 內算同級、12% 內算接近（Elo 以 400 分為基準）。",
+                    "差多少：差距在 3% 內算同級、12% 內算接近（Elo 以 400 分為基準）。"
+                    "「地端最好」只是這一項分數最高的地端模型，不是建議；建議看上面的「依情境選模型」。",
                     "On short tasks (picking tools, looking things up) local models are close to the "
                     "cloud; on long autonomous work, obscure knowledge and admitting what they do "
                     "not know, the cloud is far stronger. Best local against best cloud; AA's "
                     "scores are English, full precision. Gap: within 3% is level, within 12% close "
-                    "(Elo: against 400 points).",
+                    '(Elo: against 400 points). "Best local" is just the local model with the top '
+                    'score on that line, not a recommendation; see "Which model for what" above.',
                 )
             )
             body = [
@@ -458,16 +484,18 @@ if kind == "external":
     except ImportError:
         media = None
     cats = (media or {}).get("categories") or {}
-    sections = {"llm": tr("語言模型", "Language models")}
+    sections = {
+        "ours": tr("我們測過的語言模型在 AA 的分數", "AA scores of the models we tested"),
+        "llm": tr("語言模型", "Language models"),
+    }
     sections |= {cid: pick(c["name"]) for cid, c in cats.items() if cid != "llm"}
-    sections["ours"] = tr("我們測過的語言模型在 AA 的分數", "AA scores of the models we tested")
-    st.session_state.setdefault("scores_aa_kind", "llm")
+    st.session_state.setdefault("scores_aa_kind", "ours")
     which = (
         st.segmented_control(
             tr("AA 的哪一類", "Which AA leaderboard"), list(sections), format_func=sections.get,
             **kept("scores_aa_kind"),
         )
-        or "llm"
+        or "ours"
     )  # fmt: skip
     if which == "ours":
         if cat:
