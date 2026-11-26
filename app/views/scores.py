@@ -191,7 +191,6 @@ def overview(tests: list[dict]) -> None:
     """Every test of this kind on one table: state, last run, conclusion (or, if planned, what it
     will answer)."""
     newest = max((t["date"] for t in tests if t.get("date")), default=None)
-    st.markdown(f"### {tr('做了哪些測試', 'What we tested')}")
     counts = {s: sum(state(t) == s for t in tests) for s in STATES}
     done = counts["done"] + counts["adding"]
     parts = [tr(f"完成 {done}", f"{done} done")]
@@ -204,7 +203,12 @@ def overview(tests: list[dict]) -> None:
         parts.append(tr(f"整理中 {counts['writing']}", f"{counts['writing']} being written up"))
     if counts["planned"]:
         parts.append(tr(f"待測 {counts['planned']}", f"{counts['planned']} planned"))
-    st.caption(
+    box = st.expander(
+        tr(f"做了哪些測試（共 {len(tests)} 項，點開看清單）",
+           f"What we tested ({len(tests)} tests, click to open)"),
+        icon=":material/checklist:",
+    )  # fmt: skip
+    box.caption(
         tr(f"共 {len(tests)} 項：" + "、".join(parts) + f"。這一類最近一次測試：{newest or '—'}。",
            f"{len(tests)} tests: " + ", ".join(parts) + f". Latest run in this group: {newest or '—'}.")
     )  # fmt: skip
@@ -222,7 +226,8 @@ def overview(tests: list[dict]) -> None:
             f"<td style='white-space:nowrap'>{html.escape(t.get('date') or '—')}</td>"
             f"<td>{html.escape(said)}</td></tr>"
         )
-    html_table(head, body)
+    with box:
+        html_table(head, body)
 
 
 def pick_test(kind: str, tests: list[dict], first: str | None = None) -> dict:
