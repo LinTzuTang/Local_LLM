@@ -64,8 +64,12 @@ def node_icon(node_type: str) -> str:
 
 
 def short_model(name: str) -> str:
-    """hf.co/org/Repo-GGUF:Q4_K_M → Repo; long names stay readable in the diagram."""
-    if name.startswith("hf.co/"):
+    """hf.co/org/Repo-GGUF:Q4_K_M → Repo; cloud/... → its name; long names stay readable."""
+    from local_llm import cloud_llm
+
+    if cloud_llm.is_cloud(name):
+        name = cloud_llm.label(name)
+    elif name.startswith("hf.co/"):
         name = name.split("/")[-1].split(":")[0].removesuffix("-GGUF")
     return name if len(name) <= 28 else name[:26] + "…"
 

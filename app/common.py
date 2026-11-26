@@ -444,11 +444,18 @@ def stats_caption(stats: Stats | None) -> str:
     return " · ".join(parts)
 
 
-def save_run(kind: str, payload: dict) -> Path:
+def save_run(kind: str, payload: dict, path: Path | None = None) -> Path:
     """Write runs/<kind>-<YYYYmmdd-HHMMSS>.json. Two runs of a kind finishing in the same
-    second (background jobs) must not overwrite each other: the stamp moves on a second."""
+    second (background jobs) must not overwrite each other: the stamp moves on a second.
+    `path`: a record this run already wrote (a conversation that goes on), updated in place."""
     RUNS_DIR.mkdir(exist_ok=True)
     now = datetime.now()
+    if path is not None and path.exists():
+        old = json.loads(path.read_text())
+        record = {"kind": kind, "recorded_at": old.get("recorded_at"),
+                  "updated_at": now.astimezone().isoformat(), **payload}  # fmt: skip
+        path.write_text(json.dumps(record, ensure_ascii=False, indent=2, default=str) + "\n")
+        return path
     record = {"kind": kind, "recorded_at": now.astimezone().isoformat(), **payload}
     text = json.dumps(record, ensure_ascii=False, indent=2, default=str) + "\n"
     for extra in range(120):

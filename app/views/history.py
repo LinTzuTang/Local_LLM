@@ -23,6 +23,7 @@ import voice_assistant
 from common import RUNS_DIR, kept
 from i18n import pick, tr
 
+from local_llm import cloud_llm
 from local_llm.lab import store
 from local_llm.lab.nodes import NODE_TYPES
 
@@ -280,6 +281,8 @@ def summarize(path: str, mtime: float) -> dict:
         if data.get("judge"):
             facts["judge"] = data["judge"]
         facts["n"] = len(results)
+        if len(data.get("turns") or []) > 1:  # a conversation: several questions in turn
+            facts["turns"] = len(data["turns"])
         snip = snippet(text_of(results[0].get("answer"))) if results else ""
         if results and all(not r.get("answer") and not r.get("stats") for r in results):
             status = "error"
@@ -593,6 +596,8 @@ def card_facts(run: dict, scenarios: dict, agents: dict) -> str:
     if top := facts.get("top"):
         top_text = f"{flow_ui.short_model(str(top[0]))} {top[1]}/10"
         parts.append(chip(top_text, "#B45309", "emoji_events"))
+    if n := facts.get("turns"):
+        parts.append(chip(tr(f"{n} 輪對話", f"{n} turns"), "#4F46E5", "forum"))
     for verdict, count in (facts.get("verdicts") or {}).items():
         parts.append(verdict_chip(verdict, count))
     if facts.get("changes"):
@@ -988,7 +993,7 @@ def compare_view(data: dict, run: dict) -> None:
         judge = r.get("judge") if isinstance(r.get("judge"), dict) else {}
         rows.append(
             {
-                tr("模型", "Model"): r.get("model"),
+                tr("模型", "Model"): cloud_llm.label(r.get("model") or "?"),
                 tr("裁判分數", "Judge score"): judge.get("score"),
                 tr("首字（秒）", "First token (s)"): s.get("first_answer_s"),
                 "tokens/s": s.get("decode_tps"),
@@ -998,7 +1003,8 @@ def compare_view(data: dict, run: dict) -> None:
             }
         )
     df = pd.DataFrame(rows)
-    max_tps = float(df["tokens/s"].max() or 0) if "tokens/s" in df else 0
+    top_tps = df["tokens/s"].max() if "tokens/s" in df else None
+    max_tps = float(top_tps) if pd.notna(top_tps) else 0.0  # cloud models only: no tokens/s
     with st.container(border=True):
         section(tr("指標比較", "Metrics"))
         st.dataframe(
@@ -1018,7 +1024,19 @@ def compare_view(data: dict, run: dict) -> None:
             },
         )
 
+    turns = [t for t in data.get("turns") or [] if isinstance(t, dict)]
+    if len(turns) > 1:  # a conversation: every question with what each model answered
+        for n, turn in enumerate(turns, start=1):
+            section(tr(f"第 {n} 問", f"Question {n}"))
+            quote(text_of(turn.get("prompt")))
+            got = [r for r in turn.get("results") or [] if isinstance(r, dict)]
+            answers_side_by_side(got, [r.get("stats") or {} for r in got])
+        return
     section(tr("答案並排", "Answers side by side"))
+    answers_side_by_side(results, stats)
+
+
+def answers_side_by_side(results: list[dict], stats: list[dict]) -> None:
     per_row = 3 if len(results) > 4 or len(results) == 3 else 2 if len(results) > 1 else 1
     for start in range(0, len(results), per_row):
         cols = st.columns(per_row, gap="medium")
@@ -1030,7 +1048,8 @@ def compare_view(data: dict, run: dict) -> None:
             with col.container(border=True):
                 badge = chip(f"{score}/10", "#B45309", "emoji_events") if score is not None else ""
                 st.markdown(
-                    f'<div class="hx-colhead"><b>{esc(r.get("model", "?"))}</b>{badge}</div>',
+                    f'<div class="hx-colhead"><b>{esc(cloud_llm.label(r.get("model", "?")))}</b>'
+                    f"{badge}</div>",
                     unsafe_allow_html=True,
                 )
                 facts = []

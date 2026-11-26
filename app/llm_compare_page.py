@@ -116,7 +116,9 @@ selected = st.multiselect(
         "comparison starts)",
     ),
     options,
-    format_func=lambda t: cloud_llm.label(t) if cloud_llm.is_cloud(t) else model_label(t, installed),
+    format_func=lambda t: (
+        cloud_llm.label(t) if cloud_llm.is_cloud(t) else model_label(t, installed)
+    ),
     max_selections=MAX_MODELS,
     **kept("compare_models"),
 )
@@ -182,7 +184,9 @@ judge = st.selectbox(
         "Judge model (optional; scores each answer 1–10; must be downloaded)",
     ),
     ["", *chat_models, *cloud_models],
-    format_func=lambda m: (cloud_llm.label(m) if cloud_llm.is_cloud(m) else m) or tr("不評分", "No judge"),
+    format_func=lambda m: (
+        (cloud_llm.label(m) if cloud_llm.is_cloud(m) else m) or tr("不評分", "No judge")
+    ),
 )
 
 memory_guard(local_selected)
@@ -208,10 +212,6 @@ def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
                     r["pull"] = f"{event['completed'] / 1e9:.1f} / {event['total'] / 1e9:.1f} GB"
         except Exception as exc:
             r["answer"], r["status"] = text["pull_failed"].format(error=exc), "done"
-    messages = [
-        {"role": "system", "content": state["system"]},
-        {"role": "user", "content": state["prompt"]},
-    ]
     for i, r in enumerate(results, start=1):
         if job.cancel.is_set():
             break
@@ -220,6 +220,7 @@ def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
         r["status"] = "running"
         job.detail = f"{i}/{len(results)} {r['model']}"
         job.progress = (i - 1) / len(results)
+        messages = conversation(state, r["model"])
         try:
             for event in stream_chat(
                 backend, r["model"], messages, think=state["think"], temperature=0.2,
@@ -260,33 +261,70 @@ def compare_work(job: jobs.Job, backend, base_url: str, text: dict) -> None:
             except json.JSONDecodeError:
                 r["judge"] = {"reason": verdict}
 
+    turns = [*state.get("turns", []), {"prompt": state["prompt"], "results": results}]
+    saved = [{"prompt": t["prompt"], "results": [record(r) for r in t["results"]]} for t in turns]
     path = save_run(
         "compare",
         {
-            "prompt": state["prompt"],
+            # the first question and its answers, as before conversations (the list reads these)
+            "prompt": saved[0]["prompt"],
             "system": state["system"],
             "think": state["think"],
             "judge": judge or None,
             "stopped": job.cancel.is_set(),
-            "results": [
-                {k: r.get(k) for k in ("model", "answer", "thinking", "judge")}
-                | {"stats": r["stats"] and r["stats"].to_dict()}
-                for r in results
-            ],
+            "results": saved[0]["results"],
+            "turns": saved,  # every question and what each model answered, in order
         },
+        path=state.get("file"),
     )
+    state["file"] = path
     state["path"] = path.relative_to(path.parents[1])
+
+
+def record(r: dict) -> dict:
+    return {k: r.get(k) for k in ("model", "answer", "thinking", "judge")} | {
+        "stats": r["stats"] and r["stats"].to_dict()
+    }
+
+
+def conversation(state: dict, model: str) -> list[dict]:
+    """This model's own conversation: the system prompt, each earlier question with the answer this
+    model gave (not another's), then the new question."""
+    messages = [{"role": "system", "content": state["system"]}] if state["system"] else []
+    for t in state.get("turns", []):
+        mine = next((r for r in t["results"] if r["model"] == model), {})
+        messages += [{"role": "user", "content": t["prompt"]},
+                     {"role": "assistant", "content": mine.get("answer") or "（沒有回答）"}]  # fmt: skip
+    return messages + [{"role": "user", "content": state["prompt"]}]
+
+
+def answer_columns(results: list[dict]):
+    """Three columns per row so up to six models stay readable."""
+    return [c for i in range(0, len(results), 3) for c in st.columns(3)][: len(results)]
+
+
+def earlier_turn(n: int, turn: dict) -> None:
+    """A finished question of this conversation, with every model's answer."""
+    st.markdown(f"#### :material/help: {tr(f'第 {n} 問', f'Q{n}')}：{turn['prompt']}")
+    for col, r in zip(answer_columns(turn["results"]), turn["results"], strict=True):
+        with col.container(border=True):
+            st.markdown(f"**{cloud_llm.label(r['model'])}**")
+            st.markdown(r["answer"] or tr("（沒有回答）", "(no answer)"))
+            if r["stats"]:
+                st.caption(stats_caption(r["stats"]))
 
 
 def render(job: jobs.Job) -> None:
     state = job.state
     results = state["results"]
-    st.markdown(f"#### :material/help: {state['prompt']}")
-    # Three columns per row so up to six models stay readable.
-    cols = [c for i in range(0, len(results), 3) for c in st.columns(3)][: len(results)]
-    for col, r in zip(cols, results, strict=True):
-        with col:
-            st.subheader(cloud_llm.label(r["model"]))
+    turns = state.get("turns", [])
+    for n, turn in enumerate(turns, start=1):
+        earlier_turn(n, turn)
+    head = f"{tr(f'第 {len(turns) + 1} 問', f'Q{len(turns) + 1}')}：" if turns else ""
+    st.markdown(f"#### :material/help: {head}{state['prompt']}")
+    for col, r in zip(answer_columns(results), results, strict=True):
+        with col.container(border=True):
+            st.markdown(f"**{cloud_llm.label(r['model'])}**")
             thought = len(r["thinking"])
             if r["status"] == "waiting":
                 st.info(tr("等待中…", "Waiting…"))
@@ -347,10 +385,15 @@ def render(job: jobs.Job) -> None:
         ]
     )
     st.subheader(tr("比較結果", "Results"))
+    if table["tokens/s"].isna().all():  # cloud models only: no generation speed to show
+        table = table.drop(columns="tokens/s")
     st.dataframe(table.round(2), hide_index=True, width="stretch")
-    chart_cols = st.columns(2)
-    chart_cols[0].bar_chart(table, x=model_col, y="tokens/s", horizontal=True)
-    chart_cols[1].bar_chart(table, x=model_col, y=total_col, horizontal=True)
+    if "tokens/s" in table:
+        chart_cols = st.columns(2)
+        chart_cols[0].bar_chart(table, x=model_col, y="tokens/s", horizontal=True)
+        chart_cols[1].bar_chart(table, x=model_col, y=total_col, horizontal=True)
+    else:
+        st.bar_chart(table, x=model_col, y=total_col, horizontal=True)
     if state.get("path"):
         st.caption(tr(f"已儲存：`{state['path']}`", f"Saved: `{state['path']}`"))
 
@@ -360,6 +403,72 @@ def live(job: jobs.Job) -> None:
     if not job.running:
         st.rerun()
     render(job)
+
+
+def launch(job: jobs.Job) -> None:
+    """Start a comparison (a new conversation or the next question of one) in the background."""
+    text = {
+        "pulling": tr("下載 {model}", "downloading {model}"),
+        "pull_failed": tr("下載失敗：{error}", "Download failed: {error}"),
+        "failed": tr("錯誤：{error}", "Error: {error}"),
+        "judging": tr("{judge} 評分 {model}", "{judge} scoring {model}"),
+        "judge_prompt": tr(
+            "你是嚴格的評審。依據正確性、完整性、繁體中文表達，替下面的回答打 1 到 10 分。"
+            '只輸出 JSON：{"score": 分數, "reason": "一句理由"}\n\n',
+            "You are a strict judge. Score the answer below from 1 to 10 for correctness, "
+            'completeness and clarity. Output only JSON: {"score": <score>, "reason": '
+            '"<one-sentence reason>"}\n\n',
+        ),
+        "judge_input": tr(
+            "問題：{prompt}\n\n回答：{answer}", "Question: {prompt}\n\nAnswer: {answer}"
+        ),
+    }
+    backend, url = ollama_backend(), ollama_url()
+    jobs.start(job, lambda j: compare_work(j, backend, url, text))
+    st.session_state.compare_job = job.id
+    st.rerun()
+
+
+def follow_up(job: jobs.Job) -> None:
+    """Under a finished comparison: ask every model the next question, each going on from its own
+    earlier answers (same system prompt and settings)."""
+    state = job.state
+    if not any(r["stats"] for r in state["results"]):
+        return
+    with st.container(border=True):
+        st.markdown(":material/forum: **" + tr("接著問", "Ask a follow-up") + "**")
+        st.caption(tr(
+            "每個模型接著自己前面的回答繼續對話，系統提示與設定不變；整段對話存成同一筆執行紀錄。"
+            "要換模型或設定，請改上面的選項後按「開始比較」，會開新的對話。",
+            "Each model goes on from its own earlier answers, with the same system prompt and "
+            "settings; the whole conversation is one record in Run history. To change models or "
+            "settings, change them above and press Compare: that starts a new conversation.",
+        ))  # fmt: skip
+        question = st.text_area(
+            tr("追問", "Follow-up question"), key=f"follow_{job.id}", height=80,
+            label_visibility="collapsed",
+            placeholder=tr("例如：請改寫成更正式的語氣", "e.g. Make it more formal"),
+        )  # fmt: skip
+        if st.button(tr("問所有模型", "Ask every model"), type="primary", icon=":material/send:",
+                     disabled=not question.strip(), key=f"ask_{job.id}"):  # fmt: skip
+            turns = [
+                *state.get("turns", []),
+                {"prompt": state["prompt"], "results": state["results"]},
+            ]
+            n = len(state["results"])
+            follow = jobs.Job(
+                "compare",
+                tr(f"追問 {n} 個模型（第 {len(turns) + 1} 問）",
+                   f"Follow-up to {n} model{'' if n == 1 else 's'} (Q{len(turns) + 1})"),
+                "views/llm.py",
+                state={k: state[k] for k in ("system", "think", "max_tokens", "unload_between", "judge")}
+                | {"who": access.viewer(), "turns": turns, "prompt": question.strip(),
+                   "file": state.get("file"),
+                   "results": [{"model": r["model"], "missing": False, "status": "waiting",
+                                "answer": "", "thinking": "", "stats": None}
+                               for r in state["results"]]},
+            )  # fmt: skip
+            launch(follow)
 
 
 job = jobs.get(st.session_state.get("compare_job"))
@@ -398,28 +507,10 @@ if st.button(label, type="primary", disabled=busy or not (selected and prompt)):
             ],
         },
     )
-    text = {
-        "pulling": tr("下載 {model}", "downloading {model}"),
-        "pull_failed": tr("下載失敗：{error}", "Download failed: {error}"),
-        "failed": tr("錯誤：{error}", "Error: {error}"),
-        "judging": tr("{judge} 評分 {model}", "{judge} scoring {model}"),
-        "judge_prompt": tr(
-            "你是嚴格的評審。依據正確性、完整性、繁體中文表達，替下面的回答打 1 到 10 分。"
-            '只輸出 JSON：{"score": 分數, "reason": "一句理由"}\n\n',
-            "You are a strict judge. Score the answer below from 1 to 10 for correctness, "
-            'completeness and clarity. Output only JSON: {"score": <score>, "reason": '
-            '"<one-sentence reason>"}\n\n',
-        ),
-        "judge_input": tr(
-            "問題：{prompt}\n\n回答：{answer}", "Question: {prompt}\n\nAnswer: {answer}"
-        ),
-    }
-    backend, url = ollama_backend(), ollama_url()
-    jobs.start(job, lambda j: compare_work(j, backend, url, text))
-    st.session_state.compare_job = job.id
-    st.rerun()
+    launch(job)
 
 if job and job.running:
     live(job)
 elif job:
     render(job)
+    follow_up(job)
