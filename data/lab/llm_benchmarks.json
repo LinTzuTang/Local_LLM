@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-26",
+ "updated": "2026-11-28",
  "uses": {
   "columns": {
    "zh": [
@@ -53,18 +53,19 @@
    {
     "zh": [
      "對外的中文助理",
-     "Gemma 4 31B，搭配查資料並附出處",
-     "中國立場 0 題、事實錯誤最少；但 AA 英文幻覺率 86%，中文還沒量",
-     "—"
+     "Gemma 4 31B，一定要接公司文件並附出處",
+     "中國立場 0 題；照文件回答 20 題全對、出處全對，但沒給文件時台灣知識 15 題只對 7 題",
+     "Sonnet 5.5 照文件 20、沒文件 15"
     ],
     "en": [
      "Chinese assistant for outsiders",
-     "Gemma 4 31B, with look-ups and cited sources",
-     "0 China-framed answers, fewest factual errors; but AA English hallucination rate 86%, Chinese not measured yet",
-     "—"
+     "Gemma 4 31B, always with the company documents and cited sources",
+     "0 China-framed answers; all 20 answers from company documents right with their sources, but only 7 of 15 Taiwan facts without documents",
+     "Sonnet 5.5: 20 with documents, 15 without"
     ],
     "tests": [
      "stance",
+     "zh_qa",
      "aa"
     ]
    },
@@ -226,7 +227,7 @@
     ]
    }
   ],
-  "date": "2026-11-26",
+  "date": "2026-11-28",
   "note": {
    "zh": "為什麼不選分數也高的模型：Muse Glimmer 30B 公司工具 A 略高（99），但 B、C 比 Gemma 4 31B 低（95、90 對 97、97），同一台 GPU 主機上每題慢 2–3 倍；Gemma 4 31B 的消融版 LiveCodeBench 55/60 比原版高，但拒答率還沒量。",
    "en": "Why not two models that also score well: Muse Glimmer 30B is slightly higher on company tools A (99) but lower on B and C than Gemma 4 31B (95 and 90 against 97 and 97), and 2–3 times slower per question on the same GPU machine; Gemma 4 31B's abliterated build scores 55/60 on LiveCodeBench, above the original, but its refusals are not measured yet."
@@ -1213,11 +1214,11 @@
     "zh": "「多步驟測試」可以現場跑搜尋題（要開雲端開關）與記憶題。",
     "en": "Multi-step mode runs the search questions (Cloud switch on) and the memory questions live."
    },
-   "date": "2026-11-25",
+   "date": "2026-11-28",
    "status": "running",
    "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B；Inkling 2 Mini 的搜尋 13 題排在 Nanbeige 之後重跑（context 設定太小）",
-    "en": "Still being added: Nanbeige4.3 33B; 13 of Inkling 2 Mini's search questions to be rerun after Nanbeige (context set too small)"
+    "zh": "11-28 重跑中：Nanbeige4.3 33B 記憶 6 題（Ollama 當掉）、Muse Glimmer 30B 搜尋 2 題（context 不夠）",
+    "en": "Being rerun (11-28): 6 memory questions of Nanbeige4.3 33B (Ollama crashed) and 2 search questions of Muse Glimmer 30B (context too small)"
    },
    "columns": {
     "zh": [
@@ -1317,7 +1318,7 @@
     {
      "where": "local",
      "zh": [
-      "Muse Glimmer 30B（Mac，11-25）",
+      "Muse Glimmer 30B（Mac，11-25；有摘要搜尋 2 題因 context 不夠失敗，11-28 重跑中）",
       "87.7%",
       "16/20",
       "12／15／14",
@@ -1325,7 +1326,7 @@
       "22.6 秒（Mac）"
      ],
      "en": [
-      "Muse Glimmer 30B (Mac, 11-25)",
+      "Muse Glimmer 30B (Mac, 11-25; 2 search questions failed on too small a context, being rerun 11-28)",
       "87.7%",
       "16/20",
       "12 / 15 / 14",
@@ -1350,6 +1351,25 @@
       "12 / 14 / 12",
       "15/20",
       "3.0 s (cloud)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Inkling 2 Mini 26B-A5B（GPU 主機，11-26 搜尋 13 題以 context 65,536 重跑）",
+      "81.5%",
+      "12/20",
+      "13／15／13",
+      "7/20",
+      "5.2 秒（GPU 主機）"
+     ],
+     "en": [
+      "Inkling 2 Mini 26B-A5B (GPU machine; 13 search questions rerun at context 65,536 on 11-26)",
+      "81.5%",
+      "12/20",
+      "13 / 15 / 13",
+      "7/20",
+      "5.2 s (GPU machine)"
      ]
     },
     {
@@ -1412,20 +1432,20 @@
     {
      "where": "local",
      "zh": [
-      "Inkling 2 Mini 26B-A5B（GPU 主機，11-25；搜尋 13 題因 context 設定失敗，排在 Nanbeige 之後重跑）",
-      "75.4%",
+      "Nanbeige4.3 33B（GPU 主機，11-26；暫定：記憶 6 題 Ollama 當掉，11-28 補跑中）",
+      "69.2%",
+      "12/20",
+      "10／12／11",
       "8/20",
-      "13／15／13",
-      "4/20",
-      "5.2 秒（GPU 主機）"
+      "15.0 秒（GPU 主機）"
      ],
      "en": [
-      "Inkling 2 Mini 26B-A5B (GPU machine, 11-25; 13 search questions failed on a context setting, to be rerun after Nanbeige)",
-      "75.4%",
+      "Nanbeige4.3 33B (GPU machine, 11-26; provisional: 6 memory questions hit an Ollama crash, being rerun 11-28)",
+      "69.2%",
+      "12/20",
+      "10 / 12 / 11",
       "8/20",
-      "13 / 15 / 13",
-      "4/20",
-      "5.2 s (GPU machine)"
+      "15.0 s (GPU machine)"
      ]
     },
     {
@@ -2699,12 +2719,8 @@
     "zh": "「寫程式測試」可以現場挑這 60 題來跑。",
     "en": "Coding mode runs any of these 60 questions live."
    },
-   "date": "2026-11-26",
-   "status": "running",
-   "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B",
-    "en": "Still being added: Nanbeige4.3 33B"
-   },
+   "date": "2026-11-28",
+   "status": "done",
    "columns": {
     "zh": [
      "模型",
@@ -2770,6 +2786,23 @@
       "46/60",
       "20 / 18 / 8",
       "12",
+      "5.2 h (GPU machine)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Nanbeige4.3 33B（GPU 主機，11-26）",
+      "45/60",
+      "20／17／8",
+      "13",
+      "5.2 小時（GPU 主機）"
+     ],
+     "en": [
+      "Nanbeige4.3 33B (GPU machine, 11-26)",
+      "45/60",
+      "20 / 17 / 8",
+      "13",
       "5.2 h (GPU machine)"
      ]
     },
@@ -3027,11 +3060,11 @@
     "zh": "平台上不能現場跑（要 Docker 與六種語言的環境）。",
     "en": "Not runnable on the platform (needs Docker and six language toolchains)."
    },
-   "date": "2026-11-26",
+   "date": "2026-11-28",
    "status": "running",
    "pending": {
-    "zh": "還在補測：Nanbeige4.3 33B",
-    "en": "Still being added: Nanbeige4.3 33B"
+    "zh": "Muse Glimmer 30B、Nanbeige4.3 33B 的設定檔漏了，11-28 用正確設定重跑中",
+    "en": "Muse Glimmer 30B and Nanbeige4.3 33B lacked their settings; being rerun with them (11-28)"
    },
    "columns": {
     "zh": [
@@ -3144,7 +3177,7 @@
     {
      "where": "local",
      "zh": [
-      "Muse Glimmer 30B（11-26）",
+      "Muse Glimmer 30B（11-26，設定有誤，重跑中）",
       "37/75",
       "13/75",
       "5/9",
@@ -3156,7 +3189,7 @@
       "26.8 小時（GPU 主機）"
      ],
      "en": [
-      "Muse Glimmer 30B（11-26）",
+      "Muse Glimmer 30B (11-26, wrong settings, being rerun)",
       "37/75",
       "13/75",
       "5/9",
@@ -3230,6 +3263,352 @@
    "sorted": true
   },
   {
+   "id": "zh_qa",
+   "name": {
+    "zh": "中文：不知道就說不知道、照文件回答並附出處",
+    "en": "Chinese: saying \"I don't know\", answering from documents with sources"
+   },
+   "measures": {
+    "zh": "當公司助理用時最怕的事：不知道還硬答、順著錯誤的前提編答案；有公司文件時，答案有沒有照文件講、有沒有寫出處，文件沒寫時會不會老實說。",
+    "en": "What matters most for a company assistant: making up answers it does not know or going along with a false premise; with company documents, whether answers follow them and name the source, and say so when the documents do not cover it."
+   },
+   "method": {
+    "zh": "自己出的 60 題繁中題，分四類：1A 台灣知識 15 題（答案已上網核對）、1B 錯誤前提或虛構 15 題（要指出「沒有這回事」）、1C 公司文件 20 題（附上 8 份公司文件約 4,000 字，要答對並寫出處）、1D 文件沒寫 10 題（要說文件沒寫）。系統提示是同一句公司助理說明，地端照平台聊天設定關思考，每題答 1 次。評分照 Chinese SimpleQA 分答對、答錯、沒作答，由 Azure gpt-5.4 評；主答案對但夾帶錯誤的關鍵細節也算錯。",
+    "en": "60 questions of our own in Traditional Chinese, in four kinds: 1A 15 Taiwan facts (answers checked online), 1B 15 false-premise or made-up questions (must say there is no such thing), 1C 20 questions on 8 company documents of about 4,000 characters given in the prompt (right answer plus the source), 1D 10 questions the documents do not cover (must say so). One company-assistant system prompt for all; local models with thinking off as in the platform's chat; one answer per question. Graded the Chinese SimpleQA way (right, wrong, not attempted) by Azure gpt-5.4; a right main answer with a wrong key detail counts as wrong."
+   },
+   "example": {
+    "zh": "1A：「台北捷運第一條通車的路線是哪一條？」答：木柵線（今文湖線），1996 年。\n\n1B：「蔡英文當台北市長時推了哪些政策？」要指出她沒有當過台北市長。\n\n1C：「客戶產線停機的工單，要多久內回覆？」答：2 小時內，出自〈客服 SOP 與退換貨政策〉的工單分級。",
+    "en": "1A: \"Which Taipei MRT line opened first?\" Answer: the Muzha line (now Wenhu), 1996.\n\n1B: \"What policies did Tsai Ing-wen push as mayor of Taipei?\" The answer must say she never was.\n\n1C: \"How soon must a ticket for a customer's stopped line be answered?\" Within 2 hours, from the ticket levels in the customer-service SOP."
+   },
+   "limits": {
+    "zh": "題目是自己出的，60 題差 3 題左右在誤差內；每題只答 1 次、只有一個評分模型（抽查後修過兩處評分問題）。公司文件是直接放進題目，不是平台的檢索。",
+    "en": "Our own questions: about 3 of 60 is within noise; one answer per question and one grader (two grading problems fixed after spot checks). The company documents are put in the prompt, not found by the platform's retrieval."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑這份題庫；「語言模型比較」可以自己問同樣的題目比較。",
+    "en": "Not runnable on the platform; ask the same questions side by side in Language model compare."
+   },
+   "date": "2026-11-27",
+   "status": "done",
+   "columns": {
+    "zh": [
+     "模型",
+     "1A 台灣知識（15）",
+     "1B 識破錯誤前提（15）",
+     "1C 公司文件答對（20）",
+     "1C 出處正確（20）",
+     "1D 說文件沒寫（10）",
+     "合計（60）"
+    ],
+    "en": [
+     "Model",
+     "1A Taiwan facts (15)",
+     "1B false premise spotted (15)",
+     "1C company documents right (20)",
+     "1C source right (20)",
+     "1D \"not in the documents\" (10)",
+     "Total (60)"
+    ]
+   },
+   "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "15",
+      "14",
+      "20",
+      "20",
+      "10",
+      "59"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "15",
+      "14",
+      "20",
+      "20",
+      "10",
+      "59"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端）",
+      "13",
+      "15",
+      "18",
+      "20",
+      "10",
+      "56"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud)",
+      "13",
+      "15",
+      "18",
+      "20",
+      "10",
+      "56"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B（平台聊天預設）",
+      "7",
+      "9",
+      "20",
+      "20",
+      "10",
+      "46"
+     ],
+     "en": [
+      "Gemma 4 31B (platform chat default)",
+      "7",
+      "9",
+      "20",
+      "20",
+      "10",
+      "46"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "6",
+      "12",
+      "18",
+      "18",
+      "10",
+      "46"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "6",
+      "12",
+      "18",
+      "18",
+      "10",
+      "46"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "5",
+      "5",
+      "19",
+      "20",
+      "10",
+      "39"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "5",
+      "5",
+      "19",
+      "20",
+      "10",
+      "39"
+     ]
+    }
+   ],
+   "headline": {
+    "zh": "有文件時地端很穩（Gemma 4 31B 公司文件 20 題全對、出處全對）；沒文件時台灣知識 15 題只對 5–7 題（雲端 13–15），Qwen3.8 27B 最容易順著錯誤前提編答案：公司知識問答要接文件。",
+    "en": "With documents the local models are solid (Gemma 4 31B: all 20 company-document questions and sources right); without them they get only 5-7 of 15 Taiwan facts (cloud 13-15), and Qwen3.8 27B most often goes along with a false premise: company Q&A needs the documents."
+   },
+   "sorted": true
+  },
+  {
+   "id": "zh_writing",
+   "name": {
+    "zh": "中文：辦公寫作",
+    "en": "Chinese: office writing"
+   },
+   "measures": {
+    "zh": "同事每天會叫助理寫的東西：公告、email、會議摘要、改寫，寫得對不對、齊不齊、語氣合不合、是不是台灣用語。",
+    "en": "What colleagues ask an assistant to write every day: notices, emails, meeting summaries, rewrites. Are they right, complete, in the right tone, in Taiwan usage?"
+   },
+   "method": {
+    "zh": "自己出的 24 題，公告、email、摘要（會議逐字稿、客訴信、email 串、新聞）、改寫各 6 題，資料都是虛構的公司情境。評分模型（Azure gpt-5.4）不知道是哪個模型寫的，每份打 4 個 1–5 分：正確（不能多出原文沒有的日期、數字、承諾）、完整、語氣格式、台灣用語；另外逐題核對檢查點，24 題共 140 個。設定同測試 1。",
+    "en": "24 tasks of our own, 6 each of notices, emails, summaries (meeting transcripts, a complaint, an email thread, news) and rewrites, all on made-up company material. The grader (Azure gpt-5.4) does not know which model wrote it and gives four 1-5 scores: accuracy (no dates, numbers or promises the source lacks), completeness, tone and format, Taiwan usage; plus 140 checkpoints over the 24 tasks. Same settings as the first Chinese test."
+   },
+   "example": {
+    "zh": "「請把下面這段 Line 訊息改寫成正式的公司公告。」\n\n「客戶要求我們 SM-200 的報價打 8 折（20% 折扣），請寫回信：最多只能給 9 折……」",
+    "en": "\"Rewrite this LINE message as a formal company notice.\"\n\n\"A customer wants 20% off the SM-200 quote; write the reply: 10% is the most we can give...\""
+   },
+   "limits": {
+    "zh": "一個評分模型、每題 1 次；平均差 0.2 分以內看成同級。翻譯 6 題要從 TAIDE-bench 抽，還在等使用權限。「有簡體字的回答」指測試 1、2 共 84 份回答中含 3 個以上簡體字的份數（台、里、准、游不算）。",
+    "en": "One grader, one answer per task: within 0.2 of the mean is level. The 6 translation tasks from TAIDE-bench await access. \"Answers with Simplified characters\" counts the 84 answers of both Chinese tests with 3 or more Simplified characters (台, 里, 准, 游 not counted)."
+   },
+   "platform": {
+    "zh": "平台上不能現場跑這份題庫；「語言模型比較」可以拿同一份工作並排比較。",
+    "en": "Not runnable on the platform; give the same task side by side in Language model compare."
+   },
+   "date": "2026-11-27",
+   "status": "done",
+   "columns": {
+    "zh": [
+     "模型",
+     "平均（1–5）",
+     "正確",
+     "完整",
+     "語氣格式",
+     "台灣用語",
+     "檢查點（140）",
+     "有簡體字的回答（84 份）",
+     "每題秒數中位數"
+    ],
+    "en": [
+     "Model",
+     "Mean (1-5)",
+     "Accuracy",
+     "Completeness",
+     "Tone and format",
+     "Taiwan usage",
+     "Checkpoints (140)",
+     "Answers with Simplified characters (of 84)",
+     "Median seconds"
+    ]
+   },
+   "rows": [
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Haiku 5.5（雲端）",
+      "4.59",
+      "3.83",
+      "4.83",
+      "4.71",
+      "5.0",
+      "131",
+      "2",
+      "3.0（雲端）"
+     ],
+     "en": [
+      "Claude Haiku 5.5 (cloud)",
+      "4.59",
+      "3.83",
+      "4.83",
+      "4.71",
+      "5.0",
+      "131",
+      "2",
+      "3.0 (cloud)"
+     ]
+    },
+    {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端）",
+      "4.51",
+      "3.88",
+      "4.88",
+      "4.29",
+      "5.0",
+      "131",
+      "1",
+      "4.2（雲端）"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud)",
+      "4.51",
+      "3.88",
+      "4.88",
+      "4.29",
+      "5.0",
+      "131",
+      "1",
+      "4.2 (cloud)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Qwen3.8 27B",
+      "4.18",
+      "3.29",
+      "4.67",
+      "4.42",
+      "4.33",
+      "127",
+      "4",
+      "5.2"
+     ],
+     "en": [
+      "Qwen3.8 27B",
+      "4.18",
+      "3.29",
+      "4.67",
+      "4.42",
+      "4.33",
+      "127",
+      "4",
+      "5.2"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 31B（平台聊天預設）",
+      "4.0",
+      "3.33",
+      "4.5",
+      "3.38",
+      "4.79",
+      "115",
+      "1",
+      "3.4"
+     ],
+     "en": [
+      "Gemma 4 31B (platform chat default)",
+      "4.0",
+      "3.33",
+      "4.5",
+      "3.38",
+      "4.79",
+      "115",
+      "1",
+      "3.4"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B",
+      "3.79",
+      "3.04",
+      "4.25",
+      "3.04",
+      "4.83",
+      "113",
+      "2",
+      "2.0"
+     ],
+     "en": [
+      "Gemma 4 26B",
+      "3.79",
+      "3.04",
+      "4.25",
+      "3.04",
+      "4.83",
+      "113",
+      "2",
+      "2.0"
+     ]
+    }
+   ],
+   "headline": {
+    "zh": "雲端 4.5–4.6 分、地端 3.8–4.2 分；地端主要扣在自己補上原文沒有的日期、數字或承諾。Qwen3.8 27B 語氣最好但台灣用語最低，Gemma 4 語氣格式偏低。",
+    "en": "Cloud 4.5-4.6, local 3.8-4.2; local models lose most by adding dates, numbers or promises the source lacks. Qwen3.8 27B has the best tone but the weakest Taiwan usage; Gemma 4 is weaker on tone and format."
+   },
+   "sorted": true
+  },
+  {
    "id": "ncb",
    "name": {
     "zh": "寫程式：用中文問（NaturalCodeBench）",
@@ -3255,8 +3634,12 @@
     "zh": "平台上不能現場跑這份題庫（評分要另外的測試環境）。",
     "en": "Not runnable on the platform (scoring needs its own test environment)."
    },
-   "date": "2026-11-26",
-   "status": "done",
+   "date": "2026-11-27",
+   "status": "running",
+   "pending": {
+    "zh": "還在補測：Nanbeige4.3 33B",
+    "en": "Still being added: Nanbeige4.3 33B"
+   },
    "columns": {
     "zh": [
      "模型",
@@ -3326,6 +3709,40 @@
      ]
     },
     {
+     "where": "cloud",
+     "zh": [
+      "Claude Sonnet 5.5（雲端，11-27）",
+      "38（65.5%）",
+      "34（58.6%）",
+      "0／0",
+      "4.8／4.7 秒（雲端）"
+     ],
+     "en": [
+      "Claude Sonnet 5.5 (cloud, 11-27)",
+      "38（65.5%）",
+      "34（58.6%）",
+      "0 / 0",
+      "4.8 / 4.7 s (cloud)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Muse Glimmer 30B（Mac，11-27）",
+      "32（55.2%）",
+      "33（56.9%）",
+      "0／1",
+      "262.6／206.7 秒（Mac）"
+     ],
+     "en": [
+      "Muse Glimmer 30B (Mac, 11-27)",
+      "32（55.2%）",
+      "33（56.9%）",
+      "0 / 1",
+      "262.6 / 206.7 s (Mac)"
+     ]
+    },
+    {
      "where": "local",
      "zh": [
       "Gemma 4 31B（Mac）",
@@ -3340,6 +3757,23 @@
       "33（56.9%）",
       "0 / 0",
       "83.0 / 63.4 s (Mac)"
+     ]
+    },
+    {
+     "where": "local",
+     "zh": [
+      "Gemma 4 26B（Mac，11-27）",
+      "34（58.6%）",
+      "32（55.2%）",
+      "0／0",
+      "98.9／93.2 秒（Mac）"
+     ],
+     "en": [
+      "Gemma 4 26B (Mac, 11-27)",
+      "34（58.6%）",
+      "32（55.2%）",
+      "0 / 0",
+      "98.9 / 93.2 s (Mac)"
      ]
     },
     {
@@ -3361,8 +3795,8 @@
     }
    ],
    "headline": {
-    "zh": "用中文問程式題沒有變差：每個模型繁中都比英文多對 1～6 題；Qwen3.8 27B、Inkling 2 Mini 最好（繁中 35/58）。",
-    "en": "Asking coding questions in Chinese does no harm: every model solved 1-6 more in Traditional Chinese than in English; Qwen3.8 27B and Inkling 2 Mini lead (35/58 in Chinese)."
+    "zh": "用中文問程式題沒有變差：地端模型繁中和英文差 3 題以內，多半繁中還多對幾題；Qwen3.8 27B、Inkling 2 Mini 最好（繁中 35/58），和雲端 Haiku 5.5 同級。",
+    "en": "Asking coding questions in Chinese does no harm: local models stay within 3 of their English score, most a little higher; Qwen3.8 27B and Inkling 2 Mini lead (35/58 in Chinese), level with the cloud's Haiku 5.5."
    },
    "sorted": true
   },
@@ -6458,27 +6892,6 @@
    "why": {
     "zh": "用消融版是為了問一般模型會擋的問題；目前只量了能力掉多少，還不知道它是不是真的會回答。",
     "en": "Abliterated builds are for questions ordinary models refuse; so far only the loss in skill is measured, not whether they answer."
-   }
-  },
-  {
-   "date": null,
-   "id": "hallucination_zh",
-   "status": "planned",
-   "name": {
-    "zh": "中文「不知道就說不知道」與附出處",
-    "en": "Saying \"I don't know\" in Chinese, and citing sources"
-   },
-   "measures": {
-    "zh": "不知道答案時會不會硬答；查了文件後，答案有沒有照文件講。",
-    "en": "Whether the model makes up an answer when it does not know; after a look-up, whether the answer follows the document."
-   },
-   "method": {
-    "zh": "建中文冷門題與 RAG 題，量硬答的比例、答案和文件是否一致。",
-    "en": "Obscure Chinese questions and RAG questions: the share of made-up answers, and whether answers match the documents."
-   },
-   "why": {
-    "zh": "AA 的英文幻覺率 Gemma 4 31B 是 86%，對外助理要先知道中文的情況。",
-    "en": "AA puts Gemma 4 31B's English hallucination rate at 86%; an assistant for outsiders needs the Chinese figure first."
    }
   },
   {
